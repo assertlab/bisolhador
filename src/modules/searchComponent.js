@@ -28,15 +28,16 @@ export class SearchComponent {
         this.setLoading(true);
 
         try {
-            const [repoData, commits, branches, contributors, pulls, issuesOpenCount] = await Promise.all([
+            const [repoData, commits, branches, contributors, pulls, issuesOpenCount, languages] = await Promise.all([
                 GitHubAPI.fetchRepository(owner, repo),
                 GitHubAPI.fetchCommits(owner, repo),
                 GitHubAPI.fetchBranches(owner, repo),
                 GitHubAPI.fetchContributors(owner, repo),
                 GitHubAPI.fetchPullRequests(owner, repo),
-                GitHubAPI.fetchOpenIssuesCount(owner, repo)
+                GitHubAPI.fetchOpenIssuesCount(owner, repo),
+                GitHubAPI.fetchLanguages(owner, repo)
             ]);
-            this.onData(repoData, commits, branches, contributors, pulls, issuesOpenCount, owner, repo);
+            this.onData(repoData, commits, branches, contributors, pulls, issuesOpenCount, languages, owner, repo);
         } catch (error) {
             console.error('Erro na busca:', error);
             if (error.message.includes('401')) {

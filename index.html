@@ -35,9 +35,15 @@
                 <p id="issues-value" class="text-2xl">-</p>
             </div>
         </div>
-        <div class="bg-white p-4 rounded shadow">
-            <h3 class="text-lg font-semibold mb-4">Commits por Dia da Semana</h3>
-            <canvas id="commits-chart"></canvas>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg font-semibold mb-4">Commits por Dia da Semana</h3>
+                <canvas id="commits-chart"></canvas>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg font-semibold mb-4">Stack Tecnológica</h3>
+                <canvas id="languages-chart"></canvas>
+            </div>
         </div>
         <div id="contributors-table"></div>
     </main>

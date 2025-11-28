@@ -108,6 +108,22 @@ export class GitHubAPI {
         }
     }
 
+    static async fetchLanguages(owner, repo) {
+        if (!owner || !repo) {
+            throw new Error('Owner and repo are required');
+        }
+
+        const url = `${this.BASE_URL}/repos/${owner}/${repo}/languages`;
+        const response = await fetch(url, { headers: this.getHeaders() });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    }
+
     static async fetchOpenIssuesCount(owner, repo) {
         if (!owner || !repo) {
             return null;
