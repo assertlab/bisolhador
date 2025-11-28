@@ -5,6 +5,7 @@ import { RepoInfoComponent } from './modules/repoInfoComponent.js';
 import { ContributorsTable } from './modules/contributorsTable.js';
 import { ConfigComponent } from './modules/configComponent.js';
 import { HealthComponent } from './modules/healthComponent.js';
+import { ActivityLogs } from './modules/activityLogs.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const configComponent = new ConfigComponent('#config-btn');
@@ -14,14 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const repoInfoComponent = new RepoInfoComponent('repo-info');
     const contributorsTable = new ContributorsTable('contributors-table');
     const healthComponent = new HealthComponent('health-score');
+    const activityLogs = new ActivityLogs('#activity-logs');
 
-    const handleData = (repoData, commits, branches, contributors, pulls, issuesOpenCount, languages, owner, repo, communityProfile) => {
-        metricsCards.update(repoData, issuesOpenCount);
+    const handleData = (repoData, commits, branches, contributors, pulls, issuesOpenCount, issuesClosedCount, pullRequests, languages, owner, repo, communityProfile) => {
+        metricsCards.update(repoData, issuesOpenCount, issuesClosedCount);
         healthComponent.update(communityProfile, repoData.description);
         chartComponent.update(commits);
         languagesChartComponent.updateLanguages(languages);
         repoInfoComponent.update(repoData, branches, pulls, owner, repo);
         contributorsTable.update(contributors);
+        activityLogs.update(commits, pullRequests);
     };
 
     new SearchComponent('#search-form', '#search-btn', handleData);

@@ -21,7 +21,7 @@
             <button id="search-btn" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Buscar</button>
         </form>
         <div id="repo-info"></div>
-        <div id="metrics" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div id="metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div id="stars-card" class="bg-white p-4 rounded shadow">
                 <h3 class="text-lg font-semibold">Stars</h3>
                 <p id="stars-value" class="text-2xl">-</p>
@@ -33,6 +33,11 @@
             <div id="issues-card" class="bg-white p-4 rounded shadow">
                 <h3 class="text-lg font-semibold">Open Issues</h3>
                 <p id="issues-value" class="text-2xl">-</p>
+            </div>
+            <div id="closed-issues-card" class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg font-semibold">Closed Issues</h3>
+                <p id="closed-issues-value" class="text-2xl">-</p>
+                <p id="resolution-rate" class="text-sm text-gray-600"></p>
             </div>
         </div>
         <div id="health-score"></div>
@@ -48,6 +53,7 @@
         </div>
         <div id="contributors-table"></div>
     </main>
+    <div id="activity-logs" class="container mx-auto px-4 py-8"></div>
     <footer class="bg-white shadow-md py-4">
         <div class="container mx-auto px-4 text-center text-gray-600">
             Bisolhador Dashboard - Projeto de Análise de Repositórios GitHub.<br>© 2025 Vinicius Cardoso Garcia. Licenciado sob MIT.<br>Powered by ASSERT Lab. Orgulhosamente feito em Recife 🦈
