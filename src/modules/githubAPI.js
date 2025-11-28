@@ -146,4 +146,30 @@ export class GitHubAPI {
             return null;
         }
     }
+
+    static async fetchCommunityProfile(owner, repo) {
+        if (!owner || !repo) {
+            return null;
+        }
+
+        try {
+            const url = `${this.BASE_URL}/repos/${owner}/${repo}/community/profile`;
+            const response = await fetch(url, { headers: this.getHeaders() });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    // No community profile, return null or score 0
+                    return null;
+                }
+                console.warn(`Failed to fetch community profile: ${response.status}`);
+                return null;
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.warn('Error fetching community profile:', error);
+            return null;
+        }
+    }
 }

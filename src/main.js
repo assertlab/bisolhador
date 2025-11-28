@@ -4,6 +4,7 @@ import { ChartComponent } from './modules/chartComponent.js';
 import { RepoInfoComponent } from './modules/repoInfoComponent.js';
 import { ContributorsTable } from './modules/contributorsTable.js';
 import { ConfigComponent } from './modules/configComponent.js';
+import { HealthComponent } from './modules/healthComponent.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const configComponent = new ConfigComponent('#config-btn');
@@ -12,9 +13,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const languagesChartComponent = new ChartComponent('languages-chart');
     const repoInfoComponent = new RepoInfoComponent('repo-info');
     const contributorsTable = new ContributorsTable('contributors-table');
+    const healthComponent = new HealthComponent('health-score');
 
-    const handleData = (repoData, commits, branches, contributors, pulls, issuesOpenCount, languages, owner, repo) => {
+    const handleData = (repoData, commits, branches, contributors, pulls, issuesOpenCount, languages, owner, repo, communityProfile) => {
         metricsCards.update(repoData, issuesOpenCount);
+        healthComponent.update(communityProfile, repoData.description);
         chartComponent.update(commits);
         languagesChartComponent.updateLanguages(languages);
         repoInfoComponent.update(repoData, branches, pulls, owner, repo);
