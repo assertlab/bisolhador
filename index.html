@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dashboard SPA para análise de métricas de repositórios GitHub">
+    <title>Bisolhar Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex flex-col">
+    <header class="bg-white shadow-md py-4">
+        <div class="container mx-auto px-4">
+            <h1 class="text-2xl font-bold text-gray-900">Bisolhar</h1>
+        </div>
+    </header>
+    <main class="flex-1 container mx-auto px-4 py-8">
+        <form id="search-form" class="mb-8 flex gap-2">
+            <input id="repo-input" type="text" placeholder="owner/repo" class="px-4 py-2 border rounded flex-1" required>
+            <button id="search-btn" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Buscar</button>
+        </form>
+        <div id="metrics" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div id="stars-card" class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg font-semibold">Stars</h3>
+                <p id="stars-value" class="text-2xl">-</p>
+            </div>
+            <div id="forks-card" class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg font-semibold">Forks</h3>
+                <p id="forks-value" class="text-2xl">-</p>
+            </div>
+            <div id="issues-card" class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg font-semibold">Open Issues</h3>
+                <p id="issues-value" class="text-2xl">-</p>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+            <h3 class="text-lg font-semibold mb-4">Commits por Dia da Semana</h3>
+            <canvas id="commits-chart"></canvas>
+        </div>
+    </main>
+    <footer class="bg-white shadow-md py-4">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            Bisolhar Dashboard - Projeto de Análise de Repositórios GitHub
+        </div>
+    </footer>
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
