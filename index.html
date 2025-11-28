@@ -10,8 +10,9 @@
 </head>
 <body class="min-h-screen bg-gray-100 flex flex-col">
     <header class="bg-white shadow-md py-4">
-        <div class="container mx-auto px-4">
+        <div class="container mx-auto px-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-gray-900">Bisolhar</h1>
+            <button id="config-btn" class="text-gray-500 hover:text-gray-700 text-2xl">⚙️</button>
         </div>
     </header>
     <main class="flex-1 container mx-auto px-4 py-8">
@@ -19,6 +20,7 @@
             <input id="repo-input" type="text" placeholder="owner/repo" class="px-4 py-2 border rounded flex-1" required>
             <button id="search-btn" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Buscar</button>
         </form>
+        <div id="repo-info"></div>
         <div id="metrics" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div id="stars-card" class="bg-white p-4 rounded shadow">
                 <h3 class="text-lg font-semibold">Stars</h3>
@@ -37,6 +39,7 @@
             <h3 class="text-lg font-semibold mb-4">Commits por Dia da Semana</h3>
             <canvas id="commits-chart"></canvas>
         </div>
+        <div id="contributors-table"></div>
     </main>
     <footer class="bg-white shadow-md py-4">
         <div class="container mx-auto px-4 text-center text-gray-600">

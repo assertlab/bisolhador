@@ -5,9 +5,9 @@ export class MetricsCards {
         this.issuesElement = document.getElementById('issues-value');
     }
 
-    update(data) {
+    update(data, openIssuesCount) {
         this.starsElement.textContent = data.stargazers_count ? data.stargazers_count.toLocaleString() : '-';
         this.forksElement.textContent = data.forks_count ? data.forks_count.toLocaleString() : '-';
-        this.issuesElement.textContent = data.open_issues_count !== undefined ? data.open_issues_count.toLocaleString() : '-';
+        this.issuesElement.textContent = openIssuesCount !== null ? (openIssuesCount ? openIssuesCount.toLocaleString() : 0) : 'N/A';
     }
 }

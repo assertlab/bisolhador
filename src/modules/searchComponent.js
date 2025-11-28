@@ -28,12 +28,24 @@ export class SearchComponent {
         this.setLoading(true);
 
         try {
-            const repoData = await GitHubAPI.fetchRepository(owner, repo);
-            const commits = await GitHubAPI.fetchCommits(owner, repo);
-            this.onData(repoData, commits);
+            const [repoData, commits, branches, contributors, pulls, issuesOpenCount] = await Promise.all([
+                GitHubAPI.fetchRepository(owner, repo),
+                GitHubAPI.fetchCommits(owner, repo),
+                GitHubAPI.fetchBranches(owner, repo),
+                GitHubAPI.fetchContributors(owner, repo),
+                GitHubAPI.fetchPullRequests(owner, repo),
+                GitHubAPI.fetchOpenIssuesCount(owner, repo)
+            ]);
+            this.onData(repoData, commits, branches, contributors, pulls, issuesOpenCount, owner, repo);
         } catch (error) {
             console.error('Erro na busca:', error);
-            alert('Erro ao buscar dados do repositório.');
+            if (error.message.includes('401')) {
+                alert('Erro 401 - Token inválido ou insuficiente. Verifique o token no botão de configurações.');
+            } else if (error.message.includes('422')) {
+                alert('Erro 422 - Limite de requisições excedido. Consider inserir um token GitHub para aumentar o limite.');
+            } else {
+                alert('Erro ao buscar dados do repositório.');
+            }
         } finally {
             this.setLoading(false);
         }
