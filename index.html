@@ -54,7 +54,7 @@
             <button id="search-btn" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Buscar</button>
         </form>
         <div id="repo-info"></div>
-        <div id="metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 break-inside-avoid">
+        <div id="metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8 break-inside-avoid">
             <div id="stars-card" class="bg-white p-4 rounded shadow break-inside-avoid relative hover:z-50 transition-all duration-200">
                 <h3 class="text-lg font-semibold">Stars</h3>
                 <p id="stars-value" class="text-2xl">-</p>
@@ -75,6 +75,11 @@
             <div id="engineering-maturity-card" class="bg-white p-4 rounded shadow break-inside-avoid overflow-visible relative hover:z-50 transition-all duration-200">
                 <h3 class="text-lg font-semibold flex items-center">Maturidade de Engenharia<span class="group inline-flex items-center ml-1"><svg class="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75a.75.75 0 1 0 0 1.5h.008v.75a.75.75 0 0 1-.75.75H9a.75.75 0 0 0 .75.75v.75h-.008a.75.75 0 0 0 0 1.5h.008v-.75a.75.75 0 0 1 .75-.75H12a.75.75 0 0 1 .75.75v.75a.75.75 0 0 0 0 1.5h-.75v-.75a.75.75 0 0 1-.75-.75H9a.75.75 0 0 0-.75.75v.75h.75Z" /></svg><div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-black text-white text-xs p-2 rounded w-64 z-50">Verifica a presença de infraestrutura profissional: Testes Automatizados, CI/CD, Linters e Auditoria de Segurança.</div></span></h3>
                 <div id="maturity-badges" class="flex flex-wrap gap-1"></div>
+            </div>
+            <div id="code-churn-card" class="bg-white p-4 rounded shadow break-inside-avoid overflow-visible relative hover:z-50 transition-all duration-200">
+                <h3 class="text-lg font-semibold flex items-center">Code Churn (Últimas 10 semanas)<span class="group inline-flex items-center ml-1"><svg class="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75a.75.75 0 1 0 0 1.5h.008v.75a.75.75 0 0 1-.75.75H9a.75.75 0 0 0 .75.75v.75h-.008a.75.75 0 0 0 0 1.5h.008v-.75a.75.75 0 0 1 .75-.75H12a.75.75 0 0 1 .75.75v.75a.75.75 0 0 0 0 1.5h-.75v-.75a.75.75 0 0 1-.75-.75H9a.75.75 0 0 0-.75.75v.75h.75Z" /></svg><div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-black text-white text-xs p-2 rounded w-64 z-50">Mede a taxa de mudança no código: adições vs deleções. Indica saúde do desenvolvimento: evolução com limpeza ou refatoração excessiva.</div></span></h3>
+                <p id="code-churn-value" class="text-2xl">-</p>
+                <p id="code-churn-category" class="text-sm text-gray-600"></p>
             </div>
         </div>
         <h2 class="text-xl font-bold mt-8 mb-4">Dinâmica de Revisão</h2>

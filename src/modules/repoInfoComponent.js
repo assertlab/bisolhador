@@ -3,7 +3,7 @@ export class RepoInfoComponent {
         this.container = document.getElementById(containerId);
     }
 
-    update(repoData, branches, pulls, owner, repo, releasesCount) {
+    update(repoData, branches, pulls, owner, repo, releasesCount, mergedPRsCount) {
         const createdAt = new Date(repoData.created_at);
         const now = new Date();
         const age = this.calculateAge(createdAt, now);
@@ -30,10 +30,11 @@ export class RepoInfoComponent {
                     <div>
                         <h3 class="text-lg font-semibold">Estatísticas Extras</h3>
                         <ul>
-                            <li>Total de Branches: ${totalBranchesDisplay}</li>
-                            <li>Total de PRs: ${totalPRs}</li>
-                            <li>PRs por Branch: ${prsPerBranch}</li>
-                            <li>Total de Releases: ${releasesCount}</li>
+                            <li>Total de Branches (Origem): ${totalBranchesDisplay}</li>
+                            <li>Total de PRs (Proposta): ${totalPRs}</li>
+                            <li>Total de Merges (Aceite): ${mergedPRsCount}</li>
+                            <li>PRs por Branch (Eficiência): ${prsPerBranch}</li>
+                            <li>Total de Releases (Entrega): ${releasesCount}</li>
                         </ul>
                     </div>
                 </div>

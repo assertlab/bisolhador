@@ -28,18 +28,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const engineeringMaturityCard = new EngineeringMaturityCard('#engineering-maturity-card');
     const processAnalysisCard = new ProcessAnalysisCard();
 
-    const handleData = (repoData, commits, branches, contributors, pulls, issuesOpenCount, issuesClosedCount, pullRequests, languages, owner, repo, communityProfile, repositoryTree, releasesCount, commitActivity, pullRequestsStats) => {
+    const handleData = (repoData, commits, branches, contributors, pulls, issuesOpenCount, issuesClosedCount, pullRequests, languages, owner, repo, communityProfile, repositoryTree, releasesCount, commitActivity, pullRequestsStats, codeFrequency, branchesZombies, mergedPRsCount) => {
         currentOwner = owner;
         currentRepo = repo;
-        metricsCards.update(repoData, issuesOpenCount, issuesClosedCount);
+        metricsCards.update(repoData, issuesOpenCount, issuesClosedCount, codeFrequency);
         healthComponent.update(communityProfile, repoData.description);
         chartComponent.update(commits);
         languagesChartComponent.updateLanguages(languages);
-        repoInfoComponent.update(repoData, branches, pulls, owner, repo, releasesCount);
+        repoInfoComponent.update(repoData, branches, pulls, owner, repo, releasesCount, mergedPRsCount);
         contributorsTable.update(contributors);
         commitHistoryChart.renderCommitHistoryChart(commitActivity, repoData.created_at);
         activityLogs.update(commits, pullRequests);
-        const maturity = EngineeringMaturity.analyze(repositoryTree.tree, pullRequests);
+        const maturity = EngineeringMaturity.analyze(repositoryTree.tree, pullRequests, branchesZombies);
         engineeringMaturityCard.update(maturity);
         const leadTime = ProcessAnalysis.calculateLeadTime(pullRequestsStats);
         const divergence = ProcessAnalysis.calculateDivergence(pullRequestsStats);

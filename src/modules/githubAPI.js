@@ -48,19 +48,47 @@ export class GitHubAPI {
 
     static async fetchBranches(owner, repo) {
         if (!owner || !repo) {
-            throw new Error('Owner and repo are required');
+            return { count: 0, zombies: 0 };
         }
 
-        const url = `${this.BASE_URL}/repos/${owner}/${repo}/branches?per_page=100`;
-        const response = await fetch(url, { headers: this.getHeaders() });
+        try {
+            const url = `${this.BASE_URL}/repos/${owner}/${repo}/branches?per_page=20`;
+            const response = await fetch(url, { headers: this.getHeaders() });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                console.warn(`Failed to fetch branches: ${response.status}`);
+                return { count: 0, zombies: 0 };
+            }
+
+            const data = await response.json();
+            const count = data.length;
+            let zombies = 0;
+            const now = new Date();
+            const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+            for (const branch of data) {
+                if (!branch.commit || !branch.commit.url) continue;
+
+                try {
+                    const commitResponse = await fetch(branch.commit.url, { headers: this.getHeaders() });
+                    if (commitResponse.ok) {
+                        const commitData = await commitResponse.json();
+                        const commitDate = new Date(commitData.commit.author.date);
+                        if (commitDate < ninetyDaysAgo) {
+                            zombies++;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Error fetching commit details for branch:', branch.name, error);
+                    // Ignore, as per fail-safe
+                }
+            }
+
+            return { count, zombies };
+        } catch (error) {
+            console.warn('Error fetching branches:', error);
+            return { count: 0, zombies: 0 };
         }
-
-        const data = await response.json();
-        const count = data.length;
-        return { count: count, isMore: count === 100 };
     }
 
     static async fetchContributors(owner, repo) {
@@ -363,6 +391,60 @@ export class GitHubAPI {
         } catch (error) {
             console.warn('Error fetching PR stats:', error);
             return [];
+        }
+    }
+
+    static async fetchCodeFrequency(owner, repo) {
+        if (!owner || !repo) {
+            return null;
+        }
+
+        try {
+            const url = `${this.BASE_URL}/repos/${owner}/${repo}/stats/code_frequency`;
+            const response = await fetch(url, { headers: this.getHeaders() });
+
+            if (response.status === 202) {
+                // GitHub is still calculating, return null
+                console.warn('Code frequency still calculating by GitHub');
+                return null;
+            }
+
+            if (!response.ok) {
+                console.warn(`Failed to fetch code frequency: ${response.status}`);
+                return null;
+            }
+
+            const data = await response.json();
+            if (!data || data.length === 0) {
+                return null;
+            }
+            return data;
+        } catch (error) {
+            console.warn('Error fetching code frequency:', error);
+            return null;
+        }
+    }
+
+    static async fetchMergedPRsCount(owner, repo) {
+        if (!owner || !repo) {
+            return 0;
+        }
+
+        try {
+            const query = `repo:${owner}/${repo}+is:pr+is:merged`;
+            const url = `${this.BASE_URL}/search/issues?q=${query}`;
+            const response = await fetch(url, { headers: this.getHeaders() });
+
+            if (!response.ok) {
+                console.warn(`Failed to fetch merged PRs count: ${response.status}`);
+                return 0;
+            }
+
+            const data = await response.json();
+            return data.total_count;
+        } catch (error) {
+            console.warn('Error fetching merged PRs count:', error);
+            return 0;
         }
     }
 }

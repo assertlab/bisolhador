@@ -30,7 +30,7 @@ export class ProcessAnalysis {
         if (!pullRequests || pullRequests.length === 0) return { avg: 0, category: 'Sem dados (0 PRs)' };
 
         // Cálculo Seguro
-        const totalComments = pullRequests.reduce((sum, pr) => sum + (pr.comments || 0) + (pr.review_comments_count || 0), 0);
+        const totalComments = pullRequests.reduce((sum, pr) => sum + (pr.comments || 0) + (pr.review_comments || 0), 0);
         const average = totalComments / pullRequests.length;
         const safeAverage = Number.isNaN(average) ? 0 : average;
 

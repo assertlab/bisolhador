@@ -29,7 +29,7 @@ export class SearchComponent {
 
         try {
             const repoData = await GitHubAPI.fetchRepository(owner, repo);
-            const [commits, branches, contributors, pulls, issuesOpenCount, issuesClosedCount, pullRequests, languages, communityProfile, repositoryTree, releasesCount, commitActivity, pullRequestsStats] = await Promise.all([
+            const results = await Promise.allSettled([
                 GitHubAPI.fetchCommits(owner, repo),
                 GitHubAPI.fetchBranches(owner, repo),
                 GitHubAPI.fetchContributors(owner, repo),
@@ -42,9 +42,29 @@ export class SearchComponent {
                 GitHubAPI.fetchRepositoryTree(owner, repo, repoData.default_branch),
                 GitHubAPI.fetchReleasesCount(owner, repo),
                 GitHubAPI.fetchCommitActivity(owner, repo),
-                GitHubAPI.fetchPullRequestStats(owner, repo)
+                GitHubAPI.fetchPullRequestStats(owner, repo),
+                GitHubAPI.fetchCodeFrequency(owner, repo),
+                GitHubAPI.fetchMergedPRsCount(owner, repo)
             ]);
-            this.onData(repoData, commits, branches, contributors, pulls, issuesOpenCount, issuesClosedCount, pullRequests, languages, owner, repo, communityProfile, repositoryTree, releasesCount, commitActivity, pullRequestsStats);
+
+            // Extract values, handling failures gracefully
+            const commits = results[0].status === 'fulfilled' ? results[0].value : [];
+            const branches = results[1].status === 'fulfilled' ? results[1].value : { count: 0, zombies: 0 };
+            const contributors = results[2].status === 'fulfilled' ? results[2].value : [];
+            const pulls = results[3].status === 'fulfilled' ? results[3].value : null;
+            const issuesOpenCount = results[4].status === 'fulfilled' ? results[4].value : null;
+            const issuesClosedCount = results[5].status === 'fulfilled' ? results[5].value : null;
+            const pullRequests = results[6].status === 'fulfilled' ? results[6].value : [];
+            const languages = results[7].status === 'fulfilled' ? results[7].value : {};
+            const communityProfile = results[8].status === 'fulfilled' ? results[8].value : null;
+            const repositoryTree = results[9].status === 'fulfilled' ? results[9].value : { tree: [] };
+            const releasesCount = results[10].status === 'fulfilled' ? results[10].value : 0;
+            const commitActivity = results[11].status === 'fulfilled' ? results[11].value : { all: [] };
+            const pullRequestsStats = results[12].status === 'fulfilled' ? results[12].value : [];
+            const codeFrequency = results[13].status === 'fulfilled' ? results[13].value : [];
+            const mergedPRsCount = results[14].status === 'fulfilled' ? results[14].value : 0;
+
+            this.onData(repoData, commits, branches, contributors, pulls, issuesOpenCount, issuesClosedCount, pullRequests, languages, owner, repo, communityProfile, repositoryTree, releasesCount, commitActivity, pullRequestsStats, codeFrequency, branches.zombies, mergedPRsCount);
         } catch (error) {
             console.error('Erro na busca:', error);
             if (error.message.includes('401')) {

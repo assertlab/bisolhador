@@ -11,6 +11,13 @@ export class EngineeringMaturityCard {
         this.addBadge('⚡ CI/CD', maturity.ciCdDetected);
         this.addBadge('🐳 Docker', maturity.dockerDetected);
         this.addBadge('🛡️ Code Review (' + maturity.codeReview.selfMergePercentage + '%)', true, maturity.codeReview.color);
+
+        // Always show zombie branches feedback
+        if (maturity.zombies === 0) {
+            this.addBadge('✅ Nenhuma Branch Zumbi', true, 'green');
+        } else {
+            this.addBadge('🧟 ' + maturity.zombies + ' Branches Zumbis detectadas', true, 'red');
+        }
     }
 
     addBadge(text, detected, customColor) {

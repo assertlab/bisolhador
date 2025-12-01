@@ -1,5 +1,5 @@
 export class EngineeringMaturity {
-    static analyze(tree, pullRequests) {
+    static analyze(tree, pullRequests, zombies) {
         const testsDetected = this.detectTests(tree);
         const ciCdDetected = this.detectCiCd(tree);
         const dockerDetected = this.detectDocker(tree);
@@ -11,7 +11,8 @@ export class EngineeringMaturity {
             ciCdDetected,
             dockerDetected,
             lintDetected,
-            codeReview
+            codeReview,
+            zombies
         };
     }
 
