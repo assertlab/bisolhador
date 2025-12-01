@@ -1,18 +1,14 @@
 import React from 'react';
+import { Tooltip } from './Tooltip.jsx';
 
 export function ActivityLogs({ commits, pullRequests }) {
-  // Função para formatar data relativa
+  // Função para formatar data completa
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Hoje';
-    if (diffDays === 1) return 'Ontem';
-    if (diffDays < 7) return `${diffDays} dias atrás`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} semanas atrás`;
-    return `${Math.floor(diffDays / 30)} meses atrás`;
+    return date.toLocaleString('pt-BR', {
+      dateStyle: 'long',
+      timeStyle: 'short'
+    });
   };
 
   // Função para determinar cor do badge do PR
@@ -27,9 +23,11 @@ export function ActivityLogs({ commits, pullRequests }) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           Atividades Recentes
-          <span className="text-gray-300 cursor-help" title="Últimos commits e pull requests do repositório">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          </span>
+          <Tooltip text="Últimos commits e pull requests do repositório">
+            <svg className="w-4 h-4 text-gray-300 hover:text-gray-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </Tooltip>
         </h3>
       </div>
 
@@ -37,8 +35,8 @@ export function ActivityLogs({ commits, pullRequests }) {
         {/* Últimos Commits */}
         <div>
           <h4 className="text-md font-semibold text-gray-900 mb-4">Últimos Commits</h4>
-          <div className="space-y-3">
-            {commits.slice(0, 5).map((commit, index) => (
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {commits.slice(0, 10).map((commit, index) => (
               <div key={index} className="flex items-start space-x-3 p-3 rounded-md hover:bg-gray-50">
                 <img
                   className="w-8 h-8 rounded-full"
@@ -68,8 +66,8 @@ export function ActivityLogs({ commits, pullRequests }) {
         {/* Últimos PRs */}
         <div>
           <h4 className="text-md font-semibold text-gray-900 mb-4">Últimos Pull Requests</h4>
-          <div className="space-y-3">
-            {pullRequests.slice(0, 5).map((pr, index) => {
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {pullRequests.slice(0, 10).map((pr, index) => {
               const badge = getPRBadge(pr.state, pr.merged_at);
               return (
                 <div key={index} className="flex items-start space-x-3 p-3 rounded-md hover:bg-gray-50">

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { HelpModal } from './HelpModal.jsx';
 
-export function Header() {
+export function Header({ onSettingsClick }) {
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   return (
     <header className="bg-shark border-b border-gray-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -8,6 +10,13 @@ export function Header() {
           
           {/* Logo / Título */}
           <div className="flex-shrink-0 flex items-center gap-3">
+            {/* --- NOVO: O LOGO --- */}
+            <img
+              src="/logo_assert.png" // O Vite sabe que começa na pasta 'public'
+              alt="Powered by ASSERT Lab"
+              className="h-8 w-auto" // Altura de 32px (padrão de header)
+            />
+            {/* -------------------- */}
             <span className="text-2xl font-bold text-white tracking-tight">
               Bisolhador
             </span>
@@ -22,6 +31,7 @@ export function Header() {
             {/* Botão Ajuda (?) */}
             <button
               type="button"
+              onClick={() => setIsHelpOpen(true)}
               className="bg-white hover:bg-gray-100 text-shark border border-gray-200 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm p-2.5 inline-flex items-center transition-colors"
               title="Como usar"
             >
@@ -33,6 +43,7 @@ export function Header() {
             {/* Botão Configurações (Token) */}
             <button
               type="button"
+              onClick={onSettingsClick}
               className="bg-white hover:bg-gray-100 text-shark border border-gray-200 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm p-2.5 inline-flex items-center transition-colors"
               title="Configurar Token GitHub"
             >
@@ -56,6 +67,12 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* Help Modal */}
+      <HelpModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+      />
     </header>
   );
 }

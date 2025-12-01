@@ -1,4 +1,5 @@
 import React from 'react';
+import { Tooltip } from './Tooltip.jsx';
 
 export function ContributorsTable({ contributors, busFactor }) {
   // Determinar cor do alerta baseado no level
@@ -20,9 +21,11 @@ export function ContributorsTable({ contributors, busFactor }) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           Contribuições (Bus Factor)
-          <span className="text-gray-300 cursor-help" title="Avalia o risco de dependência de poucos contribuidores. Bus Factor alto indica vulnerabilidade.">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          </span>
+          <Tooltip text="Avalia o risco de dependência de poucos contribuidores. Bus Factor alto indica vulnerabilidade.">
+            <svg className="w-4 h-4 text-gray-300 hover:text-gray-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </Tooltip>
         </h3>
       </div>
 

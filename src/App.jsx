@@ -7,223 +7,100 @@ import { HealthScoreCard } from './components/HealthScoreCard';
 import { MaturityCard } from './components/MaturityCard';
 import { ContributorsTable } from './components/ContributorsTable';
 import { ActivityLogs } from './components/ActivityLogs';
+import { SettingsModal } from './components/SettingsModal';
 import { TechStackChart } from './components/charts/TechStackChart';
 import { CommitActivityChart } from './components/charts/CommitActivityChart';
+import { WeekDaysChart } from './components/charts/WeekDaysChart';
+import { useRepository } from './hooks/useRepository.js';
 
 function App() {
-  const [loading, setLoading] = useState(false);
-  const [repoData, setRepoData] = useState(null);
+  const { data: repoData, loading, error, search } = useRepository();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [dismissedError, setDismissedError] = useState(false);
 
-const handleSearch = (repositoryName) => {
+  const handleSearch = (repositoryName) => {
     console.log(`Bisolhando: ${repositoryName}`);
-    setLoading(true);
-    setRepoData(null);
-
-    // SIMULAÇÃO DE API (Mock Data)
-    setTimeout(() => {
-      setLoading(false);
-      
-      setRepoData({
-        fullName: repositoryName,
-        url: `https://github.com/${repositoryName}`,
-        description: "Um dashboard analítico para 'bisolhar' indicadores de análise estática e governança para repositórios educacionais e open-source no GitHub.",
-        ageText: "2 anos e 3 meses",
-        createdAt: "15/03/2023",
-        stats: {
-          branches: 12,
-          prs: 45,
-          merges: 42,
-          prsPerBranch: 3.7,
-          releases: 5
-        },
-        metrics: {
-          stars: 127,
-          forks: 29,
-          openIssues: 4,
-          closedIssues: 120,
-          resolutionRate: "96% resolvidas",
-          leadTime: "2 dias",
-          divergence: "3.5 (Saudável)"
-        },
-        // --- AQUI ESTÁ O QUE FALTAVA ---
-        health: {
-          score: 86,
-          files: {
-            hasReadme: true,
-            hasLicense: true,
-            hasContributing: true,
-            hasDescription: true,
-            hasCodeOfConduct: false,
-            hasIssueTemplate: true,
-            hasPullRequestTemplate: true
-          }
-        },
-        maturity: {
-          testsDetected: true,
-          ciCdDetected: true,
-          dockerDetected: false,
-          zombies: 0
-        },
-        codeReview: {
-          selfMergePercentage: 15,
-          color: 'yellow'
-        },
-        contributors: [
-          {
-            login: 'vinicius-garcia',
-            avatar_url: 'https://avatars.githubusercontent.com/u/123456?v=4',
-            contributions: 89,
-            percentage: 45
-          },
-          {
-            login: 'contributor2',
-            avatar_url: 'https://avatars.githubusercontent.com/u/234567?v=4',
-            contributions: 67,
-            percentage: 34
-          },
-          {
-            login: 'contributor3',
-            avatar_url: 'https://avatars.githubusercontent.com/u/345678?v=4',
-            contributions: 23,
-            percentage: 12
-          },
-          {
-            login: 'contributor4',
-            avatar_url: 'https://avatars.githubusercontent.com/u/456789?v=4',
-            contributions: 15,
-            percentage: 8
-          },
-          {
-            login: 'contributor5',
-            avatar_url: 'https://avatars.githubusercontent.com/u/567890?v=4',
-            contributions: 3,
-            percentage: 1
-          }
-        ],
-        busFactor: {
-          level: 'medium',
-          title: 'Bus Factor Moderado',
-          message: 'O repositório tem 2 contribuidores principais (45% e 34%). Considere diversificar as contribuições para reduzir vulnerabilidade.'
-        },
-        recentCommits: [
-          {
-            sha: 'abc123',
-            html_url: 'https://github.com/example/repo/commit/abc123',
-            commit: {
-              message: 'feat: add new dashboard component',
-              author: {
-                name: 'Vinicius Garcia',
-                date: '2025-12-01T10:00:00Z'
-              }
-            },
-            author: {
-              avatar_url: 'https://avatars.githubusercontent.com/u/123456?v=4'
-            }
-          },
-          {
-            sha: 'def456',
-            html_url: 'https://github.com/example/repo/commit/def456',
-            commit: {
-              message: 'fix: resolve tooltip positioning issue',
-              author: {
-                name: 'Contributor 2',
-                date: '2025-11-30T15:30:00Z'
-              }
-            },
-            author: {
-              avatar_url: 'https://avatars.githubusercontent.com/u/234567?v=4'
-            }
-          },
-          {
-            sha: 'ghi789',
-            html_url: 'https://github.com/example/repo/commit/ghi789',
-            commit: {
-              message: 'docs: update README with new features',
-              author: {
-                name: 'Contributor 3',
-                date: '2025-11-29T09:15:00Z'
-              }
-            },
-            author: {
-              avatar_url: 'https://avatars.githubusercontent.com/u/345678?v=4'
-            }
-          }
-        ],
-        recentPRs: [
-          {
-            id: 123,
-            html_url: 'https://github.com/example/repo/pull/123',
-            title: 'Add health score component',
-            state: 'closed',
-            merged_at: '2025-12-01T08:00:00Z',
-            created_at: '2025-11-28T14:00:00Z'
-          },
-          {
-            id: 124,
-            html_url: 'https://github.com/example/repo/pull/124',
-            title: 'Implement maturity badges',
-            state: 'open',
-            merged_at: null,
-            created_at: '2025-11-30T11:00:00Z'
-          },
-          {
-            id: 125,
-            html_url: 'https://github.com/example/repo/pull/125',
-            title: 'Fix chart responsiveness',
-            state: 'closed',
-            merged_at: null,
-            created_at: '2025-11-27T16:00:00Z'
-          }
-        ],
-        charts: {
-          techStack: [
-            { language: 'TypeScript', percentage: 65, color: '#3178c6' },
-            { language: 'JavaScript', percentage: 25, color: '#f1e05a' },
-            { language: 'CSS', percentage: 10, color: '#563d7c' }
-          ],
-          activity: {
-            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Hoje'],
-            values: [12, 19, 3, 5, 2, 30]
-          }
-        }
-        // -------------------------------
-      });
-    }, 1500);
+    setDismissedError(false); // Reset dismissed error on new search
+    search(repositoryName);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header />
-      
+      <Header onSettingsClick={() => setIsSettingsOpen(true)} />
+
       {/* É AQUI! A tag <main> é o container principal da página */}
       <main className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        
+
         <div className="flex flex-col items-center justify-center space-y-4">
           <h2 className="text-3xl font-bold text-shark tracking-tight text-center">
             Analise repositórios como um Tech Lead
           </h2>
-          
+
           <div className="w-full pt-4">
             <SearchBar onSearch={handleSearch} loading={loading} />
           </div>
+
+          {/* Alerta de Erro Condicional */}
+          {error && !dismissedError && (
+            <div className="w-full max-w-2xl mx-auto">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <h3 className="text-sm font-medium">Erro na busca</h3>
+                    <p className="text-sm mt-1">{error}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setDismissedError(true)}
+                  className="ml-4 text-red-400 hover:text-red-600 transition-colors"
+                  aria-label="Fechar alerta"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Lógica de Renderização: Se tem dados, mostra o Dashboard completo */}
         {repoData ? (
           <div className="space-y-6 animate-fade-in-up">
-            
+
             {/* 1. Card Principal */}
             <RepoInfoCard data={repoData} />
-            
+
             {/* 2. Grid de Métricas de Volume */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard title="Stars" value={repoData.metrics.stars} />
-              <StatCard title="Forks" value={repoData.metrics.forks} />
-              <StatCard title="Open Issues" value={repoData.metrics.openIssues} />
-              <StatCard 
-                title="Closed Issues" 
-                value={repoData.metrics.closedIssues} 
-                subValue={repoData.metrics.resolutionRate} 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <StatCard
+                title="Stars"
+                value={repoData.metrics.stars}
+                tooltipText="Número total de estrelas (favoritos) que o repositório recebeu no GitHub."
+              />
+              <StatCard
+                title="Forks"
+                value={repoData.metrics.forks}
+                tooltipText="Número de cópias (forks) do repositório criadas por outros usuários."
+              />
+              <StatCard
+                title="Open Issues"
+                value={repoData.metrics.openIssues}
+                tooltipText="Número de issues (problemas ou solicitações) que ainda estão abertas no repositório."
+              />
+              <StatCard
+                title="Closed Issues"
+                value={repoData.metrics.closedIssues}
+                subValue={repoData.metrics.resolutionRate}
+                tooltipText="Total de issues já resolvidas, com taxa de resolução mostrando eficiência."
+              />
+              <StatCard
+                title="Code Churn"
+                value={repoData.codeChurn?.ratio || 'N/A'}
+                tooltipText="Razão entre código novo adicionado e código removido/refatorado. Indica qualidade das mudanças."
               />
             </div>
 
@@ -234,11 +111,14 @@ const handleSearch = (repositoryName) => {
                 title="Lead Time"
                 value={repoData.metrics.leadTime}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
+                tooltipText="Tempo médio entre a criação de um Pull Request e sua aprovação/merge. Indica velocidade do processo de revisão."
               />
               <StatCard
                 title="Divergência"
-                value={repoData.metrics.divergence}
+                value={repoData.metrics.divergence.avg}
+                subValue={repoData.metrics.divergence.category}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>}
+                tooltipText="Número médio de comentários e discussões por Pull Request. Indica nível de colaboração e debate técnico."
               />
             </div>
 
@@ -251,14 +131,21 @@ const handleSearch = (repositoryName) => {
 
             {/* 5. Área de Gráficos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <CommitActivityChart data={repoData.charts.activity} />
+              <CommitActivityChart
+                data={repoData.charts.activity}
+                createdAt={repoData.createdAt}
+                key={`chart-${repoData.fullName}`} // Force re-render on new data
+              />
               <TechStackChart data={repoData.charts.techStack} />
             </div>
 
-            {/* 6. Contribuições */}
+            {/* 6. Padrões de Trabalho */}
+            <WeekDaysChart commits={repoData.recentCommits} />
+
+            {/* 7. Contribuições */}
             <ContributorsTable contributors={repoData.contributors} busFactor={repoData.busFactor} />
 
-            {/* 7. Atividades Recentes */}
+            {/* 8. Atividades Recentes */}
             <ActivityLogs commits={repoData.recentCommits} pullRequests={repoData.recentPRs} />
 
           </div>
@@ -281,8 +168,14 @@ const handleSearch = (repositoryName) => {
           </p>
         </div>
       </footer>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
