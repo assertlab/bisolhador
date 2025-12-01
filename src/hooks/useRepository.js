@@ -228,29 +228,15 @@ function formatLanguages(languages) {
 
 // Helper function to format commit activity data for charts
 function formatCommitActivity(commitActivity) {
+    // Return raw data from GitHub API without forcing 52 weeks
+    // Let CommitActivityChart handle the smart trimming based on project age
     const data = commitActivity?.all || [];
-    const now = new Date();
-
-    // Generate labels for the last 52 weeks (most recent first)
-    const labels = [];
-    for (let i = 51; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - (i * 7));
-        const label = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
-        labels.push(label);
-    }
-
-    // Ensure we have exactly 52 data points
-    const values = Array.isArray(data) ? data.slice(-52) : [];
-    while (values.length < 52) {
-        values.unshift(0); // Add zeros for missing weeks
-    }
 
     return {
-        labels: labels,
+        labels: [], // Component will generate labels dynamically
         datasets: [{
             label: 'Commits',
-            data: values,
+            data: data, // Pass raw array from GitHub (can be less than 52 weeks)
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             tension: 0.4

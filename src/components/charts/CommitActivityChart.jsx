@@ -25,40 +25,39 @@ export function CommitActivityChart({ data, createdAt }) {
     }
   }
 
-  // Smart trimming: find first non-zero value and show relevant period
+  // Smart trimming: adjust data length based on actual project age
   let processedData = data;
   if (data && data.datasets && data.datasets[0] && data.datasets[0].data) {
     const rawData = data.datasets[0].data;
-    let startIndex = 0;
-    let itemsToShow = 52; // Default
 
-    // Find first non-zero value
+    // For young projects, trim to actual age + small buffer
+    // For older projects, show full 52 weeks
+    const maxWeeksToShow = Math.min(weeksOld + 4, 52); // Small buffer for context
+    let itemsToShow = Math.min(rawData.length, maxWeeksToShow);
+
+    // Find first non-zero value to avoid showing too much empty data
     const firstNonZeroIndex = rawData.findIndex(value => value > 0);
+    let startIndex = 0;
 
     if (firstNonZeroIndex !== -1) {
       // Found activity - show from a few weeks before first activity
       startIndex = Math.max(0, firstNonZeroIndex - 2); // 2 weeks of context before activity
-      itemsToShow = Math.min(rawData.length - startIndex, weeksOld < 52 ? weeksOld + 4 : 52);
+      itemsToShow = Math.min(rawData.length - startIndex, itemsToShow);
     } else if (weeksOld < 52) {
-      // No activity found but project is young - show recent period
-      startIndex = Math.max(0, rawData.length - (weeksOld + 2));
-      itemsToShow = rawData.length - startIndex;
+      // No activity found but project is young - show only recent period
+      startIndex = Math.max(0, rawData.length - itemsToShow);
     }
 
     // Slice the data
     const trimmedValues = rawData.slice(startIndex, startIndex + itemsToShow);
-    const trimmedLabels = data.labels ? data.labels.slice(startIndex, startIndex + itemsToShow) : [];
 
-    // Generate labels if needed
-    let finalLabels = trimmedLabels;
-    if (!finalLabels.length || finalLabels.length !== trimmedValues.length) {
-      finalLabels = [];
-      for (let i = itemsToShow - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - (i * 7));
-        const label = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
-        finalLabels.push(label);
-      }
+    // Generate labels dynamically based on trimmed data length
+    const finalLabels = [];
+    for (let i = trimmedValues.length - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - (i * 7));
+      const label = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+      finalLabels.push(label);
     }
 
     processedData = {
@@ -70,6 +69,7 @@ export function CommitActivityChart({ data, createdAt }) {
     };
 
     console.log('Smart trim aplicado:', {
+      projectAgeWeeks: weeksOld,
       originalLength: rawData.length,
       firstActivityIndex: firstNonZeroIndex,
       startIndex,
