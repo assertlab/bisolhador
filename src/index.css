@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Define o fundo cinza claro padrão estilo SaaS */
+body {
+    @apply bg-gray-50 text-gray-900;
+}

@@ -1,37 +1,16 @@
-# Bisolhador
+# React + Vite
 
-Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Features
+Currently, two official plugins are available:
 
-- **Busca Inteligente**: Encontre e analise repositórios com facilidade usando nossa interface intuitiva.
-- **Stack Tecnológica com Cores Dinâmicas**: Visualize as tecnologias usadas nos projetos com uma paleta de cores vibrante e dinâmica.
-- **Health Score Rigoroso**: Avalie a saúde dos projetos com métricas precisas e critérios bem definidos.
-- **Tabela de Contribuidores**: Explore a comunidade de colaboradores e suas contribuições de forma detalhada.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Tech Stack
+## React Compiler
 
-- HTML5
-- Tailwind CSS
-- Chart.js
-- GitHub API
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Como Rodar
+## Expanding the ESLint configuration
 
-Siga os passos abaixo para executar o projeto localmente:
-
-1. **Clone o repositório**:
-   ```
-   git clone https://github.com/assertlab/bisolhador.git
-   cd bisolhador
-   ```
-
-2. **Abra no VS Code**:
-   Certifique-se de ter a extensão "Live Server" instalada.
-
-3. **Execute o projeto**:
-   Clique com o botão direito no arquivo `index.html` e selecione "Open with Live Server". O navegador abrirá automaticamente com a aplicação rodando.
-
-## Screenshot
-
-![Screenshot]
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
