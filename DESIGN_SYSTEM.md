@@ -31,6 +31,13 @@ Todo card deve ser gerado pela função `uiHelpers.createCard`.
 ### Badges (Pílulas)
 
   - Use as classes do Flowbite: `bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded`.
+  - **v1.2.0**: Engineering Maturity badges com cores dinâmicas (verde/vermelho) para zombies e infraestrutura.
+
+### Tooltips
+
+  - Gerados via `uiHelpers.createTooltip(text)` com regras explícitas de classificação.
+  - Estilo: `absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-black text-white text-xs p-2 rounded w-64 z-50`.
+  - Conteúdo educacional: Critérios exatos para cada métrica (ex: "Risco de Atenção se > 40% dos commits").
 
 ## 4\. Tipografia
 

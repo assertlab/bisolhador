@@ -1,3 +1,70 @@
+# 📋 Changelog - Bisolhador Dashboard
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [1.2.0] - 2025-01-12
+
+### ✨ Added
+- **Process Analysis Module**: New section analyzing Pull Request dynamics with Lead Time and Divergence/Convergence metrics
+  - Lead Time calculation: Average time from PR creation to merge, with smart singular/plural display ('hora' vs 'horas')
+  - Divergence metric: Average comments per PR, categorized as 'Baixa (Silencioso)', 'Saudável', or 'Alta (Debate Intenso)'
+  - Extreme defensive programming: Handles NaN cases, null arrays, and invalid data gracefully
+- **Code Churn Analysis**: Added churn rate calculation to metrics cards with API status handling
+  - Returns null for 202/empty responses, displays "Calculando pelo GitHub..." in UI
+  - Tracks lines added/removed over time for code volatility insights
+- **Zombie Branches Detection**: Enhanced maturity analysis with branch zombie identification
+  - Always displays badge (green for 0 zombies, red for >0)
+  - Identifies stale branches that may indicate poor maintenance practices
+- **Merged PRs Counter**: Repository info now includes total merged pull requests
+  - Provides insight into project activity and contribution patterns
+- **Dynamic Chart Transparency**: Commit charts now show sample size in titles
+  - Displays "(Amostra: X commits)" to indicate data scope
+  - Helps users understand analysis limitations for small repositories
+
+### 🔧 Changed
+- **Tooltip System**: Updated all tooltips with explicit classification criteria
+  - Divergence: "< 1: Baixa (Silencioso), 1 a 5: Saudável, > 5: Alta (Debate Intenso)"
+  - Work Habits: "Alerta se > 30% de Madrugada ou > 50% no Fim de Semana"
+  - Bus Factor: "Risco de Atenção se > 40%, Risco Crítico se > 60%"
+  - Health Score: "Nota baseada em 7 itens: Readme, License, Contributing, Description, Code of Conduct, Issue Template e PR Template"
+- **API Error Handling**: Improved robustness for GitHub API responses
+  - Better null/empty response handling across all modules
+- **Data Validation**: Extreme defensive programming in divergence calculation
+  - Input validation, safe averaging, NaN protection
+
+### 🐛 Fixed
+- **NaN Classification Bug**: Fixed divergence metric incorrectly categorizing NaN as high debate
+  - Now properly returns 'Sem dados (0 PRs)' for empty repositories
+- **Plural Logic**: Lead Time now correctly displays singular forms ('1 hora' vs '2 horas')
+- **Chart Titles**: Dynamic titles now reflect actual commit sample sizes
+
+---
+
+## [1.1.0] - 2025-01-01
+
+### ✨ Added
+- **Commit History Flow Chart**: New timeline visualization showing commit activity over the repository's lifetime
+  - Smart trimming for young projects (< 52 weeks)
+  - Weekly commit aggregation with responsive line charts
+- **Enhanced Toolbar**: Improved header with help modal and PDF export functionality
+  - Contextual help for token configuration and usage
+  - One-click PDF report generation
+- **Release Counter**: Repository info now displays total releases/tags
+  - Provides insight into project versioning and release frequency
+
+### 🔧 Changed
+- **UI Polish**: Refined responsive layouts and hover effects
+- **Performance**: Optimized chart rendering and data processing
+
+---
+
+## [1.0.0] - 2024-12-15
+
 # 🎉 Release Notes - Bisolhador Dashboard v1.0.0
 
 We're thrilled to announce the launch of **Bisolhador Dashboard v1.0.0**, the first stable release of our GitHub Repository Analysis tool! This milestone marks the culmination of dedicated efforts to create an intuitive, reliable platform for educators and developers to gain valuable insights into software engineering practices.

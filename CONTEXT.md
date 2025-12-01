@@ -17,6 +17,7 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - Health Score baseado em governança comunitária.
 - Análise de hábitos de trabalho e maturidade de engenharia.
 - Contribuição de dados.
+- **v1.2.0**: Análise de processo (Lead Time, Divergência/Convergência), detecção de zombies branches, análise de code churn, contador de PRs merged, títulos dinâmicos de gráficos com transparência de amostra.
 
 ## 2. Arquitetura Técnica
 
