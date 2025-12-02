@@ -2,7 +2,7 @@ import React from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 
-export function TechStackChart({ data }) {
+function TechStackChart({ data }) {
   // Configuração dos dados para o Chart.js
   const chartData = {
     labels: data.map(item => item.language),
@@ -55,3 +55,5 @@ export function TechStackChart({ data }) {
     </div>
   );
 }
+
+export default TechStackChart;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { RepoInfoCard } from './components/RepoInfoCard';
@@ -8,11 +8,23 @@ import { MaturityCard } from './components/MaturityCard';
 import { ContributorsTable } from './components/ContributorsTable';
 import { ActivityLogs } from './components/ActivityLogs';
 import { SettingsModal } from './components/SettingsModal';
-import { TechStackChart } from './components/charts/TechStackChart';
-import { CommitActivityChart } from './components/charts/CommitActivityChart';
-import { WeekDaysChart } from './components/charts/WeekDaysChart';
 import { SkeletonDashboard } from './components/skeletons/SkeletonDashboard.jsx';
 import { useRepository } from './hooks/useRepository.js';
+
+// Lazy-loaded chart components (Code Splitting)
+const TechStackChart = lazy(() => import('./components/charts/TechStackChart'));
+const CommitActivityChart = lazy(() => import('./components/charts/CommitActivityChart'));
+const WeekDaysChart = lazy(() => import('./components/charts/WeekDaysChart'));
+
+// Skeleton component for chart loading
+function SkeletonChart() {
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex flex-col h-80 hover:shadow-md transition-shadow relative overflow-visible hover:z-50">
+      <div className="h-5 bg-gray-200 rounded animate-pulse mb-4 w-40"></div>
+      <div className="flex-grow bg-gray-100 rounded animate-pulse"></div>
+    </div>
+  );
+}
 
 function App() {
   const { data: repoData, loading, error, search } = useRepository();
@@ -136,16 +148,22 @@ function App() {
 
             {/* 5. Área de Gráficos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <CommitActivityChart
-                data={repoData.charts.activity}
-                createdAt={repoData.createdAt}
-                key={`chart-${repoData.fullName}`} // Force re-render on new data
-              />
-              <TechStackChart data={repoData.charts.techStack} />
+              <Suspense fallback={<SkeletonChart />}>
+                <CommitActivityChart
+                  data={repoData.charts.activity}
+                  createdAt={repoData.createdAt}
+                  key={`chart-${repoData.fullName}`} // Force re-render on new data
+                />
+              </Suspense>
+              <Suspense fallback={<SkeletonChart />}>
+                <TechStackChart data={repoData.charts.techStack} />
+              </Suspense>
             </div>
 
             {/* 6. Padrões de Trabalho */}
-            <WeekDaysChart commits={repoData.recentCommits} />
+            <Suspense fallback={<SkeletonChart />}>
+              <WeekDaysChart commits={repoData.recentCommits} />
+            </Suspense>
 
             {/* 7. Contribuições */}
             <ContributorsTable contributors={repoData.contributors} busFactor={repoData.busFactor} />

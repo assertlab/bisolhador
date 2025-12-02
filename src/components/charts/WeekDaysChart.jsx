@@ -2,7 +2,7 @@ import React from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 
-export function WeekDaysChart({ commits }) {
+function WeekDaysChart({ commits }) {
   // Count commits by day of week
   const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
   const dayCounts = [0, 0, 0, 0, 0, 0, 0];
@@ -72,3 +72,5 @@ export function WeekDaysChart({ commits }) {
     </div>
   );
 }
+
+export default WeekDaysChart;

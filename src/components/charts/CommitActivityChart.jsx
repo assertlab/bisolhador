@@ -2,7 +2,7 @@ import React from 'react';
 import { Line } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 
-export function CommitActivityChart({ data, createdAt }) {
+function CommitActivityChart({ data, createdAt }) {
   // Debug log
   console.log('CommitActivityChart renderizado');
   console.log('Data recebida:', data);
@@ -138,3 +138,5 @@ export function CommitActivityChart({ data, createdAt }) {
     </div>
   );
 }
+
+export default CommitActivityChart;
