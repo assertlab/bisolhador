@@ -17,14 +17,16 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - Health Score baseado em governança comunitária.
 - Análise de hábitos de trabalho e maturidade de engenharia.
 - Contribuição de dados.
+- **v2.2.0**: Performance otimizada com TanStack Query, skeleton screens e code splitting.
 - **v2.1.0**: Export PDF funcional, gráficos inteligentes com smart trim, UX aprimorada com alertas inline.
 
 ## 2. Arquitetura Técnica
 
 ### Stack Tecnológico
 - **Frontend**: React 18 + Vite + Tailwind CSS.
-- **Bibliotecas**: react-chartjs-2 (gráficos), html2pdf.js (export PDF).
+- **Bibliotecas**: react-chartjs-2 (gráficos), html2pdf.js (export PDF), @tanstack/react-query (data fetching/cache).
 - **Integrations**: GitHub REST API v3.
+- **Performance**: React.lazy + Suspense (code splitting), Skeleton screens (LCP optimization).
 - **Build**: Vite (HMR, fast refresh).
 - **Deploy**: GitHub Pages.
 

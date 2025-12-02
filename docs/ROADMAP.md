@@ -6,11 +6,11 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## 🔮 O Futuro (Próximas Versões)
 
-### 🚧 v2.2.0 - Performance & Percepção (Planejado)
+### ✅ v2.2.0 - Performance & UX (Dezembro 2025)
 *Foco: Resolver a lentidão percebida e modernizar a camada de dados.*
-- [ ] **TanStack Query (React Query):** Substituir `useEffect` por `useQuery` para cache inteligente, deduplicação de requisições e "stale-while-revalidate".
-- [ ] **Skeleton Screens:** Implementar estados de carregamento pulsantes (esqueletos) para substituir spinners bloqueantes e melhorar o LCP (Largest Contentful Paint).
-- [ ] **Code Splitting:** Implementar `React.lazy` e `Suspense` para carregar bibliotecas pesadas (Chart.js, html2pdf) apenas quando necessárias.
+- [x] **TanStack Query (React Query):** Substituir `useEffect` por `useQuery` para cache inteligente, deduplicação de requisições e "stale-while-revalidate".
+- [x] **Skeleton Screens:** Implementar estados de carregamento pulsantes (esqueletos) para substituir spinners bloqueantes e melhorar o LCP (Largest Contentful Paint).
+- [x] **Code Splitting:** Implementar `React.lazy` e `Suspense` para carregar bibliotecas pesadas (Chart.js, html2pdf) apenas quando necessárias.
 
 ### 🎨 v2.3.0 - Experiência Global (Planejado)
 *Foco: Acessibilidade, Internacionalização e Identidade.*

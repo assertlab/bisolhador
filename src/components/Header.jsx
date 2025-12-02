@@ -22,7 +22,7 @@ export function Header({ onSettingsClick }) {
               Bisolhador
             </span>
             <span className="bg-ocean/20 text-ocean text-xs font-medium px-2.5 py-0.5 rounded border border-ocean/30 hidden sm:inline-block">
-              v2.1.0
+              v2.2.0
             </span>
           </div>
 
