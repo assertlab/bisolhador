@@ -1,6 +1,7 @@
-import {
-  __commonJS
-} from "./chunk-V4OQ3NZ2.js";
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
 
 // node_modules/react/cjs/react.development.js
 var require_react_development = __commonJS({
@@ -986,6 +987,7 @@ var require_react = __commonJS({
 });
 
 export {
+  __commonJS,
   require_react
 };
-//# sourceMappingURL=chunk-LTZIYYLR.js.map
+//# sourceMappingURL=chunk-KHA5YKM3.js.map

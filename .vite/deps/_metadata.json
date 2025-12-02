@@ -1,79 +1,34 @@
 {
-  "hash": "d3a6f60c",
-  "configHash": "7feea5b2",
-  "lockfileHash": "2be054a8",
-  "browserHash": "627129e6",
+  "hash": "47f578dc",
+  "configHash": "f60ec951",
+  "lockfileHash": "459e81d0",
+  "browserHash": "ac291e9b",
   "optimized": {
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "97d98494",
+      "fileHash": "a09e95bb",
       "needsInterop": true
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "de583b44",
+      "fileHash": "f837bc28",
       "needsInterop": true
-    },
-    "chart.js": {
-      "src": "../../node_modules/chart.js/dist/chart.js",
-      "file": "chart__js.js",
-      "fileHash": "143dd5d2",
-      "needsInterop": false
-    },
-    "react-chartjs-2": {
-      "src": "../../node_modules/react-chartjs-2/dist/index.js",
-      "file": "react-chartjs-2.js",
-      "fileHash": "91410221",
-      "needsInterop": false
     },
     "react-dom": {
       "src": "../../node_modules/react-dom/index.js",
       "file": "react-dom.js",
-      "fileHash": "ca41c4af",
-      "needsInterop": true
-    },
-    "@tanstack/react-query": {
-      "src": "../../node_modules/@tanstack/react-query/build/modern/index.js",
-      "file": "@tanstack_react-query.js",
-      "fileHash": "f8f42b67",
-      "needsInterop": false
-    },
-    "html2pdf.js": {
-      "src": "../../node_modules/html2pdf.js/dist/html2pdf.js",
-      "file": "html2pdf__js.js",
-      "fileHash": "a1f40c5e",
+      "fileHash": "8448ae97",
       "needsInterop": true
     }
   },
   "chunks": {
-    "purify.es-2QB5GR32": {
-      "file": "purify__es-2QB5GR32.js"
+    "chunk-JWZEATNH": {
+      "file": "chunk-JWZEATNH.js"
     },
-    "index.es-ZMAPEBQG": {
-      "file": "index__es-ZMAPEBQG.js"
-    },
-    "chunk-Z54NHHXK": {
-      "file": "chunk-Z54NHHXK.js"
-    },
-    "chunk-U6Z4ZFZJ": {
-      "file": "chunk-U6Z4ZFZJ.js"
-    },
-    "chunk-ZC7HT7OM": {
-      "file": "chunk-ZC7HT7OM.js"
-    },
-    "chunk-FBRNANPA": {
-      "file": "chunk-FBRNANPA.js"
-    },
-    "chunk-LTZIYYLR": {
-      "file": "chunk-LTZIYYLR.js"
-    },
-    "html2canvas.esm-RRFMSHGV": {
-      "file": "html2canvas__esm-RRFMSHGV.js"
-    },
-    "chunk-V4OQ3NZ2": {
-      "file": "chunk-V4OQ3NZ2.js"
+    "chunk-KHA5YKM3": {
+      "file": "chunk-KHA5YKM3.js"
     }
   }
 }
