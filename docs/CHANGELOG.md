@@ -9,10 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.3.0] - 2025-12-03
 
-### 🎨 Design & Experiência Global
-- **Dark Mode:** Tema escuro completo (Abyssal Shark) com persistência e adaptação automática de gráficos.
-- **Internacionalização (i18n):** Suporte total a **Português (PT-BR)** e **Inglês (EN-US)** com detecção automática.
-- **Refinamentos de UI:** Correção de Z-Index no Header e mensagens dinâmicas de Bus Factor traduzidas.
+### 🎨 Design & Global Experience
+
+- **Dark Mode:** Full dark theme (Abyssal Shark) with persistence and automatic graphic adaptation.
+- **Internationalization (i18n):** Full support for **Portuguese (PT-BR)** and **English (EN-US)** with automatic detection.
+- **UI Refinements:** Z-Index correction in the Header and translated dynamic Bus Factor messages.
 
 ---
 
