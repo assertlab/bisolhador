@@ -16,7 +16,7 @@
   "repo": {
     "noDescription": "Sem descrição disponível.",
     "projectAge": "Idade do Projeto",
-    "since": "(Desde {createdAt})",
+    "since": "(Desde {{createdAt}})",
     "extraStats": "Estatísticas Extras",
     "totalBranches": "Total de Branches:",
     "totalPRs": "Total de PRs:",

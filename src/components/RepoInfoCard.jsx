@@ -35,7 +35,7 @@ export function RepoInfoCard({ data }) {
             {data.ageText}
           </p>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
-            {t('repo.since', { createdAt: data.createdAtFormatted })}
+            {t('repo.since', { createdAt: data.createdAtFormatted || data.createdAt || 'N/A' })}
           </p>
         </div>
 
