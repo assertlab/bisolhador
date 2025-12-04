@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
@@ -11,6 +11,7 @@ import { ActivityLogs } from './components/ActivityLogs';
 import { SettingsModal } from './components/SettingsModal';
 import { SkeletonDashboard } from './components/skeletons/SkeletonDashboard.jsx';
 import { useRepository } from './hooks/useRepository.js';
+import analytics from './services/analytics.js';
 
 // Lazy-loaded chart components (Code Splitting)
 const TechStackChart = lazy(() => import('./components/charts/TechStackChart'));
@@ -32,6 +33,10 @@ function App() {
   const { data: repoData, loading, error, search } = useRepository();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [dismissedError, setDismissedError] = useState(false);
+
+  useEffect(() => {
+    analytics.trackPageView(window.location.pathname);
+  }, []);
 
   const handleSearch = (repositoryName) => {
     console.log(`Bisolhando: ${repositoryName}`);

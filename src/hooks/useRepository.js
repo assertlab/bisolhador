@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { githubService } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
+import analytics from '../services/analytics.js';
 
 // Repository data fetching function for TanStack Query
 async function fetchRepositoryData(repoName) {
@@ -154,7 +155,12 @@ export function useRepository() {
         queryFn: () => fetchRepositoryData(repoName),
         enabled: !!repoName,
         staleTime: 1000 * 60 * 5, // 5 minutes
-        retry: 1
+        retry: 1,
+        onSuccess: () => {
+            if (repoName) {
+                analytics.trackSearch(repoName);
+            }
+        }
     });
 
     const search = (name) => {

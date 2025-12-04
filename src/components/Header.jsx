@@ -4,10 +4,16 @@ import { HelpModal } from './HelpModal.jsx';
 import { exportToPDF } from '../utils/pdfExporter.js';
 import ThemeToggle from './ThemeToggle.jsx';
 import { LanguageSwitcher } from './LanguageSwitcher.jsx';
+import analytics from '../services/analytics.js';
 
 export function Header({ onSettingsClick }) {
   const { t } = useTranslation();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+
+  const handleDownload = () => {
+    analytics.trackExport();
+    exportToPDF();
+  };
   return (
     <header className="bg-shark border-b border-gray-800 sticky top-0 z-[100]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -65,7 +71,7 @@ export function Header({ onSettingsClick }) {
             {/* Botão Baixar Relatório */}
             <button
               type="button"
-              onClick={exportToPDF}
+              onClick={handleDownload}
               className="text-white bg-blue-700 dark:bg-blue-600 hover:bg-blue-800 dark:hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center gap-2 transition-colors"
               title={t('header.downloadTitle')}
             >
