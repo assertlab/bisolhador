@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v2.3.0
+# 🦈 Bisolhador Dashboard v2.4.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -11,6 +11,7 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **👥 Bus Factor**: Análise de risco de dependência de contribuidores
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
 - **📄 Export PDF**: Relatórios completos em PDF com um clique
+- **📡 Monitoramento de Uso**: Rastreamento de acessos e eventos (Buscas, Exports) com Google Analytics 4
 - **🛡️ Fail-Safe**: Tratamento robusto de erros e rate limits
 
 ## 🚀 Como Rodar
@@ -36,6 +37,8 @@ npm run dev
 npm run build
 ```
 
+**Nota**: Crie um arquivo `.env` na raiz com `VITE_GA_ID=G-SEU-ID` para habilitar o Analytics.
+
 A aplicação estará disponível em `http://localhost:5173`
 
 ## 🛠️ Tech Stack
@@ -44,6 +47,7 @@ A aplicação estará disponível em `http://localhost:5173`
 - **Styling**: Tailwind CSS
 - **Charts**: Chart.js + react-chartjs-2
 - **API**: GitHub REST API v3
+- **Analytics**: Google Analytics 4 (react-ga4)
 - **Build**: Vite
 - **Deploy**: GitHub Pages
 
