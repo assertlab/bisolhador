@@ -15,6 +15,11 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## ✅ O Presente (React Era)
 
+### v2.4.0 - Analytics & Qualidade (Dezembro 2025)
+*Foco: Telemetria e qualidade de código.*
+- [x] **Google Analytics 4:** Implementação completa de rastreamento de eventos e PageViews para monitoramento de crescimento do projeto.
+- [x] **ESLint Otimizado:** Ajuste nas regras de linting para ignorar pastas de build e legado, garantindo um CI/CD limpo.
+
 ### v2.3.0 - Experiência Global (Dezembro 2025)
 *Foco: Acessibilidade, Internacionalização e Identidade.*
 - [x] **Dark Mode:** Implementar alternância de tema (Claro/Escuro) utilizando classes `dark:` do Tailwind e persistência no localStorage.

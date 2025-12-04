@@ -2,7 +2,7 @@
 
 ## 1. Resumo do Projeto
 
-O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código aberto, desenvolvido como um Single Page Application (SPA) em React. Ele transforma dados de repositórios GitHub em insights poderosos para apoiar o ensino de Engenharia de Software, focando especificamente em métricas educacionais e práticas profissionais.
+O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código aberto, desenvolvido como um Single Page Application (SPA) em React. Ele transforma dados de repositórios GitHub em insights poderosos para apoiar o ensino de Engenharia de Software, focando especificamente em métricas educacionais e práticas profissionais. O projeto agora possui telemetria via Google Analytics 4 para monitoramento de crescimento e uso.
 
 ### Problema que Resolve
 - Fornece métricas visuais e quantitativas de repositórios GitHub para estudantes e professores.
@@ -17,6 +17,7 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - Health Score baseado em governança comunitária.
 - Análise de hábitos de trabalho e maturidade de engenharia.
 - Contribuição de dados.
+- **v2.4.0**: Google Analytics 4 implementado para rastreamento de eventos e PageViews.
 - **v2.3.0**: Dark Mode completo e internacionalização (PT-BR/EN-US) com detecção automática.
 - **v2.2.0**: Performance otimizada com TanStack Query, skeleton screens e code splitting.
 - **v2.1.0**: Export PDF funcional, gráficos inteligentes com smart trim, UX aprimorada com alertas inline.
@@ -25,7 +26,7 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 
 ### Stack Tecnológico
 - **Frontend**: React 18 + Vite + Tailwind CSS.
-- **Bibliotecas**: react-chartjs-2 (gráficos), html2pdf.js (export PDF), @tanstack/react-query (data fetching/cache), react-i18next (internacionalização).
+- **Bibliotecas**: react-chartjs-2 (gráficos), html2pdf.js (export PDF), @tanstack/react-query (data fetching/cache), react-i18next (internacionalização), react-ga4 (analytics).
 - **Integrations**: GitHub REST API v3.
 - **Performance**: React.lazy + Suspense (code splitting), Skeleton screens (LCP optimization).
 - **Build**: Vite (HMR, fast refresh).
