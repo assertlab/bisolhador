@@ -18,6 +18,9 @@ async function fetchRepositoryData(repoName) {
         throw new Error('Não foi possível buscar informações do repositório');
     }
 
+    // Track search immediately after confirming repo exists
+    analytics.trackSearch(repoName);
+
     // Fetch all other data in parallel
     const results = await Promise.allSettled([
         githubService.fetchCommits(owner, repo),
@@ -155,12 +158,7 @@ export function useRepository() {
         queryFn: () => fetchRepositoryData(repoName),
         enabled: !!repoName,
         staleTime: 1000 * 60 * 5, // 5 minutes
-        retry: 1,
-        onSuccess: () => {
-            if (repoName) {
-                analytics.trackSearch(repoName);
-            }
-        }
+        retry: 1
     });
 
     const search = (name) => {

@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v2.4.0
+# 🦈 Bisolhador Dashboard v2.5.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -37,7 +37,13 @@ npm run dev
 npm run build
 ```
 
-**Nota**: Crie um arquivo `.env` na raiz com `VITE_GA_ID=G-SEU-ID` para habilitar o Analytics.
+**Nota**: Crie um arquivo `.env` na raiz com as seguintes variáveis para habilitar o Analytics:
+
+```bash
+VITE_GA_ID=G-SEU-ID
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-anonima
+```
 
 A aplicação estará disponível em `http://localhost:5173`
 
@@ -46,6 +52,7 @@ A aplicação estará disponível em `http://localhost:5173`
 - **Frontend**: React 18 + Vite
 - **Styling**: Tailwind CSS
 - **Charts**: Chart.js + react-chartjs-2
+- **Database**: Supabase (@supabase/supabase-js)
 - **API**: GitHub REST API v3
 - **Analytics**: Google Analytics 4 (react-ga4)
 - **Build**: Vite

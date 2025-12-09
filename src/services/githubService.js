@@ -402,32 +402,28 @@ export const githubService = {
 
     async fetchCodeFrequency(owner, repo) {
         if (!owner || !repo) {
-            return null;
+            return [];
         }
 
         try {
             const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/stats/code_frequency`;
             const response = await fetch(url, { headers: getHeaders() });
 
-            if (response.status === 202) {
-                // GitHub is still calculating, return null
-                console.warn('Code frequency still calculating by GitHub');
-                return null;
-            }
-
-            if (!response.ok) {
-                console.warn(`Failed to fetch code frequency: ${response.status}`);
-                return null;
+            // Silently handle 202 (calculating) and 422 (repo too large)
+            if (response.status === 202 || response.status === 422 || !response.ok) {
+                return [];
             }
 
             const data = await response.json();
-            if (!data || data.length === 0) {
-                return null;
-            }
-            return data;
+            return data || [];
         } catch (error) {
-            console.warn('Error fetching code frequency:', error);
-            return null;
+            // Silencia erro 422 (repositórios gigantes)
+            if (error.response && error.response.status === 422) {
+                return [];
+            }
+            // Loga outros erros reais
+            console.error('Error fetching code frequency:', error);
+            return [];
         }
     },
 

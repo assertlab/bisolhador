@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.5.0] - 2025-12-09
+
+### Analytics & Persistência
+
+- **Analytics Híbrido:** Implementação do Supabase para persistência de buscas (bypassing AdBlock) em paralelo com Google Analytics 4.
+- **Infraestrutura:** Adição de cliente Supabase e novas variáveis de ambiente.
+- **Resiliência:** Melhoria no tratamento de falhas da API (Fail-safe).
+
+---
+
 ## [2.4.0] - 2025-12-03
 
 ### Analytics & Qualidade

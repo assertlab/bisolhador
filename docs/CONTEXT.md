@@ -10,6 +10,11 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - Apoia decisões pedagógicas sobre boas práticas de desenvolvimento de software.
 - Permite analisar saúde de projetos open-source e gestão de tempo (evitar "crush time").
 
+### Estratégia de Analytics Híbrida
+- **Supabase**: Dados críticos de negócio (buscas de repositórios) - bypassing AdBlock para métricas de uso real.
+- **Google Analytics 4**: Métricas de vaidade/navegação (pageviews, eventos de engajamento) - bloqueáveis por AdBlock.
+- **Objetivo**: Combinar dados confiáveis de uso com métricas de engajamento para tomada de decisões estratégicas.
+
 ### Principais Funcionalidades
 - Busca inteligente por repositórios (`owner/repo`).
 - Visualização de stack tecnológica com cores dinâmicas.
@@ -17,7 +22,7 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - Health Score baseado em governança comunitária.
 - Análise de hábitos de trabalho e maturidade de engenharia.
 - Contribuição de dados.
-- **v2.4.0**: Google Analytics 4 implementado para rastreamento de eventos e PageViews.
+- **v2.5.0**: Supabase implementado para persistência de buscas (bypassing AdBlock) em paralelo com Google Analytics 4.
 - **v2.3.0**: Dark Mode completo e internacionalização (PT-BR/EN-US) com detecção automática.
 - **v2.2.0**: Performance otimizada com TanStack Query, skeleton screens e code splitting.
 - **v2.1.0**: Export PDF funcional, gráficos inteligentes com smart trim, UX aprimorada com alertas inline.

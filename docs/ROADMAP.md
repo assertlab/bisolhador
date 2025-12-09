@@ -9,11 +9,18 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 ### 🔭 v3.0.0 - A Plataforma (Longo Prazo)
 - [ ] **Comparador de Repositórios:** Visualização "Split View" para comparar dois projetos lado a lado.
 - [ ] **Gamificação:** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter").
+- [ ] **Painel Público de Repositórios Mais Buscados (Leaderboard):** Ranking público baseado em dados do Supabase.
 - [ ] **Exportação Avançada:** JSON/CSV além do PDF.
 
 ---
 
 ## ✅ O Presente (React Era)
+
+### v2.5.0 - Analytics & Persistência (Dezembro 2025)
+*Foco: Persistência de dados bypassing AdBlock.*
+- [x] **Supabase Integration:** Implementação de persistência de buscas em banco de dados Supabase para bypassing AdBlock.
+- [x] **Analytics Híbrido:** Estratégia combinada Supabase (dados críticos) + GA4 (métricas de vaidade).
+- [x] **Resiliência:** Melhoria no tratamento de falhas da API com fail-safe aprimorado.
 
 ### v2.4.0 - Analytics & Qualidade (Dezembro 2025)
 *Foco: Telemetria e qualidade de código.*
