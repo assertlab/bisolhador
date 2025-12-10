@@ -6,7 +6,10 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## 🔮 O Futuro (Próximas Versões)
 
-### 🔭 v3.0.0 - A Plataforma (Longo Prazo)
+### 🔭 v3.0.0 - A Plataforma (Planejado)
+- [ ] **Resiliência de Analytics:** Implementar lógica de Retry com Exponential Backoff para o serviço de analytics (atual: fire-and-forget).
+- [ ] **UX de Falhas Parciais:** Melhorar feedback visual no Dashboard quando githubService retorna dados parciais (atual: silencia erro e retorna array vazio).
+- [ ] **Engenharia de Dados:** Expandir schema do Supabase para incluir github_created_at, bus_factor e top_contributors (preparação para Timeline/Time Machine).
 - [ ] **Comparador de Repositórios:** Visualização "Split View" para comparar dois projetos lado a lado.
 - [ ] **Gamificação:** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter").
 - [ ] **Painel Público de Repositórios Mais Buscados (Leaderboard):** Ranking público baseado em dados do Supabase.
@@ -16,8 +19,11 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## ✅ O Presente (React Era)
 
-### v2.7.0 - Data Mining & Fixes (Em Progresso)
+### v2.7.0 - Data Mining & Fixes ✅
 Ver [Especificação Técnica v2.7.0](docs/SPECS_v2.7.md)
+- [x] **Auditoria de Segurança:** Varredura completa para segredos hardcoded, vazamentos em logs e exposição de chaves.
+- [x] **Limpeza de Código Morto:** Remoção de logs de debug e comentários obsoletos.
+- [x] **Resiliência de Analytics:** Fortalecimento do tratamento de erros no serviço de analytics.
 
 ### v2.6.0 - O Bisolhômetro (Leaderboard) ✅
 Ver [Especificação Técnica v2.6.0](docs/SPECS_v2.6.md)
