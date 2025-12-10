@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { formatters } from '../utils/formatters.js';
 import { exportToPDF } from '../utils/pdfExporter.js';
+import { exportJson } from '../utils/exportJson.js';
 import analytics from '../services/analytics.js';
 
 export function RepoInfoCard({ data }) {
@@ -10,9 +11,14 @@ export function RepoInfoCard({ data }) {
   console.log('RepoInfoCard - createdAt:', data.createdAt);
   console.log('RepoInfoCard - createdAtFormatted:', data.createdAtFormatted);
 
-  const handleDownload = () => {
+  const handleDownloadPDF = () => {
     analytics.trackExport();
     exportToPDF();
+  };
+
+  const handleDownloadJSON = () => {
+    const filename = `bisolhador-report-${data.fullName.replace('/', '-')}.json`;
+    exportJson(data, filename);
   };
 
   return (
@@ -30,16 +36,28 @@ export function RepoInfoCard({ data }) {
             {data.description || t('repo.noDescription')}
           </p>
         </div>
-        <button
-          onClick={handleDownload}
-          className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg border border-blue-600 hover:border-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors"
-          title={t('header.downloadTitle')}
-        >
-          <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          {t('header.downloadButton')}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleDownloadJSON}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg border border-green-600 hover:border-green-700 focus:ring-4 focus:ring-green-300 transition-colors"
+            title="Download dados em JSON"
+          >
+            <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            JSON
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg border border-blue-600 hover:border-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors"
+            title={t('header.downloadTitle')}
+          >
+            <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            {t('header.downloadButton')}
+          </button>
+        </div>
       </div>
 
       {/* Grid de Informações: Idade vs Estatísticas */}
