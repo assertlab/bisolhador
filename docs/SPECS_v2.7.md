@@ -2,17 +2,17 @@
 
 ## 1\. Visão Geral
 
-Foco na interoperabilidade de dados e limpeza de dívida técnica.
+Esta versão foca na interoperabilidade de dados (permitindo extração em JSON) e na resolução de dívidas técnicas pendentes.
 
 ## 2\. Exportação JSON (Data Mining)
 
-  * **Objetivo:** Permitir que pesquisadores baixem os dados brutos da análise para uso externo (Python, Jupyter, R).
+  * **Objetivo:** Permitir que pesquisadores e alunos baixem os dados brutos da análise para uso em ferramentas externas (Python, Jupyter, R).
   * **Implementação:**
-      * Função utilitária `exportJson(data, filename)`.
-      * Botão 'JSON' no `RepoInfoCard`, ao lado do botão de PDF.
-      * O arquivo deve conter todo o objeto de estado do repositório (Métricas, Gráficos calculados, Health Score).
+      * Criar utilitário `src/utils/exportJson.js`.
+      * Adicionar botão 'JSON' secundário no componente `RepoInfoCard`, ao lado do botão de PDF.
+      * O arquivo `report.json` deve conter o objeto completo de métricas (estado do React).
 
 ## 3\. Correção de Erros (Dívida Técnica)
 
   * **GitHub API 422:** Tratamento definitivo do erro de 'Code Frequency' em repositórios gigantes (ex: facebook/react).
-  * **Estratégia:** Se a API retornar 422 ou falhar, o gráfico de Commit Activity deve renderizar um estado vazio ou mensagem amigável, sem estourar erro vermelho no console.
+  * **Solução:** Refatorar `fetchCodeFrequency` para capturar status 422 e retornar array vazio silenciosamente, evitando erros vermelhos no console.
