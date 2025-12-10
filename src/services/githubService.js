@@ -416,13 +416,8 @@ export const githubService = {
 
             const data = await response.json();
             return data || [];
-        } catch (error) {
-            // Silencia erro 422 (repositórios gigantes)
-            if (error.response && error.response.status === 422) {
-                return [];
-            }
-            // Loga outros erros reais
-            console.error('Error fetching code frequency:', error);
+        } catch {
+            // Silently handle all errors for this endpoint (including 422 on large repos)
             return [];
         }
     },
