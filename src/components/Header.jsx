@@ -1,26 +1,20 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { HelpModal } from './HelpModal.jsx';
-import { exportToPDF } from '../utils/pdfExporter.js';
 import ThemeToggle from './ThemeToggle.jsx';
 import { LanguageSwitcher } from './LanguageSwitcher.jsx';
-import analytics from '../services/analytics.js';
 
 export function Header({ onSettingsClick }) {
   const { t } = useTranslation();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-
-  const handleDownload = () => {
-    analytics.trackExport();
-    exportToPDF();
-  };
   return (
     <header className="bg-shark border-b border-gray-800 sticky top-0 z-[100]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
           {/* Logo / Título */}
-          <div className="flex-shrink-0 flex items-center gap-3">
+          <Link to="/" className="flex-shrink-0 flex items-center gap-3">
             {/* --- NOVO: O LOGO --- */}
             <img
               src={`${import.meta.env.BASE_URL}logo_assert.png`}
@@ -34,10 +28,20 @@ export function Header({ onSettingsClick }) {
             <span className="bg-ocean/20 text-ocean text-xs font-medium px-2.5 py-0.5 rounded border border-ocean/30 hidden sm:inline-block">
               {t('header.version')}
             </span>
-          </div>
+          </Link>
 
           {/* Toolbar (Botões) */}
           <div className="flex items-center gap-3">
+
+            <Link to="/" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
+              <span>🔍</span>
+              <span>Buscar</span>
+            </Link>
+
+            <Link to="/ranking" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
+              <span>🏆</span>
+              <span>Ranking</span>
+            </Link>
 
             <ThemeToggle />
 
@@ -66,19 +70,6 @@ export function Header({ onSettingsClick }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
               </svg>
-            </button>
-
-            {/* Botão Baixar Relatório */}
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="text-white bg-blue-700 dark:bg-blue-600 hover:bg-blue-800 dark:hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center gap-2 transition-colors"
-              title={t('header.downloadTitle')}
-            >
-              <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <span className="hidden sm:inline">{t('header.downloadButton')}</span>
             </button>
 
           </div>

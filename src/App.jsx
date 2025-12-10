@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { RepoInfoCard } from './components/RepoInfoCard';
@@ -11,6 +12,7 @@ import { ActivityLogs } from './components/ActivityLogs';
 import { SettingsModal } from './components/SettingsModal';
 import { SkeletonDashboard } from './components/skeletons/SkeletonDashboard.jsx';
 import { useRepository } from './hooks/useRepository.js';
+import { Ranking } from './pages/Ranking.jsx';
 import analytics from './services/analytics.js';
 
 // Lazy-loaded chart components (Code Splitting)
@@ -28,7 +30,7 @@ function SkeletonChart() {
   );
 }
 
-function App() {
+function Dashboard() {
   const { t } = useTranslation();
   const { data: repoData, loading, error, search } = useRepository();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -203,6 +205,17 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
       />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router basename={import.meta.env.BASE_URL}>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/ranking" element={<Ranking />} />
+      </Routes>
+    </Router>
   );
 }
 

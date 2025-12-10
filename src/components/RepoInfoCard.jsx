@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { formatters } from '../utils/formatters.js';
+import { exportToPDF } from '../utils/pdfExporter.js';
+import analytics from '../services/analytics.js';
 
 export function RepoInfoCard({ data }) {
   const { t, i18n } = useTranslation();
@@ -8,19 +10,36 @@ export function RepoInfoCard({ data }) {
   console.log('RepoInfoCard - createdAt:', data.createdAt);
   console.log('RepoInfoCard - createdAtFormatted:', data.createdAtFormatted);
 
+  const handleDownload = () => {
+    analytics.trackExport();
+    exportToPDF();
+  };
+
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 animate-fade-in relative z-10">
 
       {/* Cabeçalho do Card: Nome e Descrição */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold tracking-tight text-ocean mb-2 hover:underline">
-          <a href={data.url} target="_blank" rel="noopener noreferrer">
-            {data.fullName}
-          </a>
-        </h2>
-        <p className="text-gray-600 dark:text-slate-400 leading-relaxed">
-          {data.description || t('repo.noDescription')}
-        </p>
+      <div className="mb-6 flex justify-between items-start">
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold tracking-tight text-ocean mb-2 hover:underline">
+            <a href={data.url} target="_blank" rel="noopener noreferrer">
+              {data.fullName}
+            </a>
+          </h2>
+          <p className="text-gray-600 dark:text-slate-400 leading-relaxed">
+            {data.description || t('repo.noDescription')}
+          </p>
+        </div>
+        <button
+          onClick={handleDownload}
+          className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg border border-blue-600 hover:border-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors"
+          title={t('header.downloadTitle')}
+        >
+          <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          {t('header.downloadButton')}
+        </button>
       </div>
 
       {/* Grid de Informações: Idade vs Estatísticas */}
