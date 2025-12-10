@@ -1,4 +1,4 @@
-# Manual de Instruções para IAs: Bisolhador Dashboard
+# Manual de Instruções para IAs: Bisolhador Dashboard v2.7.0
 
 ## 1. Resumo do Projeto
 
@@ -29,6 +29,7 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - **v2.1.0**: Export PDF funcional, gráficos inteligentes com smart trim, UX aprimorada com alertas inline.
 
 ### Estado Atual das Features
+- **Data Mining**: Botão de exportação JSON com metadados de proveniência (versão/data) para auditoria e análise externa.
 - **Inteligência Coletiva**: Leaderboard público alimentado por logs imutáveis no Supabase.
 - **Analytics Híbrido**: Supabase + GA4 implementado com bypass de AdBlock.
 
@@ -51,6 +52,7 @@ O código está organizado em módulos ES6 modernos em `src/`, com responsabilid
 
 ### Utilitários
 - `src/utils/pdfExporter.js`: Lógica de exportação para PDF.
+- `src/utils/exportJson.js`: Exportação de dados em JSON (Client-side) para interoperabilidade.
 - `src/utils/analyzers.js`: Análise de métricas (health score, bus factor, etc.).
 - `src/utils/formatters.js`: Formatação de dados (idades, números).
 
@@ -68,6 +70,7 @@ O código está organizado em módulos ES6 modernos em `src/`, com responsabilid
 ### Fail-Safe nas APIs
 - Todas as chamadas API devem ser envolvidas em try-catch.
 - Em caso de erro, **nunca** quebrar a aplicação; retornar valores vazios (ex: [], null) e log console.warn.
+- Tratamento silencioso de erros da API do GitHub (ex: 422 em repositórios gigantes) para manter o console limpo.
 - Quando erro 403 (Rate Limit), sugerir adicionar token.
 - Quando erro 404 (repo não encontrado), mostrar mensagem amigável.
 - Contribua comportamento gracioso: sempre renderizar UI, mesmo com dados parciais.

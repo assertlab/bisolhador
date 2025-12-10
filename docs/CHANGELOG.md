@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.7.0] - 2025-12-10
+
+### New Feature: JSON Data Export
+- **Exportação de dados em JSON**: Botão secundário no RepoInfoCard para baixar dados brutos com metadados de proveniência.
+
+### Fix: GitHub API 422 Error Handling
+- **Tratamento silencioso para erro 422**: FetchCodeFrequency agora retorna array vazio silenciosamente em repositórios gigantes.
+
+---
+
 ## [2.6.0] - 2025-12-10
 
 ### New Feature: Leaderboard (Bisolhômetro)
