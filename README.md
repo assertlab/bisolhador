@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v2.6.0
+# 🦈 Bisolhador Dashboard v2.7.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -11,7 +11,7 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **👥 Bus Factor**: Análise de risco de dependência de contribuidores
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
 - **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução
-- **📄 Export PDF**: Relatórios completos em PDF com um clique
+- **📄 Export PDF/JSON**: Relatórios completos em PDF e dados brutos em JSON para análise externa
 - **📡 Monitoramento de Uso**: Rastreamento de acessos e eventos (Buscas, Exports) com Google Analytics 4
 - **🛡️ Fail-Safe**: Tratamento robusto de erros e rate limits
 
