@@ -18,9 +18,6 @@ async function fetchRepositoryData(repoName) {
         throw new Error('Não foi possível buscar informações do repositório');
     }
 
-    // Track search immediately after confirming repo exists
-    analytics.trackSearch(repoName);
-
     // Fetch all other data in parallel
     const results = await Promise.allSettled([
         githubService.fetchCommits(owner, repo),
@@ -73,6 +70,19 @@ async function fetchRepositoryData(repoName) {
 
     // Analyze health score
     const health = analyzers.calculateHealthScore(communityProfile, repoData.description);
+
+    // Track search with consolidated data
+    analytics.trackSearch({
+      name: repoData.full_name,
+      ownerType: repoData.owner.type,
+      language: repoData.language,
+      stars: repoData.stargazers_count || 0,
+      forks: repoData.forks_count || 0,
+      issues: issuesOpenCount || 0,
+      subscribers: repoData.subscribers_count || 0,
+      lastPush: repoData.pushed_at,
+      healthScore: health.score
+    });
 
     // Analyze maturity
     const maturity = analyzers.analyzeEngineeringMaturity(repositoryTree.tree, pullRequests, branches.zombies);
