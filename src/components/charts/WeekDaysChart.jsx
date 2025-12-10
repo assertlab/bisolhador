@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 import useChartTheme from '../../hooks/useChartTheme.js';
@@ -7,22 +8,26 @@ function WeekDaysChart({ commits }) {
   const { t } = useTranslation();
   const { textColor, gridColor } = useChartTheme();
 
-  // Count commits by day of week
-  const dayNames = t('charts.weekdays.days', { returnObjects: true });
-  const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+  // Memoização dos dados calculados para evitar re-processamento desnecessário
+  const { dayNames, dayCounts } = useMemo(() => {
+    const dayNames = t('charts.weekdays.days', { returnObjects: true });
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
 
-  commits.forEach(commit => {
-    try {
-      const commitDate = new Date(commit.commit.author.date);
-      const dayOfWeek = commitDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      dayCounts[dayOfWeek]++;
-    } catch {
-      // Skip invalid dates
-    }
-  });
+    commits.forEach(commit => {
+      try {
+        const commitDate = new Date(commit.commit.author.date);
+        const dayOfWeek = commitDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        dayCounts[dayOfWeek]++;
+      } catch {
+        // Skip invalid dates
+      }
+    });
 
-  // Chart data
-  const chartData = {
+    return { dayNames, dayCounts };
+  }, [commits, t]);
+
+  // Chart data - Memoizada para evitar re-renders
+  const chartData = useMemo(() => ({
     labels: dayNames,
     datasets: [
       {
@@ -34,9 +39,9 @@ function WeekDaysChart({ commits }) {
         borderRadius: 4,
       },
     ],
-  };
+  }), [dayNames, dayCounts]);
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -60,7 +65,7 @@ function WeekDaysChart({ commits }) {
         ticks: { color: textColor }
       }
     }
-  };
+  }), [textColor, gridColor, t]);
 
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 flex flex-col h-80 hover:shadow-md transition-shadow relative overflow-visible hover:z-50">

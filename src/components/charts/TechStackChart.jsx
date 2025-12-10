@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 import useChartTheme from '../../hooks/useChartTheme.js';
@@ -7,8 +8,8 @@ function TechStackChart({ data }) {
   const { t } = useTranslation();
   const { textColor } = useChartTheme();
 
-  // Configuração dos dados para o Chart.js
-  const chartData = {
+  // Configuração dos dados para o Chart.js - Memoizada para evitar re-renders
+  const chartData = useMemo(() => ({
     labels: data.map(item => item.language),
     datasets: [
       {
@@ -17,9 +18,9 @@ function TechStackChart({ data }) {
         borderWidth: 0,
       },
     ],
-  };
+  }), [data]);
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -41,7 +42,7 @@ function TechStackChart({ data }) {
       }
     },
     cutout: '60%', // Deixa o buraco no meio (Rosca)
-  };
+  }), [textColor]);
 
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 flex flex-col h-80 hover:shadow-md transition-shadow relative overflow-visible hover:z-50">
