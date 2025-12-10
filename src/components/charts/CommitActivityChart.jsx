@@ -7,11 +7,6 @@ export default function CommitActivityChart({ data, createdAt }) {
   const { t } = useTranslation();
   const { textColor, gridColor } = useChartTheme();
 
-  // Debug log
-  console.log('CommitActivityChart renderizado');
-  console.log('Data recebida:', data);
-  console.log('createdAt recebida:', createdAt);
-
   // Calculate exact project age in weeks
   let weeksOld = 52; // Default to 52 weeks
   if (createdAt) {
@@ -21,10 +16,8 @@ export default function CommitActivityChart({ data, createdAt }) {
       if (!isNaN(createdDate.getTime())) {
         const ageInMs = now - createdDate;
         weeksOld = Math.ceil(ageInMs / (1000 * 60 * 60 * 24 * 7));
-        console.log('Idade exata em semanas:', weeksOld, 'createdAt:', createdAt);
       }
-    } catch (error) {
-      console.warn('Error calculating project age:', error);
+    } catch {
       weeksOld = 52;
     }
   }
@@ -71,17 +64,6 @@ export default function CommitActivityChart({ data, createdAt }) {
         data: trimmedValues
       }]
     };
-
-    console.log('Smart trim aplicado:', {
-      projectAgeWeeks: weeksOld,
-      originalLength: rawData.length,
-      firstActivityIndex: firstNonZeroIndex,
-      startIndex,
-      itemsToShow,
-      trimmedLength: trimmedValues.length
-    });
-  } else {
-    console.warn('Dados do gráfico não estão no formato esperado:', data);
   }
 
   // Check if we have any data at all (accepts arrays with zeros)

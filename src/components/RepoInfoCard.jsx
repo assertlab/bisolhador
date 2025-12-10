@@ -8,9 +8,6 @@ export function RepoInfoCard({ data }) {
   const { t, i18n } = useTranslation();
   if (!data) return null;
 
-  console.log('RepoInfoCard - createdAt:', data.createdAt);
-  console.log('RepoInfoCard - createdAtFormatted:', data.createdAtFormatted);
-
   const handleDownloadPDF = () => {
     analytics.trackExport();
     exportToPDF();

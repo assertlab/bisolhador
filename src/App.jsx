@@ -41,7 +41,6 @@ function Dashboard() {
   }, []);
 
   const handleSearch = (repositoryName) => {
-    console.log(`Bisolhando: ${repositoryName}`);
     setDismissedError(false); // Reset dismissed error on new search
     search(repositoryName);
   };
