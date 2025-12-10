@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.6.0] - 2025-12-10
+
+### New Feature: Leaderboard (Bisolhômetro)
+- **Página de Ranking (/ranking)**: Nova página com tabela de classificação de repositórios mais analisados.
+- **Data Engineering**: Coleta de snapshot completo (Estrelas, Health Score, Linguagem) no Supabase a cada busca.
+- **UX/UI**: Nova navegação no Header (Links Buscar/Ranking) e correção de rotas com basename.
+- **Refactor**: Botão de PDF movido para o contexto do card do repositório.
+
+---
+
 ## [2.5.0] - 2025-12-09
 
 ### Analytics & Persistência

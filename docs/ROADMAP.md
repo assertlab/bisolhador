@@ -16,7 +16,7 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## ✅ O Presente (React Era)
 
-### v2.6.0 - O Bisolhômetro (Leaderboard)
+### v2.6.0 - O Bisolhômetro (Leaderboard) ✅
 Ver [Especificação Técnica v2.6.0](docs/SPECS_v2.6.md)
 
 ### v2.5.0 - Analytics & Persistência (Dezembro 2025)

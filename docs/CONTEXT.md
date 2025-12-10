@@ -22,10 +22,15 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - Health Score baseado em governança comunitária.
 - Análise de hábitos de trabalho e maturidade de engenharia.
 - Contribuição de dados.
+- **v2.6.0**: Leaderboard público alimentado por logs imutáveis no Supabase.
 - **v2.5.0**: Supabase implementado para persistência de buscas (bypassing AdBlock) em paralelo com Google Analytics 4.
 - **v2.3.0**: Dark Mode completo e internacionalização (PT-BR/EN-US) com detecção automática.
 - **v2.2.0**: Performance otimizada com TanStack Query, skeleton screens e code splitting.
 - **v2.1.0**: Export PDF funcional, gráficos inteligentes com smart trim, UX aprimorada com alertas inline.
+
+### Estado Atual das Features
+- **Inteligência Coletiva**: Leaderboard público alimentado por logs imutáveis no Supabase.
+- **Analytics Híbrido**: Supabase + GA4 implementado com bypass de AdBlock.
 
 ## 2. Arquitetura Técnica
 
