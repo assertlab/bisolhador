@@ -33,7 +33,11 @@ export function StatCard({ title, value, subValue, icon, type = 'default', toolt
 
       {/* Valor Principal */}
       <div className={`text-3xl font-bold ${valueColor} tracking-tight`}>
-        {formatters.formatNumber(value, i18n.language === 'pt' ? 'pt-BR' : 'en-US')}
+        {typeof value === 'string' && (value.includes('hora') || value.includes('dia'))
+          ? value
+          : title === 'Divergência'
+          ? `${formatters.formatNumber(value, i18n.language === 'pt' ? 'pt-BR' : 'en-US')}%`
+          : formatters.formatNumber(value, i18n.language === 'pt' ? 'pt-BR' : 'en-US')}
       </div>
 
       {/* Valor Secundário (Ex: Taxa de Resolução) */}

@@ -103,7 +103,7 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 
 ## 🙏 Agradecimentos
 
-- **ASSERT Lab** - Laboratório de Engenharia de Software do CIN/UFPE
+- **ASSERT Lab** - [Advanced System and Software Engineering Research Technologies Lab](https://assertlab.com/) do [CIN/UFPE](http://www.cin.ufpe.br/)
 - **Comunidade Open Source** - Por inspirar e possibilitar esta ferramenta
 - **Educadores e Desenvolvedores** - Por usar e contribuir com feedback
 

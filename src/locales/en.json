@@ -22,7 +22,20 @@
     "totalPRs": "Total PRs:",
     "totalMerges": "Total Merges:",
     "prsPerBranch": "PRs per Branch:",
-    "totalReleases": "Total Releases:"
+    "totalReleases": "Total Releases:",
+    "ageLessThanDay": "Less than 1 day",
+    "ageOneDay": "1 day",
+    "ageDays": "{{count}} days",
+    "ageOneWeek": "1 week",
+    "ageWeeks": "{{count}} weeks",
+    "ageOneMonth": "1 month",
+    "ageMonths": "{{count}} months",
+    "ageOneYear": "1 year",
+    "ageYears": "{{count}} years",
+    "divergenceNone": "No data (0 PRs)",
+    "divergenceLow": "Low (Quiet)",
+    "divergenceMedium": "Healthy",
+    "divergenceHigh": "High (Intense Debate)"
   },
   "app": {
     "subtitle": "Analyze repositories like a Tech Lead",
@@ -47,11 +60,18 @@
     "closedIssuesTooltip": "Total resolved issues, with resolution rate showing efficiency.",
     "codeChurnTooltip": "Ratio between new code added and code removed/refactored. Indicates change quality.",
     "leadTimeTooltip": "Average time between Pull Request creation and approval/merge. Indicates review process speed.",
-    "divergenceTooltip": "Average number of comments and discussions per Pull Request. Indicates collaboration and technical debate level."
+    "divergenceTooltip": "Percentage of PRs that received formal change requests (Request Changes)."
   },
   "language": {
     "pt": "PT",
     "en": "EN"
+  },
+  "units": {
+    "hours": "hours",
+    "days": "days"
+  },
+  "button": {
+    "jsonTitle": "Download data as JSON"
   },
   "health": {
     "title": "Health Score",

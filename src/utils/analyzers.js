@@ -159,7 +159,7 @@ export const analyzers = {
     // Process Analysis
     calculateLeadTime(prStats) {
         const mergedPRs = prStats.filter(pr => pr.merged_at);
-        if (mergedPRs.length === 0) return 'N/A';
+        if (mergedPRs.length === 0) return { value: 'N/A', unit: '' };
 
         const totalHours = mergedPRs.reduce((sum, pr) => {
             const created = new Date(pr.created_at);
@@ -173,19 +173,17 @@ export const analyzers = {
 
         if (avgHours < 24) {
             const formattedValue = Math.round(avgHours * 10) / 10;
-            const unit = formattedValue === 1 ? 'hora' : 'horas';
-            return `${formattedValue} ${unit}`;
+            return { value: formattedValue, unit: 'hours', count: formattedValue };
         } else {
             const days = avgHours / 24;
             const formattedValue = Math.round(days * 10) / 10;
-            const unit = formattedValue === 1 ? 'dia' : 'dias';
-            return `${formattedValue} ${unit}`;
+            return { value: formattedValue, unit: 'days', count: formattedValue };
         }
     },
 
     calculateDivergence(pullRequests) {
         // Validação dos Dados de Entrada
-        if (!pullRequests || pullRequests.length === 0) return { avg: 0, category: 'Sem dados (0 PRs)' };
+        if (!pullRequests || pullRequests.length === 0) return { avg: 0, categoryKey: 'repo.divergenceNone' };
 
         // Cálculo Seguro
         const totalComments = pullRequests.reduce((sum, pr) => sum + (pr.comments || 0) + (pr.review_comments || 0), 0);
@@ -193,18 +191,18 @@ export const analyzers = {
         const safeAverage = Number.isNaN(average) ? 0 : average;
 
         // Correção da Classificação
-        let category;
+        let categoryKey;
         if (safeAverage < 1) {
-            category = 'Baixa (Silencioso)';
+            categoryKey = 'repo.divergenceLow';
         } else if (safeAverage <= 5) {
-            category = 'Saudável';
+            categoryKey = 'repo.divergenceMedium';
         } else {
-            category = 'Alta (Debate Intenso)';
+            categoryKey = 'repo.divergenceHigh';
         }
 
         // Formatação
         const formattedAvg = Math.round(safeAverage * 10) / 10;
-        return { avg: formattedAvg, category };
+        return { avg: formattedAvg, categoryKey };
     },
 
     // Bus Factor Analysis
