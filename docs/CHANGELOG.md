@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.8.1] - 2025-12-18
+
+### Architecture: Save on Load Strategy
+- **Auto-Save Implementation**: Mudança fundamental da estratégia de persistência para "Save on Load". Agora os snapshots são salvos automaticamente ao fim da busca, garantindo integridade histórica e IDs únicos, em vez de depender da ação de compartilhar.
+
+### Fix: Critical JSON Parse Issue
+- **App.jsx JSON Handling**: Correção crítica no `loadSnapshot` e `loadSnapshotByDate` adicionando `JSON.parse()` obrigatório para tratar o campo `full_report` (que vem serializado como string do banco), evitando `TypeError` ao tentar acessar propriedades.
+
+### Feature: Data Sanitization
+- **Robust Sanitization**: Implementação de sanitização de dados (`sanitizeForJson`) para evitar falhas em repositórios gigantes onde a API do GitHub pode retornar referências circulares ou objetos não serializáveis.
+
+### UX: Instant Share Button
+- **Instant Sharing**: O botão 'Compartilhar' agora é instantâneo (apenas cópia de link), pois os dados já estão salvos automaticamente, melhorando a experiência do usuário.
+
+---
+
 ## [2.7.4] - 2025-12-18
 
 ### Fix

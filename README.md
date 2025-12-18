@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v2.7.4
+# 🦈 Bisolhador Dashboard v2.8.1
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -75,7 +75,7 @@ https://assertlab.github.io/bisolhador/?repo=facebook/react&date=2025-12-17
 
 1. **Busque um repositório** usando o formato `owner/repo` (ex: `facebook/react`)
 2. **Analise as métricas** de saúde, maturidade e padrões de trabalho
-3. **Compartilhe resultados** clicando no botão "Compartilhar" para gerar links permanentes
+3. **Compartilhe resultados** clicando no botão "Compartilhar" para gerar links permanentes (O Bisolhador salva automaticamente o histórico da sua análise)
 4. **Acesse dados históricos** usando URLs semânticas com datas específicas
 5. **Exporte relatórios** em PDF ou dados brutos em JSON
 
