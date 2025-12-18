@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { formatters } from '../utils/formatters.js';
 import { exportToPDF } from '../utils/pdfExporter.js';
 import { exportJson } from '../utils/exportJson.js';
-import analytics from '../services/analytics.js';
 
 export function RepoInfoCard({ data, onShareSuccess }) {
   const { t, i18n } = useTranslation();
@@ -38,7 +37,6 @@ export function RepoInfoCard({ data, onShareSuccess }) {
   };
 
   const handleDownloadPDF = () => {
-    analytics.trackExport();
     exportToPDF();
   };
 
@@ -49,34 +47,12 @@ export function RepoInfoCard({ data, onShareSuccess }) {
 
   const handleShare = async () => {
     try {
-      let shareUrl = '';
-
-      if (data.searchId) {
-        // Já temos um ID salvo, gerar link direto para snapshot
-        shareUrl = `${window.location.origin}/?id=${data.searchId}`;
-      } else {
-        // Não temos ID, salvar primeiro e depois gerar link
-        const searchData = {
-          name: data.fullName,
-          ownerType: 'User', // Simplificado - poderia ser detectado melhor
-          language: data.language || null,
-          stars: data.metrics.stars,
-          forks: data.metrics.forks,
-          issues: data.metrics.openIssues,
-          subscribers: 0, // Não temos essa info
-          lastPush: data.createdAt,
-          healthScore: data.health.score
-        };
-
-        const searchId = await analytics.saveSearch(searchData);
-        if (searchId) {
-          shareUrl = `${window.location.origin}/?id=${searchId}`;
-          // Atualizar o data com o novo searchId
-          data.searchId = searchId;
-        } else {
-          throw new Error('Falha ao salvar busca');
-        }
+      if (!data.searchId) {
+        alert('Erro: Dados não salvos. Tente recarregar a página.');
+        return;
       }
+
+      const shareUrl = window.location.origin + window.location.pathname + '?id=' + data.searchId;
 
       // Copiar para clipboard
       await navigator.clipboard.writeText(shareUrl);
@@ -86,7 +62,7 @@ export function RepoInfoCard({ data, onShareSuccess }) {
         onShareSuccess();
       }
 
-      // Mostrar toast de sucesso (usando alert por enquanto, já que não há sistema de toast)
+      // Mostrar toast de sucesso
       alert('Link copiado!');
 
     } catch (error) {

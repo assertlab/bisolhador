@@ -10,7 +10,7 @@ const analytics = {
     ReactGA.send({ hitType: "pageview", page: path });
   },
 
-  async saveSearch(data) {
+  async saveSearch(data, fullData = null) {
     if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
       return null;
     }
@@ -25,7 +25,15 @@ const analytics = {
         p_issues: parseInt(data.issues) || 0,
         p_subscribers: parseInt(data.subscribers) || 0,
         p_health_score: parseFloat(data.healthScore) || 0,
-        p_last_push_at: data.lastPush || null
+        p_last_push_at: data.lastPush || null,
+        p_full_report: fullData && typeof fullData === 'object' && Object.keys(fullData).length > 0 ? (() => {
+          try {
+            return JSON.stringify(fullData);
+          } catch (e) {
+            console.warn('[Analytics] Failed to serialize fullData:', e.message);
+            return null;
+          }
+        })() : null
       };
 
       const { data: result, error } = await supabase.rpc('registrar_busca', rpcPayload);

@@ -49,11 +49,33 @@ function Dashboard() {
     try {
       const snapshotResult = await analytics.getSnapshot(id);
       if (snapshotResult) {
-        // Converter dados do snapshot para formato esperado pelo dashboard
-        const formattedData = createMockRepoData(snapshotResult);
-        // Injetar a data do snapshot (vem do banco)
-        formattedData.analysisDate = snapshotResult.created_at || new Date().toISOString();
-        setSnapshotData(formattedData);
+        let finalData = null;
+
+        if (snapshotResult.full_report) {
+          try {
+            // CORREÇÃO CRÍTICA: Se for string, TEM que fazer parse.
+            // Se já for objeto (alguns clients convertem auto), usa direto.
+            finalData = typeof snapshotResult.full_report === 'string'
+              ? JSON.parse(snapshotResult.full_report)
+              : snapshotResult.full_report;
+          } catch (e) {
+            console.error('[App] Erro fatal ao decodificar JSON:', e);
+            // Se o JSON estiver corrompido, cai para o fallback
+            finalData = null;
+          }
+        }
+
+        // Fallback para metadados se o JSON falhou ou não existe
+        if (!finalData) {
+          finalData = createMockRepoData(snapshotResult);
+        }
+
+        // Injeção da Data (Agora segura, pois finalData é um Objeto)
+        if (finalData && typeof finalData === 'object') {
+           finalData.analysisDate = snapshotResult.created_at || new Date().toISOString();
+        }
+
+        setSnapshotData(finalData);
       } else {
         throw new Error('Snapshot não encontrado');
       }
@@ -70,9 +92,33 @@ function Dashboard() {
     try {
       const snapshotResult = await analytics.getSnapshotByDate(repoName, dateString);
       if (snapshotResult) {
-        // Converter dados do snapshot para formato esperado pelo dashboard
-        const formattedData = createMockRepoData(snapshotResult);
-        setSnapshotData(formattedData);
+        let finalData = null;
+
+        if (snapshotResult.full_report) {
+          try {
+            // CORREÇÃO CRÍTICA: Se for string, TEM que fazer parse.
+            // Se já for objeto (alguns clients convertem auto), usa direto.
+            finalData = typeof snapshotResult.full_report === 'string'
+              ? JSON.parse(snapshotResult.full_report)
+              : snapshotResult.full_report;
+          } catch (e) {
+            console.error('[App] Erro fatal ao decodificar JSON:', e);
+            // Se o JSON estiver corrompido, cai para o fallback
+            finalData = null;
+          }
+        }
+
+        // Fallback para metadados se o JSON falhou ou não existe
+        if (!finalData) {
+          finalData = createMockRepoData(snapshotResult);
+        }
+
+        // Injeção da Data (Agora segura, pois finalData é um Objeto)
+        if (finalData && typeof finalData === 'object') {
+           finalData.analysisDate = snapshotResult.created_at || new Date().toISOString();
+        }
+
+        setSnapshotData(finalData);
       } else {
         // Nenhum registro encontrado para a data específica
         throw new Error(`Nenhum registro encontrado para ${repoName} em ${dateString}`);

@@ -71,19 +71,6 @@ async function fetchRepositoryData(repoName) {
     // Analyze health score
     const health = analyzers.calculateHealthScore(communityProfile, repoData.description);
 
-    // Save search and get ID
-    const searchId = await analytics.saveSearch({
-      name: repoData.full_name,
-      ownerType: repoData.owner.type,
-      language: repoData.language,
-      stars: repoData.stargazers_count || 0,
-      forks: repoData.forks_count || 0,
-      issues: issuesOpenCount || 0,
-      subscribers: repoData.subscribers_count || 0,
-      lastPush: repoData.pushed_at,
-      healthScore: health.score
-    });
-
     // Analyze maturity
     const maturity = analyzers.analyzeEngineeringMaturity(repositoryTree.tree, pullRequests, branches.zombies);
 
@@ -118,11 +105,74 @@ async function fetchRepositoryData(repoName) {
         };
     });
 
+    // Prepare search metadata
+    const searchData = {
+      name: repoData.full_name,
+      ownerType: repoData.owner.type,
+      language: repoData.language,
+      stars: repoData.stargazers_count || 0,
+      forks: repoData.forks_count || 0,
+      issues: issuesOpenCount || 0,
+      subscribers: repoData.subscribers_count || 0,
+      lastPush: repoData.pushed_at,
+      healthScore: health.score
+    };
+
+    // Prepare sanitized full report data
+    const fullReportData = {
+      fullName: repoName,
+      url: `https://github.com/${repoName}`,
+      description: repoData.description,
+      language: repoData.language,
+      ownerType: repoData.owner?.type || 'User',
+      subscribers: repoData.subscribers_count || 0,
+      pushedAt: repoData.pushed_at,
+      ageText: age,
+      createdAt: repoData.created_at,
+      createdAtFormatted: formattedDate,
+      stats: {
+          branches: branches.count,
+          prs: pulls || 0,
+          merges: mergedPRsCount,
+          prsPerBranch,
+          releases: releasesCount
+      },
+      metrics: {
+          stars: repoData.stargazers_count || 0,
+          forks: repoData.forks_count || 0,
+          openIssues: issuesOpenCount || 0,
+          closedIssues: issuesClosedCount || 0,
+          resolutionRate,
+          leadTime,
+          divergence
+      },
+      health,
+      maturity,
+      codeReview,
+      contributors: formattedContributors,
+      busFactor,
+      recentCommits,
+      recentPRs,
+      charts: {
+          techStack: formatLanguages(languages),
+          activity: formatCommitActivity(commitActivity)
+      },
+      codeChurn,
+      analysisDate: new Date().toISOString()
+    };
+
+    // Save search with full report automatically
+    const searchId = await analytics.saveSearch(searchData, fullReportData);
+
     // Build final data structure matching component expectations
     const formattedData = {
         fullName: repoName,
         url: `https://github.com/${repoName}`,
         description: repoData.description,
+        language: repoData.language,
+        ownerType: repoData.owner?.type || 'User',
+        subscribers: repoData.subscribers_count || 0,
+        pushedAt: repoData.pushed_at,
         ageText: age,
         createdAt: repoData.created_at, // ISO string for calculations
         createdAtFormatted: formattedDate, // Formatted string for display
