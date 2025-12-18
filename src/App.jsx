@@ -280,9 +280,13 @@ function Dashboard() {
     setIsSnapshotMode(false); // Sair do modo snapshot se estiver ativo
     search(repositoryName);
 
-    // Atualizar URL com o parâmetro de busca
-    const newUrl = `/?q=${encodeURIComponent(repositoryName)}`;
-    window.history.pushState(null, '', newUrl);
+    // Atualizar URL com o parâmetro de busca (respeitando subdiretório)
+    const currentPath = window.location.pathname; // ex: "/bisolhador/" ou "/bisolhador"
+    // Remove barra final se existir para padronizar, depois remonta
+    const cleanPath = currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
+    const newUrl = `${cleanPath}/?q=${encodeURIComponent(repositoryName)}`;
+
+    window.history.pushState({ path: newUrl }, '', newUrl);
   };
 
   const handleShareSuccess = () => {

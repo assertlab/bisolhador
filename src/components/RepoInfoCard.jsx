@@ -52,7 +52,14 @@ export function RepoInfoCard({ data, onShareSuccess }) {
         return;
       }
 
-      const shareUrl = window.location.origin + window.location.pathname + '?id=' + data.searchId;
+      // Tenta pegar o base do Vite, ou fallback para pathname
+      const baseUrl = import.meta.env.BASE_URL || window.location.pathname;
+
+      // Garante que não duplique barras e nem fique sem
+      // Ex: base='/bisolhador/', limpa para '/bisolhador', depois adiciona '/?id='
+      const cleanBase = baseUrl === '/' ? '' : (baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl);
+
+      const shareUrl = `${window.location.origin}${cleanBase}/?id=${data.searchId}`;
 
       // Copiar para clipboard
       await navigator.clipboard.writeText(shareUrl);
