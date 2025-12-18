@@ -126,6 +126,7 @@ async function fetchRepositoryData(repoName) {
         ageText: age,
         createdAt: repoData.created_at, // ISO string for calculations
         createdAtFormatted: formattedDate, // Formatted string for display
+        analysisDate: new Date().toISOString(), // Data/hora da análise ao vivo
         searchId, // ID da busca salva no banco
         stats: {
             branches: branches.count,

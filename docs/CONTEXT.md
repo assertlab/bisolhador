@@ -1,4 +1,4 @@
-# Manual de Instruções para IAs: Bisolhador Dashboard v2.7.2
+# Manual de Instruções para IAs: Bisolhador Dashboard v2.7.3
 
 ## 1. Resumo do Projeto
 
@@ -22,7 +22,8 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - Health Score baseado em governança comunitária.
 - Análise de hábitos de trabalho e maturidade de engenharia.
 - Contribuição de dados.
-- **v2.7.2**: Compartilhamento de Resultados (Permalinks) com Deep Linking e Snapshots históricos.
+- **v2.7.3**: Busca Semântica Histórica com URLs legíveis (`/?repo=owner/project&date=YYYY-MM-DD`) e badge temporal.
+- **v2.7.2**: Deep Linking & Snapshots Permanentes (`/?q=owner/repo` e `/?id=123`) com compartilhamento seguro.
 - **v2.6.0**: Leaderboard público alimentado por logs imutáveis no Supabase.
 - **v2.5.0**: Supabase implementado para persistência de buscas (bypassing AdBlock) em paralelo com Google Analytics 4.
 - **v2.3.0**: Dark Mode completo e internacionalização (PT-BR/EN-US) com detecção automática.
@@ -77,11 +78,15 @@ O código está organizado em módulos ES6 modernos em `src/`, com responsabilid
 - Nenhum banco de dados; dados persistem apenas na sessão.
 
 ### Frontend / State Management
+- **Hierarquia de Busca (Prioridade)**:
+  - **Permalink (v2.7.2)**: Busca exata por ID (`?id=123`) - prioridade máxima para links imutáveis.
+  - **Semantic (v2.7.3)**: Busca pelo último registro de uma data específica (`?repo=owner/project&date=YYYY-MM-DD`) - prioridade média com suporte a timezone.
+  - **Live**: Busca em tempo real na API do GitHub (`?q=owner/repo`) - fallback padrão.
 - **Fluxo Híbrido de Dados**:
-  - **Live Mode**: Busca dados em tempo real na API do GitHub via Octokit quando não há parâmetros de URL.
-  - **Snapshot Mode**: Carrega dados históricos do Supabase via RPC quando a URL contém `?id=...`, populando o dashboard com dados estáticos.
-- **Deep Linking**: A aplicação sincroniza o estado da busca com a URL através de `pushState`, permitindo compartilhamento direto de resultados específicos (`/?q=owner/repo`).
-- **Adaptador de Dados**: Conversão automática de dados flat do Supabase para formato nested esperado pelos componentes React, com tratamento de valores nulos e campos ausentes.
+  - **Live Mode**: Busca dados em tempo real da API do GitHub quando não há parâmetros de URL.
+  - **Snapshot Mode**: Carrega dados históricos do Supabase via RPC quando URL contém `?id=...` ou `?repo=...&date=...`.
+- **Deep Linking**: Sincronização automática entre estado da aplicação e URL através de `pushState`.
+- **Adaptador de Dados**: Conversão automática de dados flat do Supabase para formato nested esperado pelos componentes React.
 
 ## 3. Regras de Negócio Críticas
 

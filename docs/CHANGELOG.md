@@ -7,22 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.7.3] - 2025-12-17
+
+### Feature: Busca Semântica Histórica
+- **URLs Legíveis**: Suporte a `/?repo=owner/project&date=YYYY-MM-DD` para buscar snapshots por data.
+- **Data da Análise**: Exibição da data/hora de coleta no card principal do dashboard.
+
+### UX
+- **Badge Temporal**: Ícone de relógio com formatação inteligente da data de análise.
+- **Timezone Handling**: Correção de timezone (UTC vs Local) na busca de snapshots por data.
+
+### Fix
+- **Hierarquia de Busca**: Implementação completa da prioridade: ID > Semantic > Live.
+- **Compatibilidade**: Manutenção de URLs existentes (?id= e ?q=).
+
+---
+
 ## [2.7.2] - 2025-12-17
 
-### New Feature: Deep Linking & Snapshots
-- **Deep Linking**: Permitir compartilhar URL de busca (/?q=owner/repo) para acesso direto aos resultados.
-- **Snapshots**: Permitir compartilhar um registro histórico (/?id=123) com dados estáticos do banco.
-- **Botão Compartilhar**: Novo botão no RepoInfoCard para gerar links permanentes via clipboard.
+### Feature: Deep Linking & Snapshots
+- **Deep Linking**: URLs de busca ao vivo (`/?q=owner/repo`) para compartilhamento direto.
+- **Snapshots Permanentes**: Links imutáveis via ID (`/?id=123`) com dados congelados.
+- **Botão Compartilhar**: Geração automática de permalinks via clipboard.
 
 ### Backend
-- **Atualização de RPCs no Supabase**: Suporte a IDs numéricos e leitura histórica de snapshots.
-- **saveSearch()**: Função assíncrona que retorna ID numérico do registro salvo.
-- **getSnapshot(id)**: Nova função para recuperar dados históricos do banco.
+- **Schema Update**: Migração para IDs `BIGINT` e scores `NUMERIC` no Supabase.
+- **RPC Seguras**: `registrar_busca` e `obter_snapshot` com validação de dados.
+- **Security Hardening**: Bloqueio de INSERT direto para usuários anônimos via RLS.
 
-### Engineering & UX
-- **Adaptador de Dados**: Conversão de dados flat do Supabase para formato nested esperado pelo dashboard.
-- **Modo Histórico**: Alerta visual azul indicando quando dados são estáticos (não refletem estado atual do GitHub).
-- **URL Management**: Gerenciamento inteligente de parâmetros de query (?id= e ?q=) na inicialização da aplicação.
+### UX
+- **Modo Histórico**: Alerta visual diferenciando dados estáticos vs atuais.
+- **URL Management**: Sincronização automática entre estado da aplicação e URL.
+- **Adaptador de Dados**: Conversão flat→nested dos dados do Supabase.
 
 ---
 

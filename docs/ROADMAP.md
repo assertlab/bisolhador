@@ -20,11 +20,16 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## ✅ O Presente (React Era)
 
+### v2.7.3 - Semantic Time Machine ✅
+- [x] **Busca Semântica Histórica:** URLs legíveis (`/?repo=owner/project&date=YYYY-MM-DD`) para snapshots por data.
+- [x] **Data da Análise:** Badge temporal no RepoInfoCard mostrando quando os dados foram coletados.
+- [x] **Timezone Handling:** Correção de UTC vs Local na busca de snapshots por data.
+
 ### v2.7.2 - Deep Linking & Snapshots ✅
-- [x] **Deep Linking na Busca:** URL reflete o estado da busca (`/?q=owner/repo`) para compartilhamento direto.
-- [x] **Permalinks/Snapshots:** URLs históricas (`/?id=123`) com dados estáticos do banco.
-- [x] **Backend:** Atualização do Schema (IDs como BIGINT, Scores como NUMERIC) e criação da RPC `obter_snapshot`.
-- [x] **UX:** Botão de compartilhamento de resultados com cópia automática para clipboard.
+- [x] **Deep Linking:** URLs de busca ao vivo (`/?q=owner/repo`) para compartilhamento direto.
+- [x] **Snapshots por ID:** Permalinks imutáveis (`/?id=123`) com dados congelados.
+- [x] **Security Hardening:** RPCs seguras e bloqueio de INSERT direto para usuários anônimos.
+- [x] **Schema Update:** Migração para IDs BIGINT e scores NUMERIC no Supabase.
 
 ### v2.7.1 - Security Hardening ✅
 - [x] **Backend RPC:** Implementação de RPC (`registrar_busca`) no Supabase para escrita segura.

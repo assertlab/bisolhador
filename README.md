@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v2.7.2
+# 🦈 Bisolhador Dashboard v2.7.3
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -11,7 +11,7 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **👥 Bus Factor**: Análise de risco de dependência de contribuidores
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
 - **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução
-- **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca
+- **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca, com data/hora da coleta sempre visível
 - **📄 Export PDF/JSON**: Relatórios completos em PDF e dados brutos em JSON para análise externa
 - **� Monitoramento de Uso**: Rastreamento de acessos e eventos (Buscas, Exports) com Google Analytics 4
 - **�🛡️ Security-First (RPC Validation)**: Implementação de RPC segura no Supabase com validação de dados
@@ -61,9 +61,14 @@ A aplicação estará disponível em `http://localhost:5173`
 https://assertlab.github.io/bisolhador/?q=facebook/react
 ```
 
-**Acesso a Snapshot Histórico:**
+**Acesso a Snapshot Histórico (Permalink):**
 ```
 https://assertlab.github.io/bisolhador/?id=123
+```
+
+**Busca Semântica Histórica (por Data):**
+```
+https://assertlab.github.io/bisolhador/?repo=facebook/react&date=2025-12-17
 ```
 
 ### Funcionalidades Principais
@@ -71,7 +76,8 @@ https://assertlab.github.io/bisolhador/?id=123
 1. **Busque um repositório** usando o formato `owner/repo` (ex: `facebook/react`)
 2. **Analise as métricas** de saúde, maturidade e padrões de trabalho
 3. **Compartilhe resultados** clicando no botão "Compartilhar" para gerar links permanentes
-4. **Exporte relatórios** em PDF ou dados brutos em JSON
+4. **Acesse dados históricos** usando URLs semânticas com datas específicas
+5. **Exporte relatórios** em PDF ou dados brutos em JSON
 
 ## 🛠️ Tech Stack
 

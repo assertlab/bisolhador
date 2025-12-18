@@ -109,6 +109,27 @@ export function RepoInfoCard({ data, onShareSuccess }) {
           <p className="text-gray-600 dark:text-slate-400 leading-relaxed">
             {data.description || t('repo.noDescription')}
           </p>
+
+          {/* Data da Análise */}
+          {data.analysisDate && (
+            <div className="flex items-center gap-2 mt-3 text-sm text-gray-500 dark:text-slate-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>
+                {t('repo.analysisDate')}: {new Intl.DateTimeFormat(
+                  i18n.language === 'pt' ? 'pt-BR' : 'en-US',
+                  {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }
+                ).format(new Date(data.analysisDate))}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <button

@@ -89,6 +89,27 @@ const analytics = {
     }
   },
 
+  async getSnapshotByDate(repoName, dateString) {
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      return null;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('buscar_snapshot_por_data', {
+        p_repo_name: repoName,
+        p_date: dateString
+      });
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.warn('[Analytics] Failed to get snapshot by date:', error.message);
+      return null;
+    }
+  },
+
   trackExport() {
     ReactGA.event({ category: "Engagement", action: "Download PDF" });
   },

@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect } from 'react';
+import { useState, lazy, Suspense, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
@@ -39,33 +39,17 @@ function Dashboard() {
   const [snapshotId, setSnapshotId] = useState(null);
   const [snapshotData, setSnapshotData] = useState(null);
   const [snapshotLoading, setSnapshotLoading] = useState(false);
+  const [semanticDate, setSemanticDate] = useState(null);
 
-  useEffect(() => {
-    analytics.trackPageView(window.location.pathname);
-
-    // Verificar parâmetros da URL na inicialização
-    const urlParams = new URLSearchParams(window.location.search);
-    const idParam = urlParams.get('id');
-    const queryParam = urlParams.get('q');
-
-    if (idParam) {
-      // Modo snapshot: carregar dados do banco
-      setIsSnapshotMode(true);
-      setSnapshotId(idParam);
-      loadSnapshot(parseInt(idParam));
-    } else if (queryParam) {
-      // Deep linking: disparar busca automaticamente
-      search(queryParam);
-    }
-  }, []);
-
-  const loadSnapshot = async (id) => {
+  const loadSnapshot = useCallback(async (id) => {
     setSnapshotLoading(true);
     try {
       const snapshotResult = await analytics.getSnapshot(id);
       if (snapshotResult) {
         // Converter dados do snapshot para formato esperado pelo dashboard
         const formattedData = createMockRepoData(snapshotResult);
+        // Injetar a data do snapshot (vem do banco)
+        formattedData.analysisDate = snapshotResult.created_at || new Date().toISOString();
         setSnapshotData(formattedData);
       } else {
         throw new Error('Snapshot não encontrado');
@@ -76,7 +60,55 @@ function Dashboard() {
     } finally {
       setSnapshotLoading(false);
     }
-  };
+  }, []);
+
+  const loadSnapshotByDate = useCallback(async (repoName, dateString) => {
+    setSnapshotLoading(true);
+    try {
+      const snapshotResult = await analytics.getSnapshotByDate(repoName, dateString);
+      if (snapshotResult) {
+        // Converter dados do snapshot para formato esperado pelo dashboard
+        const formattedData = createMockRepoData(snapshotResult);
+        setSnapshotData(formattedData);
+      } else {
+        // Nenhum registro encontrado para a data específica
+        throw new Error(`Nenhum registro encontrado para ${repoName} em ${dateString}`);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar snapshot por data:', error);
+      setDismissedError(false); // Mostrar erro
+    } finally {
+      setSnapshotLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    analytics.trackPageView(window.location.pathname);
+
+    // Verificar parâmetros da URL na inicialização - Hierarquia de prioridade
+    const urlParams = new URLSearchParams(window.location.search);
+    const idParam = urlParams.get('id');
+    const repoParam = urlParams.get('repo');
+    const dateParam = urlParams.get('date');
+    const queryParam = urlParams.get('q');
+
+    if (idParam) {
+      // Prioridade máxima: Permalink imutável (?id=...)
+      setIsSnapshotMode(true);
+      setSnapshotId(idParam);
+      setSemanticDate(null);
+      loadSnapshot(parseInt(idParam));
+    } else if (repoParam && dateParam) {
+      // Prioridade média: Busca semântica (?repo=...&date=...)
+      setIsSnapshotMode(true);
+      setSnapshotId(null);
+      setSemanticDate(dateParam);
+      loadSnapshotByDate(repoParam, dateParam);
+    } else if (queryParam) {
+      // Fallback: Busca ao vivo (?q=...)
+      search(queryParam);
+    }
+  }, [loadSnapshot, loadSnapshotByDate, search]);
 
   const createMockRepoData = (snapshotData) => {
     // Adaptador: Converter dados flat do Supabase para formato nested esperado pelo dashboard
@@ -228,7 +260,12 @@ function Dashboard() {
                   </svg>
                   <div>
                     <h3 className="text-sm font-medium">Modo Histórico</h3>
-                    <p className="text-sm mt-1">Visualizando registro #{snapshotId}. Estes dados são estáticos e não refletem o estado atual do GitHub.</p>
+                    <p className="text-sm mt-1">
+                      {semanticDate
+                        ? `Visualizando histórico de ${semanticDate} (Snapshot Semântico). Estes dados são estáticos e não refletem o estado atual do GitHub.`
+                        : `Visualizando registro #${snapshotId}. Estes dados são estáticos e não refletem o estado atual do GitHub.`
+                      }
+                    </p>
                   </div>
                 </div>
                 <button

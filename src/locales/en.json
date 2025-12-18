@@ -1,7 +1,7 @@
 {
   "header": {
     "title": "Bisolhador",
-    "version": "v2.7.2",
+    "version": "v2.7.3",
     "helpTitle": "How to use",
     "settingsTitle": "Configure GitHub Token",
     "downloadTitle": "Download report as PDF",
@@ -23,6 +23,7 @@
     "totalMerges": "Total Merges:",
     "prsPerBranch": "PRs per Branch:",
     "totalReleases": "Total Releases:",
+    "analysisDate": "Analysis Date",
     "ageLessThanDay": "Less than 1 day",
     "ageOneDay": "1 day",
     "ageDays": "{{count}} days",

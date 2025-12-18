@@ -1,7 +1,7 @@
 {
   "header": {
     "title": "Bisolhador",
-    "version": "v2.7.2",
+    "version": "v2.7.3",
     "helpTitle": "Como usar",
     "settingsTitle": "Configurar Token GitHub",
     "downloadTitle": "Baixar relatório em PDF",
@@ -23,6 +23,7 @@
     "totalMerges": "Total de Merges:",
     "prsPerBranch": "PRs por Branch:",
     "totalReleases": "Total de Releases:",
+    "analysisDate": "Data da Análise",
     "ageLessThanDay": "Menos de 1 dia",
     "ageOneDay": "1 dia",
     "ageDays": "{{count}} dias",
