@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v2.8.2
+# 🦈 Bisolhador Dashboard v2.8.3
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -14,12 +14,28 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca, com data/hora da coleta sempre visível
 - **🌍 Suporte Global a Fusos Horários**: As buscas por data respeitam automaticamente o fuso horário do navegador do usuário
 - **💾 Persistência Automática**: O histórico é salvo automaticamente ao carregar a análise, garantindo integridade dos dados
+- **🛡️ Sanitização de Dados**: Tratamento robusto de payloads JSON para evitar erros com repositórios massivos
+- **🌐 Internacionalização Completa**: Suporte total PT/EN em todas as interfaces (Ranking, Modais, Navegação)
 - **📄 Export PDF/JSON**: Relatórios completos em PDF e dados brutos em JSON para análise externa
 - ** Monitoramento de Uso**: Rastreamento de acessos e eventos (Buscas, Exports) com Google Analytics 4
 - **🛡️ Security-First (RPC Validation)**: Implementação de RPC segura no Supabase com validação de dados
 - **🛡️ Fail-Safe**: Tratamento robusto de erros e rate limits
 - **♿ Acessibilidade (WCAG AA)**: Semântica de tabelas, aria-label/aria-hidden em ícones, suporte a leitores de tela
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
+
+## 🔄 Últimas Atualizações (v2.8.x)
+
+### v2.8.3 - Correções de UI/UX e Internacionalização Completa
+- **🎨 UI/UX Polished**: Correções de navegação global, modal states unificado entre todas as telas
+- **🌐 Internacionalização Completa**: Suporte total PT/EN em Ranking, Modais (Ajuda/Configurações) e navegação
+- **🔧 Header State Management**: Botões de configurações e idioma funcionam consistentemente em Dashboard e Ranking
+- **♿ Acessibilidade Aprimorada**: Labels e aria-atributos completos para leitores de tela
+
+### v2.8.2 - Timezone Global & Persistência Automática
+- **🌍 Suporte Global a Fusos Horários**: Detecção automática do timezone do navegador para snapshots diários
+- **💾 Persistência Inteligente (Save-on-Load)**: Histórico salvo automaticamente ao carregar análise
+- **🛡️ Sanitização de Dados**: Tratamento robusto de JSON payloads para repositórios massivos
+- **📊 Analytics Aprimorado**: RPC segura com validação de dados no Supabase
 
 ## 🚀 Como Rodar
 
