@@ -35,12 +35,12 @@ export function Header({ onSettingsClick }) {
 
             <Link to="/" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
               <span>🔍</span>
-              <span>Buscar</span>
+              <span>{t('header.nav.search')}</span>
             </Link>
 
             <Link to="/ranking" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
               <span>🏆</span>
-              <span>Ranking</span>
+              <span>{t('header.nav.ranking')}</span>
             </Link>
 
             <ThemeToggle />

@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { fetchLeaderboard } from '../services/leaderboardService.js';
 import { Header } from '../components/Header';
+import { SettingsModal } from '../components/SettingsModal';
 
-export function Ranking() {
+export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useQuery({
     queryKey: ['leaderboard'],
     queryFn: () => fetchLeaderboard(50),
@@ -26,7 +29,7 @@ export function Ranking() {
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-shark mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-slate-400">Carregando ranking...</p>
+          <p className="text-gray-600 dark:text-slate-400">{t('ranking.loading')}</p>
         </div>
       </div>
     );
@@ -36,7 +39,7 @@ export function Ranking() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-4">Erro ao carregar ranking</p>
+          <p className="text-red-600 dark:text-red-400 mb-4">{t('ranking.error')}</p>
           <p className="text-gray-600 dark:text-slate-400">{error.message}</p>
         </div>
       </div>
@@ -45,16 +48,16 @@ export function Ranking() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
-      <Header onSettingsClick={() => {}} /> {/* Placeholder, since Ranking doesn't need settings */}
+      <Header onSettingsClick={() => setIsSettingsOpen(true)} />
 
       <div className="flex-grow py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-shark dark:text-white mb-2">
-              <span aria-hidden="true">🏆</span> Bisolhômetro - Hall of Fame
+              <span aria-hidden="true">🏆</span> {t('ranking.title')}
             </h1>
             <p className="text-gray-600 dark:text-slate-400">
-              Ranking dos repositórios mais bisolhados
+              {t('ranking.subtitle')}
             </p>
           </div>
 
@@ -65,22 +68,22 @@ export function Ranking() {
                 <thead className="bg-gray-50 dark:bg-slate-700">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
-                      #
+                      {t('ranking.columns.position')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
-                      Repositório
+                      {t('ranking.columns.repository')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
-                      Linguagem
+                      {t('ranking.columns.language')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
-                      Saúde
+                      {t('ranking.columns.health')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
-                      Estrelas
+                      {t('ranking.columns.stars')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
-                      Bisolhadas
+                      {t('ranking.columns.searches')}
                     </th>
                   </tr>
                 </thead>
@@ -91,7 +94,7 @@ export function Ranking() {
                     return (
                       <tr key={item.repo_name} className="hover:bg-gray-50 dark:hover:bg-slate-700">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                          <span aria-label={`Posição ${position}`}>
+                          <span aria-label={`${t('ranking.ariaLabels.position')} ${position}`}>
                             {getPositionDisplay(position)}
                           </span>
                         </td>
@@ -116,7 +119,7 @@ export function Ranking() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          <span aria-label={`${item.stars} estrelas`}>
+                          <span aria-label={`${item.stars} ${t('ranking.ariaLabels.stars')}`}>
                             ⭐ {item.stars?.toLocaleString() || 0}
                           </span>
                         </td>
@@ -138,15 +141,21 @@ export function Ranking() {
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Nenhum dado encontrado
+              {t('ranking.empty.title')}
             </h3>
             <p className="text-gray-500 dark:text-slate-400">
-              Faça a primeira busca para aparecer no ranking!
+              {t('ranking.empty.message')}
             </p>
           </div>
         )}
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 }

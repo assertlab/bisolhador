@@ -1,5 +1,9 @@
 
+import { useTranslation } from 'react-i18next';
+
 export function HelpModal({ isOpen, onClose }) {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   return (
@@ -8,54 +12,46 @@ export function HelpModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Como usar o Bisolhador
+            {t('help.title')}
           </h2>
         </div>
 
         {/* Content */}
         <div className="px-6 py-4 space-y-4">
           <div>
-            <h3 className="font-medium text-gray-900 dark:text-white mb-2">Sobre o Bisolhador</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white mb-2">{t('help.about.title')}</h3>
             <p className="text-sm text-gray-600 dark:text-slate-400">
-              O Bisolhador é uma ferramenta analítica para avaliar repositórios GitHub como um Tech Lead.
-              Ele analisa métricas de volume, governança, maturidade e atividade para fornecer insights sobre
-              saúde e eficiência do projeto.
+              {t('help.about.description')}
             </p>
           </div>
 
           <div>
-            <h3 className="font-medium text-gray-900 dark:text-white mb-2">Por que configurar um Token?</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white mb-2">{t('help.token.title')}</h3>
             <p className="text-sm text-gray-600 dark:text-slate-400 mb-3">
-              Sem token, o GitHub limita a 60 requisições por hora. Com um Personal Access Token,
-              você pode fazer até 5.000 requisições por hora, permitindo análises mais completas.
+              {t('help.token.description')}
             </p>
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded p-3">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                <strong>Importante:</strong> O token fica salvo apenas no seu navegador e nunca é enviado
-                para nossos servidores. Sua privacidade está protegida.
+                <strong>{t('help.token.warning.important')}</strong> {t('help.token.warning.message')}
               </p>
             </div>
           </div>
 
           <div>
-            <h3 className="font-medium text-gray-900 dark:text-white mb-2">Como criar um Token</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white mb-2">{t('help.createToken.title')}</h3>
             <ol className="text-sm text-gray-600 dark:text-slate-400 space-y-1 list-decimal list-inside">
-              <li>Acesse <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-ocean hover:underline">github.com/settings/tokens</a></li>
-              <li>Clique em "Generate new token (classic)"</li>
-              <li>Dê um nome descritivo (ex: "Bisolhador Analysis")</li>
-              <li>Selecione apenas a permissão "public_repo" (para repositórios públicos)</li>
-              <li>Clique em "Generate token"</li>
-              <li>Copie o token gerado (começa com "ghp_")</li>
+              {t('help.createToken.steps', { returnObjects: true }).map((step, index) => (
+                <li key={index} dangerouslySetInnerHTML={{ __html: step }} />
+              ))}
             </ol>
           </div>
 
           <div>
-            <h3 className="font-medium text-gray-900 dark:text-white mb-2">Como usar</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white mb-2">{t('help.usage.title')}</h3>
             <ol className="text-sm text-gray-600 dark:text-slate-400 space-y-1 list-decimal list-inside">
-              <li>Digite o nome do repositório no formato "owner/repo"</li>
-              <li>Clique em "Buscar" ou pressione Enter</li>
-              <li>Aguarde a análise dos dados</li>
-              <li>Explore as métricas e gráficos gerados</li>
+              {t('help.usage.steps', { returnObjects: true }).map((step, index) => (
+                <li key={index}>{step}</li>
+              ))}
             </ol>
           </div>
         </div>
@@ -66,7 +62,7 @@ export function HelpModal({ isOpen, onClose }) {
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-white bg-ocean border border-transparent rounded-md hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ocean"
           >
-            Entendi
+            {t('help.button.close')}
           </button>
         </div>
       </div>

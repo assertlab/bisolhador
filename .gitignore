@@ -43,3 +43,6 @@ Desktop.ini
 # Supabase / Testes
 supabase/config.toml
 coverage
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.github/instructions/snyk_rules.instructions.md

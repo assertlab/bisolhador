@@ -15,6 +15,8 @@ import { useRepository } from './hooks/useRepository.js';
 import { Ranking } from './pages/Ranking.jsx';
 import analytics from './services/analytics.js';
 
+
+
 // Lazy-loaded chart components (Code Splitting)
 const TechStackChart = lazy(() => import('./components/charts/TechStackChart'));
 const CommitActivityChart = lazy(() => import('./components/charts/CommitActivityChart'));
@@ -30,11 +32,10 @@ function SkeletonChart() {
   );
 }
 
-function Dashboard() {
+function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
   const location = useLocation();
   const { data: repoData, loading, error, search } = useRepository();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [dismissedError, setDismissedError] = useState(false);
   const [isSnapshotMode, setIsSnapshotMode] = useState(false);
   const [snapshotId, setSnapshotId] = useState(null);
@@ -488,11 +489,13 @@ function Dashboard() {
 }
 
 function App() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   return (
     <Router basename={import.meta.env.BASE_URL}>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/ranking" element={<Ranking />} />
+        <Route path="/" element={<Dashboard isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+        <Route path="/ranking" element={<Ranking isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
       </Routes>
     </Router>
   );

@@ -1,11 +1,15 @@
 {
   "header": {
     "title": "Bisolhador",
-    "version": "v2.8.2",
+    "version": "v2.8.3",
     "helpTitle": "Como usar",
     "settingsTitle": "Configurar Token GitHub",
     "downloadTitle": "Baixar relatório em PDF",
-    "downloadButton": "Baixar Relatório"
+    "downloadButton": "Baixar Relatório",
+    "nav": {
+      "search": "Buscar",
+      "ranking": "Ranking"
+    }
   },
   "search": {
     "label": "Buscar repositório",
@@ -163,6 +167,82 @@
       "tooltip": "Distribuição de commits ao longo dos dias da semana. Ajuda a identificar padrões de trabalho da equipe.",
       "days": ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
       "tooltipLabel": "{{day}}: {{count}} commits"
+    }
+  },
+  "ranking": {
+    "title": "Bisolhômetro - Hall of Fame",
+    "subtitle": "Ranking dos repositórios mais bisolhados",
+    "loading": "Carregando ranking...",
+    "error": "Erro ao carregar ranking",
+    "columns": {
+      "position": "#",
+      "repository": "Repositório",
+      "language": "Linguagem",
+      "health": "Saúde",
+      "stars": "Estrelas",
+      "searches": "Bisolhadas"
+    },
+    "ariaLabels": {
+      "position": "Posição",
+      "stars": "estrelas"
+    },
+    "empty": {
+      "title": "Nenhum dado encontrado",
+      "message": "Faça a primeira busca para aparecer no ranking!"
+    }
+  },
+  "settings": {
+    "title": "Configurar Token do GitHub",
+    "description": "Adicione seu Personal Access Token para aumentar o limite de 60 para 5.000 requisições/hora.",
+    "tokenLabel": "Personal Access Token",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "successMessage": "Token salvo com sucesso!",
+    "createToken": {
+      "text": "Como criar um token:",
+      "link": "github.com/settings/tokens"
+    },
+    "warning": "O token fica salvo apenas no seu navegador.",
+    "buttons": {
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    }
+  },
+  "help": {
+    "title": "Como usar o Bisolhador",
+    "about": {
+      "title": "Sobre o Bisolhador",
+      "description": "O Bisolhador é uma ferramenta analítica para avaliar repositórios GitHub como um Tech Lead. Ele analisa métricas de volume, governança, maturidade e atividade para fornecer insights sobre saúde e eficiência do projeto."
+    },
+    "token": {
+      "title": "Por que configurar um Token?",
+      "description": "Sem token, o GitHub limita a 60 requisições por hora. Com um Personal Access Token, você pode fazer até 5.000 requisições por hora, permitindo análises mais completas.",
+      "warning": {
+        "important": "Importante:",
+        "message": "O token fica salvo apenas no seu navegador e nunca é enviado para nossos servidores. Sua privacidade está protegida."
+      }
+    },
+    "createToken": {
+      "title": "Como criar um Token",
+      "steps": [
+        "Acesse <a href=\"https://github.com/settings/tokens\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-ocean hover:underline\">github.com/settings/tokens</a>",
+        "Clique em \"Generate new token (classic)\"",
+        "Dê um nome descritivo (ex: \"Bisolhador Analysis\")",
+        "Selecione apenas a permissão \"public_repo\" (para repositórios públicos)",
+        "Clique em \"Generate token\"",
+        "Copie o token gerado (começa com \"ghp_\")"
+      ]
+    },
+    "usage": {
+      "title": "Como usar",
+      "steps": [
+        "Digite o nome do repositório no formato \"owner/repo\"",
+        "Clique em \"Buscar\" ou pressione Enter",
+        "Aguarde a análise dos dados",
+        "Explore as métricas e gráficos gerados"
+      ]
+    },
+    "button": {
+      "close": "Entendi"
     }
   }
 }

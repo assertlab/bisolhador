@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.8.3] - 2026-01-20
+
+### Fix (Navigation): Header State Management
+- **Global Modal State**: Refactored settings modal state to App.jsx level, ensuring Header buttons (Settings & Language) work consistently across all routes (Dashboard & Ranking).
+- **Cross-Route Functionality**: Fixed issue where configuration and language buttons were non-responsive in Ranking page due to isolated state management.
+
+### Fix (i18n): Complete Internationalization
+- **Missing Translations**: Added complete translations for Help Modal, Settings Modal, Ranking table, and Navigation links.
+- **Header Navigation**: Implemented i18n for "Buscar/Search" and "Ranking" navigation links.
+- **Modal Content**: Fully translated Help Modal (about, token setup, usage steps) and Settings Modal (title, description, labels, buttons).
+- **Ranking Page**: Translated all table headers, loading/error messages, and empty state content.
+
+### UX: Universal Access to Settings
+- **Consistent Experience**: Users can now access settings and change language from any page in the application.
+- **State Persistence**: Modal state properly managed globally to prevent navigation issues.
+
+---
+
 ## [2.8.2] - 2025-12-19
 
 ### Feat (i18n): Timezone Detection

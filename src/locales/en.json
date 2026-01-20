@@ -1,11 +1,15 @@
 {
   "header": {
     "title": "Bisolhador",
-    "version": "v2.8.2",
+    "version": "v2.8.3",
     "helpTitle": "How to use",
     "settingsTitle": "Configure GitHub Token",
     "downloadTitle": "Download report as PDF",
-    "downloadButton": "Download Report"
+    "downloadButton": "Download Report",
+    "nav": {
+      "search": "Search",
+      "ranking": "Ranking"
+    }
   },
   "search": {
     "label": "Search repository",
@@ -163,6 +167,82 @@
       "tooltip": "Distribution of commits throughout the week. Helps identify team work patterns.",
       "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
       "tooltipLabel": "{{day}}: {{count}} commits"
+    }
+  },
+  "ranking": {
+    "title": "Bisolhômetro - Hall of Fame",
+    "subtitle": "Ranking of most analyzed repositories",
+    "loading": "Loading ranking...",
+    "error": "Error loading ranking",
+    "columns": {
+      "position": "#",
+      "repository": "Repository",
+      "language": "Language",
+      "health": "Health",
+      "stars": "Stars",
+      "searches": "Searches"
+    },
+    "ariaLabels": {
+      "position": "Position",
+      "stars": "stars"
+    },
+    "empty": {
+      "title": "No data found",
+      "message": "Make your first search to appear on the ranking!"
+    }
+  },
+  "settings": {
+    "title": "Configure GitHub Token",
+    "description": "Add your Personal Access Token to increase the limit from 60 to 5,000 requests/hour.",
+    "tokenLabel": "Personal Access Token",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "successMessage": "Token saved successfully!",
+    "createToken": {
+      "text": "How to create a token:",
+      "link": "github.com/settings/tokens"
+    },
+    "warning": "The token is saved only in your browser.",
+    "buttons": {
+      "cancel": "Cancel",
+      "save": "Save"
+    }
+  },
+  "help": {
+    "title": "How to use Bisolhador",
+    "about": {
+      "title": "About Bisolhador",
+      "description": "Bisolhador is an analytical tool for evaluating GitHub repositories like a Tech Lead. It analyzes volume, governance, maturity, and activity metrics to provide insights about project health and efficiency."
+    },
+    "token": {
+      "title": "Why configure a Token?",
+      "description": "Without a token, GitHub limits to 60 requests per hour. With a Personal Access Token, you can make up to 5,000 requests per hour, allowing more complete analyses.",
+      "warning": {
+        "important": "Important:",
+        "message": "The token is saved only in your browser and is never sent to our servers. Your privacy is protected."
+      }
+    },
+    "createToken": {
+      "title": "How to create a Token",
+      "steps": [
+        "Access <a href=\"https://github.com/settings/tokens\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-ocean hover:underline\">github.com/settings/tokens</a>",
+        "Click on \"Generate new token (classic)\"",
+        "Give it a descriptive name (ex: \"Bisolhador Analysis\")",
+        "Select only the \"public_repo\" permission (for public repositories)",
+        "Click on \"Generate token\"",
+        "Copy the generated token (starts with \"ghp_\")"
+      ]
+    },
+    "usage": {
+      "title": "How to use",
+      "steps": [
+        "Enter the repository name in the format \"owner/repo\"",
+        "Click \"Search\" or press Enter",
+        "Wait for data analysis",
+        "Explore the generated metrics and charts"
+      ]
+    },
+    "button": {
+      "close": "Got it"
     }
   }
 }
