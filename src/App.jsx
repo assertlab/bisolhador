@@ -13,6 +13,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { SkeletonDashboard } from './components/skeletons/SkeletonDashboard.jsx';
 import { useRepository } from './hooks/useRepository.js';
 import { Ranking } from './pages/Ranking.jsx';
+import { Timeline } from './pages/Timeline.jsx';
 import analytics from './services/analytics.js';
 
 
@@ -496,6 +497,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
         <Route path="/ranking" element={<Ranking isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+        <Route path="/timeline/:owner/:repo" element={<Timeline isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
       </Routes>
     </Router>
   );

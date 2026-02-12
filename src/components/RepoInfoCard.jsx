@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { formatters } from '../utils/formatters.js';
 import { exportToPDF } from '../utils/pdfExporter.js';
 import { exportJson } from '../utils/exportJson.js';
 
 export function RepoInfoCard({ data, onShareSuccess }) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   if (!data) return null;
 
   const calculateAgeText = (createdAt) => {
@@ -78,6 +80,12 @@ export function RepoInfoCard({ data, onShareSuccess }) {
     }
   };
 
+  const handleViewTimeline = () => {
+    // Extrai owner e repo do fullName (ex: "facebook/react")
+    const [owner, repo] = data.fullName.split('/');
+    navigate(`/timeline/${owner}/${repo}`);
+  };
+
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 animate-fade-in relative z-10">
 
@@ -115,6 +123,16 @@ export function RepoInfoCard({ data, onShareSuccess }) {
           )}
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handleViewTimeline}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg border border-indigo-600 hover:border-indigo-700 focus:ring-4 focus:ring-indigo-300 transition-colors"
+            title={t('timeline.viewButton')}
+          >
+            <svg aria-hidden="true" className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+            </svg>
+            {t('timeline.viewButton')}
+          </button>
           <button
             onClick={handleShare}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg border border-purple-600 hover:border-purple-700 focus:ring-4 focus:ring-purple-300 transition-colors"

@@ -244,5 +244,28 @@
     "button": {
       "close": "Got it"
     }
+  },
+  "timeline": {
+    "title": "Time Machine",
+    "subtitle": "Historical evolution of {{repo}}",
+    "viewButton": "View Evolution",
+    "backButton": "Back to Dashboard",
+    "loading": "Loading history...",
+    "chartTitle": "Metrics Evolution Over Time",
+    "dataPoints": "{{count}} recorded analyses",
+    "metrics": {
+      "stars": "Stars",
+      "forks": "Forks",
+      "subscribers": "Watchers"
+    },
+    "summary": {
+      "firstAnalysis": "First Analysis",
+      "latestAnalysis": "Latest Analysis",
+      "totalGrowth": "Total Growth"
+    },
+    "error": {
+      "title": "Error Loading History",
+      "noData": "No history found for this repository. Perform an analysis first!"
+    }
   }
 }

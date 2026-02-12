@@ -244,5 +244,28 @@
     "button": {
       "close": "Entendi"
     }
+  },
+  "timeline": {
+    "title": "Time Machine",
+    "subtitle": "Evolução histórica de {{repo}}",
+    "viewButton": "Ver Evolução",
+    "backButton": "Voltar ao Dashboard",
+    "loading": "Carregando histórico...",
+    "chartTitle": "Evolução de Métricas ao Longo do Tempo",
+    "dataPoints": "{{count}} análises registradas",
+    "metrics": {
+      "stars": "Stars",
+      "forks": "Forks",
+      "subscribers": "Watchers"
+    },
+    "summary": {
+      "firstAnalysis": "Primeira Análise",
+      "latestAnalysis": "Última Análise",
+      "totalGrowth": "Crescimento Total"
+    },
+    "error": {
+      "title": "Erro ao Carregar Histórico",
+      "noData": "Nenhum histórico encontrado para este repositório. Faça uma análise primeiro!"
+    }
   }
 }

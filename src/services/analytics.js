@@ -126,6 +126,27 @@ const analytics = {
   trackExport() {
     ReactGA.event({ category: "Engagement", action: "Download PDF" });
   },
+
+  async getRepoHistory(repoName) {
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      return null;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('get_repo_history', {
+        p_repo_name: repoName
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.warn('[Analytics] Failed to get repo history:', error.message);
+      return null;
+    }
+  },
 };
 
 export default analytics;
