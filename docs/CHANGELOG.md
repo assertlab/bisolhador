@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.0] - 2026-02-12
+
+### 🎉 Major Feature: Time Machine (Histórico de Evolução)
+- **Visualização Temporal de Métricas**: Nova página `/timeline/:owner/:repo` para visualizar a evolução histórica de repositórios através de gráficos de linha interativos.
+- **Gráficos de Evolução**: Gráficos Chart.js mostrando evolução de Stars, Forks e Watchers ao longo do tempo com dados extraídos de snapshots históricos.
+- **Supabase RPC**: Nova função `get_repo_history(p_repo_name)` para buscar histórico completo de análises ordenadas cronologicamente.
+- **UI Enhancements**: Botão "📈 Ver Evolução" adicionado ao RepoInfoCard para acesso direto à timeline do repositório.
+- **Cards de Resumo**: Visualização de primeira análise, última análise e crescimento total de stars.
+- **Internacionalização Completa**: Todas as strings da nova feature traduzidas em PT-BR e EN-US.
+
+### 🛠️ Backend
+- **Nova RPC**: `get_repo_history` com segurança `SECURITY DEFINER` e `SET search_path = public`.
+- **Serviço Analytics**: Método `getRepoHistory(repoName)` adicionado para consumir a nova RPC.
+
+### 🎨 UX/UI
+- **Nova Rota**: `/timeline/:owner/:repo` integrada ao React Router.
+- **Estado de Loading/Error**: Tratamento robusto de estados de carregamento e erro com feedback visual claro.
+- **Dark Mode Support**: Tema escuro totalmente suportado nos novos gráficos através do hook `useChartTheme`.
+- **Botão de Navegação**: Botão "Voltar ao Dashboard" para navegação intuitiva.
+
+### 📊 Data Visualization
+- **Line Charts**: Gráficos de linha com preenchimento gradiente e tensão suavizada (0.4).
+- **Tooltips Interativos**: Tooltips detalhados mostrando valores de múltiplas métricas por data.
+- **Cores Semânticas**: Dourado (#FFD700) para Stars, Azul (#3B82F6) para Forks, Verde (#10B981) para Watchers.
+
+---
+
 ## [2.8.3] - 2026-01-20
 
 ### Fix (Navigation): Header State Management

@@ -6,15 +6,16 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## 🔮 O Futuro (Próximas Versões)
 
-### 🔭 v3.0.0 - Time Machine (Planejado)
+### 🔭 v3.0.0 - Time Machine ✅
 *Nota: A infraestrutura de backend (snapshots históricos) foi antecipada na v2.7.2, permitindo foco na experiência temporal.*
 - [ ] **Resiliência de Analytics:** Implementar lógica de Retry com Exponential Backoff para o serviço de analytics (atual: fire-and-forget).
 - [ ] **UX de Falhas Parciais:** Melhorar feedback visual no Dashboard quando githubService retorna dados parciais (atual: silencia erro e retorna array vazio).
-- [ ] **Timeline Histórica:** Visualização temporal de métricas com slider de datas baseado nos snapshots armazenados.
-- [ ] **Comparador de Repositórios:** Visualização "Split View" para comparar dois projetos lado a lado.
+- [x] **Timeline Histórica (Time Machine):** Visualização temporal de métricas através de gráficos de evolução baseados nos snapshots armazenados (Stars, Forks, Watchers). Implementado com página dedicada `/timeline/:owner/:repo` e botão "Ver Evolução" no RepoInfoCard.
+
+### 🎯 v3.1.0+ - Próximas Iterações (Planejado)
+- [ ] **Comparação de Repositórios:** Suporte a múltiplos repositórios (até 10) simultâneos na Timeline, com gráficos de linhas comparativos por métrica (Stars, Forks, etc). Seleção via multi-select ou chips.
 - [ ] **Gamificação:** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter").
-- [ ] **Painel Público de Repositórios Mais Buscados (Leaderboard):** Ranking público baseado em dados do Supabase.
-- [ ] **Exportação Avançada:** JSON/CSV além do PDF.
+- [ ] **Exportação Avançada:** CSV além do PDF/JSON existente.
 
 ---
 

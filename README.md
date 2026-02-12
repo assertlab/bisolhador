@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v2.8.3
+# 🦈 Bisolhador Dashboard v3.0.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -11,6 +11,7 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **👥 Bus Factor**: Análise de risco de dependência de contribuidores
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
 - **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução
+- **📈 Time Machine (Histórico de Evolução)**: Visualize a evolução temporal de qualquer repositório através de gráficos interativos. Acompanhe o crescimento de Stars, Forks e Watchers ao longo do tempo com dados baseados em snapshots históricos
 - **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca, com data/hora da coleta sempre visível
 - **🌍 Suporte Global a Fusos Horários**: As buscas por data respeitam automaticamente o fuso horário do navegador do usuário
 - **💾 Persistência Automática**: O histórico é salvo automaticamente ao carregar a análise, garantindo integridade dos dados
@@ -23,7 +24,14 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **♿ Acessibilidade (WCAG AA)**: Semântica de tabelas, aria-label/aria-hidden em ícones, suporte a leitores de tela
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
-## 🔄 Últimas Atualizações (v2.8.x)
+## 🔄 Últimas Atualizações
+
+### v3.0.0 - Time Machine (Histórico de Evolução)
+- **📈 Visualização Temporal**: Nova página Timeline para visualizar evolução histórica de repositórios através de gráficos interativos
+- **📊 Gráficos de Evolução**: Line charts mostrando crescimento de Stars, Forks e Watchers ao longo do tempo
+- **🔧 Backend RPC**: Nova função Supabase `get_repo_history` para buscar snapshots históricos
+- **🎨 UI/UX**: Botão "Ver Evolução" no card do repositório com cards de resumo (primeira análise, última análise, crescimento total)
+- **🌐 i18n Completa**: Todas as strings traduzidas em PT-BR e EN-US
 
 ### v2.8.3 - Correções de UI/UX e Internacionalização Completa
 - **🎨 UI/UX Polished**: Correções de navegação global, modal states unificado entre todas as telas
