@@ -1,14 +1,15 @@
 {
   "header": {
     "title": "Bisolhador",
-    "version": "v3.0.0",
+    "version": "v3.1.0",
     "helpTitle": "How to use",
     "settingsTitle": "Configure GitHub Token",
     "downloadTitle": "Download report as PDF",
     "downloadButton": "Download Report",
     "nav": {
       "search": "Search",
-      "ranking": "Ranking"
+      "ranking": "Ranking",
+      "benchmark": "Benchmark"
     }
   },
   "search": {
@@ -257,6 +258,7 @@
       "label": "Period:",
       "7d": "7 days",
       "30d": "30 days",
+      "60d": "60 days",
       "90d": "90 days",
       "all": "All history"
     },
@@ -273,6 +275,47 @@
     "error": {
       "title": "Error Loading History",
       "noData": "No history found for this repository. Perform an analysis first!"
+    }
+  },
+  "benchmark": {
+    "title": "Repository Benchmark",
+    "subtitle": "Compare up to 10 repositories simultaneously and visualize metrics evolution",
+    "searchLabel": "Add repository",
+    "searchPlaceholder": "Ex: facebook/react, microsoft/vscode...",
+    "addButton": "Add",
+    "reposCount": "repositories",
+    "selectedRepos": "Selected Repositories",
+    "emptyTitle": "No repository selected",
+    "emptyDescription": "Add repositories using the search bar above to start comparing metrics",
+    "visualizationTitle": "Metrics Comparison",
+    "chartPlaceholder": "Comparison chart",
+    "comingSoon": "Coming soon",
+    "loading": "Loading repository data...",
+    "loadedRepos": "Loaded Repositories",
+    "partialError": "{{count}} repository(ies) without history. Analyze them first on the search page.",
+    "loadingCharts": "Loading charts...",
+    "evolutionChart": "Evolution of",
+    "comparisonChart": "Metrics Comparison",
+    "healthComparison": "Health Score",
+    "languageDistribution": "Languages",
+    "categoryPopularity": "Popularity",
+    "categoryVelocity": "Velocity",
+    "categoryQuality": "Quality",
+    "busFactorRisk": "Bus Factor Risk",
+    "busFactorDescription": "Work concentration on top contributor. Higher values indicate more risk.",
+    "detailTable": "Comparative Table",
+    "tableRepo": "Repository",
+    "leadTimeDays": "Lead Time (days)",
+    "riskLow": "Low",
+    "riskModerate": "Moderate",
+    "riskCritical": "Critical",
+    "filters": {
+      "label": "Period:",
+      "7d": "7 days",
+      "30d": "30 days",
+      "60d": "60 days",
+      "90d": "90 days",
+      "all": "All history"
     }
   }
 }

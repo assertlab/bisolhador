@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.1.0] - 2026-02-13
+
+### 🎉 Major Feature: Benchmark Multi-Repo
+- **Página Benchmark (`/benchmark`)**: Comparação simultânea de até 10 repositórios com seleção via chips coloridos e remoção individual.
+- **Gráficos de Evolução Comparativa**: Line charts com eixo temporal (`chartjs-adapter-date-fns`) mostrando evolução de Stars por repositório.
+- **Gráficos de Comparação por Categoria**: Bar charts agrupados por Popularidade (Stars, Forks), Velocidade (Lead Time, Code Churn) e Qualidade (Health Score, Divergência).
+- **Tabela Comparativa**: Tabela detalhada com Health Score, Lead Time, Divergência, Code Churn e classificação de risco Bus Factor.
+- **Hook `useBenchmarkRepos`**: Busca paralela de dados via TanStack Query com `useQueries`, parse de `full_report` e extração de histórico completo.
+
+### ⏱️ Filtros Temporais Unificados (Time Range)
+- **Benchmark Filters**: Sistema de filtros (7d, 30d, 60d, 90d, todo histórico) acima dos gráficos do Benchmark. Default: 30d para normalizar visualização inicial de repos com datas de início diferentes.
+- **Timeline 60d**: Novo filtro de 60 dias adicionado à página Timeline, expandindo as opções existentes.
+- **Filtragem por `created_at`**: Dados filtrados via `useMemo` antes de serem passados aos componentes de chart, mantendo apenas registros dentro da janela temporal selecionada.
+
+### 🌐 Internacionalização
+- **Benchmark i18n**: Todas as strings do Benchmark traduzidas em PT-BR e EN-US (título, subtítulo, filtros, categorias, tabela, estados vazios/erro).
+- **Filtro 60d**: Labels "60 dias" (PT) / "60 days" (EN) adicionados em `timeline.filters` e `benchmark.filters`.
+
+### 🎨 UI/UX
+- **Segmented Control Filters**: Botões de período com estilo consistente dark mode (mesmo padrão da Timeline).
+- **Repo Chips**: Tags de seleção com cor identificadora, nome e botão de remoção.
+- **Lazy Loading**: Charts do Benchmark carregados via `React.lazy` + `Suspense`.
+
+---
+
 ## [3.0.1] - 2026-02-13
 
 ### 🔒 Security Hotfix

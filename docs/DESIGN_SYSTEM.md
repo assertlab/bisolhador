@@ -1,4 +1,4 @@
-# Bisolhador Design System (v2.1)
+# Bisolhador Design System (v3.1)
 
 ## 1. Filosofia
 
@@ -32,10 +32,37 @@ Todos os cards seguem o padrão:
 
 ### Gráficos (Charts)
 
-  - **Biblioteca:** `react-chartjs-2` (Chart.js wrapper para React)
+  - **Biblioteca:** `react-chartjs-2` (Chart.js v4 wrapper para React)
   - **Configuração:** `responsive: true`, `maintainAspectRatio: false`
   - **Cores:** Ocean (#0ea5e9) para dados principais
   - **Smart Trim:** Para projetos jovens, mostrar apenas período relevante
+
+### Data Visualization (Benchmark)
+
+  - **Biblioteca:** Chart.js v4 com `chartjs-adapter-date-fns` para eixos temporais
+  - **Evolution Charts:** Line charts com `type: 'time'` no eixo X para séries temporais comparativas
+  - **Comparison Charts:** Bar charts agrupados por categoria (Popularidade, Velocidade, Qualidade)
+  - **Cores por Série:** Geradas deterministicamente via golden angle (`hue = seed * 137.508 % 360`) em HSL com saturação 70% e luminosidade 50%, garantindo distinção visual entre até 10 repositórios
+  - **Transparência:** Backgrounds usam cor da série + `'20'` (hex alpha) para preenchimento suave
+  - **Tema Adaptável:** Hook `useChartTheme` fornece `textColor`, `gridColor`, `tooltipBg`, `tooltipText` para dark/light mode
+
+### Time Filters (Filtros de Período)
+
+  - **Componente:** Inline button group com estilo segmented control
+  - **Opções:** `7d`, `30d`, `60d`, `90d`, `all`
+  - **Container:** `inline-flex rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-1`
+  - **Botão Ativo:** `bg-white dark:bg-slate-800 text-shark dark:text-white shadow-sm`
+  - **Botão Inativo:** `text-gray-600 dark:text-slate-400 hover:text-shark dark:hover:text-white`
+  - **Label:** Precedido por span `text-sm text-gray-600 dark:text-slate-400 font-medium` com texto i18n ("Período:" / "Period:")
+  - **Uso:** Timeline (filtra dados locais) e Benchmark (filtra history de cada repo antes de passar aos charts)
+
+### Repo Chips (Tags de Seleção)
+
+  - **Componente:** Chips de repositório selecionado com cor, nome e botão de remoção
+  - **Container:** `inline-flex items-center gap-2 bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-full px-3 py-1.5 text-sm`
+  - **Color Dot:** `w-3 h-3 rounded-full` com `backgroundColor` dinâmico da cor do repo
+  - **Nome:** `font-medium text-gray-700 dark:text-slate-200`
+  - **Botão Remover:** `text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors` com ícone X (SVG)
 
 ### Tooltips
 
@@ -112,9 +139,9 @@ src/
 
 ### Otimizações
 - **Vite HMR** para desenvolvimento rápido
-- **React.lazy()** não utilizado (app pequeno)
-- **Memoization** não necessária atualmente
-- **Bundle splitting** automático do Vite
+- **React.lazy() + Suspense** para code splitting de charts (CommitActivityChart, TechStackChart, BenchmarkEvolutionChart, BenchmarkComparisonChart)
+- **useMemo** para filtragem de dados temporais (Timeline, Benchmark)
+- **Manual chunks** no Vite: vendor (react), charts-vendor (chart.js), pdf-vendor (html2pdf)
 
 ### Build
 - **ESLint** integrado para qualidade de código

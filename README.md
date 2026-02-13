@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.0.0
+# 🦈 Bisolhador Dashboard v3.1.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -11,7 +11,8 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **👥 Bus Factor**: Análise de risco de dependência de contribuidores
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
 - **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução
-- **📈 Time Machine (Histórico de Evolução)**: Visualize a evolução temporal de qualquer repositório através de gráficos interativos com filtros de período (7d, 30d, 90d, todo histórico). Acompanhe o crescimento de Stars, Forks e Watchers ao longo do tempo com dados baseados em snapshots históricos
+- **📊 Benchmark Multi-Repo**: Compare a evolução de até 10 repositórios lado a lado com gráficos comparativos, filtros temporais (7d, 30d, 60d, 90d, todo histórico) e tabela de métricas detalhada
+- **📈 Time Machine (Histórico de Evolução)**: Visualize a evolução temporal de qualquer repositório através de gráficos interativos com filtros de período (7d, 30d, 60d, 90d, todo histórico). Acompanhe o crescimento de Stars, Forks e Watchers ao longo do tempo com dados baseados em snapshots históricos
 - **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca, com data/hora da coleta sempre visível
 - **🌍 Suporte Global a Fusos Horários**: As buscas por data respeitam automaticamente o fuso horário do navegador do usuário
 - **💾 Persistência Automática**: O histórico é salvo automaticamente ao carregar a análise, garantindo integridade dos dados
@@ -25,6 +26,11 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.1.0 - Benchmark Edition
+- **📊 Benchmark Multi-Repo**: Nova página `/benchmark` para comparação simultânea de até 10 repositórios com gráficos de evolução temporal e tabela comparativa
+- **⏱️ Filtros Temporais Unificados**: Sistema de filtros (7d, 30d, 60d, 90d, todo histórico) no Benchmark e na Timeline, normalizando visualizações para repositórios com datas de início diferentes
+- **📈 Gráficos de Comparação**: Evolution charts (Chart.js time-series) e comparison bar charts por categoria (Popularidade, Velocidade, Qualidade)
 
 ### v3.0.1 - Security Hotfix & Time Filters
 - **🔒 Security**: Atualização crítica de dependências (html2pdf.js, jspdf) para mitigar vulnerabilidades CVE

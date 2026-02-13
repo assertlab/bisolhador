@@ -1,14 +1,15 @@
 {
   "header": {
     "title": "Bisolhador",
-    "version": "v3.0.0",
+    "version": "v3.1.0",
     "helpTitle": "Como usar",
     "settingsTitle": "Configurar Token GitHub",
     "downloadTitle": "Baixar relatório em PDF",
     "downloadButton": "Baixar Relatório",
     "nav": {
       "search": "Buscar",
-      "ranking": "Ranking"
+      "ranking": "Ranking",
+      "benchmark": "Benchmark"
     }
   },
   "search": {
@@ -257,6 +258,7 @@
       "label": "Período:",
       "7d": "7 dias",
       "30d": "30 dias",
+      "60d": "60 dias",
       "90d": "90 dias",
       "all": "Todo histórico"
     },
@@ -273,6 +275,47 @@
     "error": {
       "title": "Erro ao Carregar Histórico",
       "noData": "Nenhum histórico encontrado para este repositório. Faça uma análise primeiro!"
+    }
+  },
+  "benchmark": {
+    "title": "Benchmark de Repositórios",
+    "subtitle": "Compare até 10 repositórios simultaneamente e visualize a evolução de métricas",
+    "searchLabel": "Adicionar repositório",
+    "searchPlaceholder": "Ex: facebook/react, microsoft/vscode...",
+    "addButton": "Adicionar",
+    "reposCount": "repositórios",
+    "selectedRepos": "Repositórios Selecionados",
+    "emptyTitle": "Nenhum repositório selecionado",
+    "emptyDescription": "Adicione repositórios usando a barra de busca acima para começar a comparar métricas",
+    "visualizationTitle": "Comparação de Métricas",
+    "chartPlaceholder": "Gráfico de comparação",
+    "comingSoon": "Em breve",
+    "loading": "Carregando dados dos repositórios...",
+    "loadedRepos": "Repositórios Carregados",
+    "partialError": "{{count}} repositório(s) sem histórico. Faça uma análise primeiro na página de busca.",
+    "loadingCharts": "Carregando gráficos...",
+    "evolutionChart": "Evolução de",
+    "comparisonChart": "Comparação de Métricas",
+    "healthComparison": "Health Score",
+    "languageDistribution": "Linguagens",
+    "categoryPopularity": "Popularidade",
+    "categoryVelocity": "Velocidade",
+    "categoryQuality": "Qualidade",
+    "busFactorRisk": "Risco Bus Factor",
+    "busFactorDescription": "Concentração de trabalho no principal contribuidor. Quanto maior, mais arriscado.",
+    "detailTable": "Tabela Comparativa",
+    "tableRepo": "Repositório",
+    "leadTimeDays": "Lead Time (dias)",
+    "riskLow": "Baixo",
+    "riskModerate": "Moderado",
+    "riskCritical": "Crítico",
+    "filters": {
+      "label": "Período:",
+      "7d": "7 dias",
+      "30d": "30 dias",
+      "60d": "60 dias",
+      "90d": "90 dias",
+      "all": "Todo histórico"
     }
   }
 }

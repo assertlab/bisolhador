@@ -14,6 +14,7 @@ import { SkeletonDashboard } from './components/skeletons/SkeletonDashboard.jsx'
 import { useRepository } from './hooks/useRepository.js';
 import { Ranking } from './pages/Ranking.jsx';
 import { Timeline } from './pages/Timeline.jsx';
+import { Benchmark } from './pages/Benchmark.jsx';
 import analytics from './services/analytics.js';
 
 
@@ -498,6 +499,7 @@ function App() {
         <Route path="/" element={<Dashboard isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
         <Route path="/ranking" element={<Ranking isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
         <Route path="/timeline/:owner/:repo" element={<Timeline isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+        <Route path="/benchmark" element={<Benchmark isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
       </Routes>
     </Router>
   );

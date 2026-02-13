@@ -1,4 +1,4 @@
-# Manual de Instruções para IAs: Bisolhador Dashboard v3.0.1
+# Manual de Instruções para IAs: Bisolhador Dashboard v3.1.0
 
 ## 1. Resumo do Projeto
 
@@ -22,6 +22,7 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - Health Score baseado em governança comunitária.
 - Análise de hábitos de trabalho e maturidade de engenharia.
 - Contribuição de dados.
+- **v3.1.0**: Benchmark Multi-Repo - Comparação simultânea de até 10 repositórios com gráficos de evolução, filtros temporais unificados (7d, 30d, 60d, 90d, todo histórico) e tabela comparativa.
 - **v3.0.1**: Security Hotfix (html2pdf.js, jspdf) e Filtros Temporais na Timeline (7d, 30d, 90d, todo histórico).
 - **v3.0.0**: Time Machine - Visualização temporal de métricas com gráficos de evolução (Stars, Forks, Watchers) através de snapshots históricos.
 - **v2.7.3**: Busca Semântica Histórica com URLs legíveis (`/?repo=owner/project&date=YYYY-MM-DD`) e badge temporal.
@@ -33,7 +34,8 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - **v2.1.0**: Export PDF funcional, gráficos inteligentes com smart trim, UX aprimorada com alertas inline.
 
 ### Estado Atual das Features
-- **Time Machine (v3.0.0-v3.0.1)**: Página dedicada `/timeline/:owner/:repo` com gráficos de evolução temporal e filtros de período (7d, 30d, 90d, todo histórico) para análise focada.
+- **Benchmark Multi-Repo (v3.1.0)**: Página dedicada `/benchmark` para comparação simultânea de até 10 repositórios com gráficos de evolução temporal (Chart.js time-series), bar charts comparativos por categoria (Popularidade, Velocidade, Qualidade), tabela comparativa detalhada, Health Score bars e análise de Bus Factor. Filtros temporais (7d, 30d, 60d, 90d, todo histórico) normalizam visualizações para repos com datas de início diferentes. Hook `useBenchmarkRepos` busca dados em paralelo via TanStack Query.
+- **Time Machine (v3.0.0-v3.0.1)**: Página dedicada `/timeline/:owner/:repo` com gráficos de evolução temporal e filtros de período (7d, 30d, 60d, 90d, todo histórico) para análise focada.
 - **Compartilhamento de Resultados**: Permalinks com Deep Linking (`/?q=owner/repo`) e Snapshots históricos (`/?id=123`) via RPC segura no Supabase.
 - **Data Mining**: Botão de exportação JSON com metadados de proveniência (versão/data) para auditoria e análise externa.
 - **Inteligência Coletiva**: Leaderboard público alimentado por logs imutáveis no Supabase.
@@ -62,7 +64,9 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 ### Estrutura de Módulos
 O código está organizado em módulos ES6 modernos em `src/`, com responsabilidades claras:
 - `src/components/`: UI Components (StatCard, Header, Charts, etc.)
-- `src/hooks/`: Lógica de Estado (useRepository - gerenciamento de dados)
+- `src/components/charts/`: Chart Components (BenchmarkEvolutionChart, BenchmarkComparisonChart)
+- `src/hooks/`: Lógica de Estado (useRepository, useBenchmarkRepos, useChartTheme)
+- `src/pages/`: Páginas dedicadas (Timeline, Benchmark)
 - `src/services/`: Chamadas de API (githubService - integração GitHub)
 - `src/utils/`: Utilitários (pdfExporter, formatters, analyzers)
 

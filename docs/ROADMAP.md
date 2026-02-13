@@ -14,9 +14,14 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 - [ ] **Resiliência de Analytics:** Implementar lógica de Retry com Exponential Backoff para o serviço de analytics (atual: fire-and-forget).
 - [ ] **UX de Falhas Parciais:** Melhorar feedback visual no Dashboard quando githubService retorna dados parciais (atual: silencia erro e retorna array vazio).
 
-### 🎯 v3.1.0+ - Próximas Iterações (Planejado)
-- [ ] **Benchmark de Repositórios (Comparação Multi-Repo):** Suporte a múltiplos repositórios (até 10) simultâneos na Timeline, com gráficos de linhas comparativos por métrica (Stars, Forks, etc). Seleção via multi-select ou chips para análise comparativa side-by-side.
-- [ ] **Gamificação:** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter").
+### 🎯 v3.1.0 - Benchmark Edition ✅
+- [x] **Benchmark de Repositórios (Comparação Multi-Repo):** Página dedicada `/benchmark` para comparação simultânea de até 10 repositórios com gráficos de evolução temporal (Chart.js time-series), bar charts comparativos por categoria (Popularidade, Velocidade, Qualidade) e tabela comparativa detalhada. Seleção via chips com cores distintas por repo.
+- [x] **Filtros Temporais Unificados (Time Range):** Sistema de filtros (7d, 30d, 60d, 90d, todo histórico) implementado no Benchmark e expandido na Timeline (novo filtro 60d), normalizando visualizações para repositórios com datas de início diferentes.
+- [x] **Internacionalização Benchmark:** Todas as strings traduzidas em PT-BR e EN-US.
+
+### 🔭 v3.2.0+ - Próximas Iterações (Planejado)
+- [ ] **Gamificação (Badges e Conquistas):** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter", "Community Champion").
+- [ ] **Análise de Risco Avançada (Bus Factor):** Dashboard dedicado com visualizações de risco de dependência, tendências temporais e recomendações.
 - [ ] **Exportação Avançada:** CSV além do PDF/JSON existente.
 
 ---

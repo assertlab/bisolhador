@@ -70,6 +70,9 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
       case "30d":
         cutoffDate.setDate(now.getDate() - 30);
         break;
+      case "60d":
+        cutoffDate.setDate(now.getDate() - 60);
+        break;
       case "90d":
         cutoffDate.setDate(now.getDate() - 90);
         break;
@@ -320,7 +323,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                     {t("timeline.filters.label")}
                   </span>
                   <div className="inline-flex rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-1">
-                    {["7d", "30d", "90d", "all"].map((range) => (
+                    {["7d", "30d", "60d", "90d", "all"].map((range) => (
                       <button
                         key={range}
                         onClick={() => setTimeRange(range)}

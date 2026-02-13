@@ -7,10 +7,13 @@ import {
   BarElement,
   ArcElement,
   Title,
+  TimeScale,
   Tooltip,
   Legend,
-  Filler
-} from 'chart.js';
+  Filler,
+} from "chart.js";
+
+import "chartjs-adapter-date-fns";
 
 // Registra os componentes globais do Chart.js
 ChartJS.register(
@@ -23,5 +26,6 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  TimeScale,
 );
