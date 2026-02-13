@@ -107,7 +107,6 @@ export function useBenchmarkRepos(selectedRepos) {
   // Calcula estados agregados
   const isLoading = queries.some((query) => query.isLoading);
   const hasErrors = queries.some((query) => query.isError);
-  const allSuccess = queries.every((query) => query.isSuccess);
 
   // Prepara dados para gráficos (apenas repos com sucesso)
   const successfulRepos = queries
@@ -118,7 +117,6 @@ export function useBenchmarkRepos(selectedRepos) {
     queries,
     isLoading,
     hasErrors,
-    allSuccess,
     successfulRepos,
     errorCount: queries.filter((q) => q.isError).length,
   };

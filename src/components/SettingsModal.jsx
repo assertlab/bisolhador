@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getItem, setItem, removeItem } from '../utils/storage.js';
 
 export function SettingsModal({ isOpen, onClose }) {
   const { t } = useTranslation();
-  const [token, setToken] = useState(() => localStorage.getItem('github_token') || '');
+  const [token, setToken] = useState(() => getItem('github_token') || '');
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSave = () => {
     if (token.trim() === '') {
-      localStorage.removeItem('github_token');
+      removeItem('github_token');
     } else {
-      localStorage.setItem('github_token', token.trim());
+      setItem('github_token', token.trim());
     }
     setShowSuccess(true);
 

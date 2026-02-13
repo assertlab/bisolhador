@@ -1,10 +1,12 @@
 // GitHub Service - Modern ES6 Module for API calls
 // Migrated from v1-legacy/src/modules/githubAPI.js
 
+import { getItem } from '../utils/storage.js';
+
 const GITHUB_BASE_URL = 'https://api.github.com';
 
 function getHeaders() {
-    const token = localStorage.getItem('github_token');
+    const token = getItem('github_token');
     const headers = {
         'Accept': 'application/vnd.github.v3+json'
     };

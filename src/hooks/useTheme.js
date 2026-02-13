@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { getItem, setItem } from '../utils/storage.js';
 
 function useTheme() {
   const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('theme');
+    const saved = getItem('theme');
     if (saved) return saved;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
@@ -18,7 +19,7 @@ function useTheme() {
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    setItem('theme', newTheme);
   };
 
   return { theme, toggleTheme };
