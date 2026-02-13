@@ -6,6 +6,7 @@ import { Header } from "../components/Header";
 import { SettingsModal } from "../components/SettingsModal";
 import analytics from "../services/analytics.js";
 import useChartTheme from "../hooks/useChartTheme";
+import { createBaseChartOptions } from "../lib/chartDefaults";
 import { useState, useMemo } from "react";
 
 export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
@@ -83,113 +84,73 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
     return data.filter((point) => point.date >= cutoffDate);
   }, [data, timeRange]);
 
-  const chartData = filteredData
-    ? {
-        labels: filteredData.map((point) =>
-          new Intl.DateTimeFormat(i18n.language === "pt" ? "pt-BR" : "en-US", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }).format(point.date),
-        ),
-        datasets: [
-          {
-            label: t("timeline.metrics.stars"),
-            data: filteredData.map((point) => point.stars),
-            borderColor: "#FFD700",
-            backgroundColor: "rgba(255, 215, 0, 0.1)",
-            tension: 0.4,
-            fill: true,
-          },
-          {
-            label: t("timeline.metrics.forks"),
-            data: filteredData.map((point) => point.forks),
-            borderColor: "#3B82F6",
-            backgroundColor: "rgba(59, 130, 246, 0.1)",
-            tension: 0.4,
-            fill: true,
-          },
-          {
-            label: t("timeline.metrics.subscribers"),
-            data: filteredData.map((point) => point.subscribers),
-            borderColor: "#10B981",
-            backgroundColor: "rgba(16, 185, 129, 0.1)",
-            tension: 0.4,
-            fill: true,
-          },
-        ],
-      }
-    : null;
+  const chartData = useMemo(() => {
+    if (!filteredData) return null;
+    return {
+      labels: filteredData.map((point) =>
+        new Intl.DateTimeFormat(i18n.language === "pt" ? "pt-BR" : "en-US", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }).format(point.date),
+      ),
+      datasets: [
+        {
+          label: t("timeline.metrics.stars"),
+          data: filteredData.map((point) => point.stars),
+          borderColor: "#FFD700",
+          backgroundColor: "rgba(255, 215, 0, 0.1)",
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: t("timeline.metrics.forks"),
+          data: filteredData.map((point) => point.forks),
+          borderColor: "#3B82F6",
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: t("timeline.metrics.subscribers"),
+          data: filteredData.map((point) => point.subscribers),
+          borderColor: "#10B981",
+          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          tension: 0.4,
+          fill: true,
+        },
+      ],
+    };
+  }, [filteredData, i18n.language, t]);
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top",
-        labels: {
-          color: chartTheme.textColor,
-          font: {
-            size: 12,
-            family: "Inter, sans-serif",
+  const chartOptions = useMemo(
+    () =>
+      createBaseChartOptions(chartTheme, {
+        plugins: {
+          legend: {
+            labels: { font: { size: 12, family: "Inter, sans-serif" } },
           },
-          padding: 15,
-          usePointStyle: true,
-        },
-      },
-      tooltip: {
-        mode: "index",
-        intersect: false,
-        backgroundColor: chartTheme.tooltipBg,
-        titleColor: chartTheme.tooltipText,
-        bodyColor: chartTheme.tooltipText,
-        borderColor: chartTheme.gridColor,
-        borderWidth: 1,
-        padding: 12,
-        titleFont: {
-          size: 13,
-          weight: "bold",
-        },
-        bodyFont: {
-          size: 12,
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          color: chartTheme.gridColor,
-          drawBorder: false,
-        },
-        ticks: {
-          color: chartTheme.textColor,
-          font: {
-            size: 11,
-          },
-          maxRotation: 45,
-          minRotation: 45,
-        },
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: chartTheme.gridColor,
-          drawBorder: false,
-        },
-        ticks: {
-          color: chartTheme.textColor,
-          font: {
-            size: 11,
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            titleFont: { size: 13, weight: "bold" },
+            bodyFont: { size: 12 },
           },
         },
-      },
-    },
-    interaction: {
-      mode: "nearest",
-      axis: "x",
-      intersect: false,
-    },
-  };
+        scales: {
+          x: {
+            grid: { drawBorder: false },
+            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 45 },
+          },
+          y: {
+            grid: { drawBorder: false },
+            ticks: { font: { size: 11 } },
+          },
+        },
+        interaction: { mode: "nearest", axis: "x", intersect: false },
+      }),
+    [chartTheme],
+  );
 
   const handleBack = () => {
     navigate("/");

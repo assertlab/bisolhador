@@ -76,8 +76,7 @@ export default function CommitActivityChart({ data, createdAt }) {
   // Check if we have any data at all (accepts arrays with zeros)
   const hasData = processedData?.datasets?.[0]?.data !== undefined;
 
-  // Chart data e options - Memoizados para evitar re-renders desnecessários (sempre antes de early returns)
-  const chartData = processedData;
+  const chartData = useMemo(() => processedData, [processedData]);
 
   const options = useMemo(() => ({
     responsive: true,
