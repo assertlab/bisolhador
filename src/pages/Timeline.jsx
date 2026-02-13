@@ -7,6 +7,8 @@ import { SettingsModal } from "../components/SettingsModal";
 import analytics from "../services/analytics.js";
 import useChartTheme from "../hooks/useChartTheme";
 import { createBaseChartOptions } from "../lib/chartDefaults";
+import { useTimeFilter } from "../hooks/useTimeFilter";
+import { TimeRangeFilter } from "../components/TimeRangeFilter";
 import { useState, useMemo } from "react";
 
 export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
@@ -57,32 +59,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
     retry: 1,
   });
 
-  // Filtra dados baseado no timeRange selecionado
-  const filteredData = useMemo(() => {
-    if (!data || timeRange === "all") return data;
-
-    const now = new Date();
-    const cutoffDate = new Date();
-
-    switch (timeRange) {
-      case "7d":
-        cutoffDate.setDate(now.getDate() - 7);
-        break;
-      case "30d":
-        cutoffDate.setDate(now.getDate() - 30);
-        break;
-      case "60d":
-        cutoffDate.setDate(now.getDate() - 60);
-        break;
-      case "90d":
-        cutoffDate.setDate(now.getDate() - 90);
-        break;
-      default:
-        return data;
-    }
-
-    return data.filter((point) => point.date >= cutoffDate);
-  }, [data, timeRange]);
+  const filteredData = useTimeFilter(data, timeRange);
 
   const chartData = useMemo(() => {
     if (!filteredData) return null;
@@ -279,26 +256,11 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                 </h2>
 
                 {/* Time Range Filter */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 dark:text-slate-400 font-medium">
-                    {t("timeline.filters.label")}
-                  </span>
-                  <div className="inline-flex rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-1">
-                    {["7d", "30d", "60d", "90d", "all"].map((range) => (
-                      <button
-                        key={range}
-                        onClick={() => setTimeRange(range)}
-                        className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                          timeRange === range
-                            ? "bg-white dark:bg-slate-800 text-shark dark:text-white shadow-sm"
-                            : "text-gray-600 dark:text-slate-400 hover:text-shark dark:hover:text-white"
-                        }`}
-                      >
-                        {t(`timeline.filters.${range}`)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <TimeRangeFilter
+                  currentRange={timeRange}
+                  onRangeChange={setTimeRange}
+                  i18nPrefix="timeline"
+                />
               </div>
 
               <div style={{ height: "400px" }}>

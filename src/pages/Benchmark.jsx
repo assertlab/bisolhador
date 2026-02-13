@@ -1,8 +1,10 @@
-import { useState, useMemo, lazy, Suspense } from 'react';
+import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
 import { useBenchmarkRepos } from '../hooks/useBenchmarkRepos';
+import { useTimeFilter } from '../hooks/useTimeFilter';
+import { TimeRangeFilter } from '../components/TimeRangeFilter';
 
 // Lazy load chart components
 const BenchmarkEvolutionChart = lazy(() => import('../components/charts/BenchmarkEvolutionChart'));
@@ -27,36 +29,33 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
   // Fetch data for all selected repos
   const { queries, isLoading, hasErrors, successfulRepos, errorCount } = useBenchmarkRepos(selectedRepos);
 
-  // Filtra o histórico de cada repo com base no timeRange selecionado
+  // Flatten all history points to filter with useTimeFilter, then regroup per repo
+  const allHistory = useMemo(() => {
+    if (!successfulRepos || successfulRepos.length === 0) return [];
+    return successfulRepos.flatMap((repo) =>
+      repo.history.map((point) => ({ ...point, _repoFullName: repo.fullName }))
+    );
+  }, [successfulRepos]);
+
+  const dateAccessor = useCallback((d) => d.date, []);
+  const filteredHistory = useTimeFilter(allHistory, timeRange, dateAccessor);
+
   const filteredRepos = useMemo(() => {
     if (!successfulRepos || successfulRepos.length === 0) return successfulRepos;
     if (timeRange === 'all') return successfulRepos;
 
-    const now = new Date();
-    const cutoffDate = new Date();
-
-    switch (timeRange) {
-      case '7d':
-        cutoffDate.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        cutoffDate.setDate(now.getDate() - 30);
-        break;
-      case '60d':
-        cutoffDate.setDate(now.getDate() - 60);
-        break;
-      case '90d':
-        cutoffDate.setDate(now.getDate() - 90);
-        break;
-      default:
-        return successfulRepos;
+    const historyByRepo = new Map();
+    for (const point of filteredHistory) {
+      const key = point._repoFullName;
+      if (!historyByRepo.has(key)) historyByRepo.set(key, []);
+      historyByRepo.get(key).push(point);
     }
 
     return successfulRepos.map((repo) => ({
       ...repo,
-      history: repo.history.filter((point) => point.date >= cutoffDate),
+      history: historyByRepo.get(repo.fullName) || [],
     }));
-  }, [successfulRepos, timeRange]);
+  }, [successfulRepos, filteredHistory, timeRange]);
 
   const handleAddRepo = (e) => {
     e.preventDefault();
@@ -311,26 +310,11 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                   </h3>
 
                   {/* Time Range Filter */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 dark:text-slate-400 font-medium">
-                      {t('benchmark.filters.label')}
-                    </span>
-                    <div className="inline-flex rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-1">
-                      {['7d', '30d', '60d', '90d', 'all'].map((range) => (
-                        <button
-                          key={range}
-                          onClick={() => setTimeRange(range)}
-                          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                            timeRange === range
-                              ? 'bg-white dark:bg-slate-800 text-shark dark:text-white shadow-sm'
-                              : 'text-gray-600 dark:text-slate-400 hover:text-shark dark:hover:text-white'
-                          }`}
-                        >
-                          {t(`benchmark.filters.${range}`)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <TimeRangeFilter
+                    currentRange={timeRange}
+                    onRangeChange={setTimeRange}
+                    i18nPrefix="benchmark"
+                  />
                 </div>
 
                 <Suspense
