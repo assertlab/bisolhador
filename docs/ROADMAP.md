@@ -6,14 +6,16 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## 🔮 O Futuro (Próximas Versões)
 
-### 🔭 v3.0.0 - Time Machine ✅
+### 🔭 v3.0.0 - v3.0.1 - Time Machine ✅
 *Nota: A infraestrutura de backend (snapshots históricos) foi antecipada na v2.7.2, permitindo foco na experiência temporal.*
+- [x] **Timeline Histórica (Time Machine):** Visualização temporal de métricas através de gráficos de evolução baseados nos snapshots armazenados (Stars, Forks, Watchers). Implementado com página dedicada `/timeline/:owner/:repo` e botão "Ver Evolução" no RepoInfoCard.
+- [x] **Filtros Temporais:** Controles de período (7d, 30d, 90d, todo histórico) para análise focada de intervalos específicos na Timeline.
+- [x] **Security Hotfix (v3.0.1):** Atualização crítica de dependências (html2pdf.js, jspdf) para mitigar vulnerabilidades CVE.
 - [ ] **Resiliência de Analytics:** Implementar lógica de Retry com Exponential Backoff para o serviço de analytics (atual: fire-and-forget).
 - [ ] **UX de Falhas Parciais:** Melhorar feedback visual no Dashboard quando githubService retorna dados parciais (atual: silencia erro e retorna array vazio).
-- [x] **Timeline Histórica (Time Machine):** Visualização temporal de métricas através de gráficos de evolução baseados nos snapshots armazenados (Stars, Forks, Watchers). Implementado com página dedicada `/timeline/:owner/:repo` e botão "Ver Evolução" no RepoInfoCard.
 
 ### 🎯 v3.1.0+ - Próximas Iterações (Planejado)
-- [ ] **Comparação de Repositórios:** Suporte a múltiplos repositórios (até 10) simultâneos na Timeline, com gráficos de linhas comparativos por métrica (Stars, Forks, etc). Seleção via multi-select ou chips.
+- [ ] **Benchmark de Repositórios (Comparação Multi-Repo):** Suporte a múltiplos repositórios (até 10) simultâneos na Timeline, com gráficos de linhas comparativos por métrica (Stars, Forks, etc). Seleção via multi-select ou chips para análise comparativa side-by-side.
 - [ ] **Gamificação:** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter").
 - [ ] **Exportação Avançada:** CSV além do PDF/JSON existente.
 

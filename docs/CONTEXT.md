@@ -1,8 +1,8 @@
-# Manual de Instruções para IAs: Bisolhador Dashboard v2.8.2
+# Manual de Instruções para IAs: Bisolhador Dashboard v3.0.1
 
 ## 1. Resumo do Projeto
 
-O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código aberto, desenvolvido como um Single Page Application (SPA) em React. Ele transforma dados de repositórios GitHub em insights poderosos para apoiar o ensino de Engenharia de Software, focando especificamente em métricas educacionais e práticas profissionais. O projeto agora possui telemetria via Google Analytics 4 para monitoramento de crescimento e uso.
+O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código aberto, desenvolvido como um Single Page Application (SPA) em React. Ele transforma dados de repositórios GitHub em insights poderosos para apoiar o ensino de Engenharia de Software, focando especificamente em métricas educacionais e práticas profissionais. O projeto possui análise temporal (Time Machine) com histórico de evolução de métricas e telemetria via Google Analytics 4 para monitoramento de crescimento e uso.
 
 ### Problema que Resolve
 - Fornece métricas visuais e quantitativas de repositórios GitHub para estudantes e professores.
@@ -22,6 +22,8 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - Health Score baseado em governança comunitária.
 - Análise de hábitos de trabalho e maturidade de engenharia.
 - Contribuição de dados.
+- **v3.0.1**: Security Hotfix (html2pdf.js, jspdf) e Filtros Temporais na Timeline (7d, 30d, 90d, todo histórico).
+- **v3.0.0**: Time Machine - Visualização temporal de métricas com gráficos de evolução (Stars, Forks, Watchers) através de snapshots históricos.
 - **v2.7.3**: Busca Semântica Histórica com URLs legíveis (`/?repo=owner/project&date=YYYY-MM-DD`) e badge temporal.
 - **v2.7.2**: Deep Linking & Snapshots Permanentes (`/?q=owner/repo` e `/?id=123`) com compartilhamento seguro.
 - **v2.6.0**: Leaderboard público alimentado por logs imutáveis no Supabase.
@@ -31,12 +33,13 @@ O **Bisolhador** é um Dashboard de Análise de Repositórios GitHub de código 
 - **v2.1.0**: Export PDF funcional, gráficos inteligentes com smart trim, UX aprimorada com alertas inline.
 
 ### Estado Atual das Features
+- **Time Machine (v3.0.0-v3.0.1)**: Página dedicada `/timeline/:owner/:repo` com gráficos de evolução temporal e filtros de período (7d, 30d, 90d, todo histórico) para análise focada.
 - **Compartilhamento de Resultados**: Permalinks com Deep Linking (`/?q=owner/repo`) e Snapshots históricos (`/?id=123`) via RPC segura no Supabase.
 - **Data Mining**: Botão de exportação JSON com metadados de proveniência (versão/data) para auditoria e análise externa.
 - **Inteligência Coletiva**: Leaderboard público alimentado por logs imutáveis no Supabase.
 - **Analytics Híbrido**: Supabase + GA4 implementado com bypass de AdBlock.
 - **Qualidade de Código**: Segue práticas de Clean Code com remoção de dead code, logs de debug e tratamento robusto de erros.
-- **Secure by Design**: Auditoria de segurança completa, zero vulnerabilidades conhecidas, dados sensíveis protegidos.
+- **Secure by Design**: Auditoria de segurança completa, dependências atualizadas (v3.0.1), dados sensíveis protegidos.
 
 ## 2. Arquitetura Técnica
 

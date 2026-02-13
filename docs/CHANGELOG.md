@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.1] - 2026-02-13
+
+### 🔒 Security Hotfix
+- **Dependency Updates**: Atualização crítica do `html2pdf.js` (v0.14.0) e `jspdf` para mitigar vulnerabilidades de XSS e injeção detectadas em CVEs anteriores.
+- **Security Audit**: Varredura completa de dependências para garantir segurança da cadeia de suprimentos.
+
+### ✨ Enhancements
+- **Filtros Temporais no Timeline**: Implementação de controles de período (7d, 30d, 90d, todo histórico) na página Time Machine, permitindo análise focada de intervalos específicos.
+- **UX Improvements**: Interface segmentada com botões de filtro estilizados e suporte completo a dark mode.
+
+---
+
 ## [3.0.0] - 2026-02-12
 
 ### 🎉 Major Feature: Time Machine (Histórico de Evolução)
