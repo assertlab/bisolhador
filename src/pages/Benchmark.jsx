@@ -10,6 +10,7 @@ import { BenchmarkRepoChips } from '../components/benchmark/BenchmarkRepoChips';
 import { BenchmarkHealthBars } from '../components/benchmark/BenchmarkHealthBars';
 import { BenchmarkBusFactorRisk } from '../components/benchmark/BenchmarkBusFactorRisk';
 import { BenchmarkDetailTable } from '../components/benchmark/BenchmarkDetailTable';
+import { MAX_BENCHMARK_REPOS, GOLDEN_ANGLE } from '../constants';
 
 // Lazy load chart components
 const BenchmarkEvolutionChart = lazy(() => import('../components/charts/BenchmarkEvolutionChart'));
@@ -17,7 +18,7 @@ const BenchmarkComparisonChart = lazy(() => import('../components/charts/Benchma
 
 // Utility function to generate consistent random colors
 const generateColor = (seed) => {
-  const hue = (seed * 137.508) % 360; // Golden angle approximation
+  const hue = (seed * GOLDEN_ANGLE) % 360;
   return `hsl(${hue}, 70%, 50%)`;
 };
 
@@ -27,8 +28,6 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
   const [searchInput, setSearchInput] = useState('');
   const [metricCategory, setMetricCategory] = useState('popularity');
   const [timeRange, setTimeRange] = useState('30d');
-
-  const MAX_REPOS = 10;
 
   // Fetch data for all selected repos
   const { queries, isLoading, hasErrors, successfulRepos, errorCount } = useBenchmarkRepos(selectedRepos);
@@ -68,17 +67,17 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
     if (!repoName) return;
 
     if (!repoName.includes('/')) {
-      alert('Por favor, use o formato: owner/repo');
+      alert(t('benchmark.alerts.invalidFormat', 'Por favor, use o formato: owner/repo'));
       return;
     }
 
     if (selectedRepos.some(r => r.fullName === repoName)) {
-      alert('Este repositório já foi adicionado');
+      alert(t('benchmark.alerts.alreadyAdded', 'Este repositório já foi adicionado'));
       return;
     }
 
-    if (selectedRepos.length >= MAX_REPOS) {
-      alert(`Máximo de ${MAX_REPOS} repositórios permitidos`);
+    if (selectedRepos.length >= MAX_BENCHMARK_REPOS) {
+      alert(t('benchmark.alerts.maxRepos', { count: MAX_BENCHMARK_REPOS }));
       return;
     }
 
@@ -123,7 +122,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
           {selectedRepos.length > 0 && (
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
               <span className="font-medium">
-                {selectedRepos.length} / {MAX_REPOS} {t('benchmark.reposCount', 'repositórios')}
+                {selectedRepos.length} / {MAX_BENCHMARK_REPOS} {t('benchmark.reposCount', 'repositórios')}
               </span>
             </div>
           )}

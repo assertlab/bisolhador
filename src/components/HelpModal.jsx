@@ -1,5 +1,5 @@
 
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 
 export function HelpModal({ isOpen, onClose }) {
   const { t } = useTranslation();
@@ -41,7 +41,14 @@ export function HelpModal({ isOpen, onClose }) {
             <h3 className="font-medium text-gray-900 dark:text-white mb-2">{t('help.createToken.title')}</h3>
             <ol className="text-sm text-gray-600 dark:text-slate-400 space-y-1 list-decimal list-inside">
               {t('help.createToken.steps', { returnObjects: true }).map((step, index) => (
-                <li key={index} dangerouslySetInnerHTML={{ __html: step }} />
+                <li key={index}>
+                  <Trans
+                    i18nKey={`help.createToken.steps.${index}`}
+                    components={{
+                      link: <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-ocean hover:underline" />
+                    }}
+                  />
+                </li>
               ))}
             </ol>
           </div>

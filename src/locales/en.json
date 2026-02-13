@@ -128,11 +128,11 @@
       },
       "warning": {
         "title": "Moderate Bus Factor",
-        "message": "User <strong>{{contributor}}</strong> concentrates <strong>{{percentage}}%</strong> of the work. Consider diversifying contributions."
+        "message": "User <bold>{{contributor}}</bold> concentrates <bold>{{percentage}}%</bold> of the work. Consider diversifying contributions."
       },
       "critical": {
         "title": "Critical Bus Factor",
-        "message": "User <strong>{{contributor}}</strong> concentrates <strong>{{percentage}}%</strong> of the work. High dependency risk."
+        "message": "User <bold>{{contributor}}</bold> concentrates <bold>{{percentage}}%</bold> of the work. High dependency risk."
       }
     }
   },
@@ -225,7 +225,7 @@
     "createToken": {
       "title": "How to create a Token",
       "steps": [
-        "Access <a href=\"https://github.com/settings/tokens\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-ocean hover:underline\">github.com/settings/tokens</a>",
+        "Access <link>github.com/settings/tokens</link>",
         "Click on \"Generate new token (classic)\"",
         "Give it a descriptive name (ex: \"Bisolhador Analysis\")",
         "Select only the \"public_repo\" permission (for public repositories)",
@@ -309,6 +309,11 @@
     "riskLow": "Low",
     "riskModerate": "Moderate",
     "riskCritical": "Critical",
+    "alerts": {
+      "invalidFormat": "Please use the format: owner/repo",
+      "alreadyAdded": "This repository has already been added",
+      "maxRepos": "Maximum of {{count}} repositories allowed"
+    },
     "filters": {
       "label": "Period:",
       "7d": "7 days",
@@ -317,5 +322,18 @@
       "90d": "90 days",
       "all": "All history"
     }
+  },
+  "share": {
+    "buttonTitle": "Share Result",
+    "buttonLabel": "Share",
+    "linkCopied": "Link copied!",
+    "errorNoData": "Error: Data not saved. Try reloading the page.",
+    "errorGeneral": "Error generating share link"
+  },
+  "snapshot": {
+    "title": "Historical Mode",
+    "byDate": "Viewing history from {{date}} (Semantic Snapshot). This data is static and does not reflect the current GitHub state.",
+    "byId": "Viewing record #{{id}}. This data is static and does not reflect the current GitHub state.",
+    "closeAlert": "Close alert"
   }
 }

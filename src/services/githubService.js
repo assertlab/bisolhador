@@ -2,6 +2,15 @@
 // Migrated from v1-legacy/src/modules/githubAPI.js
 
 import { getItem } from '../utils/storage.js';
+import {
+    GITHUB_PER_PAGE_COMMITS,
+    GITHUB_PER_PAGE_BRANCHES,
+    GITHUB_PER_PAGE_RECENT_PRS,
+    GITHUB_PER_PAGE_PR_STATS,
+    GITHUB_PER_PAGE_RELEASES,
+    ZOMBIE_BRANCH_DAYS,
+    WEEKS_IN_YEAR,
+} from '../constants.js';
 
 const GITHUB_BASE_URL = 'https://api.github.com';
 
@@ -38,7 +47,7 @@ export const githubService = {
             throw new Error('Owner and repo are required');
         }
 
-        const perPage = params.perPage || 15;
+        const perPage = params.perPage || GITHUB_PER_PAGE_COMMITS;
         const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/commits?per_page=${perPage}`;
 
         const response = await fetch(url, { headers: getHeaders() });
@@ -57,7 +66,7 @@ export const githubService = {
         }
 
         try {
-            const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/branches?per_page=20`;
+            const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/branches?per_page=${GITHUB_PER_PAGE_BRANCHES}`;
             const response = await fetch(url, { headers: getHeaders() });
 
             if (!response.ok) {
@@ -69,7 +78,7 @@ export const githubService = {
             const count = data.length;
             let zombies = 0;
             const now = new Date();
-            const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            const ninetyDaysAgo = new Date(now.getTime() - ZOMBIE_BRANCH_DAYS * 24 * 60 * 60 * 1000);
 
             for (const branch of data) {
                 if (!branch.commit || !branch.commit.url) continue;
@@ -241,7 +250,7 @@ export const githubService = {
         }
 
         try {
-            const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/pulls?state=all&sort=created&direction=desc&per_page=10`;
+            const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/pulls?state=all&sort=created&direction=desc&per_page=${GITHUB_PER_PAGE_RECENT_PRS}`;
             const response = await fetch(url, { headers: getHeaders() });
 
             if (!response.ok) {
@@ -263,7 +272,7 @@ export const githubService = {
         }
 
         try {
-            const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/releases?per_page=1`;
+            const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/releases?per_page=${GITHUB_PER_PAGE_RELEASES}`;
             const response = await fetch(url, { headers: getHeaders() });
 
             if (!response.ok) {
@@ -324,7 +333,7 @@ export const githubService = {
 
     async fetchCommitActivity(owner, repo) {
         if (!owner || !repo) {
-            return { all: Array(52).fill(0) }; // Return 52 weeks of zeros
+            return { all: Array(WEEKS_IN_YEAR).fill(0) }; // Return 52 weeks of zeros
         }
 
         try {
@@ -333,18 +342,18 @@ export const githubService = {
 
             if (!response.ok) {
                 console.warn(`Failed to fetch commit activity: ${response.status}`);
-                return { all: Array(52).fill(0) };
+                return { all: Array(WEEKS_IN_YEAR).fill(0) };
             }
 
             const data = await response.json();
             // Ensure we have valid data
             if (!data || !data.all || !Array.isArray(data.all)) {
-                return { all: Array(52).fill(0) };
+                return { all: Array(WEEKS_IN_YEAR).fill(0) };
             }
             return data;
         } catch (error) {
             console.warn('Error fetching commit activity:', error);
-            return { all: Array(52).fill(0) };
+            return { all: Array(WEEKS_IN_YEAR).fill(0) };
         }
     },
 
@@ -386,7 +395,7 @@ export const githubService = {
         }
 
         try {
-            const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/pulls?state=all&per_page=20&sort=created&direction=desc`;
+            const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/pulls?state=all&per_page=${GITHUB_PER_PAGE_PR_STATS}&sort=created&direction=desc`;
             const response = await fetch(url, { headers: getHeaders() });
 
             if (!response.ok) {

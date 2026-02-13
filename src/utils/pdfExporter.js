@@ -1,4 +1,5 @@
 import html2pdf from 'html2pdf.js';
+import { PDF_MARGIN, PDF_IMAGE_QUALITY, PDF_CANVAS_SCALE } from '../constants.js';
 
 export function exportToPDF() {
   // Seleciona o elemento main que contém todo o dashboard
@@ -16,11 +17,11 @@ export function exportToPDF() {
 
   // Configurações do html2pdf
   const options = {
-    margin: [10, 10, 10, 10], // margens em mm
+    margin: [PDF_MARGIN, PDF_MARGIN, PDF_MARGIN, PDF_MARGIN],
     filename: filename,
-    image: { type: 'jpeg', quality: 0.98 },
+    image: { type: 'jpeg', quality: PDF_IMAGE_QUALITY },
     html2canvas: {
-      scale: 2,
+      scale: PDF_CANVAS_SCALE,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff'

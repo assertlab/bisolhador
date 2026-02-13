@@ -128,11 +128,11 @@
       },
       "warning": {
         "title": "Bus Factor Moderado",
-        "message": "O usuário <strong>{{contributor}}</strong> concentra <strong>{{percentage}}%</strong> do trabalho. Considere diversificar as contribuições."
+        "message": "O usuário <bold>{{contributor}}</bold> concentra <bold>{{percentage}}%</bold> do trabalho. Considere diversificar as contribuições."
       },
       "critical": {
         "title": "Bus Factor Crítico",
-        "message": "O usuário <strong>{{contributor}}</strong> concentra <strong>{{percentage}}%</strong> do trabalho. Alto risco de dependência."
+        "message": "O usuário <bold>{{contributor}}</bold> concentra <bold>{{percentage}}%</bold> do trabalho. Alto risco de dependência."
       }
     }
   },
@@ -225,7 +225,7 @@
     "createToken": {
       "title": "Como criar um Token",
       "steps": [
-        "Acesse <a href=\"https://github.com/settings/tokens\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-ocean hover:underline\">github.com/settings/tokens</a>",
+        "Acesse <link>github.com/settings/tokens</link>",
         "Clique em \"Generate new token (classic)\"",
         "Dê um nome descritivo (ex: \"Bisolhador Analysis\")",
         "Selecione apenas a permissão \"public_repo\" (para repositórios públicos)",
@@ -309,6 +309,11 @@
     "riskLow": "Baixo",
     "riskModerate": "Moderado",
     "riskCritical": "Crítico",
+    "alerts": {
+      "invalidFormat": "Por favor, use o formato: owner/repo",
+      "alreadyAdded": "Este repositório já foi adicionado",
+      "maxRepos": "Máximo de {{count}} repositórios permitidos"
+    },
     "filters": {
       "label": "Período:",
       "7d": "7 dias",
@@ -317,5 +322,18 @@
       "90d": "90 dias",
       "all": "Todo histórico"
     }
+  },
+  "share": {
+    "buttonTitle": "Compartilhar Resultado",
+    "buttonLabel": "Compartilhar",
+    "linkCopied": "Link copiado!",
+    "errorNoData": "Erro: Dados não salvos. Tente recarregar a página.",
+    "errorGeneral": "Erro ao gerar link de compartilhamento"
+  },
+  "snapshot": {
+    "title": "Modo Histórico",
+    "byDate": "Visualizando histórico de {{date}} (Snapshot Semântico). Estes dados são estáticos e não refletem o estado atual do GitHub.",
+    "byId": "Visualizando registro #{{id}}. Estes dados são estáticos e não refletem o estado atual do GitHub.",
+    "closeAlert": "Fechar alerta"
   }
 }

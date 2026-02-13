@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { githubService } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
 import analytics from '../services/analytics.js';
+import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE } from '../constants.js';
 
 // Repository data fetching function for TanStack Query
 async function fetchRepositoryData(repoName) {
@@ -54,9 +55,9 @@ async function fetchRepositoryData(repoName) {
     const codeFrequency = results[13]?.status === 'fulfilled' ? results[13].value : null;
     const mergedPRsCount = results[14]?.status === 'fulfilled' ? results[14].value : 0;
 
-    // Get first 10 commits and PRs for activity logs
-    const recentCommits = commits.slice(0, 10);
-    const recentPRs = pullRequests.slice(0, 10);
+    // Get recent commits and PRs for activity logs
+    const recentCommits = commits.slice(0, RECENT_ITEMS_LIMIT);
+    const recentPRs = pullRequests.slice(0, RECENT_ITEMS_LIMIT);
 
     // Calculate repository age
     const createdAt = new Date(repoData.created_at);
@@ -219,7 +220,7 @@ export function useRepository() {
         queryKey: ['repository', repoName],
         queryFn: () => fetchRepositoryData(repoName),
         enabled: !!repoName,
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: CACHE_STALE_TIME_MS,
         retry: 1
     });
 
@@ -283,9 +284,9 @@ function formatLanguages(languages) {
         percentage: (bytes / total) * 100
     }));
 
-    // Filter languages with less than 1%
-    const mainLanguages = languageEntries.filter(lang => lang.percentage >= 1);
-    const others = languageEntries.filter(lang => lang.percentage < 1);
+    // Filter languages below threshold
+    const mainLanguages = languageEntries.filter(lang => lang.percentage >= LANGUAGE_MIN_PERCENTAGE);
+    const others = languageEntries.filter(lang => lang.percentage < LANGUAGE_MIN_PERCENTAGE);
     const othersPercentage = others.reduce((sum, lang) => sum + lang.percentage, 0);
 
     if (othersPercentage > 0) {

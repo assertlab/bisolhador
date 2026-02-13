@@ -50,7 +50,7 @@ export function RepoInfoCard({ data, onShareSuccess }) {
   const handleShare = async () => {
     try {
       if (!data.searchId) {
-        alert('Erro: Dados não salvos. Tente recarregar a página.');
+        alert(t('share.errorNoData'));
         return;
       }
 
@@ -72,11 +72,11 @@ export function RepoInfoCard({ data, onShareSuccess }) {
       }
 
       // Mostrar toast de sucesso
-      alert('Link copiado!');
+      alert(t('share.linkCopied'));
 
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
-      alert('Erro ao gerar link de compartilhamento');
+      alert(t('share.errorGeneral'));
     }
   };
 
@@ -136,12 +136,12 @@ export function RepoInfoCard({ data, onShareSuccess }) {
           <button
             onClick={handleShare}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg border border-purple-600 hover:border-purple-700 focus:ring-4 focus:ring-purple-300 transition-colors"
-            title="Compartilhar Resultado"
+            title={t('share.buttonTitle')}
           >
             <svg aria-hidden="true" className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
             </svg>
-            Compartilhar
+            {t('share.buttonLabel')}
           </button>
           <button
             onClick={handleDownloadJSON}

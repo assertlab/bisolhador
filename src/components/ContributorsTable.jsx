@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 
 export function ContributorsTable({ contributors, busFactor }) {
@@ -18,12 +18,7 @@ export function ContributorsTable({ contributors, busFactor }) {
     textColor = 'text-green-800 dark:text-green-200';
   }
 
-  // Build the message with interpolation - get title and message separately
   const busFactorTitle = t(`contributors.busFactor.${busFactor.level}.title`);
-  const busFactorMessage = t(`contributors.busFactor.${busFactor.level}.message`, {
-    contributor: busFactor.topContributor,
-    percentage: busFactor.percentage
-  });
 
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow relative overflow-hidden">
@@ -51,7 +46,13 @@ export function ContributorsTable({ contributors, busFactor }) {
               {busFactorTitle}
             </h3>
             <div className={`mt-2 text-sm ${textColor}`}>
-              <p dangerouslySetInnerHTML={{ __html: busFactorMessage }} />
+              <p>
+                <Trans
+                  i18nKey={`contributors.busFactor.${busFactor.level}.message`}
+                  values={{ contributor: busFactor.topContributor, percentage: busFactor.percentage }}
+                  components={{ bold: <strong /> }}
+                />
+              </p>
             </div>
           </div>
         </div>
