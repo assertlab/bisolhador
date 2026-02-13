@@ -253,6 +253,13 @@
     "loading": "Carregando histórico...",
     "chartTitle": "Evolução de Métricas ao Longo do Tempo",
     "dataPoints": "{{count}} análises registradas",
+    "filters": {
+      "label": "Período:",
+      "7d": "7 dias",
+      "30d": "30 dias",
+      "90d": "90 dias",
+      "all": "Todo histórico"
+    },
     "metrics": {
       "stars": "Stars",
       "forks": "Forks",

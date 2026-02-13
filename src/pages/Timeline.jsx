@@ -6,7 +6,7 @@ import { Header } from "../components/Header";
 import { SettingsModal } from "../components/SettingsModal";
 import analytics from "../services/analytics.js";
 import useChartTheme from "../hooks/useChartTheme";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
@@ -14,6 +14,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const navigate = useNavigate();
   const chartTheme = useChartTheme();
   const repoFullName = `${owner}/${repo}`;
+  const [timeRange, setTimeRange] = useState("all");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["timeline", repoFullName],
@@ -55,9 +56,33 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
     retry: 1,
   });
 
-  const chartData = data
+  // Filtra dados baseado no timeRange selecionado
+  const filteredData = useMemo(() => {
+    if (!data || timeRange === "all") return data;
+
+    const now = new Date();
+    const cutoffDate = new Date();
+
+    switch (timeRange) {
+      case "7d":
+        cutoffDate.setDate(now.getDate() - 7);
+        break;
+      case "30d":
+        cutoffDate.setDate(now.getDate() - 30);
+        break;
+      case "90d":
+        cutoffDate.setDate(now.getDate() - 90);
+        break;
+      default:
+        return data;
+    }
+
+    return data.filter((point) => point.date >= cutoffDate);
+  }, [data, timeRange]);
+
+  const chartData = filteredData
     ? {
-        labels: data.map((point) =>
+        labels: filteredData.map((point) =>
           new Intl.DateTimeFormat(i18n.language === "pt" ? "pt-BR" : "en-US", {
             day: "2-digit",
             month: "short",
@@ -67,7 +92,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
         datasets: [
           {
             label: t("timeline.metrics.stars"),
-            data: data.map((point) => point.stars),
+            data: filteredData.map((point) => point.stars),
             borderColor: "#FFD700",
             backgroundColor: "rgba(255, 215, 0, 0.1)",
             tension: 0.4,
@@ -75,7 +100,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
           },
           {
             label: t("timeline.metrics.forks"),
-            data: data.map((point) => point.forks),
+            data: filteredData.map((point) => point.forks),
             borderColor: "#3B82F6",
             backgroundColor: "rgba(59, 130, 246, 0.1)",
             tension: 0.4,
@@ -83,7 +108,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
           },
           {
             label: t("timeline.metrics.subscribers"),
-            data: data.map((point) => point.subscribers),
+            data: filteredData.map((point) => point.subscribers),
             borderColor: "#10B981",
             backgroundColor: "rgba(16, 185, 129, 0.1)",
             tension: 0.4,
@@ -284,9 +309,34 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
           {/* Chart Section */}
           {chartData && (
             <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-lg font-semibold text-shark dark:text-white mb-6">
-                {t("timeline.chartTitle")}
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+                <h2 className="text-lg font-semibold text-shark dark:text-white">
+                  {t("timeline.chartTitle")}
+                </h2>
+
+                {/* Time Range Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 dark:text-slate-400 font-medium">
+                    {t("timeline.filters.label")}
+                  </span>
+                  <div className="inline-flex rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 p-1">
+                    {["7d", "30d", "90d", "all"].map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => setTimeRange(range)}
+                        className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                          timeRange === range
+                            ? "bg-white dark:bg-slate-800 text-shark dark:text-white shadow-sm"
+                            : "text-gray-600 dark:text-slate-400 hover:text-shark dark:hover:text-white"
+                        }`}
+                      >
+                        {t(`timeline.filters.${range}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div style={{ height: "400px" }}>
                 <Line data={chartData} options={chartOptions} />
               </div>
@@ -294,7 +344,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
           )}
 
           {/* Stats Summary */}
-          {data && data.length > 0 && (
+          {filteredData && filteredData.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between">
@@ -310,7 +360,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                           month: "short",
                           year: "numeric",
                         },
-                      ).format(data[0].date)}
+                      ).format(filteredData[0].date)}
                     </p>
                   </div>
                   <svg
@@ -343,7 +393,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                           month: "short",
                           year: "numeric",
                         },
-                      ).format(data[data.length - 1].date)}
+                      ).format(filteredData[filteredData.length - 1].date)}
                     </p>
                   </div>
                   <svg
@@ -369,7 +419,10 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                       {t("timeline.summary.totalGrowth")}
                     </p>
                     <p className="text-lg font-semibold text-green-600 dark:text-green-400 mt-1">
-                      +{data[data.length - 1].stars - data[0].stars} ⭐
+                      +
+                      {filteredData[filteredData.length - 1].stars -
+                        filteredData[0].stars}{" "}
+                      ⭐
                     </p>
                   </div>
                   <svg
