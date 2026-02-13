@@ -1,7 +1,6 @@
 {
   "header": {
     "title": "Bisolhador",
-    "version": "v3.1.0",
     "helpTitle": "Como usar",
     "settingsTitle": "Configurar Token GitHub",
     "downloadTitle": "Baixar relatório em PDF",
@@ -166,7 +165,15 @@
     "weekdays": {
       "title": "Commits por Dia da Semana (Amostra: {{count}} commits)",
       "tooltip": "Distribuição de commits ao longo dos dias da semana. Ajuda a identificar padrões de trabalho da equipe.",
-      "days": ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
+      "days": [
+        "Domingo",
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
       "tooltipLabel": "{{day}}: {{count}} commits"
     }
   },

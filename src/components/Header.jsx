@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { version } from '../../package.json';
 import { HelpModal } from './HelpModal.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
 import { LanguageSwitcher } from './LanguageSwitcher.jsx';
@@ -26,7 +27,7 @@ export function Header({ onSettingsClick }) {
               {t('header.title')}
             </span>
             <span className="bg-ocean/20 text-ocean text-xs font-medium px-2.5 py-0.5 rounded border border-ocean/30 hidden sm:inline-block">
-              {t('header.version')}
+              v{version}
             </span>
           </Link>
 
