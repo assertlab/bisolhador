@@ -146,7 +146,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
     } else if (queryParam) {
       search(queryParam);
     }
-  }, [location.search, loadSnapshot, loadSnapshotByDate, search]);
+  }, [location.search, location.pathname, loadSnapshot, loadSnapshotByDate, search]);
 
   const handleSearch = (repositoryName) => {
     setDismissedError(false);

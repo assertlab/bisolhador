@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.1.1] - 2026-02-13
+
+### Refactoring Edition — 5 Sprints de Maturidade Técnica
+
+Refatoração completa da codebase baseada no [Tech Debt Report v3.1.0](docs/TECH_DEBT_v3.1.0.md), executada em 5 sprints incrementais.
+
+### 🐛 Sprint 1 — Bug Fixes & Quick Wins
+- **Fix `useChartTheme`**: Adicionadas propriedades `tooltipBg`/`tooltipText` + `useMemo` no retorno do hook para corrigir tooltips sem cor em dark mode.
+- **Safe localStorage**: Criado wrapper `src/utils/storage.js` com try-catch para evitar exceções em navegação privada (Safari/Firefox).
+- **Dead code removido**: `sanitizeForJson.js` e export `allSuccess` não utilizado em `useBenchmarkRepos`.
+
+### ⚡ Sprint 2 — Performance (useMemo em Charts)
+- **Memoização de charts**: `chartData` e `chartOptions` envolvidos em `useMemo` em `Timeline.jsx`, `BenchmarkEvolutionChart.jsx`, `BenchmarkComparisonChart.jsx` e `CommitActivityChart.jsx`.
+- **Padronização**: Todos os gráficos seguem o mesmo padrão de memoização para evitar re-criação do canvas Chart.js.
+
+### 🔄 Sprint 3 — DRY (useTimeFilter Unificado)
+- **`useTimeFilter` hook**: Lógica de filtragem temporal (7d/30d/60d/90d/all) extraída para hook reutilizável, eliminando duplicação entre Timeline e Benchmark.
+- **`<TimeRangeFilter>` component**: Componente de UI unificado para seleção de período temporal.
+
+### 🏗️ Sprint 4 — Architecture (Componentização)
+- **Dashboard extraído**: `Dashboard` movido de `App.jsx` para `src/pages/Dashboard.jsx` com `snapshotAdapter.js` separado.
+- **Benchmark componentizado**: 5 sub-componentes extraídos (`BenchmarkSearchForm`, `BenchmarkRepoChips`, `BenchmarkHealthBars`, `BenchmarkBusFactorRisk`, `BenchmarkDetailTable`).
+
+### 🛡️ Sprint 5 — Security & Polish
+- **Proteção XSS**: `dangerouslySetInnerHTML` substituído por componente `Trans` do react-i18next.
+- **i18n completo**: Todas as strings hardcoded em português migradas para arquivos de locale.
+- **Constantes extraídas**: Magic numbers movidos para `src/constants.js` (API pagination, thresholds, PDF config).
+- **Migração de contexto**: `docs/CONTEXT.md` migrado para `CLAUDE.md` no padrão oficial Claude Code.
+
+---
+
 ## [3.1.0] - 2026-02-13
 
 ### 🎉 Major Feature: Benchmark Multi-Repo

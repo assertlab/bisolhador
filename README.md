@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.1.0
+# 🦈 Bisolhador Dashboard v3.1.1
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -26,6 +26,13 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.1.1 - Refactoring Edition
+- **⚡ Performance**: `useMemo` em todos os charts (evita re-criação do canvas Chart.js a cada render)
+- **🏗️ Clean Architecture**: Dashboard e Benchmark componentizados, lógica temporal unificada em `useTimeFilter`
+- **🛡️ Segurança**: Proteção XSS (`dangerouslySetInnerHTML` substituído por `Trans`), localStorage com wrapper seguro
+- **🌐 i18n Total**: Todas as strings hardcoded migradas para react-i18next
+- **🧹 Código Limpo**: Constantes extraídas para `src/constants.js`, dead code removido
 
 ### v3.1.0 - Benchmark Edition
 - **📊 Benchmark Multi-Repo**: Nova página `/benchmark` para comparação simultânea de até 10 repositórios com gráficos de evolução temporal e tabela comparativa
@@ -126,11 +133,13 @@ https://assertlab.github.io/bisolhador/?repo=facebook/react&date=2025-12-17
 - **Build**: Vite
 - **Deploy**: GitHub Pages
 
+> **Nota técnica (v3.1.1):** A codebase passou por uma refatoração completa em 5 sprints focando em performance otimizada (`useMemo` em charts), Clean Architecture (componentização de Dashboard e Benchmark), segurança (proteção XSS, safe localStorage) e eliminação de código duplicado (hooks unificados, constantes extraídas).
+
 ## 📚 Documentação & Arquitetura
 
 Para detalhes técnicos, arquitetura e desenvolvimento:
 
-- **[Contexto do Projeto](docs/CONTEXT.md)** - Manual completo para IAs e desenvolvedores
+- **[CLAUDE.md](CLAUDE.md)** - Contexto técnico do projeto (padrão Claude Code)
 - **[Design System](docs/DESIGN_SYSTEM.md)** - Sistema de design e padrões visuais
 - **[Histórico de Mudanças (Changelog)](CHANGELOG.md)** - Todas as versões e alterações
 - **[Roadmap](docs/ROADMAP.md)** - Planejamento futuro e histórico de releases

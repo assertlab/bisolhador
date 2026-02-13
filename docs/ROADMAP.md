@@ -19,6 +19,15 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 - [x] **Filtros Temporais Unificados (Time Range):** Sistema de filtros (7d, 30d, 60d, 90d, todo histórico) implementado no Benchmark e expandido na Timeline (novo filtro 60d), normalizando visualizações para repositórios com datas de início diferentes.
 - [x] **Internacionalização Benchmark:** Todas as strings traduzidas em PT-BR e EN-US.
 
+### 🛠️ v3.1.1 - Refactoring Edition ✅
+*Marco de maturidade técnica: refatoração completa em 5 sprints baseada no Tech Debt Report v3.1.0.*
+- [x] **Bug Fixes**: Correção de `useChartTheme` (tooltips dark mode), safe localStorage wrapper, remoção de dead code.
+- [x] **Performance**: `useMemo` em todos os charts para evitar re-criação de canvas Chart.js a cada render.
+- [x] **DRY**: Hook `useTimeFilter` e componente `<TimeRangeFilter>` unificados, eliminando duplicação entre Timeline e Benchmark.
+- [x] **Clean Architecture**: Dashboard extraído para `src/pages/Dashboard.jsx`, Benchmark componentizado em 5 sub-componentes.
+- [x] **Security & Polish**: Proteção XSS (substituição de `dangerouslySetInnerHTML`), i18n completo, constantes extraídas para `src/constants.js`.
+- [x] **Documentação**: Migração de `docs/CONTEXT.md` para `CLAUDE.md` (padrão oficial Claude Code).
+
 ### 🔭 v3.2.0+ - Próximas Iterações (Planejado)
 - [ ] **Gamificação (Badges e Conquistas):** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter", "Community Champion").
 - [ ] **Análise de Risco Avançada (Bus Factor):** Dashboard dedicado com visualizações de risco de dependência, tendências temporais e recomendações.

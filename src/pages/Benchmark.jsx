@@ -30,7 +30,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
   const [timeRange, setTimeRange] = useState('30d');
 
   // Fetch data for all selected repos
-  const { queries, isLoading, hasErrors, successfulRepos, errorCount } = useBenchmarkRepos(selectedRepos);
+  const { isLoading, hasErrors, successfulRepos, errorCount } = useBenchmarkRepos(selectedRepos);
 
   // Flatten all history points to filter with useTimeFilter, then regroup per repo
   const allHistory = useMemo(() => {
