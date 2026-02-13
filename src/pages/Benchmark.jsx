@@ -5,6 +5,11 @@ import { SettingsModal } from '../components/SettingsModal';
 import { useBenchmarkRepos } from '../hooks/useBenchmarkRepos';
 import { useTimeFilter } from '../hooks/useTimeFilter';
 import { TimeRangeFilter } from '../components/TimeRangeFilter';
+import { BenchmarkSearchForm } from '../components/benchmark/BenchmarkSearchForm';
+import { BenchmarkRepoChips } from '../components/benchmark/BenchmarkRepoChips';
+import { BenchmarkHealthBars } from '../components/benchmark/BenchmarkHealthBars';
+import { BenchmarkBusFactorRisk } from '../components/benchmark/BenchmarkBusFactorRisk';
+import { BenchmarkDetailTable } from '../components/benchmark/BenchmarkDetailTable';
 
 // Lazy load chart components
 const BenchmarkEvolutionChart = lazy(() => import('../components/charts/BenchmarkEvolutionChart'));
@@ -12,7 +17,6 @@ const BenchmarkComparisonChart = lazy(() => import('../components/charts/Benchma
 
 // Utility function to generate consistent random colors
 const generateColor = (seed) => {
-  // Use seed to generate consistent color
   const hue = (seed * 137.508) % 360; // Golden angle approximation
   return `hsl(${hue}, 70%, 50%)`;
 };
@@ -63,25 +67,21 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
 
     if (!repoName) return;
 
-    // Validate format (owner/repo)
     if (!repoName.includes('/')) {
       alert('Por favor, use o formato: owner/repo');
       return;
     }
 
-    // Check if already added
     if (selectedRepos.some(r => r.fullName === repoName)) {
       alert('Este repositório já foi adicionado');
       return;
     }
 
-    // Check max limit
     if (selectedRepos.length >= MAX_REPOS) {
       alert(`Máximo de ${MAX_REPOS} repositórios permitidos`);
       return;
     }
 
-    // Add repo to list
     const [owner, repo] = repoName.split('/');
     const newRepo = {
       fullName: repoName,
@@ -91,7 +91,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
     };
 
     setSelectedRepos([...selectedRepos, newRepo]);
-    setSearchInput(''); // Clear input
+    setSearchInput('');
   };
 
   const handleRemoveRepo = (fullName) => {
@@ -113,41 +113,11 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
             {t('benchmark.subtitle', 'Compare até 10 repositórios simultaneamente e visualize a evolução de métricas')}
           </p>
 
-          {/* Search Bar */}
-          <div className="w-full pt-4">
-            <form onSubmit={handleAddRepo} className="w-full max-w-3xl mx-auto">
-              <label htmlFor="benchmark-search" className="mb-2 text-sm font-medium text-gray-900 dark:text-white sr-only">
-                {t('benchmark.searchLabel', 'Adicionar repositório')}
-              </label>
-              <div className="relative">
-                {/* Search Icon */}
-                <div className="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                </div>
-
-                {/* Input */}
-                <input
-                  type="search"
-                  id="benchmark-search"
-                  className="block w-full p-4 ps-12 text-sm text-gray-900 dark:text-white border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 focus:ring-ocean focus:border-ocean outline-none shadow-sm transition-shadow placeholder-gray-400 dark:placeholder-slate-400"
-                  placeholder={t('benchmark.searchPlaceholder', 'Ex: facebook/react, microsoft/vscode...')}
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  required
-                />
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  className="text-white absolute end-2.5 bottom-2.5 bg-ocean dark:bg-sky-600 hover:bg-sky-600 dark:hover:bg-sky-700 focus:ring-4 focus:outline-none focus:ring-sky-300 font-medium rounded-lg text-sm px-5 py-2 transition-all flex items-center gap-2"
-                >
-                  {t('benchmark.addButton', 'Adicionar')}
-                </button>
-              </div>
-            </form>
-          </div>
+          <BenchmarkSearchForm
+            searchInput={searchInput}
+            setSearchInput={setSearchInput}
+            onSubmit={handleAddRepo}
+          />
 
           {/* Counter Badge */}
           {selectedRepos.length > 0 && (
@@ -160,44 +130,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
         </div>
 
         {/* Chips Area - Selected Repos */}
-        {selectedRepos.length > 0 && (
-          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">
-              {t('benchmark.selectedRepos', 'Repositórios Selecionados')}
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {selectedRepos.map((repo) => (
-                <div
-                  key={repo.fullName}
-                  className="inline-flex items-center gap-2 bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-full px-3 py-1.5 text-sm"
-                >
-                  {/* Color Dot */}
-                  <span
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: repo.color }}
-                    aria-hidden="true"
-                  ></span>
-
-                  {/* Repo Name */}
-                  <span className="font-medium text-gray-700 dark:text-slate-200">
-                    {repo.fullName}
-                  </span>
-
-                  {/* Remove Button */}
-                  <button
-                    onClick={() => handleRemoveRepo(repo.fullName)}
-                    className="ml-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                    aria-label={`Remover ${repo.fullName}`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <BenchmarkRepoChips selectedRepos={selectedRepos} onRemoveRepo={handleRemoveRepo} />
 
         {/* Status Messages */}
         {hasErrors && errorCount > 0 && (
@@ -309,7 +242,6 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                     {t('benchmark.visualizationTitle', 'Comparação de Métricas')}
                   </h3>
 
-                  {/* Time Range Filter */}
                   <TimeRangeFilter
                     currentRange={timeRange}
                     onRangeChange={setTimeRange}
@@ -354,44 +286,10 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                     {/* Comparison Bar Chart */}
                     <BenchmarkComparisonChart repos={filteredRepos} metricCategory={metricCategory} />
 
-                    {/* Additional metrics if needed */}
+                    {/* Health & Language side-by-side */}
                     {successfulRepos.length >= 2 && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Health Score Comparison */}
-                        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">
-                          <h4 className="text-md font-semibold text-shark dark:text-white mb-4">
-                            {t('benchmark.healthComparison', 'Health Score')}
-                          </h4>
-                          <div className="space-y-3">
-                            {successfulRepos.map((repo) => (
-                              <div key={repo.fullName} className="flex items-center gap-3">
-                                <span
-                                  className="w-3 h-3 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: repo.color }}
-                                ></span>
-                                <div className="flex-grow">
-                                  <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-gray-700 dark:text-slate-300 truncate max-w-[200px]">
-                                      {repo.fullName}
-                                    </span>
-                                    <span className="font-semibold text-shark dark:text-white">
-                                      {repo.healthScore}%
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
-                                    <div
-                                      className="h-2 rounded-full transition-all"
-                                      style={{
-                                        width: `${repo.healthScore}%`,
-                                        backgroundColor: repo.color,
-                                      }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                        <BenchmarkHealthBars repos={successfulRepos} />
 
                         {/* Language Distribution */}
                         <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">
@@ -422,141 +320,12 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
 
                     {/* Bus Factor Risk Section */}
                     {successfulRepos.length >= 2 && (
-                      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">
-                        <h4 className="text-md font-semibold text-shark dark:text-white mb-2">
-                          {t('benchmark.busFactorRisk', 'Risco Bus Factor')}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">
-                          {t('benchmark.busFactorDescription', 'Concentração de trabalho no principal contribuidor. Quanto maior, mais arriscado.')}
-                        </p>
-                        <div className="space-y-3">
-                          {successfulRepos.map((repo) => {
-                            const pct = repo.busFactorPercentage;
-                            let barColor = 'bg-green-500';
-                            let textBadge = 'text-green-700 dark:text-green-400';
-                            if (pct > 80) {
-                              barColor = 'bg-red-500';
-                              textBadge = 'text-red-700 dark:text-red-400';
-                            } else if (pct > 60) {
-                              barColor = 'bg-yellow-500';
-                              textBadge = 'text-yellow-700 dark:text-yellow-400';
-                            }
-
-                            return (
-                              <div key={repo.fullName} className="flex items-center gap-3">
-                                <span
-                                  className="w-3 h-3 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: repo.color }}
-                                ></span>
-                                <div className="flex-grow">
-                                  <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-gray-700 dark:text-slate-300 truncate max-w-[200px]">
-                                      {repo.fullName}
-                                    </span>
-                                    <span className={`font-semibold ${textBadge}`}>
-                                      {pct > 0 ? `${pct}%` : 'N/A'}
-                                      {repo.busFactorTopContributor && pct > 0 && (
-                                        <span className="text-xs text-gray-400 dark:text-slate-500 ml-1">
-                                          ({repo.busFactorTopContributor})
-                                        </span>
-                                      )}
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
-                                    <div
-                                      className={`h-2 rounded-full transition-all ${barColor}`}
-                                      style={{ width: `${Math.min(pct, 100)}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <BenchmarkBusFactorRisk repos={successfulRepos} />
                     )}
 
                     {/* Detail Metrics Table */}
                     {successfulRepos.length >= 2 && (
-                      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">
-                        <h4 className="text-md font-semibold text-shark dark:text-white mb-4">
-                          {t('benchmark.detailTable', 'Tabela Comparativa')}
-                        </h4>
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
-                            <thead className="bg-gray-50 dark:bg-slate-700">
-                              <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                                  {t('benchmark.tableRepo', 'Repositório')}
-                                </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                                  {t('benchmark.healthComparison', 'Health Score')}
-                                </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                                  {t('stats.leadTime', 'Lead Time')}
-                                </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                                  {t('stats.divergence', 'Divergência')}
-                                </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                                  {t('stats.codeChurn', 'Code Churn')}
-                                </th>
-                                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                                  {t('benchmark.busFactorRisk', 'Risco Bus Factor')}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
-                              {successfulRepos.map((repo) => {
-                                let riskBadge = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-                                let riskLabel = t('benchmark.riskLow', 'Baixo');
-                                if (repo.busFactorPercentage > 80) {
-                                  riskBadge = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-                                  riskLabel = t('benchmark.riskCritical', 'Crítico');
-                                } else if (repo.busFactorPercentage > 60) {
-                                  riskBadge = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-                                  riskLabel = t('benchmark.riskModerate', 'Moderado');
-                                }
-
-                                return (
-                                  <tr key={repo.fullName} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                                    <td className="px-4 py-3 whitespace-nowrap">
-                                      <div className="flex items-center gap-2">
-                                        <span
-                                          className="w-2 h-2 rounded-full flex-shrink-0"
-                                          style={{ backgroundColor: repo.color }}
-                                        ></span>
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                          {repo.fullName}
-                                        </span>
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                                      {repo.healthScore}%
-                                    </td>
-                                    <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                                      {repo.leadTime > 0
-                                        ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, repo.leadTimeUnit)}`
-                                        : 'N/A'}
-                                    </td>
-                                    <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                                      {repo.divergence > 0 ? repo.divergence.toFixed(1) : 'N/A'}
-                                    </td>
-                                    <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                                      {repo.codeChurnRatio > 0 ? repo.codeChurnRatio.toFixed(2) : 'N/A'}
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadge}`}>
-                                        {repo.busFactorPercentage > 0 ? `${repo.busFactorPercentage}% — ${riskLabel}` : 'N/A'}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
+                      <BenchmarkDetailTable repos={successfulRepos} />
                     )}
                   </div>
                 </Suspense>
