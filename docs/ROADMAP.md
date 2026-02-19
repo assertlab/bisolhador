@@ -6,15 +6,22 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## 🔮 O Futuro (Próximas Versões)
 
-### 🔭 v3.0.0 - v3.0.1 - Time Machine ✅
-*Nota: A infraestrutura de backend (snapshots históricos) foi antecipada na v2.7.2, permitindo foco na experiência temporal.*
-- [x] **Timeline Histórica (Time Machine):** Visualização temporal de métricas através de gráficos de evolução baseados nos snapshots armazenados (Stars, Forks, Watchers). Implementado com página dedicada `/timeline/:owner/:repo` e botão "Ver Evolução" no RepoInfoCard.
-- [x] **Filtros Temporais:** Controles de período (7d, 30d, 90d, todo histórico) para análise focada de intervalos específicos na Timeline.
-- [x] **Security Hotfix (v3.0.1):** Atualização crítica de dependências (html2pdf.js, jspdf) para mitigar vulnerabilidades CVE.
-### 🎯 v3.1.0 - Benchmark Edition ✅
-- [x] **Benchmark de Repositórios (Comparação Multi-Repo):** Página dedicada `/benchmark` para comparação simultânea de até 10 repositórios com gráficos de evolução temporal (Chart.js time-series), bar charts comparativos por categoria (Popularidade, Velocidade, Qualidade) e tabela comparativa detalhada. Seleção via chips com cores distintas por repo.
-- [x] **Filtros Temporais Unificados (Time Range):** Sistema de filtros (7d, 30d, 60d, 90d, todo histórico) implementado no Benchmark e expandido na Timeline (novo filtro 60d), normalizando visualizações para repositórios com datas de início diferentes.
-- [x] **Internacionalização Benchmark:** Todas as strings traduzidas em PT-BR e EN-US.
+### 🔭 v3.3.0+ - Próximas Iterações (Planejado)
+- [ ] **Gamificação (Badges e Conquistas):** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter", "Community Champion").
+- [ ] **Análise de Risco Avançada (Bus Factor):** Dashboard dedicado com visualizações de risco de dependência, tendências temporais e recomendações.
+- [ ] **Exportação Avançada:** CSV além do PDF/JSON existente.
+
+---
+
+## 🌟 O Presente (Era v3.x - Maturidade)
+
+### 🛡️ v3.2.0 - Resilience & Stability ✅
+- [x] **Resiliência de Analytics (Exponential Backoff):** Implementação de lógica de retentativas com Exponential Backoff no serviço de analytics do Supabase, garantindo que oscilações de rede não percam dados.
+- [x] **UX de Falhas Parciais (PartialDataAlert):** Componente `PartialDataAlert` no GitHub Service para tratamento de falhas parciais da API (ex: Rate Limit de commits). O painel renderiza os dados disponíveis e exibe um banner amigável detalhando os dados ausentes.
+
+### 🐛 v3.1.2 - Patch Fix ✅
+- [x] **Correções de UI e Versionamento Dinâmico**: Header exibe versão dinamicamente do `package.json` (elimina strings hardcoded).
+- [x] **Sincronização de Documentação**: CHANGELOG, README, CLAUDE.md e ROADMAP atualizados para v3.1.2.
 
 ### 🛠️ v3.1.1 - Refactoring Edition ✅
 *Marco de maturidade técnica: refatoração completa em 5 sprints baseada no Tech Debt Report v3.1.0.*
@@ -25,22 +32,20 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 - [x] **Security & Polish**: Proteção XSS (substituição de `dangerouslySetInnerHTML`), i18n completo, constantes extraídas para `src/constants.js`.
 - [x] **Documentação**: Migração de `docs/CONTEXT.md` para `CLAUDE.md` (padrão oficial Claude Code).
 
-### 🐛 v3.1.2 - Patch Fix ✅
-- [x] **Correções de UI e Versionamento Dinâmico**: Header exibe versão dinamicamente do `package.json` (elimina strings hardcoded).
-- [x] **Sincronização de Documentação**: CHANGELOG, README, CLAUDE.md e ROADMAP atualizados para v3.1.2.
+### 🎯 v3.1.0 - Benchmark Edition ✅
+- [x] **Benchmark de Repositórios (Comparação Multi-Repo):** Página dedicada `/benchmark` para comparação simultânea de até 10 repositórios com gráficos de evolução temporal (Chart.js time-series), bar charts comparativos por categoria (Popularidade, Velocidade, Qualidade) e tabela comparativa detalhada. Seleção via chips com cores distintas por repo.
+- [x] **Filtros Temporais Unificados (Time Range):** Sistema de filtros (7d, 30d, 60d, 90d, todo histórico) implementado no Benchmark e expandido na Timeline (novo filtro 60d), normalizando visualizações para repositórios com datas de início diferentes.
+- [x] **Internacionalização Benchmark:** Todas as strings traduzidas em PT-BR e EN-US.
 
-### 🛡️ v3.2.0 - Resilience & Stability ✅
-- [x] **Resiliência de Analytics (Exponential Backoff):** Implementação de lógica de retentativas com Exponential Backoff no serviço de analytics do Supabase, garantindo que oscilações de rede não percam dados.
-- [x] **UX de Falhas Parciais (PartialDataAlert):** Componente `PartialDataAlert` no GitHub Service para tratamento de falhas parciais da API (ex: Rate Limit de commits). O painel renderiza os dados disponíveis e exibe um banner amigável detalhando os dados ausentes.
-
-### 🔭 v3.3.0+ - Próximas Iterações (Planejado)
-- [ ] **Gamificação (Badges e Conquistas):** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter", "Community Champion").
-- [ ] **Análise de Risco Avançada (Bus Factor):** Dashboard dedicado com visualizações de risco de dependência, tendências temporais e recomendações.
-- [ ] **Exportação Avançada:** CSV além do PDF/JSON existente.
+### 🔭 v3.0.0 - v3.0.1 - Time Machine ✅
+*Nota: A infraestrutura de backend (snapshots históricos) foi antecipada na v2.7.2, permitindo foco na experiência temporal.*
+- [x] **Timeline Histórica (Time Machine):** Visualização temporal de métricas através de gráficos de evolução baseados nos snapshots armazenados (Stars, Forks, Watchers). Implementado com página dedicada `/timeline/:owner/:repo` e botão "Ver Evolução" no RepoInfoCard.
+- [x] **Filtros Temporais:** Controles de período (7d, 30d, 90d, todo histórico) para análise focada de intervalos específicos na Timeline.
+- [x] **Security Hotfix (v3.0.1):** Atualização crítica de dependências (html2pdf.js, jspdf) para mitigar vulnerabilidades CVE.
 
 ---
 
-## ✅ O Presente (React Era)
+## 📚 O Passado Recente (Era v2.x - React)
 
 ### v2.8.2 - Global Timezones & Auto-Persistence ✅
 - [x] **Correção de Persistência / Banco de Dados:** Implementação da estratégia "Save on Load" para garantir integridade histórica e IDs únicos automaticamente.
