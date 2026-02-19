@@ -7,6 +7,7 @@ import { RepoInfoCard } from '../components/RepoInfoCard';
 import { StatCard } from '../components/StatCard';
 import { HealthScoreCard } from '../components/HealthScoreCard';
 import { MaturityCard } from '../components/MaturityCard';
+import { BusFactorCard } from '../components/BusFactorCard';
 import { ContributorsTable } from '../components/ContributorsTable';
 import { ActivityLogs } from '../components/ActivityLogs';
 import { SettingsModal } from '../components/SettingsModal';
@@ -304,6 +305,14 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               <HealthScoreCard score={(repoData || snapshotData).health.score} files={(repoData || snapshotData).health.files} />
               <MaturityCard maturity={(repoData || snapshotData).maturity} codeReview={(repoData || snapshotData).codeReview} />
             </div>
+
+            {/* 4.5. Análise de Risco (Bus Factor) */}
+            {(repoData || snapshotData).busFactorAnalysis?.busFactor > 0 && (
+              <>
+                <h3 className="text-lg font-semibold text-shark dark:text-white pt-4">{t('busFactor.sectionTitle')}</h3>
+                <BusFactorCard busFactorAnalysis={(repoData || snapshotData).busFactorAnalysis} />
+              </>
+            )}
 
             {/* 5. Área de Gráficos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

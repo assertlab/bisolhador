@@ -6,13 +6,15 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## 🔮 O Futuro (Próximas Versões)
 
-### 🔭 v3.4.0+ - Próximas Iterações (Planejado)
+### 🔭 v3.5.0+ - Próximas Iterações (Planejado)
 - [ ] **Gamificação (Badges e Conquistas):** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter", "Community Champion").
-- [ ] **Análise de Risco Avançada (Bus Factor):** Dashboard dedicado com visualizações de risco de dependência, tendências temporais e recomendações.
 
 ---
 
 ## 🌟 O Presente (Era v3.x - Maturidade)
+
+### ☢️ v3.4.0 - Governance & Risk Edition ✅
+- [x] **Análise de Risco Avançada (Bus Factor):** Motor matemático baseado em limite de 70% de esforço (Pareto) e novo componente visual BusFactorCard (Barra Horizontal Empilhada) para alertar sobre centralização de conhecimento.
 
 ### 📊 v3.3.0 - Data Science Edition ✅
 - [x] **Exportação Avançada (CSV):** Motor nativo de exportação CSV (sem bibliotecas externas) com escape RFC 4180 e UTF-8 BOM para compatibilidade com Excel. Integrado no Dashboard (13 métricas do repositório) e na Tabela Comparativa do Benchmark (exporta colunas idênticas à tabela visual). Headers traduzidos dinamicamente via i18n (PT-BR/EN-US).

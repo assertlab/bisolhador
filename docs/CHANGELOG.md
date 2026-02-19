@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.4.0] - 2026-02-19
+
+### ☢️ Governance & Risk Edition
+
+- **FEAT: Fator de Ônibus (Bus Factor) com cálculo rigoroso (Pareto 70%)**: Novo motor matemático em `src/utils/busFactor.js` que ordena contribuidores por commits, acumula até o limiar de 70% do esforço total e determina o número mínimo de desenvolvedores críticos. Classificação em 4 níveis de risco: Crítico (1 dev), Alto (2), Moderado (3-4) e Saudável (5+).
+- **FEAT: Risk Card no Dashboard com avatares, classificação de risco e barra de progresso nativa em Tailwind**: Novo componente `BusFactorCard` com número central do Bus Factor com cor semântica por risco, avatares dos key developers com borda colorida, barra horizontal empilhada (divs Tailwind com largura inline proporcional) e legenda. Integrado como seção "Análise de Risco" entre Governança/Maturidade e Gráficos. i18n completo (PT-BR/EN-US).
+
+---
+
 ## [3.3.0] - 2026-02-19
 
 ### 📊 Data Science Edition

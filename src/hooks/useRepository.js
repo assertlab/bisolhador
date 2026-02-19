@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { githubService } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
+import { calculateBusFactor as calculateAdvancedBusFactor } from '../utils/busFactor.js';
 import analytics from '../services/analytics.js';
 import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE } from '../constants.js';
 
@@ -100,6 +101,7 @@ async function fetchRepositoryData(repoName) {
 
     // Analyze bus factor
     const busFactor = analyzers.calculateBusFactor(contributors);
+    const busFactorAnalysis = calculateAdvancedBusFactor(contributors);
 
     // Analyze code churn
     const codeChurn = analyzers.calculateCodeChurn(codeFrequency);
@@ -168,6 +170,7 @@ async function fetchRepositoryData(repoName) {
       codeReview,
       contributors: formattedContributors,
       busFactor,
+      busFactorAnalysis,
       recentCommits,
       recentPRs,
       charts: {
@@ -216,6 +219,7 @@ async function fetchRepositoryData(repoName) {
         codeReview,
         contributors: formattedContributors,
         busFactor,
+        busFactorAnalysis,
         recentCommits,
         recentPRs,
         charts: {

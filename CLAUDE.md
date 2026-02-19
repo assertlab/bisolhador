@@ -37,6 +37,7 @@ src/
 │   └── Benchmark.jsx           # Multi-repo comparison (up to 10 repos)
 ├── components/
 │   ├── Header.jsx, SearchBar.jsx, StatCard.jsx, ...
+│   ├── BusFactorCard.jsx       # Advanced Bus Factor risk card (stacked bar, avatars)
 │   ├── TimeRangeFilter.jsx     # Shared time filter (7d/30d/60d/90d/all)
 │   ├── charts/                 # Chart components (lazy loaded)
 │   │   ├── CommitActivityChart.jsx
@@ -62,6 +63,7 @@ src/
 │   └── analytics.js            # Hybrid analytics (GA4 + Supabase)
 ├── utils/
 │   ├── analyzers.js            # Pure functions: health score, bus factor, maturity
+│   ├── busFactor.js            # Advanced Bus Factor (Pareto 70% threshold)
 │   ├── formatters.js           # Date/number formatting
 │   ├── pdfExporter.js          # PDF export via html2pdf.js
 │   ├── exportJson.js           # JSON data export with provenance metadata
@@ -72,7 +74,7 @@ src/
 ### Data Flow
 1. User searches for repo in `owner/repo` format
 2. `useRepository` hook orchestrates all GitHub API calls via `githubService`
-3. `analyzers.js` computes metrics locally (health score, bus factor, maturity, etc.)
+3. `analyzers.js` and `busFactor.js` compute metrics locally (health score, bus factor, maturity, etc.)
 4. Results rendered in Dashboard with charts, cards, and tables
 5. Analytics tracked via hybrid system: Supabase (critical) + GA4 (engagement)
 
@@ -114,7 +116,7 @@ Score = (items present / 7) × 100%. Colors: Green (>75%), Yellow (>50%), Red (b
 ## Project Context
 
 ### Purpose
-Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.3.0). Transforms GitHub repository data into visual insights for students and professors.
+Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.4.0). Transforms GitHub repository data into visual insights for students and professors.
 
 ### Token System
 - Stored in `localStorage['github_token']` (via safe storage wrapper)

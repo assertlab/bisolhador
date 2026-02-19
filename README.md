@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.3.0
+# 🦈 Bisolhador Dashboard v3.4.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -8,7 +8,8 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **📊 Métricas Completas**: Stars, forks, issues, PRs, releases e code churn
 - **📈 Gráficos Avançados**: Fluxo de trabalho, padrões de commits e stack tecnológica
 - **⚡ Health Score**: Avaliação rigorosa baseada em 7 critérios comunitários
-- **👥 Bus Factor**: Análise de risco de dependência de contribuidores
+- **👥 Bus Factor**: Análise de risco de dependência de contribuidores com cálculo Pareto 70% e visualização de barra empilhada
+- **☢️ Análise de Risco de Equipe (Bus Factor)**: Card dedicado com número do Bus Factor, avatares dos key developers, classificação de risco (Crítico/Alto/Moderado/Saudável) e barra horizontal empilhada
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
 - **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução
 - **📊 Benchmark Multi-Repo**: Compare a evolução de até 10 repositórios lado a lado com gráficos comparativos, filtros temporais (7d, 30d, 60d, 90d, todo histórico) e tabela de métricas detalhada
@@ -26,6 +27,11 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.4.0 - Governance & Risk Edition
+- **☢️ Bus Factor Avançado (Pareto 70%)**: Motor matemático que calcula o número mínimo de devs responsáveis por 70% dos commits, com classificação em 4 níveis de risco
+- **☢️ BusFactorCard**: Novo componente visual com número central, avatares dos key developers, barra horizontal empilhada em Tailwind e legenda colorida
+- **🌐 i18n**: Chaves de tradução completas para Bus Factor (PT-BR/EN-US)
 
 ### v3.3.0 - Data Science Edition
 - **📊 Exportação Avançada (CSV)**: Motor nativo de exportação CSV (sem libs externas) com UTF-8 BOM para compatibilidade com Excel
@@ -145,7 +151,7 @@ https://assertlab.github.io/bisolhador/?repo=facebook/react&date=2025-12-17
 - **Build**: Vite
 - **Deploy**: GitHub Pages
 
-> **Nota técnica (v3.3.0):** A codebase passou por uma refatoração completa em 5 sprints focando em performance otimizada (`useMemo` em charts), Clean Architecture (componentização de Dashboard e Benchmark), segurança (proteção XSS, safe localStorage) e eliminação de código duplicado (hooks unificados, constantes extraídas).
+> **Nota técnica (v3.4.0):** A codebase passou por uma refatoração completa em 5 sprints focando em performance otimizada (`useMemo` em charts), Clean Architecture (componentização de Dashboard e Benchmark), segurança (proteção XSS, safe localStorage) e eliminação de código duplicado (hooks unificados, constantes extraídas).
 
 ## 📚 Documentação & Arquitetura
 

@@ -338,6 +338,19 @@
     "byId": "Viewing record #{{id}}. This data is static and does not reflect the current GitHub state.",
     "closeAlert": "Close alert"
   },
+  "busFactor": {
+    "sectionTitle": "Risk Analysis",
+    "title": "Bus Factor",
+    "tooltip": "Minimum number of developers who account for 70% of commits. Lower values indicate higher dependency risk.",
+    "description": "{{count}} dev(s) account for 70% of the work",
+    "others": "Others",
+    "risk": {
+      "critical": "Critical Risk",
+      "high": "High Risk",
+      "moderate": "Moderate Risk",
+      "healthy": "Healthy"
+    }
+  },
   "partialData": {
     "title": "Partial data",
     "message": "Some information could not be loaded: {{items}}. Displayed data may be incomplete.",

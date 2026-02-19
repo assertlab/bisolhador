@@ -346,6 +346,19 @@
     "byId": "Visualizando registro #{{id}}. Estes dados são estáticos e não refletem o estado atual do GitHub.",
     "closeAlert": "Fechar alerta"
   },
+  "busFactor": {
+    "sectionTitle": "Análise de Risco",
+    "title": "Bus Factor",
+    "tooltip": "Número mínimo de desenvolvedores que concentram 70% dos commits. Quanto menor, maior o risco de dependência.",
+    "description": "{{count}} dev(s) concentram 70% do trabalho",
+    "others": "Outros",
+    "risk": {
+      "critical": "Risco Crítico",
+      "high": "Risco Alto",
+      "moderate": "Risco Moderado",
+      "healthy": "Saudável"
+    }
+  },
   "partialData": {
     "title": "Dados parciais",
     "message": "Algumas informações não puderam ser carregadas: {{items}}. Os dados exibidos podem estar incompletos.",
