@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.2.0
+# 🦈 Bisolhador Dashboard v3.3.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -18,7 +18,7 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **💾 Persistência Automática**: O histórico é salvo automaticamente ao carregar a análise, garantindo integridade dos dados
 - **🛡️ Sanitização de Dados**: Tratamento robusto de payloads JSON para evitar erros com repositórios massivos
 - **🌐 Internacionalização Completa**: Suporte total PT/EN em todas as interfaces (Ranking, Modais, Navegação)
-- **📄 Export PDF/JSON**: Relatórios completos em PDF e dados brutos em JSON para análise externa
+- **📄 Export PDF/JSON/CSV**: Relatórios completos em PDF, dados brutos em JSON e exportação em CSV para análise em planilhas
 - ** Monitoramento de Uso**: Rastreamento de acessos e eventos (Buscas, Exports) com Google Analytics 4
 - **🛡️ Security-First (RPC Validation)**: Implementação de RPC segura no Supabase com validação de dados
 - **🛡️ Fail-Safe**: Tratamento robusto de erros e rate limits
@@ -26,6 +26,11 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.3.0 - Data Science Edition
+- **📊 Exportação Avançada (CSV)**: Motor nativo de exportação CSV (sem libs externas) com UTF-8 BOM para compatibilidade com Excel
+- **📊 CSV no Dashboard**: Exporta 13 métricas do repositório (Stars, Forks, Issues, Health Score, Lead Time, Code Churn, Divergência, etc.)
+- **📊 CSV no Benchmark**: Botão "Exportar CSV" na Tabela Comparativa com colunas idênticas à tabela visual
 
 ### v3.2.0 - Resilience & Stability
 - **🛡️ Exponential Backoff**: Retentativas automáticas com backoff exponencial para envios de analytics ao Supabase, garantindo resiliência a oscilações de rede
@@ -127,7 +132,7 @@ https://assertlab.github.io/bisolhador/?repo=facebook/react&date=2025-12-17
 2. **Analise as métricas** de saúde, maturidade e padrões de trabalho
 3. **Compartilhe resultados** clicando no botão "Compartilhar" para gerar links permanentes (O Bisolhador salva automaticamente o histórico da sua análise)
 4. **Acesse dados históricos** usando URLs semânticas com datas específicas
-5. **Exporte relatórios** em PDF ou dados brutos em JSON
+5. **Exporte relatórios** em PDF, dados brutos em JSON ou métricas em CSV
 
 ## 🛠️ Tech Stack
 
@@ -140,7 +145,7 @@ https://assertlab.github.io/bisolhador/?repo=facebook/react&date=2025-12-17
 - **Build**: Vite
 - **Deploy**: GitHub Pages
 
-> **Nota técnica (v3.2.0):** A codebase passou por uma refatoração completa em 5 sprints focando em performance otimizada (`useMemo` em charts), Clean Architecture (componentização de Dashboard e Benchmark), segurança (proteção XSS, safe localStorage) e eliminação de código duplicado (hooks unificados, constantes extraídas).
+> **Nota técnica (v3.3.0):** A codebase passou por uma refatoração completa em 5 sprints focando em performance otimizada (`useMemo` em charts), Clean Architecture (componentização de Dashboard e Benchmark), segurança (proteção XSS, safe localStorage) e eliminação de código duplicado (hooks unificados, constantes extraídas).
 
 ## 📚 Documentação & Arquitetura
 

@@ -1,13 +1,52 @@
 import { useTranslation } from 'react-i18next';
+import { exportToCsv } from '../../utils/csvExporter.js';
 
 export function BenchmarkDetailTable({ repos }) {
   const { t } = useTranslation();
 
+  const handleExportCsv = () => {
+    const rows = repos.map((repo) => {
+      let riskLabel = t('benchmark.riskLow', 'Low');
+      if (repo.busFactorPercentage > 80) {
+        riskLabel = t('benchmark.riskCritical', 'Critical');
+      } else if (repo.busFactorPercentage > 60) {
+        riskLabel = t('benchmark.riskModerate', 'Moderate');
+      }
+
+      return {
+        [t('benchmark.tableRepo')]: repo.fullName,
+        [t('benchmark.healthComparison')]: `${repo.healthScore}%`,
+        [t('stats.leadTime')]: repo.leadTime > 0
+          ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, repo.leadTimeUnit)}`
+          : 'N/A',
+        [t('stats.divergence')]: repo.divergence > 0 ? repo.divergence.toFixed(1) : 'N/A',
+        [t('stats.codeChurn')]: repo.codeChurnRatio > 0 ? repo.codeChurnRatio.toFixed(2) : 'N/A',
+        [t('benchmark.busFactorRisk')]: repo.busFactorPercentage > 0
+          ? `${repo.busFactorPercentage}% — ${riskLabel}`
+          : 'N/A',
+      };
+    });
+
+    exportToCsv('bisolhador-benchmark.csv', rows);
+  };
+
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">
-      <h4 className="text-md font-semibold text-shark dark:text-white mb-4">
-        {t('benchmark.detailTable', 'Tabela Comparativa')}
-      </h4>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-md font-semibold text-shark dark:text-white">
+          {t('benchmark.detailTable', 'Tabela Comparativa')}
+        </h4>
+        <button
+          onClick={handleExportCsv}
+          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg border border-emerald-600 hover:border-emerald-700 focus:ring-4 focus:ring-emerald-300 transition-colors"
+          title={t('button.csvBenchmarkTitle')}
+        >
+          <svg aria-hidden="true" className="w-3.5 h-3.5 inline mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+          {t('button.csvExport')}
+        </button>
+      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
           <thead className="bg-gray-50 dark:bg-slate-700">

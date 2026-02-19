@@ -76,7 +76,10 @@
     "days": "dias"
   },
   "button": {
-    "jsonTitle": "Download dados em JSON"
+    "jsonTitle": "Download dados em JSON",
+    "csvTitle": "Download dados em CSV",
+    "csvExport": "Exportar CSV",
+    "csvBenchmarkTitle": "Exportar comparação em CSV"
   },
   "health": {
     "title": "Health Score",

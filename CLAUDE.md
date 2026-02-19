@@ -64,7 +64,8 @@ src/
 │   ├── analyzers.js            # Pure functions: health score, bus factor, maturity
 │   ├── formatters.js           # Date/number formatting
 │   ├── pdfExporter.js          # PDF export via html2pdf.js
-│   └── exportJson.js           # JSON data export with provenance metadata
+│   ├── exportJson.js           # JSON data export with provenance metadata
+│   └── csvExporter.js          # CSV export (native, no dependencies)
 └── locales/                    # i18n translation files (pt/, en/)
 ```
 
@@ -113,7 +114,7 @@ Score = (items present / 7) × 100%. Colors: Green (>75%), Yellow (>50%), Red (b
 ## Project Context
 
 ### Purpose
-Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.2.0). Transforms GitHub repository data into visual insights for students and professors.
+Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.3.0). Transforms GitHub repository data into visual insights for students and professors.
 
 ### Token System
 - Stored in `localStorage['github_token']` (via safe storage wrapper)

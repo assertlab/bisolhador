@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.3.0] - 2026-02-19
+
+### 📊 Data Science Edition
+
+- **FEAT: Exportação Avançada (CSV)**: Adicionado suporte nativo para download de métricas em formato CSV (separado por vírgulas e compatível com Excel via UTF-8 BOM). Motor próprio sem dependências externas, com escape RFC 4180 para campos com caracteres especiais.
+- **FEAT: Integração CSV no Dashboard e Benchmark**: Botão "CSV" no Dashboard exporta 13 métricas do repositório (Stars, Forks, Issues, Health Score, Lead Time, Code Churn, Divergência, Branches, PRs, Merges, Releases). Botão "Exportar CSV" na Tabela Comparativa do Benchmark exporta colunas idênticas à tabela visual (Health Score, Lead Time, Divergência, Code Churn, Risco Bus Factor). Headers traduzidos dinamicamente via i18n (PT-BR/EN-US).
+
+---
+
 ## [3.2.0] - 2026-02-19
 
 ### 🛡️ Resilience & Stability

@@ -6,14 +6,16 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## 🔮 O Futuro (Próximas Versões)
 
-### 🔭 v3.3.0+ - Próximas Iterações (Planejado)
+### 🔭 v3.4.0+ - Próximas Iterações (Planejado)
 - [ ] **Gamificação (Badges e Conquistas):** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter", "Community Champion").
 - [ ] **Análise de Risco Avançada (Bus Factor):** Dashboard dedicado com visualizações de risco de dependência, tendências temporais e recomendações.
-- [ ] **Exportação Avançada:** CSV além do PDF/JSON existente.
 
 ---
 
 ## 🌟 O Presente (Era v3.x - Maturidade)
+
+### 📊 v3.3.0 - Data Science Edition ✅
+- [x] **Exportação Avançada (CSV):** Motor nativo de exportação CSV (sem bibliotecas externas) com escape RFC 4180 e UTF-8 BOM para compatibilidade com Excel. Integrado no Dashboard (13 métricas do repositório) e na Tabela Comparativa do Benchmark (exporta colunas idênticas à tabela visual). Headers traduzidos dinamicamente via i18n (PT-BR/EN-US).
 
 ### 🛡️ v3.2.0 - Resilience & Stability ✅
 - [x] **Resiliência de Analytics (Exponential Backoff):** Implementação de lógica de retentativas com Exponential Backoff no serviço de analytics do Supabase, garantindo que oscilações de rede não percam dados.
