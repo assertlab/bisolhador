@@ -108,11 +108,12 @@ Score = (items present / 7) × 100%. Colors: Green (>75%), Yellow (>50%), Red (b
 - Complex pages broken into sub-components (e.g., `benchmark/`)
 - Shared UI extracted as reusable components (`TimeRangeFilter`, `StatCard`)
 - Constants extracted to `src/constants.js` (no magic numbers in business logic)
+- Version display is dynamic (Header reads from `package.json`)
 
 ## Project Context
 
 ### Purpose
-Educational tool by ASSERT Lab (UFPE) for software engineering teaching. Transforms GitHub repository data into visual insights for students and professors.
+Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.2.0). Transforms GitHub repository data into visual insights for students and professors.
 
 ### Token System
 - Stored in `localStorage['github_token']` (via safe storage wrapper)

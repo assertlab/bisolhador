@@ -334,5 +334,10 @@
     "byDate": "Viewing history from {{date}} (Semantic Snapshot). This data is static and does not reflect the current GitHub state.",
     "byId": "Viewing record #{{id}}. This data is static and does not reflect the current GitHub state.",
     "closeAlert": "Close alert"
+  },
+  "partialData": {
+    "title": "Partial data",
+    "message": "Some information could not be loaded: {{items}}. Displayed data may be incomplete.",
+    "closeAlert": "Close alert"
   }
 }

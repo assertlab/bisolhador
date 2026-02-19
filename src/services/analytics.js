@@ -1,5 +1,6 @@
-import ReactGA from 'react-ga4';
-import { supabase } from './supabase.js';
+import ReactGA from "react-ga4";
+import { supabase } from "./supabase.js";
+import { withExponentialBackoff } from "../utils/retry.js";
 
 const analytics = {
   initialize() {
@@ -11,7 +12,10 @@ const analytics = {
   },
 
   async saveSearch(data, fullData = null) {
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    if (
+      !import.meta.env.VITE_SUPABASE_URL ||
+      !import.meta.env.VITE_SUPABASE_ANON_KEY
+    ) {
       return null;
     }
 
@@ -26,17 +30,28 @@ const analytics = {
         p_subscribers: parseInt(data.subscribers) || 0,
         p_health_score: parseFloat(data.healthScore) || 0,
         p_last_push_at: data.lastPush || null,
-        p_full_report: fullData && typeof fullData === 'object' && Object.keys(fullData).length > 0 ? (() => {
-          try {
-            return JSON.stringify(fullData);
-          } catch (e) {
-            console.warn('[Analytics] Failed to serialize fullData:', e.message);
-            return null;
-          }
-        })() : null
+        p_full_report:
+          fullData &&
+          typeof fullData === "object" &&
+          Object.keys(fullData).length > 0
+            ? (() => {
+                try {
+                  return JSON.stringify(fullData);
+                } catch (e) {
+                  console.warn(
+                    "[Analytics] Failed to serialize fullData:",
+                    e.message,
+                  );
+                  return null;
+                }
+              })()
+            : null,
       };
 
-      const { data: result, error } = await supabase.rpc('registrar_busca', rpcPayload);
+      const { data: result, error } = await supabase.rpc(
+        "registrar_busca",
+        rpcPayload,
+      );
       if (error) {
         throw error;
       }
@@ -44,72 +59,87 @@ const analytics = {
       // Retorna o ID numérico
       return result;
     } catch (error) {
-      console.warn('[Analytics] Failed to save search:', error.message);
+      console.warn("[Analytics] Failed to save search:", error.message);
       return null;
     }
   },
 
   trackSearch(data) {
-    ReactGA.event({ category: "Search", action: "Analyze Repo", label: data.name });
+    ReactGA.event({
+      category: "Search",
+      action: "Analyze Repo",
+      label: data.name,
+    });
 
-    // Send to Supabase if available (fire and forget to not block UI)
-    if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) {
-      // TODO: Implementar Retry Logic (v3.0) - Adicionar tentativa de reenvio em caso de falha temporária
-      (async () => {
-        try {
-          const rpcPayload = {
-            p_repo_name: data.name,
-            p_owner_type: data.ownerType,
-            p_language: data.language || null,
-            p_stars: parseInt(data.stars) || 0,
-            p_forks: parseInt(data.forks) || 0,
-            p_issues: parseInt(data.issues) || 0,
-            p_subscribers: parseInt(data.subscribers) || 0,
-            p_health_score: parseFloat(data.healthScore) || 0,
-            p_last_push_at: data.lastPush || null
-          };
-          const { error } = await supabase.rpc('registrar_busca', rpcPayload);
-          if (error) {
-            throw error;
-          }
-        } catch (error) {
-          console.warn('[Analytics] Failed to track search:', error.message);
-        }
-      })();
+    // Send to Supabase if available (fire and forget with retry to not block UI)
+    if (
+      import.meta.env.VITE_SUPABASE_URL &&
+      import.meta.env.VITE_SUPABASE_ANON_KEY
+    ) {
+      const rpcPayload = {
+        p_repo_name: data.name,
+        p_owner_type: data.ownerType,
+        p_language: data.language || null,
+        p_stars: parseInt(data.stars) || 0,
+        p_forks: parseInt(data.forks) || 0,
+        p_issues: parseInt(data.issues) || 0,
+        p_subscribers: parseInt(data.subscribers) || 0,
+        p_health_score: parseFloat(data.healthScore) || 0,
+        p_last_push_at: data.lastPush || null,
+      };
+
+      withExponentialBackoff(async () => {
+        const { error } = await supabase.rpc("registrar_busca", rpcPayload);
+        if (error) throw error;
+      }).catch((error) => {
+        console.warn(
+          "[Analytics] Failed to track search after retries:",
+          error.message,
+        );
+      });
     }
   },
 
   async getSnapshot(id) {
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    if (
+      !import.meta.env.VITE_SUPABASE_URL ||
+      !import.meta.env.VITE_SUPABASE_ANON_KEY
+    ) {
       return null;
     }
 
     try {
-      const { data, error } = await supabase.rpc('obter_snapshot', { p_id: parseInt(id) });
+      const { data, error } = await supabase.rpc("obter_snapshot", {
+        p_id: parseInt(id),
+      });
       if (error) {
         throw error;
       }
 
       return data;
     } catch (error) {
-      console.warn('[Analytics] Failed to get snapshot:', error.message);
+      console.warn("[Analytics] Failed to get snapshot:", error.message);
       return null;
     }
   },
 
   async getSnapshotByDate(repoName, dateString) {
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    if (
+      !import.meta.env.VITE_SUPABASE_URL ||
+      !import.meta.env.VITE_SUPABASE_ANON_KEY
+    ) {
       return null;
     }
 
     try {
       // Detecção automática do fuso (Ex: 'America/Recife', 'Europe/Lisbon')
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const userTimezone =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
-      const { data, error } = await supabase.rpc('buscar_snapshot_por_data', {
+      const { data, error } = await supabase.rpc("buscar_snapshot_por_data", {
         p_repo_name: repoName,
         p_date: dateString,
-        p_timezone: userTimezone // <--- Novo parâmetro
+        p_timezone: userTimezone, // <--- Novo parâmetro
       });
 
       if (error) {
@@ -118,7 +148,10 @@ const analytics = {
 
       return data;
     } catch (error) {
-      console.warn('[Analytics] Failed to get snapshot by date:', error.message);
+      console.warn(
+        "[Analytics] Failed to get snapshot by date:",
+        error.message,
+      );
       return null;
     }
   },
@@ -128,13 +161,16 @@ const analytics = {
   },
 
   async getRepoHistory(repoName) {
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    if (
+      !import.meta.env.VITE_SUPABASE_URL ||
+      !import.meta.env.VITE_SUPABASE_ANON_KEY
+    ) {
       return null;
     }
 
     try {
-      const { data, error } = await supabase.rpc('get_repo_history', {
-        p_repo_name: repoName
+      const { data, error } = await supabase.rpc("get_repo_history", {
+        p_repo_name: repoName,
       });
 
       if (error) {
@@ -143,7 +179,7 @@ const analytics = {
 
       return data;
     } catch (error) {
-      console.warn('[Analytics] Failed to get repo history:', error.message);
+      console.warn("[Analytics] Failed to get repo history:", error.message);
       return null;
     }
   },

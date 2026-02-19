@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.2.0] - 2026-02-19
+
+### 🛡️ Resilience & Stability
+
+- **FEAT: Exponential Backoff para Analytics**: Implementação de lógica de retentativas (Exponential Backoff) para envios de analytics ao Supabase, garantindo que oscilações de rede não percam dados. O serviço agora tenta reenviar automaticamente antes de desistir silenciosamente.
+- **FEAT: Tratamento de Falhas Parciais (PartialDataAlert)**: Tratamento de falhas parciais da API do GitHub (ex: Rate Limit de commits). O painel agora renderiza o que conseguiu carregar e exibe um banner amigável (`PartialDataAlert`) detalhando os dados ausentes, em vez de silenciar erros.
+
+---
+
+## [3.1.2] - 2026-02-13
+
+### 🐛 Patch Fix
+
+- **Dynamic Version Display**: O componente `Header` agora exibe a versão da aplicação dinamicamente lendo do `package.json`, eliminando strings hardcoded e garantindo sincronização automática com o versionamento do projeto.
+
+---
+
 ## [3.1.1] - 2026-02-13
 
 ### Refactoring Edition — 5 Sprints de Maturidade Técnica

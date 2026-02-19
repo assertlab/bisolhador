@@ -342,5 +342,10 @@
     "byDate": "Visualizando histórico de {{date}} (Snapshot Semântico). Estes dados são estáticos e não refletem o estado atual do GitHub.",
     "byId": "Visualizando registro #{{id}}. Estes dados são estáticos e não refletem o estado atual do GitHub.",
     "closeAlert": "Fechar alerta"
+  },
+  "partialData": {
+    "title": "Dados parciais",
+    "message": "Algumas informações não puderam ser carregadas: {{items}}. Os dados exibidos podem estar incompletos.",
+    "closeAlert": "Fechar alerta"
   }
 }

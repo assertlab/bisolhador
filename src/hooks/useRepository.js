@@ -38,6 +38,22 @@ async function fetchRepositoryData(repoName) {
         githubService.fetchMergedPRsCount(owner, repo)
     ]);
 
+    // Map of result indices to human-readable endpoint names
+    const endpointNames = [
+        'commits', 'branches', 'contributors', 'pullRequests',
+        'openIssues', 'closedIssues', 'recentPRs', 'languages',
+        'communityProfile', 'repositoryTree', 'releases',
+        'commitActivity', 'prStats', 'codeFrequency', 'mergedPRs'
+    ];
+
+    // Collect warnings from rejected promises
+    const warnings = results.reduce((acc, result, index) => {
+        if (result.status === 'rejected') {
+            acc.push(endpointNames[index]);
+        }
+        return acc;
+    }, []);
+
     // Extract results with fail-safe handling
     const commits = results[0]?.status === 'fulfilled' ? results[0].value : [];
     const branches = results[1]?.status === 'fulfilled' ? results[1].value : { count: 0, zombies: 0 };
@@ -206,7 +222,8 @@ async function fetchRepositoryData(repoName) {
             techStack: formatLanguages(languages),
             activity: formatCommitActivity(commitActivity)
         },
-        codeChurn
+        codeChurn,
+        _warnings: warnings.length > 0 ? warnings : undefined
     };
 
     return formattedData;

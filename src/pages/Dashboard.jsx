@@ -11,6 +11,7 @@ import { ContributorsTable } from '../components/ContributorsTable';
 import { ActivityLogs } from '../components/ActivityLogs';
 import { SettingsModal } from '../components/SettingsModal';
 import { SkeletonDashboard } from '../components/skeletons/SkeletonDashboard.jsx';
+import { PartialDataAlert } from '../components/PartialDataAlert.jsx';
 import { useRepository } from '../hooks/useRepository.js';
 import { createMockRepoData } from '../utils/snapshotAdapter.js';
 import analytics from '../services/analytics.js';
@@ -235,6 +236,9 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               </div>
             </div>
           )}
+
+          {/* Alerta de Dados Parciais */}
+          <PartialDataAlert warnings={(repoData || snapshotData)?._warnings} />
         </div>
 
         {/* Lógica de Renderização */}

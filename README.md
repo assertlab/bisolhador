@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.1.1
+# 🦈 Bisolhador Dashboard v3.2.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -26,6 +26,13 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.2.0 - Resilience & Stability
+- **🛡️ Exponential Backoff**: Retentativas automáticas com backoff exponencial para envios de analytics ao Supabase, garantindo resiliência a oscilações de rede
+- **🛡️ PartialDataAlert**: Tratamento de falhas parciais da API do GitHub — o painel renderiza os dados disponíveis e exibe um banner amigável detalhando os dados ausentes
+
+### v3.1.2 - Patch Fix
+- **🐛 Dynamic Version**: Header agora exibe a versão dinamicamente do `package.json` (sem strings hardcoded)
 
 ### v3.1.1 - Refactoring Edition
 - **⚡ Performance**: `useMemo` em todos os charts (evita re-criação do canvas Chart.js a cada render)
@@ -133,7 +140,7 @@ https://assertlab.github.io/bisolhador/?repo=facebook/react&date=2025-12-17
 - **Build**: Vite
 - **Deploy**: GitHub Pages
 
-> **Nota técnica (v3.1.1):** A codebase passou por uma refatoração completa em 5 sprints focando em performance otimizada (`useMemo` em charts), Clean Architecture (componentização de Dashboard e Benchmark), segurança (proteção XSS, safe localStorage) e eliminação de código duplicado (hooks unificados, constantes extraídas).
+> **Nota técnica (v3.2.0):** A codebase passou por uma refatoração completa em 5 sprints focando em performance otimizada (`useMemo` em charts), Clean Architecture (componentização de Dashboard e Benchmark), segurança (proteção XSS, safe localStorage) e eliminação de código duplicado (hooks unificados, constantes extraídas).
 
 ## 📚 Documentação & Arquitetura
 
