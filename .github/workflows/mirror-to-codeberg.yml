@@ -1,0 +1,33 @@
+name: 🪞 Espelhamento para Codeberg
+
+# Executa sempre que houver um push na main ou uma nova tag de versão for criada
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fundamental: puxa todo o histórico, branches e tags
+
+      - name: 🚀 Sincronizando com o Codeberg
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+          CODEBERG_USER: "vinicius3w" # ⚠️ Altere para o seu usuário/organização
+          REPO_NAME: "bisolhador"
+        run: |
+          # Configura o git local para não reclamar de credenciais
+          git config --global user.name "GitHub Action Mirror"
+          git config --global user.email "action@github.com"
+          
+          # Adiciona o Codeberg como um remote
+          git remote add codeberg https://$CODEBERG_USER:$CODEBERG_TOKEN@codeberg.org/$CODEBERG_USER/$REPO_NAME.git
+          
+          # Empurra todo o histórico e tags forçando a sincronia
+          git push codeberg --all --force
+          git push codeberg --tags --force
