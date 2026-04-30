@@ -12,19 +12,22 @@ jobs:
       - name: 📥 Checkout do código
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Puxa todo o histórico, branches e tags
 
       - name: 🚀 Sincronizando com o Codeberg
         env:
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
-          CODEBERG_USER: "vinicius3w"
-          CODEBERG_ORG: "ASSERT_Lab"
+          AUTH_USER: "vinicius3w"       # Seu usuário (quem faz o login)
+          TARGET_OWNER: "ASSERT_Lab"    # A organização (onde o repo mora)
           REPO_NAME: "bisolhador"
         run: |
+          # Configura o git local para não reclamar de credenciais
           git config --global user.name "GitHub Action Mirror"
           git config --global user.email "action@github.com"
           
-          git remote add codeberg https://$CODEBERG_USER:$CODEBERG_TOKEN@codeberg.org/$CODEBERG_ORG/$REPO_NAME.git
+          # Adiciona o Codeberg como um remote (Note a separação de AUTH_USER e TARGET_OWNER)
+          git remote add codeberg https://$AUTH_USER:$CODEBERG_TOKEN@codeberg.org/$TARGET_OWNER/$REPO_NAME.git
           
+          # Empurra todo o histórico e tags forçando a sincronia
           git push codeberg --all --force
           git push codeberg --tags --force
