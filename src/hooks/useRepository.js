@@ -4,6 +4,7 @@ import { githubService } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
 import { calculateBusFactor as calculateAdvancedBusFactor } from '../utils/busFactor.js';
 import analytics from '../services/analytics.js';
+import i18n from '../i18n.js';
 import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE } from '../constants.js';
 
 // Repository data fetching function for TanStack Query
@@ -18,6 +19,15 @@ async function fetchRepositoryData(repoName) {
     const repoData = await githubService.fetchRepository(owner, repo);
     if (!repoData) {
         throw new Error('Não foi possível buscar informações do repositório');
+    }
+
+    // Privacy gate: never process or persist data from private repositories,
+    // regardless of the PAT having read access to them. Must run before any
+    // of the 15+ parallel fetches below and before analytics.saveSearch.
+    if (repoData.private === true) {
+        const privateRepoError = new Error(i18n.t('errors.privateRepo'));
+        privateRepoError.code = 'PRIVATE_REPO_UNSUPPORTED';
+        throw privateRepoError;
     }
 
     // Fetch all other data in parallel
@@ -261,6 +271,7 @@ export function useRepository() {
         data,
         loading: isLoading,
         error: error?.message || null,
+        errorCode: error?.code || null,
         search,
         clearSearch
     };

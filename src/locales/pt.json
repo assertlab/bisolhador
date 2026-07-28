@@ -1,4 +1,8 @@
 {
+  "errors": {
+    "privateRepo": "Este repositório é privado. O Bisolhador funciona apenas com repositórios públicos, pois os dados analisados podem ser compartilhados publicamente.",
+    "privacyCheckFailed": "Não foi possível confirmar se este repositório é público (falha de rede ou limite de requisições do GitHub). Por segurança, ele não foi adicionado — tente novamente em instantes."
+  },
   "header": {
     "title": "Bisolhador",
     "helpTitle": "Como usar",

@@ -2,6 +2,8 @@ import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
+import { githubService } from '../services/githubService';
+import { withExponentialBackoff } from '../utils/retry.js';
 import { useBenchmarkRepos } from '../hooks/useBenchmarkRepos';
 import { useTimeFilter } from '../hooks/useTimeFilter';
 import { TimeRangeFilter } from '../components/TimeRangeFilter';
@@ -28,6 +30,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
   const [searchInput, setSearchInput] = useState('');
   const [metricCategory, setMetricCategory] = useState('popularity');
   const [timeRange, setTimeRange] = useState('30d');
+  const [isCheckingRepo, setIsCheckingRepo] = useState(false);
 
   // Fetch data for all selected repos
   const { isLoading, hasErrors, successfulRepos, errorCount } = useBenchmarkRepos(selectedRepos);
@@ -60,7 +63,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
     }));
   }, [successfulRepos, filteredHistory, timeRange]);
 
-  const handleAddRepo = (e) => {
+  const handleAddRepo = async (e) => {
     e.preventDefault();
     const repoName = searchInput.trim();
 
@@ -82,6 +85,38 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
     }
 
     const [owner, repo] = repoName.split('/');
+
+    // Privacy gate: the Benchmark page has its own entry path (it reads history
+    // straight from Supabase and never calls useRepository.js), so it needs its
+    // own live check against GitHub before a private repo can ever be selected.
+    // Transient failures (rate limit, network blips) are retried with backoff;
+    // baseDelay is shortened from the util's 1000ms default to keep the worst
+    // case around ~3s instead of ~10s (isCheckingRepo below keeps the button
+    // disabled with a spinner for the duration either way).
+    // Known limitation: fetchRepository doesn't attach the HTTP status to the
+    // error it throws, so a 404 (repo genuinely doesn't exist) gets retried
+    // 3x same as a transient failure would — wasteful but not incorrect.
+    // Fixing that cleanly requires attaching a status code in githubService.js.
+    setIsCheckingRepo(true);
+    try {
+      const repoInfo = await withExponentialBackoff(
+        () => githubService.fetchRepository(owner, repo),
+        3,
+        300
+      );
+      if (repoInfo?.private === true) {
+        alert(t('errors.privateRepo'));
+        return;
+      }
+    } catch {
+      // All retries exhausted — fail closed. We can't confirm this repo is
+      // public, so we refuse to add it rather than risk processing a private one.
+      alert(t('errors.privacyCheckFailed'));
+      return;
+    } finally {
+      setIsCheckingRepo(false);
+    }
+
     const newRepo = {
       fullName: repoName,
       owner,
@@ -116,6 +151,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
             searchInput={searchInput}
             setSearchInput={setSearchInput}
             onSubmit={handleAddRepo}
+            isChecking={isCheckingRepo}
           />
 
           {/* Counter Badge */}
