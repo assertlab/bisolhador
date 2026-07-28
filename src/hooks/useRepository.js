@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { githubService } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
@@ -245,19 +245,24 @@ export function useRepository() {
         retry: 1
     });
 
-    const search = (name) => {
+    const search = useCallback((name) => {
         if (name && name.includes('/')) {
             setRepoName(name);
         } else {
             setRepoName(null);
         }
-    };
+    }, []);
+
+    const clearSearch = useCallback(() => {
+        setRepoName(null);
+    }, []);
 
     return {
         data,
         loading: isLoading,
         error: error?.message || null,
-        search
+        search,
+        clearSearch
     };
 }
 

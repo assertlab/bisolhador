@@ -160,6 +160,10 @@ const analytics = {
     ReactGA.event({ category: "Engagement", action: "Download PDF" });
   },
 
+  /**
+   * Busca o histórico completo de análises de um repositório para a Timeline.
+   * @param {string} repoName - Nome do repositório (ex: 'facebook/react')
+   */
   async getRepoHistory(repoName) {
     if (
       !import.meta.env.VITE_SUPABASE_URL ||

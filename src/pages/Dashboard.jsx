@@ -35,15 +35,27 @@ function SkeletonChart() {
 export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
   const location = useLocation();
-  const { data: repoData, loading, error, search } = useRepository();
+  const { data: repoData, loading, error, search, clearSearch } = useRepository();
   const [dismissedError, setDismissedError] = useState(false);
   const [isSnapshotMode, setIsSnapshotMode] = useState(false);
   const [snapshotId, setSnapshotId] = useState(null);
   const [snapshotData, setSnapshotData] = useState(null);
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [semanticDate, setSemanticDate] = useState(null);
+  const [searchBarKey, setSearchBarKey] = useState(0);
 
   const lastFetchedParams = useRef('');
+
+  // Limpa todo o resíduo de uma busca/snapshot anterior (dados, erros e input)
+  const handleClearSearch = useCallback(() => {
+    clearSearch();
+    setIsSnapshotMode(false);
+    setSnapshotId(null);
+    setSnapshotData(null);
+    setSemanticDate(null);
+    setDismissedError(false);
+    setSearchBarKey((key) => key + 1); // Força remount do SearchBar (limpa o input)
+  }, [clearSearch]);
 
   const loadSnapshot = useCallback(async (id) => {
     setSnapshotLoading(true);
@@ -147,8 +159,11 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
       loadSnapshotByDate(repoParam, dateParam);
     } else if (queryParam) {
       search(queryParam);
+    } else {
+      // Navegação para "/" sem parâmetros (ex.: ícones de Home/Busca) — limpa resíduo da busca anterior
+      handleClearSearch();
     }
-  }, [location.search, location.pathname, loadSnapshot, loadSnapshotByDate, search]);
+  }, [location.search, location.pathname, loadSnapshot, loadSnapshotByDate, search, handleClearSearch]);
 
   const handleSearch = (repositoryName) => {
     setDismissedError(false);
@@ -178,7 +193,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
           </h2>
 
           <div className="w-full pt-4">
-            <SearchBar onSearch={handleSearch} loading={loading} />
+            <SearchBar key={searchBarKey} onSearch={handleSearch} loading={loading} />
           </div>
 
           {/* Alerta de Modo Snapshot */}
