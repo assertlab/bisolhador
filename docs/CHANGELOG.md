@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.4.1] - 2026-07-28
+
+### 🐛 Fixes
+
+- **FIX**: Resolução do bug de "estado fantasma" na navegação SPA. Adicionado limpador de estado reativo no Dashboard atrelado à URL.
+- **FIX**: Forçada a remontagem do SearchBar via prop key para limpar texto residual.
+- **FIX**: Correção de erro de sintaxe/duplicação no arquivo `analytics.js` que estava quebrando o pipeline de build.
+
+---
+
 ## [3.4.0] - 2026-02-19
 
 ### ☢️ Governance & Risk Edition
