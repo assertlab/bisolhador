@@ -22,6 +22,7 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **📄 Export PDF/JSON/CSV**: Relatórios completos em PDF, dados brutos em JSON e exportação em CSV para análise em planilhas
 - ** Monitoramento de Uso**: Rastreamento de acessos e eventos (Buscas, Exports) com Google Analytics 4
 - **🛡️ Security-First (RPC Validation)**: Implementação de RPC segura no Supabase com validação de dados
+- **🔒 Apenas Repositórios Públicos**: Por design, o Bisolhador não processa nem persiste dados de repositórios privados — mesmo que seu token pessoal tenha acesso a eles — já que os dados analisados podem ser compartilhados publicamente via links permanentes
 - **🛡️ Fail-Safe**: Tratamento robusto de erros e rate limits
 - **♿ Acessibilidade (WCAG AA)**: Semântica de tabelas, aria-label/aria-hidden em ícones, suporte a leitores de tela
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens

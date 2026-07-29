@@ -5,10 +5,25 @@ import { exportToPDF } from '../utils/pdfExporter.js';
 import { exportJson } from '../utils/exportJson.js';
 import { exportToCsv } from '../utils/csvExporter.js';
 
+// GitHub owner/repo segments: alphanumeric, dots, hyphens, underscores only —
+// no slashes, backslashes or control characters. Defense in depth for the
+// /timeline/:owner/:repo route: fullName can originate from a Supabase
+// snapshot (analytics_searches), which was reachable by open INSERT for
+// anon users in the past, so it isn't trusted just because react-router is
+// patched.
+const SAFE_GITHUB_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
 export function RepoInfoCard({ data, onShareSuccess }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   if (!data) return null;
+
+  const [timelineOwner, timelineRepo] = (data.fullName || '').split('/');
+  const isTimelineRouteSafe =
+    Boolean(timelineOwner) &&
+    Boolean(timelineRepo) &&
+    SAFE_GITHUB_NAME_PATTERN.test(timelineOwner) &&
+    SAFE_GITHUB_NAME_PATTERN.test(timelineRepo);
 
   const calculateAgeText = (createdAt) => {
     const now = new Date();
@@ -104,9 +119,12 @@ export function RepoInfoCard({ data, onShareSuccess }) {
   };
 
   const handleViewTimeline = () => {
-    // Extrai owner e repo do fullName (ex: "facebook/react")
-    const [owner, repo] = data.fullName.split('/');
-    navigate(`/timeline/${owner}/${repo}`);
+    if (!isTimelineRouteSafe) {
+      console.error('Bloqueado: fullName não bate o padrão seguro de owner/repo do GitHub:', data.fullName);
+      alert(t('errors.invalidRepoName'));
+      return;
+    }
+    navigate(`/timeline/${timelineOwner}/${timelineRepo}`);
   };
 
   return (
@@ -146,16 +164,18 @@ export function RepoInfoCard({ data, onShareSuccess }) {
           )}
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={handleViewTimeline}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg border border-indigo-600 hover:border-indigo-700 focus:ring-4 focus:ring-indigo-300 transition-colors"
-            title={t('timeline.viewButton')}
-          >
-            <svg aria-hidden="true" className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
-            </svg>
-            {t('timeline.viewButton')}
-          </button>
+          {isTimelineRouteSafe && (
+            <button
+              onClick={handleViewTimeline}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg border border-indigo-600 hover:border-indigo-700 focus:ring-4 focus:ring-indigo-300 transition-colors"
+              title={t('timeline.viewButton')}
+            >
+              <svg aria-hidden="true" className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+              </svg>
+              {t('timeline.viewButton')}
+            </button>
+          )}
           <button
             onClick={handleShare}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg border border-purple-600 hover:border-purple-700 focus:ring-4 focus:ring-purple-300 transition-colors"

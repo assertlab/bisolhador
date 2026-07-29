@@ -6,12 +6,24 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 
 ## 🔮 O Futuro (Próximas Versões)
 
-### 🔭 v3.5.0+ - Próximas Iterações (Planejado)
+### 🔭 Próximas Iterações (Planejado)
 - [ ] **Gamificação (Badges e Conquistas):** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter", "Community Champion").
+- [ ] **Quality Workbench (Testes Automatizados):** Hoje o projeto não tem nenhuma suíte de testes formal (unitários, integração ou e2e) além do `scripts/csp-smoke-test.mjs` recém-criado. Toda validação histórica foi manual/exploratória. Próximos passos: (1) testes unitários com Vitest para funções puras críticas em `analyzers.js` (health score, bus factor, lead time); (2) testes de componente com Testing Library para os fluxos de fail-safe documentados; (3) expandir `csp-smoke-test.mjs` para uma suíte e2e mais ampla; (4) adicionar um job de lint+build+test obrigatório em `.github/workflows`, hoje inexistente (o único workflow atual só espelha o repo para o Codeberg).
+- [ ] **UX de Erros Diferenciados:** Hoje o Dashboard renderiza todo tipo de erro (403 de rate limit, 404, repositório privado, etc.) de forma idêntica — um único banner genérico com o texto cru do erro, sem diferenciação visual nem ação específica por tipo.
 
 ---
 
 ## 🌟 O Presente (Era v3.x - Maturidade)
+
+### 🔒 v3.5.0 - Security Hardening Edition ✅
+- [x] **Auditoria de Segurança Completa:** Revisão end-to-end de RLS do Supabase, superfície de ataque client-side, segredos no histórico do git e Content-Security-Policy.
+- [x] **RLS Corrigida:** Removidas as policies públicas "Permitir inserts publicos" (INSERT) e "Permitir leitura publica" (SELECT) de `analytics_searches`, que liberavam acesso direto ao role `anon` bypassando as RPCs — a documentação anterior afirmava (incorretamente) que isso já estava bloqueado.
+- [x] **Bloqueio de Repositórios Privados:** `useRepository.js` e `Benchmark.jsx` agora checam a visibilidade do repositório antes de processar ou persistir qualquer dado, fechando um vazamento de dados de repositório privado para usuários não autenticados.
+- [x] **Rotação da Anon Key:** Identificado `.env` commitado no histórico do git (dez/2025); anon key do Supabase rotacionada no painel do Supabase.
+- [x] **Sanitização de URLs:** `encodeURIComponent` aplicado nos 18 endpoints de `githubService.js` que interpolavam `owner`/`repo`/`defaultBranch` sem escapar.
+- [x] **Content-Security-Policy:** Primeira CSP do projeto, adicionada em `index.html`, escopada aos domínios reais usados (GitHub, Supabase, GA4).
+- [x] **react-router-dom Atualizado:** `^7.10.1` → `^7.18.2` (corrige open redirect via backslash) + validação defensiva de rota (`SAFE_GITHUB_NAME_PATTERN`) em `RepoInfoCard.jsx`.
+- [x] **Primeiro Teste Automatizado:** `scripts/csp-smoke-test.mjs` (Playwright), rodável via `npm run smoke:csp`.
 
 ### ☢️ v3.4.0 - Governance & Risk Edition ✅
 - [x] **Análise de Risco Avançada (Bus Factor):** Motor matemático baseado em limite de 70% de esforço (Pareto) e novo componente visual BusFactorCard (Barra Horizontal Empilhada) para alertar sobre centralização de conhecimento.

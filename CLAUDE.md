@@ -5,11 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev      # Start dev server (http://localhost:5173)
-npm run build    # Production build
-npm run lint     # Run ESLint
-npm run preview  # Preview production build locally
-npm run deploy   # Deploy to GitHub Pages (runs build first)
+npm run dev        # Start dev server (http://localhost:5173)
+npm run build      # Production build
+npm run lint       # Run ESLint
+npm run preview    # Preview production build locally
+npm run deploy     # Deploy to GitHub Pages (runs build first)
+npm run smoke:csp  # CSP + PDF-export smoke test (Playwright, build + dev modes)
 ```
 
 ## Architecture
@@ -95,8 +96,7 @@ Score = (items present / 7) × 100%. Colors: Green (>75%), Yellow (>50%), Red (b
 
 ### Error Handling
 - All API calls wrapped in try-catch; return empty values on error (never crash)
-- 403 (Rate Limit) → suggest adding token
-- 404 (Not found) → friendly error message
+- Dashboard renders a single generic error banner (`{error}` as plain text) — there is no differentiated UI per error type today; 403 (rate limit), 404, and "private repo unsupported" all look identical to the user. Prior versions of this file claimed 403/404 got distinct treatment; that was never true in the code. See `docs/ROADMAP.md` for the pending UX item to fix this.
 - Render UI even with partial data (graceful degradation)
 
 ### Performance Patterns
@@ -116,7 +116,7 @@ Score = (items present / 7) × 100%. Colors: Green (>75%), Yellow (>50%), Red (b
 ## Project Context
 
 ### Purpose
-Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.4.1). Transforms GitHub repository data into visual insights for students and professors.
+Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.5.0). Transforms GitHub repository data into visual insights for students and professors.
 
 ### Token System
 - Stored in `localStorage['github_token']` (via safe storage wrapper)
@@ -127,7 +127,7 @@ Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.4.1)
 - **Write**: All writes via validated RPCs (`registrar_busca`), no direct INSERT
 - **Read**: History via RPC (`buscar_snapshot_por_data`) with dynamic timezone
 - **Schema**: `analytics_searches` uses `BIGINT` IDs and `NUMERIC` health_score
-- **Security**: INSERT revoked for anon users via RLS; RPCs handle validation
+- **Security**: Direct table access (INSERT/SELECT) for the `anon` role is revoked via RLS — all access goes through `SECURITY DEFINER` RPCs. This was **not** true before v3.5.0: two public RLS policies ("Permitir inserts publicos", "Permitir leitura publica") let `anon` read/write `analytics_searches` directly, bypassing every RPC, despite this file previously claiming otherwise. See `## Security` below and `docs/CHANGELOG.md` [3.5.0].
 
 ### URL / Deep Linking
 - `/?q=owner/repo` — live search
@@ -142,6 +142,31 @@ VITE_SUPABASE_URL=https://... # Supabase project URL
 VITE_SUPABASE_ANON_KEY=...    # Supabase anonymous key
 ```
 
+### Automated Testing
+`scripts/csp-smoke-test.mjs` is the project's only automated test (Playwright). Run via `npm run smoke:csp`. Optional process env vars (never `VITE_`-prefixed, never bundled):
+- `SMOKE_SNAPSHOT_ID` — loads an existing `analytics_searches` id via the app's `?id=` permalink instead of live-searching, to bypass the unauthenticated GitHub rate limit (60 req/h).
+- `SMOKE_GITHUB_TOKEN` — a real GitHub PAT, injected into the test browser's `localStorage` (mirrors what `SettingsModal` does manually) so the live search actually gets 5,000 req/h. Never logged.
+
 ### Testing Repositories
 - `twbs/bootstrap` or `torvalds/linux` — Mature, high-activity repos
 - `assertlab/bisolhador` — Young, low-activity repo (tests smart trim on charts)
+
+## Security
+
+### Private Repositories
+The app never processes or persists data from private GitHub repositories, even when the user's PAT has private-repo scope. `useRepository.js` checks `repoData.private` immediately after the initial repo fetch and aborts (`PRIVATE_REPO_UNSUPPORTED`) before any of the 15+ parallel calls or the Supabase save-on-load. `Benchmark.jsx` has its own entry path — it reads history from Supabase, not live GitHub calls — so it performs its own live visibility check via `githubService.fetchRepository`, retried with `withExponentialBackoff` and fail-closed if visibility can't be confirmed.
+
+### Input Sanitization
+`githubService.js` applies `encodeURIComponent` to every interpolated value (`owner`, `repo`, `defaultBranch`) in request URLs and GitHub search query strings — including inside search qualifiers (e.g. `` repo:${owner}/${repo}+type:pr ``), where only the interpolated values are encoded, never the literal `+`/`:` separators, so query semantics aren't broken.
+
+### Content-Security-Policy
+`index.html` ships a CSP scoped to the domains the app actually calls: `api.github.com`, Supabase (via the build-time `%VITE_SUPABASE_URL%` substitution, not a wildcard), GA4's script/collection domains, and `avatars.githubusercontent.com` for contributor images. `style-src` includes `'unsafe-inline'` because `html2canvas` (used by the PDF export) applies inline styles via `setAttribute`/`cssText` while cloning the DOM for rendering — confirmed with a real headless-browser test (`npm run smoke:csp`), not assumed. `frame-ancestors`/`report-uri` don't work via `<meta>` (HTTP-header-only directives), so GitHub Pages static hosting has no clickjacking protection through this CSP.
+
+### Route Safety
+`RepoInfoCard.jsx` validates `owner`/`repo` against `SAFE_GITHUB_NAME_PATTERN` before calling `navigate()` for the `/timeline/:owner/:repo` route — defense in depth, since that data can come from a Supabase snapshot rather than a live search, and a react-router version fix shouldn't be the only safety net for app-constructed routes.
+
+## Documentation Maintenance Policy
+
+Whenever a code change has the potential to change behavior documented in this file, in `README.md`, or in `docs/DESIGN_SYSTEM.md`, explicitly evaluate — before considering the task done — whether any of those documents need updating, and whether the change justifies a new `docs/CHANGELOG.md` entry and a `package.json` version bump (following SemVer: patch for fixes with no visible behavior change, minor for new behavior/hardening that doesn't break existing usage, major for changes that break existing usage).
+
+Stale documentation isn't a cosmetic problem in this project. It has already, concretely, caused a false sense of security about RLS protections that didn't actually exist — this file and the project's other docs asserted for months that anonymous INSERT into `analytics_searches` was blocked, when in fact two public RLS policies made it (and anonymous SELECT) fully open. Treat every doc claim about security posture as something that needs re-verifying against the actual code/config, not something to copy forward from the previous version.

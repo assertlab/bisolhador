@@ -31,7 +31,7 @@ export const githubService = {
       throw new Error("Owner and repo are required");
     }
 
-    const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}`;
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
     const response = await fetch(url, { headers: getHeaders() });
 
     if (!response.ok) {
@@ -48,7 +48,7 @@ export const githubService = {
     }
 
     const perPage = params.perPage || GITHUB_PER_PAGE_COMMITS;
-    const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/commits?per_page=${perPage}`;
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits?per_page=${perPage}`;
 
     const response = await fetch(url, { headers: getHeaders() });
 
@@ -66,7 +66,7 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/branches?per_page=${GITHUB_PER_PAGE_BRANCHES}`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=${GITHUB_PER_PAGE_BRANCHES}`;
       const response = await fetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
@@ -119,7 +119,7 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/contributors`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors`;
       const response = await fetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
@@ -141,7 +141,7 @@ export const githubService = {
     }
 
     try {
-      const query = `repo:${owner}/${repo}+type:pr`;
+      const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+type:pr`;
       const url = `${GITHUB_BASE_URL}/search/issues?q=${query}`;
       const response = await fetch(url, { headers: getHeaders() });
 
@@ -164,7 +164,7 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/languages`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/languages`;
       const response = await fetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
@@ -186,7 +186,7 @@ export const githubService = {
     }
 
     try {
-      const query = `repo:${owner}/${repo}+is:issue+is:open`;
+      const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+is:issue+is:open`;
       const url = `${GITHUB_BASE_URL}/search/issues?q=${query}`;
       const response = await fetch(url, { headers: getHeaders() });
 
@@ -209,7 +209,7 @@ export const githubService = {
     }
 
     try {
-      const query = `repo:${owner}/${repo}+is:issue+is:closed`;
+      const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+is:issue+is:closed`;
       const url = `${GITHUB_BASE_URL}/search/issues?q=${query}`;
       const response = await fetch(url, { headers: getHeaders() });
 
@@ -232,7 +232,7 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/community/profile`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/community/profile`;
       const response = await fetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
@@ -258,7 +258,7 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/pulls?state=all&sort=created&direction=desc&per_page=${GITHUB_PER_PAGE_RECENT_PRS}`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=all&sort=created&direction=desc&per_page=${GITHUB_PER_PAGE_RECENT_PRS}`;
       const response = await fetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
@@ -282,7 +282,7 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/releases?per_page=${GITHUB_PER_PAGE_RELEASES}`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases?per_page=${GITHUB_PER_PAGE_RELEASES}`;
       const response = await fetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
@@ -306,7 +306,7 @@ export const githubService = {
       }
 
       // Fallback for MVP: fetch all releases and count
-      const allUrl = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/releases`;
+      const allUrl = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases`;
       const allResponse = await fetch(allUrl, { headers: getHeaders() });
 
       if (!allResponse.ok) {
@@ -347,7 +347,7 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/stats/participation`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/participation`;
       const response = await fetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
@@ -373,13 +373,13 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}?recursive=1`;
       const response = await fetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
         if (response.status === 422) {
           // Repository too large, try without recursive
-          const urlNoRecursive = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/git/trees/${defaultBranch}`;
+          const urlNoRecursive = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}`;
           const responseNoRecursive = await fetch(urlNoRecursive, {
             headers: getHeaders(),
           });
@@ -407,7 +407,7 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/pulls?state=all&per_page=${GITHUB_PER_PAGE_PR_STATS}&sort=created&direction=desc`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=all&per_page=${GITHUB_PER_PAGE_PR_STATS}&sort=created&direction=desc`;
       const response = await fetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
@@ -429,7 +429,7 @@ export const githubService = {
     }
 
     try {
-      const url = `${GITHUB_BASE_URL}/repos/${owner}/${repo}/stats/code_frequency`;
+      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/code_frequency`;
       const response = await fetch(url, { headers: getHeaders() });
 
       // Silently handle 202 (calculating) and 422 (repo too large)
@@ -451,7 +451,7 @@ export const githubService = {
     }
 
     try {
-      const query = `repo:${owner}/${repo}+is:pr+is:merged`;
+      const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+is:pr+is:merged`;
       const url = `${GITHUB_BASE_URL}/search/issues?q=${query}`;
       const response = await fetch(url, { headers: getHeaders() });
 

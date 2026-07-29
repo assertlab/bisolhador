@@ -5,6 +5,42 @@
     <link rel="icon" type="image/png" href="/logo_assert.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>bisolhador</title>
+    <!--
+      Content-Security-Policy — domínios liberados com base no que o código realmente chama,
+      não uma lista genérica de tutorial:
+      - script-src: 'self' (bundle Vite) + googletagmanager.com, de onde o react-ga4 injeta o
+        gtag.js (ver node_modules/react-ga4/src/ga4.js, gtagUrl default).
+      - connect-src: 'self' + api.github.com (src/services/githubService.js, único host chamado)
+        + %VITE_SUPABASE_URL% (src/services/supabase.js — usa a env var real da build via o
+        "HTML env replacement" nativo do Vite, em vez de hardcodar o domínio ou usar um wildcard
+        *.supabase.co, que permitiria exfiltração para QUALQUER projeto Supabase de terceiros)
+        + google-analytics.com / *.google-analytics.com / *.analytics.google.com /
+        googletagmanager.com (destinos documentados de coleta do gtag.js — não são chamados
+        diretamente pelo nosso código, então não dá pra confirmar por grep, só pela doc do GA4).
+      - img-src: 'self' + avatars.githubusercontent.com (contributor.avatar_url em
+        ContributorsTable.jsx, BusFactorCard.jsx e ActivityLogs.jsx) + data: (html2canvas, usado
+        pelo export de PDF em pdfExporter.js, lê/gera data URIs internamente).
+      - style-src: 'self' 'unsafe-inline' — os style={{...}} inline do React usam a CSSOM
+        (propriedade por propriedade), o que é correto mas irrelevante aqui: o motivo real do
+        'unsafe-inline' é o html2canvas (usado no export de PDF, src/utils/pdfExporter.js), que
+        aplica estilo inline via setAttribute('style', ...)/cssText ao clonar o DOM pra renderizar
+        o canvas — isso cai sob style-src independente de nonce/hash. Em modo dev, o próprio
+        @vite/client também injeta estilo inline (provavelmente pro overlay de erro do HMR), então
+        a mesma relaxação é necessária nos dois ambientes de qualquer forma. Confirmado via smoke
+        test real com Playwright (scripts/csp-smoke-test.mjs, npm run smoke:csp), não suposição —
+        a violação "Applying inline style violates... style-src 'self'" aparecia em build E dev
+        antes desse ajuste.
+      - font-src: 'self' — nenhuma fonte externa (sem Google Fonts/CDN, confirmado em index.css
+        e tailwind.config.js).
+      - object-src 'none' / base-uri 'self' — hardening padrão, sem uso conhecido no app.
+      Limitação conhecida: frame-ancestors, report-uri e sandbox são ignorados quando a CSP vem
+      de <meta> (só funcionam via header HTTP real). GitHub Pages não permite configurar headers
+      HTTP customizados nativamente, então proteção contra clickjacking não é coberta aqui.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' https://avatars.githubusercontent.com data:; font-src 'self'; connect-src 'self' https://api.github.com %VITE_SUPABASE_URL% https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self';"
+    />
   </head>
   <body>
     <div id="root"></div>

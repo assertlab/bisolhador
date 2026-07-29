@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.5.0] - 2026-07-29
+
+### 🔒 Security
+
+- **SECURITY**: Removidas as policies de RLS "Permitir inserts publicos" (INSERT, `with_check: true`) e "Permitir leitura publica" (SELECT, `qual: true`) da tabela `analytics_searches`, que liberavam leitura/escrita direta para o role `anon`, ignorando completamente as RPCs (`registrar_busca`, `obter_snapshot`, etc). A documentação já afirmava (incorretamente) que INSERT anônimo estava bloqueado — não estava. Todo acesso agora passa exclusivamente pelas RPCs `SECURITY DEFINER`.
+- **SECURITY**: Bloqueado o processamento e a persistência de repositórios privados. A aplicação nunca checava `repoData.private` ao buscar via API do GitHub; combinado com um PAT de escopo privado e o "save on load" automático, isso permitia vazar dados de repositório privado para qualquer pessoa não autenticada. Corrigido em `src/hooks/useRepository.js` (aborta com erro `PRIVATE_REPO_UNSUPPORTED` antes de qualquer chamada adicional ou persistência) e em `src/pages/Benchmark.jsx` (checagem própria via `githubService.fetchRepository`, com retry via `withExponentialBackoff` e fail-closed se a visibilidade não puder ser confirmada). Novas mensagens: `errors.privateRepo`, `errors.privacyCheckFailed`.
+- **SECURITY**: Identificado que a anon key do Supabase estava exposta em texto puro no histórico do git (commit `.env` em dez/2025). A chave foi rotacionada no painel do Supabase; o histórico do git em si não foi reescrito (decisão consciente — reescrever histórico é destrutivo).
+- **SECURITY**: Adicionada Content-Security-Policy em `index.html` (não existia antes) — `default-src 'self'`, `script-src` liberando `googletagmanager.com`, `style-src 'self' 'unsafe-inline'` (necessário pelo `html2canvas` do export de PDF, que aplica estilo inline via `setAttribute`/`cssText` — confirmado por teste real, não suposição), `img-src` liberando `avatars.githubusercontent.com` e `data:`, `connect-src` liberando `api.github.com`, Supabase (via `%VITE_SUPABASE_URL%`) e os domínios de coleta do GA4, `object-src 'none'`, `base-uri 'self'`. Limitação conhecida: `frame-ancestors`/`report-uri` não funcionam via `<meta>` (só via header HTTP real) — GitHub Pages não permite esse mecanismo de proteção contra clickjacking.
+- **SECURITY**: `react-router-dom` atualizado de `^7.10.1` para `^7.18.2`, corrigindo um open redirect via backslash (CVE no range `7.0.0-7.14.1`). Adicionada validação defensiva em `RepoInfoCard.jsx` (`SAFE_GITHUB_NAME_PATTERN`) antes do `navigate()` para a rota `/timeline/:owner/:repo` — defesa em profundidade, já que `owner`/`repo` podem vir de um snapshot persistido no Supabase, não só de busca ao vivo. Nova mensagem: `errors.invalidRepoName`.
+
+### 🐛 Fixed
+
+- **FIX**: `src/services/githubService.js` interpolava `owner`/`repo`/`defaultBranch` sem `encodeURIComponent` em 18 endpoints, incluindo query strings de busca (ex: `` repo:${owner}/${repo}+type:pr ``). Corrigido em todos os pontos, aplicando o encode apenas aos valores interpolados para não quebrar a sintaxe de qualifiers das query strings de busca do GitHub.
+
+### ✨ Added
+
+- **FEAT: Smoke test de CSP (`scripts/csp-smoke-test.mjs`)**: primeiro teste automatizado do projeto. Via Playwright (nova devDependency), roda um fluxo real (busca + export de PDF) contra o build de produção E o dev server, capturando violações de CSP, requisições de rede para domínios do GA4 e status de WebSocket. Rodável via `npm run smoke:csp`. Suporta as env vars opcionais `SMOKE_SNAPSHOT_ID` (bypassa a API do GitHub via permalink) e `SMOKE_GITHUB_TOKEN` (injeta um token no localStorage do browser de teste, nunca logado).
+
+---
+
 ## [3.4.1] - 2026-07-28
 
 ### 🐛 Fixes
