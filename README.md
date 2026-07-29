@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.4.1
+# 🦈 Bisolhador Dashboard v3.5.1
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -28,6 +28,11 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.5.0 - v3.5.1 - Security Hardening Edition
+- **🔒 Auditoria de Segurança Completa**: RLS do Supabase corrigida (bloqueava só na documentação, não na prática), bloqueio de processamento/persistência de repositórios privados e primeira Content-Security-Policy do projeto
+- **🔄 react-router-dom Atualizado**: Corrige open redirect via backslash, com validação defensiva de rota adicional em `RepoInfoCard`
+- **🐛 Fix de Sincronização de URL**: `useSearchParams` substitui `window.history.pushState` bruto no Dashboard, corrigindo resíduo de busca anterior ao navegar para Home/Buscar depois de uma pesquisa
 
 ### v3.4.0 - Governance & Risk Edition
 - **☢️ Bus Factor Avançado (Pareto 70%)**: Motor matemático que calcula o número mínimo de devs responsáveis por 70% dos commits, com classificação em 4 níveis de risco

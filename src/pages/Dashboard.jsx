@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { SearchBar } from '../components/SearchBar';
 import { RepoInfoCard } from '../components/RepoInfoCard';
@@ -35,6 +35,7 @@ function SkeletonChart() {
 export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
   const location = useLocation();
+  const [, setSearchParams] = useSearchParams();
   const { data: repoData, loading, error, search, clearSearch } = useRepository();
   const [dismissedError, setDismissedError] = useState(false);
   const [isSnapshotMode, setIsSnapshotMode] = useState(false);
@@ -169,12 +170,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
     setDismissedError(false);
     setIsSnapshotMode(false);
     search(repositoryName);
-
-    const currentPath = window.location.pathname;
-    const cleanPath = currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
-    const newUrl = `${cleanPath}/?q=${encodeURIComponent(repositoryName)}`;
-
-    window.history.pushState({ path: newUrl }, '', newUrl);
+    setSearchParams({ q: repositoryName });
   };
 
   const handleShareSuccess = () => {

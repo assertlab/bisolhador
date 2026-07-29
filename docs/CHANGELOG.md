@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.5.1] - 2026-07-29
+
+### 🐛 Fixed
+
+- **FIX**: `handleSearch` em `Dashboard.jsx` usava `window.history.pushState()` bruto para atualizar a URL após uma busca via SearchBar, o que dessincronizava o `location` interno do react-router-dom do que a barra de endereços realmente mostrava. Isso fazia o `useEffect` que limpa resíduo de busca anterior (adicionado no fix de v3.4.1, commit `47f94f5`) nunca disparar quando a navegação de volta para `/` acontecia via `<Link>` (ícones de Home/Buscar no Header) depois de uma busca feita pelo campo de texto — o bug só não aparecia ao navegar direto por URL, que foi o cenário testado originalmente. Corrigido substituindo o `pushState` bruto por `useSearchParams()` do react-router-dom.
+
+---
+
 ## [3.5.0] - 2026-07-29
 
 ### 🔒 Security

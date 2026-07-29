@@ -147,6 +147,8 @@ VITE_SUPABASE_ANON_KEY=...    # Supabase anonymous key
 - `SMOKE_SNAPSHOT_ID` — loads an existing `analytics_searches` id via the app's `?id=` permalink instead of live-searching, to bypass the unauthenticated GitHub rate limit (60 req/h).
 - `SMOKE_GITHUB_TOKEN` — a real GitHub PAT, injected into the test browser's `localStorage` (mirrors what `SettingsModal` does manually) so the live search actually gets 5,000 req/h. Never logged.
 
+This pattern isn't specific to `csp-smoke-test.mjs`: any ad-hoc/throwaway Playwright script written to investigate a bug should read `SMOKE_GITHUB_TOKEN` from `process.env` (same rules — never `VITE_`-prefixed, injected via `page.addInitScript` into the test browser's `localStorage`, never logged) before falling back to mocking the GitHub API or just eating the 60 req/h rate limit. Mocking the GitHub API is still legitimate when the bug is clearly independent of the actual data returned (e.g. router state-sync bugs) — the rule is to reach for the token when testing against real data is what actually matters, not to inject it into every test regardless of what's being verified.
+
 ### Testing Repositories
 - `twbs/bootstrap` or `torvalds/linux` — Mature, high-activity repos
 - `assertlab/bisolhador` — Young, low-activity repo (tests smart trim on charts)
