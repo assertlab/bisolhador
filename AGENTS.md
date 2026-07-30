@@ -16,3 +16,16 @@
 - Nunca adicionar um componente de chart novo sem garantir que ele passa por `ensureChartSetup()` antes de montar — sem isso, crash real em runtime (`"category" is not a registered scale"`), não erro de build/lint.
 - Ao remover código aparentemente não utilizado, confirmar que nenhuma ADR/documento descreve um propósito para ele antes de apagar — o `sanitizeForJson.js` foi removido como dead code num refactor passado sem que ninguém notasse que a ADR-004 ainda descrevia sua função como vigente.
 - Em scripts de medição de performance (Playwright + `performance.now()`), cuidado para não incluir o tempo de carregamento de um chunk lazy (ex: esperar um seletor que só existe após o code-splitting de página) dentro da métrica que está sendo medida — isso já inflou artificialmente um resultado de lag duas vezes nesta mesma sessão de trabalho.
+
+## Fluxo de Trabalho com Agentes de Código
+
+1. Antes de qualquer mudança, atualize e crie uma branch nova: `git checkout main && git pull origin main`, depois `git checkout -b <tipo>/<nome-descritivo>` (ex: `perf/`, `fix/`, `docs/`). Nunca commitar direto em `main`.
+2. Implemente a mudança pedida.
+3. Depois de implementar qualquer mudança e antes de declarar que está pronto para revisão do usuário:
+   1. Rode `/code-review` sobre o diff atual da branch. Trate achados de severidade alta/crítica como bloqueantes — corrija antes de prosseguir. Achados de baixa severidade podem ser reportados ao usuário como pendência, sem bloquear.
+   2. Rode `/simplify` sobre o mesmo diff. Aplique limpezas óbvias (duplicação, complexidade desnecessária) que não mudem comportamento; para qualquer sugestão que mude comportamento observável, reporte ao usuário em vez de aplicar direto.
+   3. Rode `/security-review` sempre que o trabalho tocar autenticação, autorização, dados persistidos, RLS/RPCs do Supabase, ou qualquer integração externa (GitHub API, Supabase, GA4). Para mudanças puramente de UI/estilo/documentação sem nenhum desses fatores, pode ser pulado — mas registre explicitamente que foi pulado e por quê, em vez de simplesmente omitir.
+   4. Só depois desses passos, rode `npm run lint` e `npm run build`, e então pare e reporte ao usuário que está pronto para revisão — seguindo o resto do fluxo abaixo (branch, commit, push, PR, nunca merge automático).
+4. `git add`, `git commit` com mensagem descritiva (o porquê, não só o quê), `git push -u origin <branch>`.
+5. Abra ou atualize o Pull Request: use `gh pr create`/`gh pr edit` se o `gh` CLI estiver disponível e autenticado; caso contrário, não tente contornar — reporte ao usuário a URL de comparação que o próprio `git push` imprime, para abrir manualmente.
+6. Nunca dar merge nem fechar o PR — isso fica com o usuário, manualmente, depois de revisar.
