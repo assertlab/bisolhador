@@ -5,6 +5,7 @@ import { analyzers } from '../utils/analyzers.js';
 import { calculateBusFactor as calculateAdvancedBusFactor } from '../utils/busFactor.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
+import { ensureChartSetup } from '../lib/chartSetup.js';
 import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE } from '../constants.js';
 
 // Repository data fetching function for TanStack Query
@@ -12,6 +13,14 @@ async function fetchRepositoryData(repoName) {
     if (!repoName || !repoName.includes('/')) {
         throw new Error('Formato inválido. Use owner/repo');
     }
+
+    // Fire-and-forget: start downloading + registering chart.js in parallel
+    // with the GitHub fetches below, instead of waiting until a chart
+    // actually mounts to trigger it. This is what eliminates the cold-search
+    // chart lag — never let a failure here block the actual search.
+    ensureChartSetup().catch((err) => {
+        console.warn('[useRepository] Chart.js prefetch failed (non-fatal, will retry on chart mount):', err);
+    });
 
     const [owner, repo] = repoName.split('/');
 

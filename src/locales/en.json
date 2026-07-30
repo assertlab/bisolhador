@@ -48,6 +48,7 @@
     "divergenceHigh": "High (Intense Debate)"
   },
   "app": {
+    "loadingPage": "Loading...",
     "subtitle": "Analyze repositories like a Tech Lead",
     "errorTitle": "Search error",
     "placeholderText": "Charts will appear here...",

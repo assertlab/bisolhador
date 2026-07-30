@@ -9,7 +9,8 @@ import useChartTheme from "../hooks/useChartTheme";
 import { createBaseChartOptions } from "../lib/chartDefaults";
 import { useTimeFilter } from "../hooks/useTimeFilter";
 import { TimeRangeFilter } from "../components/TimeRangeFilter";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { ensureChartSetup } from "../lib/chartSetup.js";
 
 export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
@@ -18,6 +19,24 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const chartTheme = useChartTheme();
   const repoFullName = `${owner}/${repo}`;
   const [timeRange, setTimeRange] = useState("all");
+
+  // Unlike Dashboard/Benchmark, this page's <Line> isn't behind its own
+  // React.lazy() wrapper, so nothing else guarantees chart.js has been
+  // registered by the time it mounts — Timeline can be the very first
+  // chart-rendering page a visitor hits (e.g. a shared permalink). Without
+  // this gate, react-chartjs-2 throws ("category" is not a registered
+  // scale) because ensureChartSetup() was never called. This also doubles
+  // as the same prefetch pattern used elsewhere: it fires on mount, in
+  // parallel with the history fetch below, instead of waiting for chart
+  // mount to trigger it.
+  const [chartReady, setChartReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    ensureChartSetup()
+      .then(() => { if (!cancelled) setChartReady(true); })
+      .catch((err) => console.warn('[Timeline] Chart.js setup failed:', err));
+    return () => { cancelled = true; };
+  }, []);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["timeline", repoFullName],
@@ -263,9 +282,16 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                 />
               </div>
 
-              <div style={{ height: "400px" }}>
-                <Line data={chartData} options={chartOptions} />
-              </div>
+              {chartReady ? (
+                <div style={{ height: "400px" }}>
+                  <Line data={chartData} options={chartOptions} />
+                </div>
+              ) : (
+                <div
+                  className="bg-gray-100 dark:bg-slate-700 rounded animate-pulse"
+                  style={{ height: "400px" }}
+                ></div>
+              )}
             </div>
           )}
 
