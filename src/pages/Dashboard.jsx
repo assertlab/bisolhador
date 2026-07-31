@@ -12,6 +12,7 @@ import { ContributorsTable } from '../components/ContributorsTable';
 import { ActivityLogs } from '../components/ActivityLogs';
 import { SettingsModal } from '../components/SettingsModal';
 import { SkeletonDashboard } from '../components/skeletons/SkeletonDashboard.jsx';
+import { SkeletonChart } from '../components/skeletons/SkeletonChart.jsx';
 import { PartialDataAlert } from '../components/PartialDataAlert.jsx';
 import { useRepository } from '../hooks/useRepository.js';
 import { createMockRepoData } from '../utils/snapshotAdapter.js';
@@ -31,16 +32,6 @@ const CommitActivityChart = lazy(() =>
 const WeekDaysChart = lazy(() =>
   Promise.all([import('../components/charts/WeekDaysChart'), ensureChartSetup()]).then(([mod]) => mod)
 );
-
-// Skeleton component for chart loading
-function SkeletonChart() {
-  return (
-    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 flex flex-col h-80 hover:shadow-md transition-shadow relative overflow-visible hover:z-50">
-      <div className="h-5 bg-gray-200 dark:bg-slate-600 rounded animate-pulse mb-4 w-40"></div>
-      <div className="flex-grow bg-gray-100 dark:bg-slate-700 rounded animate-pulse"></div>
-    </div>
-  );
-}
 
 export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
