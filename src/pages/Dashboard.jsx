@@ -16,11 +16,21 @@ import { PartialDataAlert } from '../components/PartialDataAlert.jsx';
 import { useRepository } from '../hooks/useRepository.js';
 import { createMockRepoData } from '../utils/snapshotAdapter.js';
 import analytics from '../services/analytics.js';
+import { ensureChartSetup } from '../lib/chartSetup.js';
 
-// Lazy-loaded chart components (Code Splitting)
-const TechStackChart = lazy(() => import('../components/charts/TechStackChart'));
-const CommitActivityChart = lazy(() => import('../components/charts/CommitActivityChart'));
-const WeekDaysChart = lazy(() => import('../components/charts/WeekDaysChart'));
+// Lazy-loaded chart components (Code Splitting). Each also waits on
+// ensureChartSetup() so chart.js registration — now dynamically imported
+// itself — is guaranteed done before the component mounts, without keeping
+// it on the app's critical path.
+const TechStackChart = lazy(() =>
+  Promise.all([import('../components/charts/TechStackChart'), ensureChartSetup()]).then(([mod]) => mod)
+);
+const CommitActivityChart = lazy(() =>
+  Promise.all([import('../components/charts/CommitActivityChart'), ensureChartSetup()]).then(([mod]) => mod)
+);
+const WeekDaysChart = lazy(() =>
+  Promise.all([import('../components/charts/WeekDaysChart'), ensureChartSetup()]).then(([mod]) => mod)
+);
 
 // Skeleton component for chart loading
 function SkeletonChart() {
