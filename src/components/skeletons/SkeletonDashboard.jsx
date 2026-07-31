@@ -1,3 +1,5 @@
+import { SkeletonChart } from './SkeletonChart.jsx';
+
 export function SkeletonDashboard() {
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -102,14 +104,8 @@ export function SkeletonDashboard() {
 
       {/* 5. Área de Gráficos - Grid 2 charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 flex flex-col h-80 hover:shadow-md transition-shadow relative overflow-visible hover:z-50">
-          <div className="h-5 bg-gray-200 dark:bg-slate-600 rounded animate-pulse mb-4 w-40"></div>
-          <div className="flex-grow bg-gray-100 dark:bg-slate-700 rounded animate-pulse"></div>
-        </div>
-        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 flex flex-col h-80 hover:shadow-md transition-shadow relative overflow-visible hover:z-50">
-          <div className="h-5 bg-gray-200 dark:bg-slate-600 rounded animate-pulse mb-4 w-32"></div>
-          <div className="flex-grow bg-gray-100 dark:bg-slate-700 rounded animate-pulse"></div>
-        </div>
+        <SkeletonChart />
+        <SkeletonChart />
       </div>
 
       {/* 6. Padrões de Trabalho - WeekDaysChart */}

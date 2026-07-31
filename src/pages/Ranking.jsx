@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { fetchLeaderboard } from '../services/leaderboardService.js';
 import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
+import { PageLoadingState } from '../components/skeletons/PageLoadingState.jsx';
 
 export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
@@ -25,14 +26,7 @@ export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-shark mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-slate-400">{t('ranking.loading')}</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingState message={t('ranking.loading')} />;
   }
 
   if (error) {
