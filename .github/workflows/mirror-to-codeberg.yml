@@ -17,6 +17,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Puxa todo o histórico, branches e tags
+          persist-credentials: false # Evita interferência do helper de credenciais do checkout
 
       - name: 🚀 Sincronizando com o Codeberg
         env:
@@ -28,10 +29,16 @@ jobs:
           # Configura o git local para não reclamar de credenciais
           git config --global user.name "GitHub Action Mirror"
           git config --global user.email "action@github.com"
-          
+
+          # Usa Authorization header com credenciais em Base64 para evitar
+          # problemas de parsing de URL com tokens que contenham '+', '/' ou '='
+          # (padrão idêntico ao usado pelo actions/checkout para o GitHub)
+          TOKEN_B64=$(printf '%s:%s' "$AUTH_USER" "$CODEBERG_TOKEN" | base64 -w 0)
+          git config --global http.https://codeberg.org/.extraheader "Authorization: Basic $TOKEN_B64"
+
           # Adiciona o Codeberg como um remote (Note a separação de AUTH_USER e TARGET_OWNER)
-          git remote add codeberg https://$AUTH_USER:$CODEBERG_TOKEN@codeberg.org/$TARGET_OWNER/$REPO_NAME.git
-          
+          git remote add codeberg https://codeberg.org/$TARGET_OWNER/$REPO_NAME.git
+
           # Empurra todo o histórico e tags forçando a sincronia
           git push codeberg --all --force
           git push codeberg --tags --force
