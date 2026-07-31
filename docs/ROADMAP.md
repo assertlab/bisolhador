@@ -10,10 +10,21 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 - [ ] **Gamificação (Badges e Conquistas):** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter", "Community Champion").
 - [ ] **Quality Workbench (Testes Automatizados):** Hoje o projeto não tem nenhuma suíte de testes formal (unitários, integração ou e2e) além do `scripts/csp-smoke-test.mjs` recém-criado. Toda validação histórica foi manual/exploratória. Próximos passos: (1) testes unitários com Vitest para funções puras críticas em `analyzers.js` (health score, bus factor, lead time); (2) testes de componente com Testing Library para os fluxos de fail-safe documentados; (3) expandir `csp-smoke-test.mjs` para uma suíte e2e mais ampla; (4) adicionar um job de lint+build+test obrigatório em `.github/workflows`, hoje inexistente (o único workflow atual só espelha o repo para o Codeberg).
 - [ ] **UX de Erros Diferenciados:** Hoje o Dashboard renderiza todo tipo de erro (403 de rate limit, 404, repositório privado, etc.) de forma idêntica — um único banner genérico com o texto cru do erro, sem diferenciação visual nem ação específica por tipo.
+- [ ] **Paleta de Cores do BusFactorCard:** `src/components/BusFactorCard.jsx` usa uma paleta fixa hardcoded de 8 cores (`DEVELOPER_COLORS`) com wraparound (`% length`) para mais de 8 desenvolvedores. Candidato a usar `generateColor()` (`src/utils/colors.js`, extraído no B5) em vez da paleta fixa — achado do `/simplify` durante o trabalho de B5, não aplicado por estar fora do escopo daquele PR (mudaria as cores renderizadas num componente não solicitado).
+- [ ] **Bundle Size do `pdf-vendor`:** Maior chunk do projeto (976 KB minificado, ~279 KB gzip) — identificado durante a investigação de bundle desta sessão, mas nunca endereçado: o trabalho de lazy-loading (v3.5.2, chart prefetch) cobriu páginas e `chart.js`, não o `html2pdf.js`. Candidato a uma investigação de code-splitting futura similar à já feita para o chunk principal.
 
 ---
 
 ## 🌟 O Presente (Era v3.x - Maturidade)
+
+### 🧹 Tech Debt Cleanup (pós-v3.6.0) ✅
+*Backlog secundário de `docs/TECH_DEBT_v3.1.0.md`, fechado via `/code-review`/`/simplify` nesta sessão. Apenas A4 correspondeu a um bump de versão real (v3.6.0, notificações toast); os demais são refactors sem mudança de comportamento observável, sem entrada própria no CHANGELOG.*
+- [x] **A4 - Notificações Não-Bloqueantes (v3.6.0):** As 10 chamadas de `alert()` bloqueante do app (compartilhamento, exportação de PDF, validações do Benchmark, rejeição de repositório privado) substituídas por um sistema de toast (`src/components/Toast.jsx` + `src/hooks/useToast.js`). Mensagens de erro persistem até fechamento manual; sucesso/aviso somem sozinhas após 5s.
+- [x] **M2 - Formatação de Data Unificada:** `Intl.DateTimeFormat`/`toLocaleString` duplicados em 6 pontos do código (`RepoInfoCard`, `BenchmarkEvolutionChart`, `Timeline`, `ActivityLogs`) consolidados em 3 funções pequenas de `src/utils/formatters.js` (`formatDateTime`, `formatDateShort`, `formatDateLong`), preservando formatos intencionalmente distintos por contexto em vez de forçar um único formato.
+- [x] **M5 - Deps do `useMemo` em BenchmarkComparisonChart:** `chartData` passou a depender do prop primitivo `metricCategory` em vez de um valor derivado (`activeConfigs`), tornando o recálculo correto por construção em vez de por coincidência de referência estável.
+- [x] **B5 - `generateColor()` Genérico:** Extraído de `Benchmark.jsx` para `src/utils/colors.js`, reutilizável por qualquer componente que precise de cores determinísticas e visualmente distintas a partir de um seed.
+- [x] **B3 - `SkeletonChart` Compartilhado:** Componente movido de `Dashboard.jsx` para `src/components/skeletons/`, com um modo `bare` que permite reuso no gate de carregamento do Chart.js em `Timeline.jsx` sem duplicar o card visual.
+- [x] **B4 - Estados de `Timeline.jsx` Extraídos:** Bloco de loading extraído para `PageLoadingState` (compartilhado com `Ranking.jsx`, que tinha o mesmo padrão duplicado); bloco de erro extraído como `TimelineErrorState` (específico do Timeline, sem forçar reuso com o estado de erro estruturalmente mais simples do Ranking).
 
 ### 🔒 v3.5.0 - Security Hardening Edition ✅
 - [x] **Auditoria de Segurança Completa:** Revisão end-to-end de RLS do Supabase, superfície de ataque client-side, segredos no histórico do git e Content-Security-Policy.
@@ -161,6 +172,14 @@ Dashboard SPA focado no ensino de Engenharia de Software.
 - [x] **Health Score:** Algoritmo próprio de governança (Readme, License, Contributing).
 - [x] **Bus Factor:** Análise de centralização de código na tabela de contribuidores.
 - [x] **Crunch Detector:** Análise de horários de commit (Madrugada/Fim de semana).
+
+---
+
+## 📝 Última Atualização
+
+Sessão de trabalho cobriu, em sequência: security hardening (v3.5.0), fix de sincronização de router (v3.5.1), prefetch de chart.js (v3.5.2), reestruturação do `AGENTS.md` (migração de conteúdo do `CLAUDE.md`, novo critério de quando rodar `/code-review`/`/simplify` — não é mais "código vs. documentação", e sim se a mudança afirma algo verificável sobre o comportamento atual do sistema), e o backlog secundário de tech debt do `/code-review`/`/simplify` (A4, M2, M5, B3, B4, B5) revisado e fechado.
+
+**Próximo passo escolhido:** a decidir — backlog secundário revisado e organizado, sessão de trabalho encerrada por decisão do usuário.
 
 ---
 
