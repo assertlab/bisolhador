@@ -13,10 +13,16 @@ import { BenchmarkHealthBars } from '../components/benchmark/BenchmarkHealthBars
 import { BenchmarkBusFactorRisk } from '../components/benchmark/BenchmarkBusFactorRisk';
 import { BenchmarkDetailTable } from '../components/benchmark/BenchmarkDetailTable';
 import { MAX_BENCHMARK_REPOS, GOLDEN_ANGLE } from '../constants';
+import { ensureChartSetup } from '../lib/chartSetup.js';
 
-// Lazy load chart components
-const BenchmarkEvolutionChart = lazy(() => import('../components/charts/BenchmarkEvolutionChart'));
-const BenchmarkComparisonChart = lazy(() => import('../components/charts/BenchmarkComparisonChart'));
+// Lazy load chart components. Each also waits on ensureChartSetup() so
+// chart.js registration (dynamically imported itself) is done before mount.
+const BenchmarkEvolutionChart = lazy(() =>
+  Promise.all([import('../components/charts/BenchmarkEvolutionChart'), ensureChartSetup()]).then(([mod]) => mod)
+);
+const BenchmarkComparisonChart = lazy(() =>
+  Promise.all([import('../components/charts/BenchmarkComparisonChart'), ensureChartSetup()]).then(([mod]) => mod)
+);
 
 // Utility function to generate consistent random colors
 const generateColor = (seed) => {
@@ -83,6 +89,14 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
       alert(t('benchmark.alerts.maxRepos', { count: MAX_BENCHMARK_REPOS }));
       return;
     }
+
+    // Fire-and-forget: start downloading + registering chart.js in parallel
+    // with the privacy check / history fetch below, instead of waiting until
+    // a chart actually mounts to trigger it. Never let a failure here block
+    // adding the repo.
+    ensureChartSetup().catch((err) => {
+      console.warn('[Benchmark] Chart.js prefetch failed (non-fatal, will retry on chart mount):', err);
+    });
 
     const [owner, repo] = repoName.split('/');
 

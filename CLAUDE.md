@@ -100,7 +100,8 @@ Score = (items present / 7) × 100%. Colors: Green (>75%), Yellow (>50%), Red (b
 - Render UI even with partial data (graceful degradation)
 
 ### Performance Patterns
-- Charts use `React.lazy` + `Suspense` (code splitting)
+- Charts use `React.lazy` + `Suspense` (code splitting); the 4 pages (Dashboard, Ranking, Timeline, Benchmark) are lazy-loaded in `App.jsx` the same way
+- `chart.js` is imported dynamically and registered on demand via `ensureChartSetup()` (`src/lib/chartSetup.js`) — never eager from `main.jsx`. Initialization is shared through a single memoized promise and prefetched (fire-and-forget) in parallel with searches (`useRepository.js`) and Benchmark repo additions (`Benchmark.jsx`), so it doesn't block the search itself but avoids visible lag on first chart render
 - `useMemo` for chart data/options to avoid Chart.js canvas re-creation
 - `useChartTheme` returns memoized theme object
 - Skeleton screens for loading states (LCP optimization)

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.5.2] - 2026-07-30
+
+### 🐛 Fixed
+
+- **FIX**: `Timeline.jsx` renderizava `<Line>` sem garantir que o `chart.js` estivesse registrado (diferente de `Dashboard.jsx`/`Benchmark.jsx`, que já usam `React.lazy()` + `ensureChartSetup()` para isso). Ao acessar um permalink de Timeline como primeira página da sessão, isso causava um crash real (`"category" is not a registered scale"`). Corrigido com um gate (`useEffect` + `ensureChartSetup()` + skeleton) antes de montar o gráfico.
+
+### ⚡ Performance
+
+- **PERF**: Chart.js agora é prefetched (fire-and-forget, via `ensureChartSetup()`) em paralelo com o início de cada busca (`useRepository.js`) e cada adição de repo no Benchmark (`handleAddRepo`), em vez de só ser carregado quando um gráfico tenta montar. Reduz o lag da primeira renderização de gráfico após um carregamento de página em ~125ms de média (medido com latência de rede simulada realista para chunks estáticos; em localhost puro, sem latência de CDN, a diferença é desprezível). Não afeta o tamanho de nenhum chunk — só quando o download começa.
+
+---
+
 ## [3.5.1] - 2026-07-29
 
 ### 🐛 Fixed

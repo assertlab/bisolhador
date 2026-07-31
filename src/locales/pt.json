@@ -48,6 +48,7 @@
     "divergenceHigh": "Alta (Debate Intenso)"
   },
   "app": {
+    "loadingPage": "Carregando...",
     "subtitle": "Analise repositórios como um Tech Lead",
     "errorTitle": "Erro na busca",
     "placeholderText": "Os gráficos aparecerão aqui...",
