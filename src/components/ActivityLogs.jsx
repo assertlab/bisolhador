@@ -1,18 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
+import { formatters } from '../utils/formatters.js';
 
 export function ActivityLogs({ commits, pullRequests }) {
   const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'pt' ? 'pt-BR' : 'en-US';
 
-  // Função para formatar data completa
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const locale = i18n.language === 'pt' ? 'pt-BR' : 'en-US';
-    return date.toLocaleString(locale, {
-      dateStyle: 'long',
-      timeStyle: 'short'
-    });
-  };
+  const formatDate = (dateString) => formatters.formatDateLong(dateString, locale);
 
   // Função para determinar cor do badge do PR
   const getPRBadge = (state, merged) => {
