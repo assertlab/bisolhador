@@ -16,6 +16,7 @@ const SAFE_GITHUB_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 export function RepoInfoCard({ data, onShareSuccess }) {
   const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'pt' ? 'pt-BR' : 'en-US';
   const navigate = useNavigate();
   if (!data) return null;
 
@@ -149,16 +150,7 @@ export function RepoInfoCard({ data, onShareSuccess }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <span>
-                {t('repo.analysisDate')}: {new Intl.DateTimeFormat(
-                  i18n.language === 'pt' ? 'pt-BR' : 'en-US',
-                  {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  }
-                ).format(new Date(data.analysisDate))}
+                {t('repo.analysisDate')}: {formatters.formatDateTime(data.analysisDate, locale)}
               </span>
             </div>
           )}
@@ -243,15 +235,15 @@ export function RepoInfoCard({ data, onShareSuccess }) {
           <ul className="space-y-2">
             <li className="flex justify-between text-sm">
               <span className="text-gray-600 dark:text-slate-400">{t('repo.totalBranches')}</span>
-              <span className="font-medium text-gray-900 dark:text-white">{formatters.formatNumber(data.stats.branches, i18n.language === 'pt' ? 'pt-BR' : 'en-US')}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{formatters.formatNumber(data.stats.branches, locale)}</span>
             </li>
             <li className="flex justify-between text-sm">
               <span className="text-gray-600 dark:text-slate-400">{t('repo.totalPRs')}</span>
-              <span className="font-medium text-gray-900 dark:text-white">{formatters.formatNumber(data.stats.prs, i18n.language === 'pt' ? 'pt-BR' : 'en-US')}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{formatters.formatNumber(data.stats.prs, locale)}</span>
             </li>
             <li className="flex justify-between text-sm">
               <span className="text-gray-600 dark:text-slate-400">{t('repo.totalMerges')}</span>
-              <span className="font-medium text-gray-900 dark:text-white">{formatters.formatNumber(data.stats.merges, i18n.language === 'pt' ? 'pt-BR' : 'en-US')}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{formatters.formatNumber(data.stats.merges, locale)}</span>
             </li>
             <li className="flex justify-between text-sm border-t border-gray-100 dark:border-slate-700 pt-1 mt-1">
               <span className="text-gray-600 dark:text-slate-400">{t('repo.prsPerBranch')}</span>

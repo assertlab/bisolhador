@@ -3,6 +3,7 @@ import { Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import useChartTheme from '../../hooks/useChartTheme';
 import { createBaseChartOptions } from '../../lib/chartDefaults';
+import { formatters } from '../../utils/formatters.js';
 
 /**
  * Gráfico de evolução temporal comparativa
@@ -51,10 +52,7 @@ export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
             callbacks: {
               title: (context) => {
                 if (context[0]?.parsed?.x) {
-                  return new Intl.DateTimeFormat(
-                    i18n.language === 'pt' ? 'pt-BR' : 'en-US',
-                    { day: '2-digit', month: 'short', year: 'numeric' },
-                  ).format(new Date(context[0].parsed.x));
+                  return formatters.formatDateShort(context[0].parsed.x, i18n.language === 'pt' ? 'pt-BR' : 'en-US');
                 }
                 return '';
               },

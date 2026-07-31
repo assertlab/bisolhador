@@ -11,9 +11,11 @@ import { useTimeFilter } from "../hooks/useTimeFilter";
 import { TimeRangeFilter } from "../components/TimeRangeFilter";
 import { useState, useMemo, useEffect } from "react";
 import { ensureChartSetup } from "../lib/chartSetup.js";
+import { formatters } from "../utils/formatters.js";
 
 export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
+  const locale = i18n.language === "pt" ? "pt-BR" : "en-US";
   const { owner, repo } = useParams();
   const navigate = useNavigate();
   const chartTheme = useChartTheme();
@@ -83,13 +85,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const chartData = useMemo(() => {
     if (!filteredData) return null;
     return {
-      labels: filteredData.map((point) =>
-        new Intl.DateTimeFormat(i18n.language === "pt" ? "pt-BR" : "en-US", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }).format(point.date),
-      ),
+      labels: filteredData.map((point) => formatters.formatDateShort(point.date, locale)),
       datasets: [
         {
           label: t("timeline.metrics.stars"),
@@ -117,7 +113,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
         },
       ],
     };
-  }, [filteredData, i18n.language, t]);
+  }, [filteredData, locale, t]);
 
   const chartOptions = useMemo(
     () =>
@@ -305,14 +301,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                       {t("timeline.summary.firstAnalysis")}
                     </p>
                     <p className="text-lg font-semibold text-shark dark:text-white mt-1">
-                      {new Intl.DateTimeFormat(
-                        i18n.language === "pt" ? "pt-BR" : "en-US",
-                        {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        },
-                      ).format(filteredData[0].date)}
+                      {formatters.formatDateShort(filteredData[0].date, locale)}
                     </p>
                   </div>
                   <svg
@@ -338,14 +327,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                       {t("timeline.summary.latestAnalysis")}
                     </p>
                     <p className="text-lg font-semibold text-shark dark:text-white mt-1">
-                      {new Intl.DateTimeFormat(
-                        i18n.language === "pt" ? "pt-BR" : "en-US",
-                        {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        },
-                      ).format(filteredData[filteredData.length - 1].date)}
+                      {formatters.formatDateShort(filteredData[filteredData.length - 1].date, locale)}
                     </p>
                   </div>
                   <svg
