@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.0] - 2026-07-31
+
+### ✨ Added
+
+- **UX**: Substituídas todas as 10 chamadas de `alert()` bloqueante do app (compartilhamento, exportação de PDF, validações do Benchmark, rejeição de repositório privado) por um sistema de notificação toast não-bloqueante (`src/components/Toast.jsx` + `src/hooks/useToast.js`). Mensagens de erro persistem até fechamento manual; sucesso/aviso somem sozinhas após 5s. Nenhum texto traduzido foi alterado, só o mecanismo de exibição.
+
+---
+
 ## [3.5.2] - 2026-07-30
 
 ### 🐛 Fixed

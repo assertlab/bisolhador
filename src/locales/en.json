@@ -361,5 +361,8 @@
     "title": "Partial data",
     "message": "Some information could not be loaded: {{items}}. Displayed data may be incomplete.",
     "closeAlert": "Close alert"
+  },
+  "toast": {
+    "close": "Close notification"
   }
 }

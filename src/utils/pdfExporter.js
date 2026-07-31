@@ -1,5 +1,6 @@
 import html2pdf from 'html2pdf.js';
 import { PDF_MARGIN, PDF_IMAGE_QUALITY, PDF_CANVAS_SCALE } from '../constants.js';
+import { showToast } from '../hooks/useToast.js';
 
 export function exportToPDF() {
   // Seleciona o elemento main que contém todo o dashboard
@@ -46,6 +47,6 @@ export function exportToPDF() {
     })
     .catch((error) => {
       console.error('Erro ao exportar PDF:', error);
-      alert('Erro ao gerar o relatório PDF. Tente novamente.');
+      showToast('Erro ao gerar o relatório PDF. Tente novamente.', 'error');
     });
 }
