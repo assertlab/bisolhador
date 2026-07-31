@@ -22,3 +22,6 @@ export const CACHE_STALE_TIME_MS = 1000 * 60 * 5; // 5 minutes
 export const PDF_MARGIN = 10;
 export const PDF_IMAGE_QUALITY = 0.98;
 export const PDF_CANVAS_SCALE = 2;
+
+// Toast notifications
+export const TOAST_AUTO_DISMISS_MS = 1000 * 5; // 5 seconds

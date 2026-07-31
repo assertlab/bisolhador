@@ -14,6 +14,7 @@ import { BenchmarkBusFactorRisk } from '../components/benchmark/BenchmarkBusFact
 import { BenchmarkDetailTable } from '../components/benchmark/BenchmarkDetailTable';
 import { MAX_BENCHMARK_REPOS, GOLDEN_ANGLE } from '../constants';
 import { ensureChartSetup } from '../lib/chartSetup.js';
+import { showToast } from '../hooks/useToast.js';
 
 // Lazy load chart components. Each also waits on ensureChartSetup() so
 // chart.js registration (dynamically imported itself) is done before mount.
@@ -76,17 +77,17 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
     if (!repoName) return;
 
     if (!repoName.includes('/')) {
-      alert(t('benchmark.alerts.invalidFormat', 'Por favor, use o formato: owner/repo'));
+      showToast(t('benchmark.alerts.invalidFormat', 'Por favor, use o formato: owner/repo'), 'warning');
       return;
     }
 
     if (selectedRepos.some(r => r.fullName === repoName)) {
-      alert(t('benchmark.alerts.alreadyAdded', 'Este repositório já foi adicionado'));
+      showToast(t('benchmark.alerts.alreadyAdded', 'Este repositório já foi adicionado'), 'warning');
       return;
     }
 
     if (selectedRepos.length >= MAX_BENCHMARK_REPOS) {
-      alert(t('benchmark.alerts.maxRepos', { count: MAX_BENCHMARK_REPOS }));
+      showToast(t('benchmark.alerts.maxRepos', { count: MAX_BENCHMARK_REPOS }), 'warning');
       return;
     }
 
@@ -119,13 +120,13 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
         300
       );
       if (repoInfo?.private === true) {
-        alert(t('errors.privateRepo'));
+        showToast(t('errors.privateRepo'), 'error');
         return;
       }
     } catch {
       // All retries exhausted — fail closed. We can't confirm this repo is
       // public, so we refuse to add it rather than risk processing a private one.
-      alert(t('errors.privacyCheckFailed'));
+      showToast(t('errors.privacyCheckFailed'), 'error');
       return;
     } finally {
       setIsCheckingRepo(false);

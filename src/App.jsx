@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ToastContainer } from './components/Toast.jsx';
 
 // Lazy-loaded pages (Code Splitting) — same pattern already used for chart
 // components. Pages use named exports, so map the module to the { default }
@@ -38,6 +39,7 @@ function App() {
           <Route path="/benchmark" element={<Benchmark isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
         </Routes>
       </Suspense>
+      <ToastContainer />
     </Router>
   );
 }

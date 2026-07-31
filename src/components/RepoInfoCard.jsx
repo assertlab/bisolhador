@@ -4,6 +4,7 @@ import { formatters } from '../utils/formatters.js';
 import { exportToPDF } from '../utils/pdfExporter.js';
 import { exportJson } from '../utils/exportJson.js';
 import { exportToCsv } from '../utils/csvExporter.js';
+import { showToast } from '../hooks/useToast.js';
 
 // GitHub owner/repo segments: alphanumeric, dots, hyphens, underscores only —
 // no slashes, backslashes or control characters. Defense in depth for the
@@ -88,7 +89,7 @@ export function RepoInfoCard({ data, onShareSuccess }) {
   const handleShare = async () => {
     try {
       if (!data.searchId) {
-        alert(t('share.errorNoData'));
+        showToast(t('share.errorNoData'), 'error');
         return;
       }
 
@@ -109,19 +110,18 @@ export function RepoInfoCard({ data, onShareSuccess }) {
         onShareSuccess();
       }
 
-      // Mostrar toast de sucesso
-      alert(t('share.linkCopied'));
+      showToast(t('share.linkCopied'), 'success');
 
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
-      alert(t('share.errorGeneral'));
+      showToast(t('share.errorGeneral'), 'error');
     }
   };
 
   const handleViewTimeline = () => {
     if (!isTimelineRouteSafe) {
       console.error('Bloqueado: fullName não bate o padrão seguro de owner/repo do GitHub:', data.fullName);
-      alert(t('errors.invalidRepoName'));
+      showToast(t('errors.invalidRepoName'), 'error');
       return;
     }
     navigate(`/timeline/${timelineOwner}/${timelineRepo}`);
