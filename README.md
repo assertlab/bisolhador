@@ -163,7 +163,7 @@ https://assertlab.github.io/bisolhador/?repo=facebook/react&date=2025-12-17
 
 Para detalhes técnicos, arquitetura e desenvolvimento:
 
-- **[CLAUDE.md](CLAUDE.md)** - Contexto técnico do projeto (padrão Claude Code)
+- **[AGENTS.md](AGENTS.md)** - Contexto técnico do projeto (arquitetura, segurança, decisões)
 - **[Design System](docs/DESIGN_SYSTEM.md)** - Sistema de design e padrões visuais
 - **[Histórico de Mudanças (Changelog)](CHANGELOG.md)** - Todas as versões e alterações
 - **[Roadmap](docs/ROADMAP.md)** - Planejamento futuro e histórico de releases
