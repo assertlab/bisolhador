@@ -12,9 +12,10 @@ import { BenchmarkRepoChips } from '../components/benchmark/BenchmarkRepoChips';
 import { BenchmarkHealthBars } from '../components/benchmark/BenchmarkHealthBars';
 import { BenchmarkBusFactorRisk } from '../components/benchmark/BenchmarkBusFactorRisk';
 import { BenchmarkDetailTable } from '../components/benchmark/BenchmarkDetailTable';
-import { MAX_BENCHMARK_REPOS, GOLDEN_ANGLE } from '../constants';
+import { MAX_BENCHMARK_REPOS } from '../constants';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 import { showToast } from '../hooks/useToast.js';
+import { generateColor } from '../utils/colors.js';
 
 // Lazy load chart components. Each also waits on ensureChartSetup() so
 // chart.js registration (dynamically imported itself) is done before mount.
@@ -24,12 +25,6 @@ const BenchmarkEvolutionChart = lazy(() =>
 const BenchmarkComparisonChart = lazy(() =>
   Promise.all([import('../components/charts/BenchmarkComparisonChart'), ensureChartSetup()]).then(([mod]) => mod)
 );
-
-// Utility function to generate consistent random colors
-const generateColor = (seed) => {
-  const hue = (seed * GOLDEN_ANGLE) % 360;
-  return `hsl(${hue}, 70%, 50%)`;
-};
 
 export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();

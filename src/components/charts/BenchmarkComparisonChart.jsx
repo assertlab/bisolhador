@@ -57,24 +57,26 @@ export default function BenchmarkComparisonChart({ repos, metricCategory = 'popu
   const { t } = useTranslation();
   const chartTheme = useChartTheme();
 
-  const activeConfigs = datasetConfigs[metricCategory] || datasetConfigs.popularity;
-
   const categoryTitles = {
     popularity: t('benchmark.categoryPopularity', 'Popularidade'),
     velocity: t('benchmark.categoryVelocity', 'Velocidade'),
     quality: t('benchmark.categoryQuality', 'Qualidade'),
   };
 
-  const chartData = useMemo(() => ({
-    labels: repos?.map((repo) => repo.fullName) ?? [],
-    datasets: activeConfigs.map((config) => ({
-      label: t(config.labelKey, config.fallback),
-      data: repos?.map(config.accessor) ?? [],
-      backgroundColor: repos?.map((repo) => repo.color + config.alphaHex) ?? [],
-      borderColor: repos?.map((repo) => repo.color) ?? [],
-      borderWidth: 2,
-    })),
-  }), [repos, activeConfigs, t]);
+  // Computed inline so the memo depends on the primitive metricCategory, not a derived reference.
+  const chartData = useMemo(() => {
+    const activeConfigs = datasetConfigs[metricCategory] || datasetConfigs.popularity;
+    return {
+      labels: repos?.map((repo) => repo.fullName) ?? [],
+      datasets: activeConfigs.map((config) => ({
+        label: t(config.labelKey, config.fallback),
+        data: repos?.map(config.accessor) ?? [],
+        backgroundColor: repos?.map((repo) => repo.color + config.alphaHex) ?? [],
+        borderColor: repos?.map((repo) => repo.color) ?? [],
+        borderWidth: 2,
+      })),
+    };
+  }, [repos, metricCategory, t]);
 
   const chartOptions = useMemo(
     () =>
