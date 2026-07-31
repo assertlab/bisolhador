@@ -11,7 +11,6 @@ export const WEEKS_IN_YEAR = 52;
 
 // Benchmark
 export const MAX_BENCHMARK_REPOS = 10;
-export const GOLDEN_ANGLE = 137.508;
 
 // Repository analysis
 export const RECENT_ITEMS_LIMIT = 10;
