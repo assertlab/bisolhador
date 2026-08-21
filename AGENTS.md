@@ -160,6 +160,9 @@ The app never processes or persists data from private GitHub repositories, even 
 ### Input Sanitization
 `githubService.js` applies `encodeURIComponent` to every interpolated value (`owner`, `repo`, `defaultBranch`) in request URLs and GitHub search query strings — including inside search qualifiers (e.g. `` repo:${owner}/${repo}+type:pr ``), where only the interpolated values are encoded, never the literal `+`/`:` separators, so query semantics aren't broken.
 
+### RPC Input Validation
+`get_leaderboard` tem teto de 100 no `limit_count` (`LEAST`/`GREATEST` com `COALESCE(limit_count, 50)` cobrindo o caso de `NULL` explícito, nunca confia no valor enviado pelo client); `registrar_busca` valida tamanho de `full_report` (500KB via `octet_length`, não `pg_column_size` — este último mede o tamanho comprimido/TOAST no disco, não o tamanho lógico, e podia ser contornado por payloads muito compressíveis) e `repo_name` (nulo ou > 300 chars) antes do INSERT, com `RAISE EXCEPTION` — ambos no nível do banco, não só no client. Ambas as funções também têm `DROP FUNCTION IF EXISTS` antes do `CREATE OR REPLACE`, seguindo o padrão de `get_repo_history.sql`, para garantir que um `CREATE OR REPLACE` com assinatura diferente da já implantada substitua a função antiga em vez de criar uma sobrecarga (overload) coexistente. Aplicado após revisão via Supabase Security Advisor.
+
 ### Content-Security-Policy
 `index.html` ships a CSP scoped to the domains the app actually calls: `api.github.com`, Supabase (via the build-time `%VITE_SUPABASE_URL%` substitution, not a wildcard), GA4's script/collection domains, and `avatars.githubusercontent.com` for contributor images. `style-src` includes `'unsafe-inline'` because `html2canvas` (used by the PDF export) applies inline styles via `setAttribute`/`cssText` while cloning the DOM for rendering — confirmed with a real headless-browser test (`npm run smoke:csp`), not assumed. `frame-ancestors`/`report-uri` don't work via `<meta>` (HTTP-header-only directives), so GitHub Pages static hosting has no clickjacking protection through this CSP.
 
@@ -174,12 +177,13 @@ Stale documentation isn't a cosmetic problem in this project. It has already, co
 
 ## Decisões Arquiteturais que Já Foram Tomadas (não reabrir sem motivo novo)
 
-- RLS do Supabase: acesso à tabela `analytics_searches` é só via RPCs `SECURITY DEFINER` (`registrar_busca`, `obter_snapshot`, etc). Nunca reintroduzir policy de INSERT/SELECT direta para o role `anon` — foi exatamente essa configuração que causou o vazamento de dados corrigido na v3.5.0.
+- RLS do Supabase: acesso à tabela `analytics_searches` é só via RPCs `SECURITY DEFINER` (`registrar_busca`, `obter_snapshot`, etc). Nunca reintroduzir policy de INSERT/SELECT direta para o role `anon` — foi exatamente essa configuração que causou o vazamento de dados corrigido na v3.5.0. Confirmado via Supabase Security Advisor: a tabela ter RLS habilitada com zero policies é o estado correto e esperado (sinalizado como INFO "RLS Enabled No Policy", não como problema).
 - Repositórios privados nunca são processados nem persistidos pelo app, mesmo quando o PAT do usuário tem escopo de acesso privado — decisão de produto deliberada (v3.5.0), não uma limitação técnica a ser contornada.
 - Checagens de segurança seguem fail-closed, não fail-safe/fail-open. Isso é uma exceção intencional ao padrão geral de "nunca quebrar a aplicação, retornar valores vazios" do projeto — esse padrão vale para degradação graciosa de UX, não para controles de segurança.
 - react-router-dom permanece em `^7.18.2+` (nunca aceitar sugestão de `npm audit fix --force` de rebaixar para `7.11.0` — isso reintroduziria um open redirect real e já corrigido).
 - Histórico do git não foi reescrito após o vazamento da anon key do Supabase no histórico (dez/2025) — a chave foi rotacionada em vez disso. Não propor reescrita de histórico como solução padrão para segredos vazados neste projeto.
 - Versionamento segue SemVer estrito: mudanças de segurança/hardening que não quebram uso existente são minor (ex: v3.5.0), não major.
+- As 4 RPCs públicas (get_leaderboard, get_repo_history, obter_snapshot, registrar_busca) são intencionalmente SECURITY DEFINER e executáveis por anon/authenticated — é assim que o app funciona sem exigir login. O Supabase Security Advisor sinaliza isso como WARN estrutural permanentemente, mesmo com toda a validação interna correta — não é um problema de código, é o modelo de acesso do produto. Não tentar "resolver" trocando para SECURITY INVOKER ou revogando EXECUTE — isso quebraria a aplicação para todo usuário não autenticado.
 
 ## Boas Práticas de Código
 
