@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.1] - 2026-08-21
+
+### 🔒 Security
+
+- **SECURITY**: Corrigidas duas RPCs do Supabase (`get_leaderboard`, `registrar_busca`) após revisão via Supabase Security Advisor. `get_leaderboard` agora tem teto de 100 no `limit_count` (`LEAST`/`GREATEST`), com `COALESCE(limit_count, 50)` cobrindo o caso de um caller passar `NULL` explicitamente e resultar em `LIMIT NULL` (= sem limite). `registrar_busca` passa a validar o tamanho de `full_report` via `octet_length` (tamanho lógico do JSON) em vez de `pg_column_size` (que mede o tamanho comprimido/TOAST no disco e podia ser contornado por payloads muito compressíveis) e valida `repo_name` (nulo ou > 300 caracteres), ambos com `RAISE EXCEPTION` antes do `INSERT`. As duas funções também passaram a usar `DROP FUNCTION IF EXISTS` antes do `CREATE OR REPLACE`, seguindo a convenção já estabelecida em `get_repo_history.sql`. SQL rastreado em `supabase-migrations/get_leaderboard.sql` e `supabase-migrations/registrar_busca.sql`.
+- **SECURITY**: Documentadas em `AGENTS.md` duas decisões conscientes confirmadas via Supabase Security Advisor, para não serem reabertas por engano: RLS habilitada com zero policies em `analytics_searches` é o estado correto e esperado (sinalizado como INFO "RLS Enabled No Policy"); as 4 RPCs públicas (`get_leaderboard`, `get_repo_history`, `obter_snapshot`, `registrar_busca`) serem `SECURITY DEFINER` e executáveis por `anon`/`authenticated` é intencional — é assim que o app funciona sem exigir login — e o WARN estrutural do Advisor sobre isso é permanente, não um problema de código a "resolver".
+
+---
+
 ## [3.6.0] - 2026-07-31
 
 ### ✨ Added
