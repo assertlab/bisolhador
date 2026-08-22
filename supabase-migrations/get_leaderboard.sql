@@ -28,5 +28,7 @@ AS $function$
   FROM latest_snapshots l
   JOIN search_counts c ON l.repo_name = c.repo_name
   ORDER BY c.total DESC, l.created_at DESC
-  LIMIT LEAST(GREATEST(COALESCE(limit_count, 50), 1), 100);  -- NULL vira default 50; nunca menos que 1, nunca mais que 100
+  -- COALESCE primeiro: um caller passando limit_count => null explicitamente
+  -- (sobrescrevendo o DEFAULT 50) não pode resultar em LIMIT NULL (= sem limite).
+  LIMIT LEAST(GREATEST(COALESCE(limit_count, 50), 1), 100);
 $function$;

@@ -19,7 +19,7 @@ begin
   end if;
 
   if p_repo_name is null or length(p_repo_name) > 300 then
-    raise exception 'repo_name é nulo ou excede o tamanho esperado';
+    raise exception 'repo_name inválido ou excede o tamanho esperado';
   end if;
 
   insert into analytics_searches (
