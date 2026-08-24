@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.6.0
+# 🦈 Bisolhador Dashboard v3.6.1
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -28,6 +28,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.6.1 - Supabase RPC Hardening
+- **🔒 Correção de RPCs (Supabase Security Advisor)**: `get_leaderboard` ganhou teto de 100 no `limit_count`, protegido contra `NULL` explícito (`COALESCE` + `LEAST`/`GREATEST`); `registrar_busca` passou a validar o tamanho de `full_report` pelo tamanho lógico do JSON (`octet_length`) em vez do tamanho comprimido em disco (`pg_column_size`, contornável por payloads muito compressíveis), além de validar `repo_name`
 
 ### v3.6.0 - Toast Notifications Edition
 - **🔔 Notificações Não-Bloqueantes**: Todas as chamadas de `alert()` bloqueante (compartilhamento, exportação de PDF, validações do Benchmark, rejeição de repositório privado) foram substituídas por um sistema de toast — erros permanecem visíveis até fechamento manual, sucesso/aviso somem sozinhos

@@ -7,6 +7,7 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 ## 🔮 O Futuro (Próximas Versões)
 
 ### 🔭 Próximas Iterações (Planejado)
+- [ ] **Reclassificar Vulnerabilidades do `npm audit` (push v3.6.1):** O push da v3.6.1 disparou um alerta do GitHub reportando 44 vulnerabilidades (1 crítica, 16 altas, 22 moderadas, 5 baixas) — número bem maior que as 15 já investigadas no security-review original. Provavelmente reflete dependências novas introduzidas pelo Playwright (`smoke:csp`), mas isso ainda precisa de confirmação, não suposição: reclassificar cada uma antes de assumir que são todas transitivas/dev-only.
 - [ ] **Gamificação (Badges e Conquistas):** Badges de conquista para alunos (ex: "Clean Coder", "Bug Hunter", "Community Champion").
 - [ ] **Quality Workbench (Testes Automatizados):** Hoje o projeto não tem nenhuma suíte de testes formal (unitários, integração ou e2e) além do `scripts/csp-smoke-test.mjs` recém-criado. Toda validação histórica foi manual/exploratória. Próximos passos: (1) testes unitários com Vitest para funções puras críticas em `analyzers.js` (health score, bus factor, lead time); (2) testes de componente com Testing Library para os fluxos de fail-safe documentados; (3) expandir `csp-smoke-test.mjs` para uma suíte e2e mais ampla; (4) adicionar um job de lint+build+test obrigatório em `.github/workflows`, hoje inexistente (o único workflow atual só espelha o repo para o Codeberg).
 - [ ] **UX de Erros Diferenciados:** Hoje o Dashboard renderiza todo tipo de erro (403 de rate limit, 404, repositório privado, etc.) de forma idêntica — um único banner genérico com o texto cru do erro, sem diferenciação visual nem ação específica por tipo.
@@ -16,6 +17,12 @@ Este documento rastreia a evolução do Bisolhador, desde sua concepção em Van
 ---
 
 ## 🌟 O Presente (Era v3.x - Maturidade)
+
+### 🔒 v3.6.1 - Supabase RPC Hardening ✅
+- [x] **`get_leaderboard` Corrigida:** Teto de 100 no `limit_count` (`LEAST`/`GREATEST`), com `COALESCE(limit_count, 50)` cobrindo o caso de `NULL` explícito (que antes resultava em `LIMIT NULL`, isto é, sem limite).
+- [x] **`registrar_busca` Corrigida:** Validação de tamanho de `full_report` via `octet_length` (tamanho lógico do JSON) em vez de `pg_column_size` (tamanho comprimido/TOAST em disco, contornável por payloads muito compressíveis), mais validação de `repo_name` (nulo ou > 300 caracteres) — ambas com `RAISE EXCEPTION` antes do `INSERT`.
+- [x] **Processo:** Correções aplicadas primeiro ao vivo no Supabase após revisão via Security Advisor, depois sincronizadas em `supabase-migrations/` (`get_leaderboard.sql`, `registrar_busca.sql`).
+- [x] **Decisões Documentadas no `AGENTS.md`:** RLS habilitada com zero policies em `analytics_searches` é o estado correto e esperado (INFO "RLS Enabled No Policy", não um problema); as 4 RPCs públicas `SECURITY DEFINER` (`get_leaderboard`, `get_repo_history`, `obter_snapshot`, `registrar_busca`) executáveis por `anon`/`authenticated` são intencionais — é assim que o app funciona sem exigir login.
 
 ### 🧹 Tech Debt Cleanup (pós-v3.6.0) ✅
 *Backlog secundário de `docs/TECH_DEBT_v3.1.0.md`, fechado via `/code-review`/`/simplify` nesta sessão. Apenas A4 correspondeu a um bump de versão real (v3.6.0, notificações toast); os demais são refactors sem mudança de comportamento observável, sem entrada própria no CHANGELOG.*
@@ -177,9 +184,9 @@ Dashboard SPA focado no ensino de Engenharia de Software.
 
 ## 📝 Última Atualização
 
-Sessão de trabalho cobriu, em sequência: security hardening (v3.5.0), fix de sincronização de router (v3.5.1), prefetch de chart.js (v3.5.2), reestruturação do `AGENTS.md` (migração de conteúdo do `CLAUDE.md`, novo critério de quando rodar `/code-review`/`/simplify` — não é mais "código vs. documentação", e sim se a mudança afirma algo verificável sobre o comportamento atual do sistema), e o backlog secundário de tech debt do `/code-review`/`/simplify` (A4, M2, M5, B3, B4, B5) revisado e fechado.
+Sessão de trabalho cobriu, em sequência: security hardening (v3.5.0), fix de sincronização de router (v3.5.1), prefetch de chart.js (v3.5.2), reestruturação do `AGENTS.md` (migração de conteúdo do `CLAUDE.md`, novo critério de quando rodar `/code-review`/`/simplify` — não é mais "código vs. documentação", e sim se a mudança afirma algo verificável sobre o comportamento atual do sistema), o backlog secundário de tech debt do `/code-review`/`/simplify` (A4, M2, M5, B3, B4, B5) revisado e fechado, e o hardening de RPC da v3.6.1 (`get_leaderboard`, `registrar_busca`, corrigidas após revisão via Supabase Security Advisor). Processo de release: tags `v3.6.0` e `v3.6.1` publicadas, com correção de uma tag que apontava para o commit errado.
 
-**Próximo passo escolhido:** a decidir — backlog secundário revisado e organizado, sessão de trabalho encerrada por decisão do usuário.
+**Próximo passo escolhido:** a decidir — reclassificação das 44 vulnerabilidades do npm audit ainda pendente.
 
 ---
 
