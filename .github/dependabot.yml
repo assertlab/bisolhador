@@ -5,19 +5,26 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    # Um PR semanal por grupo em vez de um por pacote; majors continuam isolados, exceto no grupo eslint.
+    # Um PR semanal por grupo em vez de um por pacote; majors continuam isolados, exceto nos grupos eslint e i18n.
     groups:
       # ESLint e plugins quebram separados (peer ranges, regras novas no
       # recommended): todas as versões, majors inclusive, num PR só.
-      # Vem antes dos demais grupos; o Dependabot usa o primeiro que casar.
+      # Os grupos são disjuntos de propósito (exclude-patterns abaixo): a doc só
+      # diz "first group that it matches", sem definir a ordem, e na prática o
+      # react-refresh caiu em dev-minor-patch mesmo com este grupo listado antes.
       eslint:
         patterns: ['eslint', '@eslint/*', 'eslint-plugin-*']
+      # Mesmo problema: react-i18next N exige i18next de uma faixa específica.
+      i18n:
+        patterns: ['i18next', 'react-i18next', 'i18next-*']
       runtime-minor-patch:
         dependency-type: production
         update-types: [minor, patch]
+        exclude-patterns: ['i18next', 'react-i18next', 'i18next-*']
       dev-minor-patch:
         dependency-type: development
         update-types: [minor, patch]
+        exclude-patterns: ['eslint', '@eslint/*', 'eslint-plugin-*']
     ignore:
       # Substitui um check que o CI ainda não tem: o v4 passa em lint+build mas
       # quebra o export de PDF (ver docs/ROADMAP.md). Remover quando smoke:csp
