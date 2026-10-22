@@ -14,9 +14,13 @@ updates:
       # react-refresh caiu em dev-minor-patch mesmo com este grupo listado antes.
       eslint:
         patterns: ['eslint', '@eslint/*', 'eslint-plugin-*']
+      # Mesmo problema: react-i18next N exige i18next de uma faixa específica.
+      i18n:
+        patterns: ['i18next', 'react-i18next', 'i18next-*']
       runtime-minor-patch:
         dependency-type: production
         update-types: [minor, patch]
+        exclude-patterns: ['i18next', 'react-i18next', 'i18next-*']
       dev-minor-patch:
         dependency-type: development
         update-types: [minor, patch]
