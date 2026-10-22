@@ -35,16 +35,11 @@ export function useBenchmarkRepos(selectedRepos) {
           }
         }
 
-        let primaryLanguage;
-        if (reportData) {
-          primaryLanguage = reportData.language ||
-                           reportData.primaryLanguage ||
-                           (reportData.charts?.techStack?.[0]?.language) ||
-                           latestSnapshot.language ||
-                           'Unknown';
-        } else {
-          primaryLanguage = latestSnapshot.language || 'Unknown';
-        }
+        const primaryLanguage = reportData?.language ||
+                                reportData?.primaryLanguage ||
+                                reportData?.charts?.techStack?.[0]?.language ||
+                                latestSnapshot.language ||
+                                'Unknown';
 
         return {
           fullName: repo.fullName,
