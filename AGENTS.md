@@ -116,7 +116,7 @@ Score = (items present / 7) × 100%. Colors (`HealthScoreCard.jsx`): Green (≥7
 ## Project Context
 
 ### Purpose
-Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.6.3). Transforms GitHub repository data into visual insights for students and professors.
+Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.6.4). Transforms GitHub repository data into visual insights for students and professors.
 
 ### Token System
 - Stored in `localStorage['github_token']` (via safe storage wrapper)
