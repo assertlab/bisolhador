@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.6.3
+# 🦈 Bisolhador Dashboard v3.6.4
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -28,6 +28,11 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.6.4 - Metrics Accuracy Fixes
+- **🐛 Code Churn**: deixou de mostrar `Infinity` / "Acúmulo Intenso" para quase todo repositório ativo (a API do GitHub devolve as deleções com sinal negativo)
+- **🐛 Code Review e Divergência reais**: a taxa de self-merge e a média de comentários por PR agora são medidas de verdade (GraphQL, com token do GitHub); sem token aparecem como "n/d" com a explicação, em vez de um 0% falso
+- **🧪 Testes Unitários**: primeira suíte (Vitest) rodando no CI — foi ela que revelou os três bugs acima
 
 ### v3.6.3 - Dashboard & Snapshot Fixes
 - **🐛 Snapshot vs. Busca ao Vivo**: voltar (Back) de uma busca para um permalink de snapshot não mostra mais os dados da busca por baixo do banner de snapshot — a URL decide o que é exibido
