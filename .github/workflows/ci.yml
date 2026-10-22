@@ -78,7 +78,16 @@ jobs:
 
       - run: npm ci
 
-      - run: npx playwright install --with-deps chromium
+      # Só o navegador, sem --with-deps: o apt (fontes) do espelho do runner
+      # já levou ~10 min numa execução. A imagem ubuntu-latest já traz as libs
+      # de sistema do Chromium (vem com Google Chrome); se faltar alguma, o
+      # smoke falha alto ao abrir o browser, não em silêncio.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - run: npx playwright install chromium
 
       - run: npm run smoke:csp
 
