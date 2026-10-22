@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.2] - 2026-10-22
+
+### 🐛 Fixed
+
+- **FIX**: A CSP de `index.html` bloqueava os hits que o gtag.js envia via `<img>` (violação de `img-src` para `www.googletagmanager.com/td`, vista no `npm run smoke:csp`). O `img-src` passou a incluir `*.google-analytics.com` e `www.googletagmanager.com`, os mesmos hosts de coleta já liberados no `connect-src`, conforme o guia de CSP do GA4. Sem mudança visível para o usuário; só evita perder hits do GA4.
+
+---
+
 ## [3.6.1] - 2026-08-21
 
 ### 🔒 Security

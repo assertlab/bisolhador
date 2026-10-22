@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.6.1
+# 🦈 Bisolhador Dashboard v3.6.2
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -28,6 +28,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.6.2 - CSP Fix
+- **🐛 Pixel do GA4 Liberado na CSP**: `img-src` passou a liberar os hosts de coleta do GA4 (`*.google-analytics.com`, `www.googletagmanager.com`), evitando a violação de CSP que bloqueava os hits via `<img>` do gtag.js
 
 ### v3.6.1 - Supabase RPC Hardening
 - **🔒 Correção de RPCs (Supabase Security Advisor)**: `get_leaderboard` ganhou teto de 100 no `limit_count`, protegido contra `NULL` explícito (`COALESCE` + `LEAST`/`GREATEST`); `registrar_busca` passou a validar o tamanho de `full_report` pelo tamanho lógico do JSON (`octet_length`) em vez do tamanho comprimido em disco (`pg_column_size`, contornável por payloads muito compressíveis), além de validar `repo_name`

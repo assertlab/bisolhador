@@ -115,7 +115,7 @@ Score = (items present / 7) × 100%. Colors: Green (>75%), Yellow (>50%), Red (b
 ## Project Context
 
 ### Purpose
-Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.5.2). Transforms GitHub repository data into visual insights for students and professors.
+Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.6.2). Transforms GitHub repository data into visual insights for students and professors.
 
 ### Token System
 - Stored in `localStorage['github_token']` (via safe storage wrapper)
@@ -164,7 +164,7 @@ The app never processes or persists data from private GitHub repositories, even 
 `get_leaderboard` tem teto de 100 no `limit_count` (`LEAST`/`GREATEST` com `COALESCE(limit_count, 50)` cobrindo o caso de `NULL` explícito, nunca confia no valor enviado pelo client); `registrar_busca` valida tamanho de `full_report` (500KB via `octet_length`, não `pg_column_size` — este último mede o tamanho comprimido/TOAST no disco, não o tamanho lógico, e podia ser contornado por payloads muito compressíveis) e `repo_name` (nulo ou > 300 chars) antes do INSERT, com `RAISE EXCEPTION` — ambos no nível do banco, não só no client. Ambas as funções também têm `DROP FUNCTION IF EXISTS` antes do `CREATE OR REPLACE`, seguindo o padrão de `get_repo_history.sql`, para garantir que um `CREATE OR REPLACE` com assinatura diferente da já implantada substitua a função antiga em vez de criar uma sobrecarga (overload) coexistente. Aplicado após revisão via Supabase Security Advisor.
 
 ### Content-Security-Policy
-`index.html` ships a CSP scoped to the domains the app actually calls: `api.github.com`, Supabase (via the build-time `%VITE_SUPABASE_URL%` substitution, not a wildcard), GA4's script/collection domains, and `avatars.githubusercontent.com` for contributor images. `style-src` includes `'unsafe-inline'` because `html2canvas` (used by the PDF export) applies inline styles via `setAttribute`/`cssText` while cloning the DOM for rendering — confirmed with a real headless-browser test (`npm run smoke:csp`), not assumed. `frame-ancestors`/`report-uri` don't work via `<meta>` (HTTP-header-only directives), so GitHub Pages static hosting has no clickjacking protection through this CSP.
+`index.html` ships a CSP scoped to the domains the app actually calls: `api.github.com`, Supabase (via the build-time `%VITE_SUPABASE_URL%` substitution, not a wildcard), GA4's script/collection domains (also in `img-src`, for gtag.js image hits), and `avatars.githubusercontent.com` for contributor images. `style-src` includes `'unsafe-inline'` because `html2canvas` (used by the PDF export) applies inline styles via `setAttribute`/`cssText` while cloning the DOM for rendering — confirmed with a real headless-browser test (`npm run smoke:csp`), not assumed. `frame-ancestors`/`report-uri` don't work via `<meta>` (HTTP-header-only directives), so GitHub Pages static hosting has no clickjacking protection through this CSP.
 
 ### Route Safety
 `RepoInfoCard.jsx` validates `owner`/`repo` against `SAFE_GITHUB_NAME_PATTERN` before calling `navigate()` for the `/timeline/:owner/:repo` route — defense in depth, since that data can come from a Supabase snapshot rather than a live search, and a react-router version fix shouldn't be the only safety net for app-constructed routes.

@@ -19,7 +19,10 @@
         diretamente pelo nosso código, então não dá pra confirmar por grep, só pela doc do GA4).
       - img-src: 'self' + avatars.githubusercontent.com (contributor.avatar_url em
         ContributorsTable.jsx, BusFactorCard.jsx e ActivityLogs.jsx) + data: (html2canvas, usado
-        pelo export de PDF em pdfExporter.js, lê/gera data URIs internamente).
+        pelo export de PDF em pdfExporter.js, lê/gera data URIs internamente)
+        + *.google-analytics.com / www.googletagmanager.com (hits do gtag.js via <img>, conforme
+        o guia de CSP do GA4: developers.google.com/tag-platform/security/guides/csp; o pixel
+        googletagmanager.com/td já apareceu como violação no npm run smoke:csp).
       - style-src: 'self' 'unsafe-inline' — os style={{...}} inline do React usam a CSSOM
         (propriedade por propriedade), o que é correto mas irrelevante aqui: o motivo real do
         'unsafe-inline' é o html2canvas (usado no export de PDF, src/utils/pdfExporter.js), que
@@ -39,7 +42,7 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' https://avatars.githubusercontent.com data:; font-src 'self'; connect-src 'self' https://api.github.com %VITE_SUPABASE_URL% https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self';"
+      content="default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' https://avatars.githubusercontent.com https://*.google-analytics.com https://www.googletagmanager.com data:; font-src 'self'; connect-src 'self' https://api.github.com %VITE_SUPABASE_URL% https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self';"
     />
   </head>
   <body>
