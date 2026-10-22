@@ -16,7 +16,7 @@ export function parseFullReport(fullReport, context) {
       return null;
     }
   }
-  return report !== null && typeof report === 'object' ? report : null;
+  return report !== null && typeof report === 'object' && !Array.isArray(report) ? report : null;
 }
 
 /**

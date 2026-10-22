@@ -24,7 +24,7 @@ describe('parseFullReport', () => {
     expect(error.mock.calls[0][0]).toContain('[Timeline]');
   });
 
-  it.each(['false', '0', '""', 'null', '"text"'])('returns null for JSON that is not a report object (%s)', (json) => {
+  it.each(['false', '0', '""', 'null', '"text"', '[]', '[1,2]'])('returns null for JSON that is not a report object (%s)', (json) => {
     expect(parseFullReport(json, 'test')).toBeNull();
   });
 });
