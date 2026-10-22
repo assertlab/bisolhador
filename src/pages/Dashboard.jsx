@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect, useCallback, useRef } from 'react';
+import { useState, lazy, Suspense, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '../components/Header';
@@ -15,7 +15,7 @@ import { SkeletonDashboard } from '../components/skeletons/SkeletonDashboard.jsx
 import { SkeletonChart } from '../components/skeletons/SkeletonChart.jsx';
 import { PartialDataAlert } from '../components/PartialDataAlert.jsx';
 import { useRepository } from '../hooks/useRepository.js';
-import { createMockRepoData } from '../utils/snapshotAdapter.js';
+import { useSnapshot } from '../hooks/useSnapshot.js';
 import analytics from '../services/analytics.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 
@@ -36,140 +36,56 @@ const WeekDaysChart = lazy(() =>
 export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
   const location = useLocation();
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: repoData, loading, error, search, clearSearch } = useRepository();
   const [dismissedError, setDismissedError] = useState(false);
-  const [isSnapshotMode, setIsSnapshotMode] = useState(false);
-  const [snapshotId, setSnapshotId] = useState(null);
-  const [snapshotData, setSnapshotData] = useState(null);
-  const [snapshotLoading, setSnapshotLoading] = useState(false);
-  const [semanticDate, setSemanticDate] = useState(null);
+  // Guarda para qual URL o alerta de snapshot foi fechado, em vez de um booleano:
+  // abrir outro permalink mostra o alerta de novo sem precisar de effect.
+  const [snapshotAlertDismissedFor, setSnapshotAlertDismissedFor] = useState(null);
+
+  // Derivado da URL (prioridade: ID > Semântico), não copiado para estado num effect.
+  const snapshotId = searchParams.get('id');
+  const semanticDate = !snapshotId && searchParams.get('repo') ? searchParams.get('date') : null;
+  const isSnapshotMode = Boolean(snapshotId || semanticDate) && snapshotAlertDismissedFor !== location.search;
+  const { data: snapshotData, loading: snapshotLoading } = useSnapshot({
+    id: snapshotId,
+    repo: searchParams.get('repo'),
+    date: searchParams.get('date'),
+  });
   const [searchBarKey, setSearchBarKey] = useState(0);
 
-  const lastFetchedParams = useRef('');
+  // Sincroniza URL → estado durante o render, quando a query string muda (padrão
+  // "ajustar estado quando um valor muda" da doc do React), em vez de setState
+  // num effect. null inicial: a primeira renderização também processa a URL.
+  const [syncedSearch, setSyncedSearch] = useState(null);
+  if (syncedSearch !== location.search) {
+    setSyncedSearch(location.search);
+    const queryParam = searchParams.get('q');
+    const isSnapshotUrl = Boolean(snapshotId || (searchParams.get('repo') && searchParams.get('date')));
 
-  // Limpa todo o resíduo de uma busca/snapshot anterior (dados, erros e input)
-  const handleClearSearch = useCallback(() => {
-    clearSearch();
-    setIsSnapshotMode(false);
-    setSnapshotId(null);
-    setSnapshotData(null);
-    setSemanticDate(null);
-    setDismissedError(false);
-    setSearchBarKey((key) => key + 1); // Força remount do SearchBar (limpa o input)
-  }, [clearSearch]);
-
-  const loadSnapshot = useCallback(async (id) => {
-    setSnapshotLoading(true);
-    try {
-      const snapshotResult = await analytics.getSnapshot(id);
-      if (snapshotResult) {
-        let finalData = null;
-
-        if (snapshotResult.full_report) {
-          try {
-            finalData = typeof snapshotResult.full_report === 'string'
-              ? JSON.parse(snapshotResult.full_report)
-              : snapshotResult.full_report;
-          } catch (e) {
-            console.error('[Dashboard] Erro fatal ao decodificar JSON:', e);
-            finalData = null;
-          }
-        }
-
-        if (!finalData) {
-          finalData = createMockRepoData(snapshotResult);
-        }
-
-        if (finalData && typeof finalData === 'object') {
-           finalData.analysisDate = snapshotResult.created_at || new Date().toISOString();
-        }
-
-        setSnapshotData(finalData);
-      } else {
-        throw new Error('Snapshot não encontrado');
-      }
-    } catch (error) {
-      console.error('Erro ao carregar snapshot:', error);
-      setDismissedError(false);
-    } finally {
-      setSnapshotLoading(false);
-    }
-  }, []);
-
-  const loadSnapshotByDate = useCallback(async (repoName, dateString) => {
-    setSnapshotLoading(true);
-    try {
-      const snapshotResult = await analytics.getSnapshotByDate(repoName, dateString);
-      if (snapshotResult) {
-        let finalData = null;
-
-        if (snapshotResult.full_report) {
-          try {
-            finalData = typeof snapshotResult.full_report === 'string'
-              ? JSON.parse(snapshotResult.full_report)
-              : snapshotResult.full_report;
-          } catch (e) {
-            console.error('[Dashboard] Erro fatal ao decodificar JSON:', e);
-            finalData = null;
-          }
-        }
-
-        if (!finalData) {
-          finalData = createMockRepoData(snapshotResult);
-        }
-
-        if (finalData && typeof finalData === 'object') {
-           finalData.analysisDate = snapshotResult.created_at || new Date().toISOString();
-        }
-
-        setSnapshotData(finalData);
-      } else {
-        throw new Error(`Nenhum registro encontrado para ${repoName} em ${dateString}`);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar snapshot por data:', error);
-      setDismissedError(false);
-    } finally {
-      setSnapshotLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const currentParams = location.search;
-    if (lastFetchedParams.current === currentParams) return;
-
-    lastFetchedParams.current = currentParams;
-
-    analytics.trackPageView(location.pathname);
-
-    const urlParams = new URLSearchParams(location.search);
-    const idParam = urlParams.get('id');
-    const repoParam = urlParams.get('repo');
-    const dateParam = urlParams.get('date');
-    const queryParam = urlParams.get('q');
-
-    if (idParam) {
-      setIsSnapshotMode(true);
-      setSnapshotId(idParam);
-      setSemanticDate(null);
-      loadSnapshot(parseInt(idParam));
-    } else if (repoParam && dateParam) {
-      setIsSnapshotMode(true);
-      setSnapshotId(null);
-      setSemanticDate(dateParam);
-      loadSnapshotByDate(repoParam, dateParam);
+    if (isSnapshotUrl) {
+      // Snapshot: carregado por useSnapshot a partir da própria URL.
     } else if (queryParam) {
       search(queryParam);
     } else {
-      // Navegação para "/" sem parâmetros (ex.: ícones de Home/Busca) — limpa resíduo da busca anterior
-      handleClearSearch();
+      // Navegação para "/" sem parâmetros (ex.: ícones de Home/Busca) — limpa
+      // resíduo da busca anterior: dados, erro dispensado e input do SearchBar.
+      clearSearch();
+      setDismissedError(false);
+      setSearchBarKey((key) => key + 1); // Força remount do SearchBar (limpa o input)
     }
-  }, [location.search, location.pathname, loadSnapshot, loadSnapshotByDate, search, handleClearSearch]);
+  }
+
+  // Efeito externo de verdade (GA4): só o pageview fica em effect.
+  const lastTrackedSearch = useRef(null);
+  useEffect(() => {
+    if (lastTrackedSearch.current === location.search) return;
+    lastTrackedSearch.current = location.search;
+    analytics.trackPageView(location.pathname);
+  }, [location.search, location.pathname]);
 
   const handleSearch = (repositoryName) => {
     setDismissedError(false);
-    setIsSnapshotMode(false);
     search(repositoryName);
     setSearchParams({ q: repositoryName });
   };
@@ -212,7 +128,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                   </div>
                 </div>
                 <button
-                  onClick={() => setIsSnapshotMode(false)}
+                  onClick={() => setSnapshotAlertDismissedFor(location.search)}
                   className="ml-4 text-blue-400 hover:text-blue-600 transition-colors"
                   aria-label={t('snapshot.closeAlert')}
                 >
