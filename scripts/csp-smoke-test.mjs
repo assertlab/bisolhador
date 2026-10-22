@@ -2,7 +2,21 @@
 // Smoke test: drives a real search + PDF export flow in a headless browser
 // against both the production build (vite preview) and the dev server (vite),
 // and reports every CSP violation observed in either mode. Does NOT modify
-// index.html — this is a read-only diagnostic.
+// index.html. It is a pass/fail gate (exit code below), and it changes the
+// network behavior under test in one way only:
+//
+// Never writes to production: Supabase registrar_busca (save-on-load) and
+// GA4 collection hits are intercepted and answered locally. CSP is still
+// fully exercised — the browser enforces CSP before a request reaches
+// Playwright's route handler, so a blocked origin still shows up as a
+// violation and an allowed one is still recorded in gaRequests.
+//
+// Exit code: 0 only if every mode navigated, loaded the dashboard, started
+// the PDF download, and had zero CSP violations and zero page errors. With
+// SMOKE_REQUIRE_GA=1 (set in CI), zero GA4 requests also fails: GA4's CSP
+// coverage would otherwise go untested silently (e.g. VITE_GA_ID missing).
+// Runs in CI (.github/workflows/ci.yml, job "smoke") in snapshot mode; it
+// depends on SMOKE_SNAPSHOT_ID existing in production Supabase.
 //
 // Optional environment variables (both are ways to work around the
 // unauthenticated GitHub rate limit of 60 req/h, which the live-search flow
@@ -42,9 +56,12 @@ const SNAPSHOT_ID = process.env.SMOKE_SNAPSHOT_ID || null;
 // on the Node side, and passed into the browser via addInitScript below.
 const GITHUB_TOKEN = process.env.SMOKE_GITHUB_TOKEN || null;
 
+// Same GA4 hosts the CSP allows (index.html): *.google-analytics.com,
+// *.analytics.google.com (regional collection, e.g. region1.) and
+// googletagmanager.com.
 function isGaHost(url) {
   try {
-    return /(^|\.)google-analytics\.com$|(^|\.)googletagmanager\.com$/i.test(new URL(url).hostname);
+    return /(^|\.)google-analytics\.com$|(^|\.)analytics\.google\.com$|(^|\.)googletagmanager\.com$/i.test(new URL(url).hostname);
   } catch {
     return false;
   }
@@ -71,8 +88,11 @@ function waitForServer(url, timeoutMs) {
   });
 }
 
+// Own process group (detached) so killServer can stop the whole tree. Killing
+// only the direct child left the real vite process (and its stdout pipe)
+// alive on Linux, which kept this script from ever exiting in CI.
 function spawnServer(command, args, { label }) {
-  const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'], detached: true });
   const output = [];
   child.stdout.on('data', (d) => output.push(`[${label} stdout] ${d}`));
   child.stderr.on('data', (d) => output.push(`[${label} stderr] ${d}`));
@@ -80,15 +100,20 @@ function spawnServer(command, args, { label }) {
 }
 
 async function killServer(child) {
-  if (!child || child.killed) return;
-  child.kill('SIGTERM');
+  if (!child || child.exitCode !== null) return;
+  const killGroup = (signal) => {
+    try { process.kill(-child.pid, signal); } catch { /* group already gone */ }
+  };
+  killGroup('SIGTERM');
   await new Promise((resolve) => {
     const timer = setTimeout(() => {
-      try { child.kill('SIGKILL'); } catch { /* already dead */ }
+      killGroup('SIGKILL');
       resolve();
     }, 3000);
     child.once('exit', () => { clearTimeout(timer); resolve(); });
   });
+  child.stdout?.destroy();
+  child.stderr?.destroy();
 }
 
 async function runBrowserFlow(baseUrl, label) {
@@ -102,6 +127,7 @@ async function runBrowserFlow(baseUrl, label) {
   const websockets = [];
   const gaRequests = [];
   const gaRequestRecordByRequest = new Map();
+  const writesIntercepted = { registrar_busca: 0, ga4: 0 };
 
   // Positive proof that GA4 traffic actually left the page — a missing
   // console violation is NOT proof it wasn't blocked (CSP can silently drop
@@ -158,6 +184,29 @@ async function runBrowserFlow(baseUrl, label) {
 
   page.on('pageerror', (err) => {
     pageErrors.push(String(err && err.stack ? err.stack : err));
+  });
+
+  // No production writes from a test run (see header). Only the collection
+  // endpoints are stubbed — gtag.js itself still loads, so script-src and
+  // the request-side CSP checks stay real.
+  // Supabase is cross-origin from localhost: without CORS headers Chromium
+  // rejects the fulfilled response, and supabase-js would see a network
+  // error instead of this stub (a different path than real users get).
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+  await page.route('**/rest/v1/rpc/registrar_busca', (route) => {
+    if (route.request().method() === 'OPTIONS') {
+      return route.fulfill({ status: 204, headers: corsHeaders });
+    }
+    writesIntercepted.registrar_busca += 1;
+    return route.fulfill({ status: 200, contentType: 'application/json', headers: corsHeaders, body: 'null' });
+  });
+  await page.route((url) => isGaHost(url.href) && /\/(collect|td)\/?$/.test(url.pathname), (route) => {
+    writesIntercepted.ga4 += 1;
+    return route.fulfill({ status: 204, body: '' });
   });
 
   page.on('websocket', (ws) => {
@@ -258,7 +307,7 @@ async function runBrowserFlow(baseUrl, label) {
 
   await browser.close();
 
-  return { flow, consoleLogs, cspViolations, pageErrors, websockets, gaRequests };
+  return { flow, consoleLogs, cspViolations, pageErrors, websockets, gaRequests, writesIntercepted };
 }
 
 function printReport({ flow, consoleLogs, cspViolations, pageErrors, websockets, gaRequests }, serverOutput) {
@@ -323,7 +372,7 @@ async function main() {
   });
 
   console.log('>>> Subindo vite preview...');
-  const preview = spawnServer('npx', ['vite', 'preview', '--port', '4173', '--strictPort'], { label: 'preview' });
+  const preview = spawnServer('node_modules/.bin/vite', ['preview', '--port', '4173', '--strictPort'], { label: 'preview' });
   try {
     await waitForServer('http://localhost:4173' + APP_BASE_PATH, 20_000);
     const result = await runBrowserFlow('http://localhost:4173', 'PRODUCTION BUILD (vite preview, dist/ com CSP restritiva)');
@@ -334,7 +383,7 @@ async function main() {
 
   // ---- 2) DEV SERVER (npm run dev / vite) ----
   console.log('\n>>> Subindo vite dev server...');
-  const dev = spawnServer('npx', ['vite', '--port', '5173', '--strictPort'], { label: 'dev' });
+  const dev = spawnServer('node_modules/.bin/vite', ['--port', '5173', '--strictPort'], { label: 'dev' });
   try {
     await waitForServer('http://localhost:5173' + APP_BASE_PATH, 20_000);
     const result = await runBrowserFlow('http://localhost:5173', 'DEV SERVER (vite, mesma CSP de index.html, checando HMR/websocket)');
@@ -355,7 +404,8 @@ async function main() {
       `${r.flow.label}: navigationOk=${r.flow.navigationOk} searchSubmitted=${r.flow.searchSubmitted} ` +
         `dashboardLoaded=${r.flow.dashboardLoaded} pdfClicked=${r.flow.pdfClicked} downloadStarted=${r.flow.downloadStarted} ` +
         `cspViolations=${r.cspViolations.length} gaRequests=${r.gaRequests.length} websockets=${r.websockets.length} ` +
-        `pageErrors=${r.pageErrors.length} flowError=${r.flow.error ?? 'none'}`,
+        `pageErrors=${r.pageErrors.length} intercepted=${JSON.stringify(r.writesIntercepted)} ` +
+        `flowError=${r.flow.error ?? 'none'}`,
     );
   }
   const totalGaRequests = reports.reduce((sum, r) => sum + r.gaRequests.length, 0);
@@ -365,9 +415,40 @@ async function main() {
         'cobrirem google-analytics.com/googletagmanager.com deve ser tratado como NÃO TESTADO, não como aprovado.',
     );
   }
+
+  const failures = reports.flatMap((r) => {
+    const f = r.flow;
+    const problems = [];
+    if (!f.navigationOk) problems.push('navigation');
+    if (!f.dashboardLoaded) problems.push('dashboard did not load');
+    if (!f.downloadStarted) problems.push('PDF download did not start');
+    if (r.cspViolations.length) problems.push(`${r.cspViolations.length} CSP violation(s)`);
+    if (r.pageErrors.length) problems.push(`${r.pageErrors.length} page error(s)`);
+    return problems.map((p) => `${f.label}: ${p}`);
+  });
+  if (process.env.SMOKE_REQUIRE_GA === '1' && totalGaRequests === 0) {
+    failures.push('0 GA4 requests in every mode (SMOKE_REQUIRE_GA=1): is VITE_GA_ID set?');
+  }
+  if (failures.length) {
+    console.log('\nFALHOU:\n  ' + failures.join('\n  '));
+    if (failures.some((f) => f.includes('dashboard did not load')) && SNAPSHOT_ID) {
+      console.log(`  (snapshot mode: confirm analytics_searches id ${SNAPSHOT_ID} still exists and VITE_SUPABASE_* are set)`);
+    }
+    // exitCode, not exit(): lets the large report above flush to a pipe first.
+    process.exitCode = 1;
+    return;
+  }
+  console.log('\nOK: todos os modos passaram.');
 }
 
-main().catch((err) => {
-  console.error('Smoke test crashed:', err);
-  process.exit(1);
-});
+// Exit explicitly once stdout has flushed: a leftover handle (server pipe,
+// timer) must never turn a finished run into a CI timeout, and exiting only
+// after the flush keeps the full report when piped.
+main()
+  .catch((err) => {
+    console.error('Smoke test crashed:', err);
+    process.exitCode = 1;
+  })
+  .finally(() => {
+    process.stdout.write('', () => process.exit(process.exitCode ?? 0));
+  });

@@ -43,6 +43,54 @@ jobs:
       # Sem secrets: valida que compila; o bundle gerado aqui não é publicado.
       - run: npm run build
 
+  # E2E (Playwright): busca por snapshot + export de PDF contra build e dev
+  # server, falhando em qualquer violação de CSP. Pega o que lint/build não
+  # pegam (ex: Tailwind v4 quebra o PDF por causa de oklch()). Só lê o
+  # Supabase de produção; gravações e coleta do GA4 são interceptadas no
+  # próprio script. NÃO é check obrigatório (depende de rede/Supabase) —
+  # promover depois de algumas semanas estável.
+  smoke:
+    name: smoke (CSP + PDF)
+    # PRs de fork não recebem secrets; sem config o build não carrega o snapshot.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # vars || secrets: runs do Dependabot só recebem Dependabot secrets
+      # (os três valores estão cadastrados lá também; nenhum é segredo de
+      # fato, todos vão para o bundle público).
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_GA_ID: ${{ vars.VITE_GA_ID || secrets.VITE_GA_ID }}
+      # Linha existente em produção (facebook/react, 2026-07-30). Se for
+      # apagada, o job falha com "dashboard did not load": trocar a var.
+      SMOKE_SNAPSHOT_ID: ${{ vars.SMOKE_SNAPSHOT_ID || '1047' }}
+      SMOKE_REQUIRE_GA: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Só o navegador, sem --with-deps: o apt (fontes) do espelho do runner
+      # já levou ~10 min numa execução. A imagem ubuntu-latest já traz as libs
+      # de sistema do Chromium (vem com Google Chrome); se faltar alguma, o
+      # smoke falha alto ao abrir o browser, não em silêncio.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - run: npx playwright install chromium
+
+      - run: npm run smoke:csp
+
   dependency-review:
     name: dependency review
     if: github.event_name == 'pull_request'
