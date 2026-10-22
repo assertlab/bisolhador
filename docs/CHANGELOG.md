@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🐛 Fixed
 
 - **FIX**: Code Churn mostrava `Infinity` / "Acúmulo Intenso" para praticamente todo repositório ativo. A API `/stats/code_frequency` do GitHub devolve as deleções como número **negativo** (`[ts, 989, -1243]`), e o cálculo as somava sem valor absoluto. Snapshots já gravados no Supabase mantêm o valor antigo; buscas novas saem corretas.
+- **FIX**: As métricas de **Code Review** (taxa de self-merge, card de Maturidade) e **Divergência** apareciam sempre como 0% / "baixa" para qualquer repositório: a lista `GET /pulls` do GitHub não traz quem fez o merge nem a contagem de comentários. Agora vêm de uma única consulta GraphQL quando há token; sem token, aparecem como "n/d" com a explicação, em vez de um zero falso. Snapshots antigos mantêm os valores gravados.
+- **FIX**: O card de Divergência mostrava `%` (inclusive em "N/A%"), mas a métrica é a média de comentários por PR; o `%` vinha de um caso especial fixo no `StatCard` que só disparava em português. O tooltip, que descrevia outra métrica ("% de PRs com Request Changes"), foi corrigido.
+- **FIX**: Badge de Code Review em cinza (sem PRs mergeados) aparecia vermelho; snapshots sem `full_report` mostravam a chave crua `divergenceNone` e "Code Review (%)".
 - **FIX**: `calculateLeadTime` não quebra mais a análise inteira se a lista de PRs vier em formato inesperado (retorna `N/A`, como as métricas irmãs).
 - **FIX**: `full_report` corrompido em snapshots volta a ser logado como erro (`console.error`) em todos os pontos de leitura, e JSON válido que não é um relatório (`false`, `0`) cai no fallback em vez de chegar ao Dashboard.
 

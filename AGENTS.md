@@ -122,6 +122,7 @@ Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.6.3)
 - Stored in `localStorage['github_token']` (via safe storage wrapper)
 - Increases rate limit from 60 to 5,000 requests/hour
 - Auto-added to requests in `githubService.getHeaders()`
+- Required for the **Code Review (self-merge rate)** and **Divergence** metrics: they come from one GraphQL call (`fetchPullRequestReviewStats`), because the REST `/pulls` list has no `merged_by`/comment counts. Without a token, both are shown as unavailable ("n/d" plus an explanation), never as 0% (`src/utils/prReviewStats.js`).
 
 ### Backend / Supabase
 - **Write**: All writes via validated RPCs (`registrar_busca`), no direct INSERT
@@ -179,7 +180,7 @@ This pattern isn't specific to `csp-smoke-test.mjs`: any ad-hoc/throwaway Playwr
 The app never processes or persists data from private GitHub repositories, even when the user's PAT has private-repo scope. `useRepository.js` checks `repoData.private` immediately after the initial repo fetch and aborts (`PRIVATE_REPO_UNSUPPORTED`) before any of the 15+ parallel calls or the Supabase save-on-load. `Benchmark.jsx` has its own entry path — it reads history from Supabase, not live GitHub calls — so it performs its own live visibility check via `githubService.fetchRepository`, retried with `withExponentialBackoff` and fail-closed if visibility can't be confirmed.
 
 ### Input Sanitization
-`githubService.js` applies `encodeURIComponent` to every interpolated value (`owner`, `repo`, `defaultBranch`) in request URLs and GitHub search query strings — including inside search qualifiers (e.g. `` repo:${owner}/${repo}+type:pr ``), where only the interpolated values are encoded, never the literal `+`/`:` separators, so query semantics aren't broken.
+`githubService.js` applies `encodeURIComponent` to every interpolated value (`owner`, `repo`, `defaultBranch`) in request URLs and GitHub search query strings — including inside search qualifiers (e.g. `` repo:${owner}/${repo}+type:pr ``), where only the interpolated values are encoded, never the literal `+`/`:` separators, so query semantics aren't broken. The one GraphQL query (`fetchPullRequestReviewStats`) passes `owner`/`repo` as GraphQL **variables**, never interpolated into the query string.
 
 ### RPC Input Validation
 `get_leaderboard` tem teto de 100 no `limit_count` (`LEAST`/`GREATEST` com `COALESCE(limit_count, 50)` cobrindo o caso de `NULL` explícito, nunca confia no valor enviado pelo client); `registrar_busca` valida tamanho de `full_report` (500KB via `octet_length`, não `pg_column_size` — este último mede o tamanho comprimido/TOAST no disco, não o tamanho lógico, e podia ser contornado por payloads muito compressíveis) e `repo_name` (nulo ou > 300 chars) antes do INSERT, com `RAISE EXCEPTION` — ambos no nível do banco, não só no client. Ambas as funções também têm `DROP FUNCTION IF EXISTS` antes do `CREATE OR REPLACE`, seguindo o padrão de `get_repo_history.sql`, para garantir que um `CREATE OR REPLACE` com assinatura diferente da já implantada substitua a função antiga em vez de criar uma sobrecarga (overload) coexistente. Aplicado após revisão via Supabase Security Advisor.

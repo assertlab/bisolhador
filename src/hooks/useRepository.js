@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { githubService } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
+import { analyzeReviewMetrics } from '../utils/prReviewStats.js';
 import { calculateBusFactor as calculateAdvancedBusFactor } from '../utils/busFactor.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
@@ -54,7 +55,8 @@ async function fetchRepositoryData(repoName) {
         githubService.fetchCommitActivity(owner, repo),
         githubService.fetchPullRequestStats(owner, repo),
         githubService.fetchCodeFrequency(owner, repo),
-        githubService.fetchMergedPRsCount(owner, repo)
+        githubService.fetchMergedPRsCount(owner, repo),
+        githubService.fetchPullRequestReviewStats(owner, repo)
     ]);
 
     // Map of result indices to human-readable endpoint names
@@ -62,7 +64,8 @@ async function fetchRepositoryData(repoName) {
         'commits', 'branches', 'contributors', 'pullRequests',
         'openIssues', 'closedIssues', 'recentPRs', 'languages',
         'communityProfile', 'repositoryTree', 'releases',
-        'commitActivity', 'prStats', 'codeFrequency', 'mergedPRs'
+        'commitActivity', 'prStats', 'codeFrequency', 'mergedPRs',
+        'prReviewStats'
     ];
 
     // Collect warnings from rejected promises
@@ -89,6 +92,9 @@ async function fetchRepositoryData(repoName) {
     const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : [];
     const codeFrequency = results[13]?.status === 'fulfilled' ? results[13].value : null;
     const mergedPRsCount = results[14]?.status === 'fulfilled' ? results[14].value : 0;
+    // null when fulfilled = no token (GraphQL needs one); rejected = request failed.
+    const prReviewStats = results[15]?.status === 'fulfilled' ? results[15].value : null;
+    const prReviewUnavailableReason = results[15]?.status === 'fulfilled' ? 'noToken' : 'error';
 
     // Get recent commits and PRs for activity logs
     const recentCommits = commits.slice(0, RECENT_ITEMS_LIMIT);
@@ -110,12 +116,11 @@ async function fetchRepositoryData(repoName) {
     // Analyze maturity
     const maturity = analyzers.analyzeEngineeringMaturity(repositoryTree.tree, pullRequests, branches.zombies);
 
-    // Analyze code review
-    const codeReview = analyzers.analyzeCodeReview(pullRequestsStats);
+    // Self-merge rate and divergence: GraphQL-backed, unavailable without a token
+    const { codeReview, divergence } = analyzeReviewMetrics(prReviewStats, prReviewUnavailableReason);
 
     // Analyze process metrics
     const leadTime = analyzers.calculateLeadTime(pullRequestsStats);
-    const divergence = analyzers.calculateDivergence(pullRequestsStats);
 
     // Analyze bus factor
     const busFactor = analyzers.calculateBusFactor(contributors);

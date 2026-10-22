@@ -54,9 +54,12 @@ export function createMockRepoData(snapshotData) {
         unit: 'hours',
         count: 0
       },
+      // Snapshot sem full_report não registrou revisão de PRs (ver prReviewStats.js).
       divergence: {
-        avg: 'N/A',
-        categoryKey: 'divergenceNone'
+        avg: null,
+        categoryKey: 'repo.divergenceUnavailable',
+        available: false,
+        reason: 'snapshot'
       }
     },
 
@@ -84,10 +87,12 @@ export function createMockRepoData(snapshotData) {
       zombies: 0
     },
 
-    // Code review (valores padrão)
+    // Code review: indisponível (mesmo formato de analyzeReviewMetrics)
     codeReview: {
-      percentage: 0,
-      selfMerges: 0
+      selfMergePercentage: null,
+      color: 'gray',
+      available: false,
+      reason: 'snapshot'
     },
 
     // Contribuições (valores padrão)

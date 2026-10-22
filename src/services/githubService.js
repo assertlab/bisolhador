@@ -2,6 +2,7 @@
 // Migrated from v1-legacy/src/modules/githubAPI.js
 
 import { getItem } from "../utils/storage.js";
+import { toPullRequestStats } from "../utils/prReviewStats.js";
 import {
   GITHUB_PER_PAGE_COMMITS,
   GITHUB_PER_PAGE_BRANCHES,
@@ -421,6 +422,53 @@ export const githubService = {
       console.warn("Error fetching PR stats:", error);
       return [];
     }
+  },
+
+  // Review data for the same recent PRs as fetchPullRequestStats, via GraphQL:
+  // the REST list has no merged_by/comments, and per-PR REST calls would cost
+  // up to GITHUB_PER_PAGE_PR_STATS extra requests per search. GraphQL needs a
+  // token, so without one this resolves to null (metrics shown as unavailable)
+  // instead of failing. Errors throw so useRepository reports a partial result.
+  async fetchPullRequestReviewStats(owner, repo) {
+    if (!owner || !repo || !getItem("github_token")) {
+      return null;
+    }
+
+    const query = `query($owner: String!, $name: String!, $n: Int!) {
+      repository(owner: $owner, name: $name) {
+        pullRequests(first: $n, orderBy: { field: CREATED_AT, direction: DESC }) {
+          nodes {
+            createdAt
+            mergedAt
+            author { login }
+            mergedBy { login }
+            comments { totalCount }
+            reviews(first: 50) { nodes { comments { totalCount } } }
+          }
+        }
+      }
+    }`;
+
+    const response = await fetch(`${GITHUB_BASE_URL}/graphql`, {
+      method: "POST",
+      headers: { ...getHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query,
+        // Sent as GraphQL variables, never interpolated into the query string.
+        variables: { owner, name: repo, n: GITHUB_PER_PAGE_PR_STATS },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`GraphQL PR review stats failed: ${response.status}`);
+    }
+
+    const body = await response.json();
+    if (body.errors?.length) {
+      throw new Error(`GraphQL PR review stats failed: ${body.errors[0].message}`);
+    }
+
+    return toPullRequestStats(body.data?.repository?.pullRequests?.nodes);
   },
 
   async fetchCodeFrequency(owner, repo) {

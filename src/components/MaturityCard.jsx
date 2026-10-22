@@ -3,12 +3,15 @@ import { Tooltip } from './Tooltip.jsx';
 
 export function MaturityCard({ maturity, codeReview }) {
   const { t } = useTranslation();
+  // Snapshots antigos não têm `available`: trata como disponível (valor gravado).
+  const reviewAvailable = codeReview?.available !== false;
   // Função auxiliar para renderizar badge
   const renderBadge = (text, detected, customColor) => {
     let bgColor = 'bg-gray-500';
     if (customColor) {
       if (customColor === 'green') bgColor = 'bg-green-500';
       else if (customColor === 'yellow') bgColor = 'bg-yellow-500';
+      else if (customColor === 'gray') bgColor = 'bg-gray-500';
       else bgColor = 'bg-red-500';
     } else if (detected) {
       bgColor = 'bg-green-500';
@@ -39,15 +42,24 @@ export function MaturityCard({ maturity, codeReview }) {
         {renderBadge(t('maturity.badges.tests'), maturity.testsDetected)}
         {renderBadge(t('maturity.badges.ciCd'), maturity.ciCdDetected)}
         {renderBadge(t('maturity.badges.docker'), maturity.dockerDetected)}
-        {renderBadge(t('maturity.badges.codeReview', { percentage: codeReview.selfMergePercentage }), true, codeReview.color)}
+        {reviewAvailable
+          ? renderBadge(t('maturity.badges.codeReview', { percentage: codeReview.selfMergePercentage }), true, codeReview.color)
+          : renderBadge(t('maturity.badges.codeReviewUnavailable'), false, 'gray')
+        }
         {maturity.zombies === 0
           ? renderBadge(t('maturity.badges.noZombies'), true, 'green')
           : renderBadge(t('maturity.badges.zombies', { count: maturity.zombies }), true, 'red')
         }
       </div>
 
+      {!reviewAvailable && (
+        <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
+          {t(`maturity.unavailable.${codeReview.reason}`, { defaultValue: t('maturity.unavailable.error') })}
+        </p>
+      )}
+
       {/* Alerta de Code Review */}
-      {codeReview.selfMergePercentage > 0 && (
+      {reviewAvailable && codeReview.selfMergePercentage > 0 && (
         <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md">
           <div className="flex">
             <div className="flex-shrink-0">

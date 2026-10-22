@@ -3,14 +3,9 @@ import { analyzers } from './analyzers.js';
 
 const tree = (...paths) => paths.map((path) => ({ path }));
 
-// What useRepository actually passes in: items from GET /repos/{o}/{r}/pulls
-// (pull-request-simple). Unlike the single-PR endpoint, they have NO merged_by,
-// comments or review_comments — verified against the live API (2026-10).
-const listPullsItem = ({ author = 'a', merged = true } = {}) => ({
-  user: { login: author },
-  created_at: '2026-10-01T00:00:00Z',
-  merged_at: merged ? '2026-10-01T05:00:00Z' : null,
-});
+// analyzeCodeReview/calculateDivergence receive GraphQL-backed data mapped by
+// toPullRequestStats (see prReviewStats.test.js), not the REST /pulls list,
+// which has no merged_by/comments.
 const HOUR = 60 * 60 * 1000;
 const pr = ({ author = 'a', mergedBy, createdAt = 0, mergedAfterMs, comments = 0, reviewComments = 0 } = {}) => ({
   user: { login: author },
@@ -110,20 +105,6 @@ describe('analyzeCodeReview (self-merge rate)', () => {
       ...Array.from({ length: reviewed }, () => pr({ author: 'a', mergedBy: 'b', mergedAfterMs: HOUR })),
     ];
     expect(analyzers.analyzeCodeReview(prs)).toEqual({ selfMergePercentage: percentage, color });
-  });
-});
-
-describe('known bugs with the real /pulls list shape (see docs/ROADMAP.md)', () => {
-  // it.fails: passes while the bug exists. When the data source is fixed these
-  // start failing — then turn them into regular tests.
-  it.fails('analyzeCodeReview detects self-merges', () => {
-    const prs = [listPullsItem({ author: 'a' }), listPullsItem({ author: 'a' })];
-    expect(analyzers.analyzeCodeReview(prs).selfMergePercentage).toBe(100);
-  });
-
-  it.fails('calculateDivergence counts PR discussion', () => {
-    const prs = [listPullsItem(), listPullsItem()];
-    expect(analyzers.calculateDivergence(prs).categoryKey).not.toBe('repo.divergenceLow');
   });
 });
 
