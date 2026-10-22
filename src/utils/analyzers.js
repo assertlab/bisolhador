@@ -251,7 +251,7 @@ export const analyzers = {
             totalDeletions += week[2];
         }
         const ratio = totalDeletions > 0 ? totalAdditions / totalDeletions : totalAdditions > 0 ? Infinity : 0;
-        let category = '';
+        let category;
         if (ratio > 10) {
             category = 'Acúmulo Intenso (Pouca Refatoração)';
         } else if (ratio >= 2) {

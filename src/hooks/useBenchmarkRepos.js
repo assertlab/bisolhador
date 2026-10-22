@@ -35,7 +35,7 @@ export function useBenchmarkRepos(selectedRepos) {
           }
         }
 
-        let primaryLanguage = 'Unknown';
+        let primaryLanguage;
         if (reportData) {
           primaryLanguage = reportData.language ||
                            reportData.primaryLanguage ||
