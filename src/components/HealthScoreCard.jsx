@@ -4,8 +4,8 @@ import { Tooltip } from './Tooltip.jsx';
 export function HealthScoreCard({ score, files }) {
   const { t } = useTranslation();
   // Determinar cor baseada no score
-  let scoreColor = 'text-gray-900 dark:text-white';
-  let bgColor = 'bg-gray-100 dark:bg-slate-700';
+  let scoreColor;
+  let bgColor;
   if (score >= 75) {
     scoreColor = 'text-green-600';
     bgColor = 'bg-green-50 dark:bg-green-900/20';

@@ -5,8 +5,13 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    # Um PR semanal por grupo em vez de um por pacote; majors continuam isolados.
+    # Um PR semanal por grupo em vez de um por pacote; majors continuam isolados, exceto no grupo eslint.
     groups:
+      # ESLint e plugins quebram separados (peer ranges, regras novas no
+      # recommended): todas as versões, majors inclusive, num PR só.
+      # Vem antes dos demais grupos; o Dependabot usa o primeiro que casar.
+      eslint:
+        patterns: ['eslint', '@eslint/*', 'eslint-plugin-*']
       runtime-minor-patch:
         dependency-type: production
         update-types: [minor, patch]
