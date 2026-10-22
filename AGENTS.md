@@ -7,7 +7,6 @@ npm run dev        # Start dev server (http://localhost:5173)
 npm run build      # Production build
 npm run lint       # Run ESLint
 npm run preview    # Preview production build locally
-npm run deploy     # Deploy to GitHub Pages (runs build first)
 npm run smoke:csp  # CSP + PDF-export smoke test (Playwright, build + dev modes)
 ```
 
@@ -21,7 +20,7 @@ npm run smoke:csp  # CSP + PDF-export smoke test (Playwright, build + dev modes)
 - **API**: GitHub REST API v3
 - **Analytics**: Hybrid — Supabase (critical data, AdBlock-proof) + GA4 (engagement)
 - **i18n**: react-i18next (PT-BR / EN-US) with auto-detection
-- **Deploy**: GitHub Pages (base URL: `/bisolhador/`)
+- **Deploy**: GitHub Pages (base URL: `/bisolhador/`) via `.github/workflows/deploy.yml` — see `### Release / Deploy`
 
 ### Folder Structure
 ```
@@ -133,6 +132,18 @@ Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.6.2)
 - `/?id=123` — immutable snapshot permalink
 - `/?repo=owner/project&date=YYYY-MM-DD` — semantic historical search
 - Priority: ID > Semantic > Live
+
+### Release / Deploy
+Production is published only by pushing a version tag — never from a local machine.
+1. Bump `package.json` + `docs/CHANGELOG.md` in a PR, merge it.
+2. `git tag vX.Y.Z <merge-commit> && git push origin vX.Y.Z`.
+3. `deploy.yml` builds that tag and publishes to Pages. Its in-workflow checks (build config present, tag = `package.json` version, commit on `main`) catch **mistakes**, not malice: on a tag push the workflow file comes from the tagged commit itself, which could drop them.
+
+**Security boundary** (repo settings, not the workflow): a tag ruleset limiting who can create/update/delete `v*` tags, plus the `github-pages` environment allowing only `v*` tags and `main`. Without the tag ruleset, anyone with write access can publish an unreviewed commit by tagging it.
+
+Repo setup this depends on: Settings → Pages → Source = "GitHub Actions"; Actions variables `VITE_SUPABASE_URL`, `VITE_GA_ID` and secret `VITE_SUPABASE_ANON_KEY` (names: see `### Environment Variables`).
+
+Rollback/redeploy: run `deploy.yml` via `workflow_dispatch` **from `main`**, passing the tag. Workflow logic then comes from `main`; only the app code comes from the tag. Floor: `v3.6.2` — older tags have no `.nvmrc`, so `setup-node` fails on them.
 
 ### Environment Variables
 ```bash

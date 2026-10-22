@@ -1,0 +1,106 @@
+name: Deploy
+
+# Publica no GitHub Pages a partir de uma tag de versão (v3.6.2 etc.), não a
+# cada merge: o release continua sendo uma decisão explícita, amarrada ao bump
+# do package.json e à entrada do CHANGELOG.
+on:
+  push:
+    tags: ['v*']
+  # Redeploy/rollback: disparar a partir de main informando a tag. A lógica do
+  # workflow vem sempre de main (revisada); só o código do app vem da tag.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag a publicar (ex. v3.6.2)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Nunca dois deploys ao mesmo tempo; o que já começou termina.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      # Nenhum destes é segredo de fato (todos acabam no bundle público);
+      # a anon key fica em secret só para não aparecer em logs.
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_GA_ID: ${{ vars.VITE_GA_ID }}
+    steps:
+      # Fail-closed antes de qualquer coisa: variável/secret inexistente vira
+      # string vazia, e o Vite troca %VITE_SUPABASE_URL% por nada na CSP sem
+      # reclamar; sem a anon key, analytics.js desliga o Supabase em silêncio.
+      # Nos dois casos o build passa e o app sobe quebrado.
+      - name: build config present
+        run: |
+          missing=0
+          for name in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY VITE_GA_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name não configurada nas variables/secrets do Actions."
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: dispatch only from main
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Dispare o deploy a partir de main (informando a tag), não de $GITHUB_REF."
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          persist-credentials: false
+          fetch-depth: 0 # histórico de main, para o check de ancestralidade abaixo
+
+      # Pega engano (tag no commit errado, versão não bumpada). NÃO é a barreira
+      # de segurança: num push de tag, este arquivo vem do próprio commit
+      # tagueado, que poderia removê-lo. A barreira é o ruleset de tags v* +
+      # a política do environment github-pages (ver AGENTS.md).
+      - name: tag is a release from main
+        run: |
+          expected="v$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$expected" ]; then
+            echo "::error::Tag $TAG não bate com package.json ($expected)."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "::error::O commit da tag $TAG não está em main."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
