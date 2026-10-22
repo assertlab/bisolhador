@@ -88,8 +88,11 @@ function waitForServer(url, timeoutMs) {
   });
 }
 
+// Own process group (detached) so killServer can stop the whole tree. Killing
+// only the direct child left the real vite process (and its stdout pipe)
+// alive on Linux, which kept this script from ever exiting in CI.
 function spawnServer(command, args, { label }) {
-  const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'], detached: true });
   const output = [];
   child.stdout.on('data', (d) => output.push(`[${label} stdout] ${d}`));
   child.stderr.on('data', (d) => output.push(`[${label} stderr] ${d}`));
@@ -97,15 +100,20 @@ function spawnServer(command, args, { label }) {
 }
 
 async function killServer(child) {
-  if (!child || child.killed) return;
-  child.kill('SIGTERM');
+  if (!child || child.exitCode !== null) return;
+  const killGroup = (signal) => {
+    try { process.kill(-child.pid, signal); } catch { /* group already gone */ }
+  };
+  killGroup('SIGTERM');
   await new Promise((resolve) => {
     const timer = setTimeout(() => {
-      try { child.kill('SIGKILL'); } catch { /* already dead */ }
+      killGroup('SIGKILL');
       resolve();
     }, 3000);
     child.once('exit', () => { clearTimeout(timer); resolve(); });
   });
+  child.stdout?.destroy();
+  child.stderr?.destroy();
 }
 
 async function runBrowserFlow(baseUrl, label) {
@@ -364,7 +372,7 @@ async function main() {
   });
 
   console.log('>>> Subindo vite preview...');
-  const preview = spawnServer('npx', ['vite', 'preview', '--port', '4173', '--strictPort'], { label: 'preview' });
+  const preview = spawnServer('node_modules/.bin/vite', ['preview', '--port', '4173', '--strictPort'], { label: 'preview' });
   try {
     await waitForServer('http://localhost:4173' + APP_BASE_PATH, 20_000);
     const result = await runBrowserFlow('http://localhost:4173', 'PRODUCTION BUILD (vite preview, dist/ com CSP restritiva)');
@@ -375,7 +383,7 @@ async function main() {
 
   // ---- 2) DEV SERVER (npm run dev / vite) ----
   console.log('\n>>> Subindo vite dev server...');
-  const dev = spawnServer('npx', ['vite', '--port', '5173', '--strictPort'], { label: 'dev' });
+  const dev = spawnServer('node_modules/.bin/vite', ['--port', '5173', '--strictPort'], { label: 'dev' });
   try {
     await waitForServer('http://localhost:5173' + APP_BASE_PATH, 20_000);
     const result = await runBrowserFlow('http://localhost:5173', 'DEV SERVER (vite, mesma CSP de index.html, checando HMR/websocket)');
@@ -433,7 +441,14 @@ async function main() {
   console.log('\nOK: todos os modos passaram.');
 }
 
-main().catch((err) => {
-  console.error('Smoke test crashed:', err);
-  process.exit(1);
-});
+// Exit explicitly once stdout has flushed: a leftover handle (server pipe,
+// timer) must never turn a finished run into a CI timeout, and exiting only
+// after the flush keeps the full report when piped.
+main()
+  .catch((err) => {
+    console.error('Smoke test crashed:', err);
+    process.exitCode = 1;
+  })
+  .finally(() => {
+    process.stdout.write('', () => process.exit(process.exitCode ?? 0));
+  });
