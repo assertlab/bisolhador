@@ -2,7 +2,8 @@
 // Smoke test: drives a real search + PDF export flow in a headless browser
 // against both the production build (vite preview) and the dev server (vite),
 // and reports every CSP violation observed in either mode. Does NOT modify
-// index.html — this is a read-only diagnostic.
+// index.html. It is a pass/fail gate (exit code below), and it changes the
+// network behavior under test in one way only:
 //
 // Never writes to production: Supabase registrar_busca (save-on-load) and
 // GA4 collection hits are intercepted and answered locally. CSP is still
@@ -11,8 +12,11 @@
 // violation and an allowed one is still recorded in gaRequests.
 //
 // Exit code: 0 only if every mode navigated, loaded the dashboard, started
-// the PDF download, and had zero CSP violations and zero page errors.
-// Runs in CI (.github/workflows/ci.yml, job "smoke") in snapshot mode.
+// the PDF download, and had zero CSP violations and zero page errors. With
+// SMOKE_REQUIRE_GA=1 (set in CI), zero GA4 requests also fails: GA4's CSP
+// coverage would otherwise go untested silently (e.g. VITE_GA_ID missing).
+// Runs in CI (.github/workflows/ci.yml, job "smoke") in snapshot mode; it
+// depends on SMOKE_SNAPSHOT_ID existing in production Supabase.
 //
 // Optional environment variables (both are ways to work around the
 // unauthenticated GitHub rate limit of 60 req/h, which the live-search flow
@@ -52,9 +56,12 @@ const SNAPSHOT_ID = process.env.SMOKE_SNAPSHOT_ID || null;
 // on the Node side, and passed into the browser via addInitScript below.
 const GITHUB_TOKEN = process.env.SMOKE_GITHUB_TOKEN || null;
 
+// Same GA4 hosts the CSP allows (index.html): *.google-analytics.com,
+// *.analytics.google.com (regional collection, e.g. region1.) and
+// googletagmanager.com.
 function isGaHost(url) {
   try {
-    return /(^|\.)google-analytics\.com$|(^|\.)googletagmanager\.com$/i.test(new URL(url).hostname);
+    return /(^|\.)google-analytics\.com$|(^|\.)analytics\.google\.com$|(^|\.)googletagmanager\.com$/i.test(new URL(url).hostname);
   } catch {
     return false;
   }
@@ -112,7 +119,7 @@ async function runBrowserFlow(baseUrl, label) {
   const websockets = [];
   const gaRequests = [];
   const gaRequestRecordByRequest = new Map();
-  const writesIntercepted = [];
+  const writesIntercepted = { registrar_busca: 0, ga4: 0 };
 
   // Positive proof that GA4 traffic actually left the page — a missing
   // console violation is NOT proof it wasn't blocked (CSP can silently drop
@@ -174,12 +181,23 @@ async function runBrowserFlow(baseUrl, label) {
   // No production writes from a test run (see header). Only the collection
   // endpoints are stubbed — gtag.js itself still loads, so script-src and
   // the request-side CSP checks stay real.
+  // Supabase is cross-origin from localhost: without CORS headers Chromium
+  // rejects the fulfilled response, and supabase-js would see a network
+  // error instead of this stub (a different path than real users get).
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
   await page.route('**/rest/v1/rpc/registrar_busca', (route) => {
-    writesIntercepted.push('registrar_busca');
-    return route.fulfill({ status: 200, contentType: 'application/json', body: 'null' });
+    if (route.request().method() === 'OPTIONS') {
+      return route.fulfill({ status: 204, headers: corsHeaders });
+    }
+    writesIntercepted.registrar_busca += 1;
+    return route.fulfill({ status: 200, contentType: 'application/json', headers: corsHeaders, body: 'null' });
   });
-  await page.route((url) => isGaHost(url.href) && /\/(g\/collect|collect|td)(\/|$|\?)/.test(url.pathname + url.search), (route) => {
-    writesIntercepted.push('ga4');
+  await page.route((url) => isGaHost(url.href) && /\/(collect|td)\/?$/.test(url.pathname), (route) => {
+    writesIntercepted.ga4 += 1;
     return route.fulfill({ status: 204, body: '' });
   });
 
@@ -378,7 +396,7 @@ async function main() {
       `${r.flow.label}: navigationOk=${r.flow.navigationOk} searchSubmitted=${r.flow.searchSubmitted} ` +
         `dashboardLoaded=${r.flow.dashboardLoaded} pdfClicked=${r.flow.pdfClicked} downloadStarted=${r.flow.downloadStarted} ` +
         `cspViolations=${r.cspViolations.length} gaRequests=${r.gaRequests.length} websockets=${r.websockets.length} ` +
-        `pageErrors=${r.pageErrors.length} writesIntercepted=${r.writesIntercepted.length} ` +
+        `pageErrors=${r.pageErrors.length} intercepted=${JSON.stringify(r.writesIntercepted)} ` +
         `flowError=${r.flow.error ?? 'none'}`,
     );
   }
@@ -400,9 +418,17 @@ async function main() {
     if (r.pageErrors.length) problems.push(`${r.pageErrors.length} page error(s)`);
     return problems.map((p) => `${f.label}: ${p}`);
   });
+  if (process.env.SMOKE_REQUIRE_GA === '1' && totalGaRequests === 0) {
+    failures.push('0 GA4 requests in every mode (SMOKE_REQUIRE_GA=1): is VITE_GA_ID set?');
+  }
   if (failures.length) {
     console.log('\nFALHOU:\n  ' + failures.join('\n  '));
-    process.exit(1);
+    if (failures.some((f) => f.includes('dashboard did not load')) && SNAPSHOT_ID) {
+      console.log(`  (snapshot mode: confirm analytics_searches id ${SNAPSHOT_ID} still exists and VITE_SUPABASE_* are set)`);
+    }
+    // exitCode, not exit(): lets the large report above flush to a pipe first.
+    process.exitCode = 1;
+    return;
   }
   console.log('\nOK: todos os modos passaram.');
 }
