@@ -2,6 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { analyzers } from './analyzers.js';
 
 const tree = (...paths) => paths.map((path) => ({ path }));
+
+// What useRepository actually passes in: items from GET /repos/{o}/{r}/pulls
+// (pull-request-simple). Unlike the single-PR endpoint, they have NO merged_by,
+// comments or review_comments — verified against the live API (2026-10).
+const listPullsItem = ({ author = 'a', merged = true } = {}) => ({
+  user: { login: author },
+  created_at: '2026-10-01T00:00:00Z',
+  merged_at: merged ? '2026-10-01T05:00:00Z' : null,
+});
 const HOUR = 60 * 60 * 1000;
 const pr = ({ author = 'a', mergedBy, createdAt = 0, mergedAfterMs, comments = 0, reviewComments = 0 } = {}) => ({
   user: { login: author },
@@ -104,7 +113,25 @@ describe('analyzeCodeReview (self-merge rate)', () => {
   });
 });
 
+describe('known bugs with the real /pulls list shape (see docs/ROADMAP.md)', () => {
+  // it.fails: passes while the bug exists. When the data source is fixed these
+  // start failing — then turn them into regular tests.
+  it.fails('analyzeCodeReview detects self-merges', () => {
+    const prs = [listPullsItem({ author: 'a' }), listPullsItem({ author: 'a' })];
+    expect(analyzers.analyzeCodeReview(prs).selfMergePercentage).toBe(100);
+  });
+
+  it.fails('calculateDivergence counts PR discussion', () => {
+    const prs = [listPullsItem(), listPullsItem()];
+    expect(analyzers.calculateDivergence(prs).categoryKey).not.toBe('repo.divergenceLow');
+  });
+});
+
 describe('calculateLeadTime', () => {
+  it.each([[null], [undefined], [{}]])('is N/A for non-array input (%j)', (input) => {
+    expect(analyzers.calculateLeadTime(input)).toEqual({ value: 'N/A', unit: '' });
+  });
+
   it('is N/A with no merged PRs', () => {
     expect(analyzers.calculateLeadTime([pr()])).toEqual({ value: 'N/A', unit: '' });
   });
@@ -165,7 +192,8 @@ describe('analyzers.calculateBusFactor (top-contributor share)', () => {
 });
 
 describe('calculateCodeChurn (additions/deletions, last 10 weeks)', () => {
-  const week = (additions, deletions) => [0, additions, deletions];
+  // Real /stats/code_frequency shape: deletions come NEGATIVE, e.g. [1792281600, 989, -1243].
+  const week = (additions, deletions) => [0, additions, -deletions];
 
   it('is null without data', () => {
     expect(analyzers.calculateCodeChurn([])).toEqual({ ratio: null, category: null });
@@ -179,6 +207,10 @@ describe('calculateCodeChurn (additions/deletions, last 10 weeks)', () => {
     [[week(0, 0)], '0.00', 'Refatoração Agressiva'],
   ])('%j → ratio %s', (data, ratio, category) => {
     expect(analyzers.calculateCodeChurn(data)).toEqual({ ratio, category });
+  });
+
+  it('handles the real API sign convention (regression: active repos showed Infinity)', () => {
+    expect(analyzers.calculateCodeChurn([[1792281600, 989, -1243]])).toEqual({ ratio: '0.80', category: 'Refatoração Agressiva' });
   });
 
   it('only counts the last 10 weeks', () => {

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🐛 Fixed
+
+- **FIX**: Code Churn mostrava `Infinity` / "Acúmulo Intenso" para praticamente todo repositório ativo. A API `/stats/code_frequency` do GitHub devolve as deleções como número **negativo** (`[ts, 989, -1243]`), e o cálculo as somava sem valor absoluto. Snapshots já gravados no Supabase mantêm o valor antigo; buscas novas saem corretas.
+- **FIX**: `calculateLeadTime` não quebra mais a análise inteira se a lista de PRs vier em formato inesperado (retorna `N/A`, como as métricas irmãs).
+- **FIX**: `full_report` corrompido em snapshots volta a ser logado como erro (`console.error`) em todos os pontos de leitura, e JSON válido que não é um relatório (`false`, `0`) cai no fallback em vez de chegar ao Dashboard.
+
+### 🧪 Tests
+
+- **TEST**: Primeira suíte de testes unitários (Vitest), rodando no CI. Ela revelou o bug do Code Churn acima e dois outros ainda não corrigidos — Self-Merge e Divergência sempre zerados (ver `docs/ROADMAP.md`).
+
+---
+
 ## [3.6.3] - 2026-10-22
 
 ### 🐛 Fixed

@@ -17,11 +17,15 @@ describe('parseFullReport', () => {
     expect(parseFullReport(value, 'test')).toBeNull();
   });
 
-  it('returns null and warns with the caller context on malformed JSON', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  it('returns null and logs an error with the caller context on malformed JSON', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(parseFullReport('{not json', 'Timeline')).toBeNull();
-    expect(warn).toHaveBeenCalledOnce();
-    expect(warn.mock.calls[0][0]).toContain('[Timeline]');
+    expect(error).toHaveBeenCalledOnce();
+    expect(error.mock.calls[0][0]).toContain('[Timeline]');
+  });
+
+  it.each(['false', '0', '""', 'null', '"text"'])('returns null for JSON that is not a report object (%s)', (json) => {
+    expect(parseFullReport(json, 'test')).toBeNull();
   });
 });
 

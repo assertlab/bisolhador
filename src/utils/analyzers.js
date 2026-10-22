@@ -158,6 +158,7 @@ export const analyzers = {
 
     // Process Analysis
     calculateLeadTime(prStats) {
+        if (!Array.isArray(prStats)) return { value: 'N/A', unit: '' };
         const mergedPRs = prStats.filter(pr => pr.merged_at);
         if (mergedPRs.length === 0) return { value: 'N/A', unit: '' };
 
@@ -246,9 +247,12 @@ export const analyzers = {
         const last10 = codeFrequencyData.slice(-10);
         let totalAdditions = 0;
         let totalDeletions = 0;
+        // GitHub /stats/code_frequency: [timestamp, additions, deletions], com
+        // deletions NEGATIVO (ex: [1792281600, 989, -1243]). Sem o abs, toda
+        // semana com remoções deixava totalDeletions < 0 e o ratio ia a Infinity.
         for (const week of last10) {
             totalAdditions += week[1];
-            totalDeletions += week[2];
+            totalDeletions += Math.abs(week[2]);
         }
         const ratio = totalDeletions > 0 ? totalAdditions / totalDeletions : totalAdditions > 0 ? Infinity : 0;
         let category;
