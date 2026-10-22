@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { githubService } from '../services/githubService.js';
+import { githubService, hasGithubToken } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
 import { analyzeReviewMetrics } from '../utils/prReviewStats.js';
 import { calculateBusFactor as calculateAdvancedBusFactor } from '../utils/busFactor.js';
@@ -39,6 +39,8 @@ async function fetchRepositoryData(repoName) {
         throw privateRepoError;
     }
 
+    const hasToken = hasGithubToken();
+
     // Fetch all other data in parallel
     const results = await Promise.allSettled([
         githubService.fetchCommits(owner, repo),
@@ -56,7 +58,8 @@ async function fetchRepositoryData(repoName) {
         githubService.fetchPullRequestStats(owner, repo),
         githubService.fetchCodeFrequency(owner, repo),
         githubService.fetchMergedPRsCount(owner, repo),
-        githubService.fetchPullRequestReviewStats(owner, repo)
+        // GraphQL requires a token; without one, skip it (metrics → unavailable).
+        hasToken ? githubService.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null)
     ]);
 
     // Map of result indices to human-readable endpoint names
@@ -92,9 +95,7 @@ async function fetchRepositoryData(repoName) {
     const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : [];
     const codeFrequency = results[13]?.status === 'fulfilled' ? results[13].value : null;
     const mergedPRsCount = results[14]?.status === 'fulfilled' ? results[14].value : 0;
-    // null when fulfilled = no token (GraphQL needs one); rejected = request failed.
     const prReviewStats = results[15]?.status === 'fulfilled' ? results[15].value : null;
-    const prReviewUnavailableReason = results[15]?.status === 'fulfilled' ? 'noToken' : 'error';
 
     // Get recent commits and PRs for activity logs
     const recentCommits = commits.slice(0, RECENT_ITEMS_LIMIT);
@@ -114,10 +115,10 @@ async function fetchRepositoryData(repoName) {
     const health = analyzers.calculateHealthScore(communityProfile, repoData.description);
 
     // Analyze maturity
-    const maturity = analyzers.analyzeEngineeringMaturity(repositoryTree.tree, pullRequests, branches.zombies);
+    const maturity = analyzers.analyzeEngineeringMaturity(repositoryTree.tree, branches.zombies);
 
     // Self-merge rate and divergence: GraphQL-backed, unavailable without a token
-    const { codeReview, divergence } = analyzeReviewMetrics(prReviewStats, prReviewUnavailableReason);
+    const { codeReview, divergence } = analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken');
 
     // Analyze process metrics
     const leadTime = analyzers.calculateLeadTime(pullRequestsStats);

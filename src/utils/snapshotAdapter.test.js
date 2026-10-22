@@ -40,7 +40,7 @@ describe('createMockRepoData', () => {
   it('marks review metrics unavailable instead of inventing 0%', () => {
     const data = createMockRepoData({ repo_name: 'owner/repo' });
     expect(data.codeReview).toMatchObject({ available: false, reason: 'snapshot', selfMergePercentage: null });
-    expect(data.metrics.divergence).toMatchObject({ available: false, avg: null, categoryKey: 'repo.divergenceUnavailable' });
+    expect(data.metrics.divergence).toEqual({ avg: null, categoryKey: 'repo.divergenceUnavailable' });
   });
 
   it('falls back to N/A without a repo name', () => {

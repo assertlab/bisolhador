@@ -33,19 +33,13 @@ export const analyzers = {
     },
 
     // Engineering Maturity Analysis
-    analyzeEngineeringMaturity(tree, pullRequests, zombies) {
-        const testsDetected = this.detectTests(tree);
-        const ciCdDetected = this.detectCiCd(tree);
-        const dockerDetected = this.detectDocker(tree);
-        const lintDetected = this.detectLinter(tree);
-        const codeReview = this.analyzeCodeReview(pullRequests);
-
+    // Self-merge rate is NOT here: it needs GraphQL data (see prReviewStats.js).
+    analyzeEngineeringMaturity(tree, zombies) {
         return {
-            testsDetected,
-            ciCdDetected,
-            dockerDetected,
-            lintDetected,
-            codeReview,
+            testsDetected: this.detectTests(tree),
+            ciCdDetected: this.detectCiCd(tree),
+            dockerDetected: this.detectDocker(tree),
+            lintDetected: this.detectLinter(tree),
             zombies
         };
     },

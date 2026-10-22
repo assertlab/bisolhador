@@ -122,7 +122,7 @@ Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.6.3)
 - Stored in `localStorage['github_token']` (via safe storage wrapper)
 - Increases rate limit from 60 to 5,000 requests/hour
 - Auto-added to requests in `githubService.getHeaders()`
-- Required for the **Code Review (self-merge rate)** and **Divergence** metrics: they come from one GraphQL call (`fetchPullRequestReviewStats`), because the REST `/pulls` list has no `merged_by`/comment counts. Without a token, both are shown as unavailable ("n/d" plus an explanation), never as 0% (`src/utils/prReviewStats.js`).
+- Required for the **Code Review (self-merge rate)** and **Divergence** metrics: they come from one GraphQL call (`fetchPullRequestReviewStats`), because the REST `/pulls` list has no `merged_by`/comment counts. Without a token, both are shown as unavailable ("n/d" plus an explanation), never as 0% (`src/utils/prReviewStats.js`). Persisted snapshots go through `normalizeSnapshotReviewMetrics` on read: pre-fix reports (no `codeReview.available`) and reports saved as unavailable both show "not recorded in this snapshot".
 
 ### Backend / Supabase
 - **Write**: All writes via validated RPCs (`registrar_busca`), no direct INSERT

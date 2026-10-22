@@ -1,22 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 
+const BADGE_COLORS = { green: 'bg-green-500', yellow: 'bg-yellow-500', red: 'bg-red-500', gray: 'bg-gray-500' };
+
 export function MaturityCard({ maturity, codeReview }) {
   const { t } = useTranslation();
   // Snapshots antigos não têm `available`: trata como disponível (valor gravado).
   const reviewAvailable = codeReview?.available !== false;
-  // Função auxiliar para renderizar badge
+  // Função auxiliar para renderizar badge: cor explícita, senão verde/cinza por `detected`
   const renderBadge = (text, detected, customColor) => {
-    let bgColor = 'bg-gray-500';
-    if (customColor) {
-      if (customColor === 'green') bgColor = 'bg-green-500';
-      else if (customColor === 'yellow') bgColor = 'bg-yellow-500';
-      else if (customColor === 'gray') bgColor = 'bg-gray-500';
-      else bgColor = 'bg-red-500';
-    } else if (detected) {
-      bgColor = 'bg-green-500';
-    }
-
+    const bgColor = BADGE_COLORS[customColor] ?? (detected ? 'bg-green-500' : 'bg-gray-500');
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${bgColor}`}>
         {text}

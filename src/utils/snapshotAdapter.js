@@ -57,9 +57,7 @@ export function createMockRepoData(snapshotData) {
       // Snapshot sem full_report não registrou revisão de PRs (ver prReviewStats.js).
       divergence: {
         avg: null,
-        categoryKey: 'repo.divergenceUnavailable',
-        available: false,
-        reason: 'snapshot'
+        categoryKey: 'repo.divergenceUnavailable'
       }
     },
 
@@ -82,7 +80,6 @@ export function createMockRepoData(snapshotData) {
       tests: false,
       ciCd: false,
       docker: false,
-      codeReview: false,
       noZombies: false,
       zombies: 0
     },

@@ -15,6 +15,10 @@ import {
 
 const GITHUB_BASE_URL = "https://api.github.com";
 
+export function hasGithubToken() {
+  return Boolean(getItem("github_token"));
+}
+
 function getHeaders() {
   const token = getItem("github_token");
   const headers = {
@@ -424,14 +428,15 @@ export const githubService = {
     }
   },
 
-  // Review data for the same recent PRs as fetchPullRequestStats, via GraphQL:
-  // the REST list has no merged_by/comments, and per-PR REST calls would cost
-  // up to GITHUB_PER_PAGE_PR_STATS extra requests per search. GraphQL needs a
-  // token, so without one this resolves to null (metrics shown as unavailable)
-  // instead of failing. Errors throw so useRepository reports a partial result.
+  // Review data (merged_by, comment counts) for the same recent PRs as
+  // fetchPullRequestStats, in one GraphQL call instead of up to
+  // GITHUB_PER_PAGE_PR_STATS per-PR REST calls. Why: see src/utils/prReviewStats.js.
+  // Requires a token (callers check hasGithubToken()). Unlike the other
+  // fetchers it throws on failure, so useRepository can tell "failed" from
+  // "no token" and list it in the partial-data warning.
   async fetchPullRequestReviewStats(owner, repo) {
-    if (!owner || !repo || !getItem("github_token")) {
-      return null;
+    if (!owner || !repo || !hasGithubToken()) {
+      throw new Error("fetchPullRequestReviewStats needs owner, repo and a GitHub token");
     }
 
     const query = `query($owner: String!, $name: String!, $n: Int!) {
@@ -443,7 +448,7 @@ export const githubService = {
             author { login }
             mergedBy { login }
             comments { totalCount }
-            reviews(first: 50) { nodes { comments { totalCount } } }
+            reviews(first: 100) { nodes { comments { totalCount } } }
           }
         }
       }
@@ -463,12 +468,18 @@ export const githubService = {
       throw new Error(`GraphQL PR review stats failed: ${response.status}`);
     }
 
+    // GraphQL can return partial data alongside `errors` (e.g. one node
+    // FORBIDDEN); use the data when it's there, fail only when it isn't.
     const body = await response.json();
+    const nodes = body.data?.repository?.pullRequests?.nodes;
+    if (!Array.isArray(nodes)) {
+      throw new Error(`GraphQL PR review stats failed: ${body.errors?.[0]?.message ?? "no data"}`);
+    }
     if (body.errors?.length) {
-      throw new Error(`GraphQL PR review stats failed: ${body.errors[0].message}`);
+      console.warn("[githubService] GraphQL PR review stats returned partial data:", body.errors[0].message);
     }
 
-    return toPullRequestStats(body.data?.repository?.pullRequests?.nodes);
+    return toPullRequestStats(nodes);
   },
 
   async fetchCodeFrequency(owner, repo) {

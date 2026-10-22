@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toPullRequestStats, analyzeReviewMetrics } from './prReviewStats.js';
+import { toPullRequestStats, analyzeReviewMetrics, normalizeSnapshotReviewMetrics } from './prReviewStats.js';
 import { analyzers } from './analyzers.js';
 
 // Shape returned by the GraphQL query in githubService.fetchPullRequestReviewStats.
@@ -53,7 +53,7 @@ describe('analyzeReviewMetrics', () => {
     const stats = toPullRequestStats([node({ author: 'a', mergedBy: 'b', comments: 1 })]);
     expect(analyzeReviewMetrics(stats)).toEqual({
       codeReview: { selfMergePercentage: 0, color: 'green', available: true },
-      divergence: { avg: 1, categoryKey: 'repo.divergenceMedium', available: true },
+      divergence: { avg: 1, categoryKey: 'repo.divergenceMedium' },
     });
   });
 
@@ -63,7 +63,43 @@ describe('analyzeReviewMetrics', () => {
   ])('marks both unavailable with reason %s (no fake 0%%)', (reason, categoryKey) => {
     expect(analyzeReviewMetrics(null, reason)).toEqual({
       codeReview: { selfMergePercentage: null, color: 'gray', available: false, reason },
-      divergence: { avg: null, categoryKey, available: false, reason },
+      divergence: { avg: null, categoryKey },
     });
+  });
+});
+
+describe('normalizeSnapshotReviewMetrics (reading persisted full_report)', () => {
+  const report = (codeReview, divergence) => ({ codeReview, metrics: { divergence } });
+  const UNAVAILABLE = {
+    codeReview: { selfMergePercentage: null, color: 'gray', available: false, reason: 'snapshot' },
+    divergence: { avg: null, categoryKey: 'repo.divergenceUnavailable' },
+  };
+
+  it('treats pre-fix snapshots (no `available`) as unavailable: their 0% came from data without merged_by', () => {
+    const legacy = report({ selfMergePercentage: 0, color: 'green' }, { avg: 0, categoryKey: 'repo.divergenceLow' });
+    const normalized = normalizeSnapshotReviewMetrics(legacy);
+    expect(normalized.codeReview).toEqual(UNAVAILABLE.codeReview);
+    expect(normalized.metrics.divergence).toEqual(UNAVAILABLE.divergence);
+  });
+
+  it.each(['noToken', 'error'])('rewrites reason %s to "snapshot" (adding a token cannot refetch a snapshot)', (reason) => {
+    const saved = report({ ...UNAVAILABLE.codeReview, reason }, { avg: null, categoryKey: 'repo.divergenceNeedsToken' });
+    const normalized = normalizeSnapshotReviewMetrics(saved);
+    expect(normalized.codeReview.reason).toBe('snapshot');
+    expect(normalized.metrics.divergence.categoryKey).toBe('repo.divergenceUnavailable');
+  });
+
+  it('keeps real measured values', () => {
+    const saved = report({ selfMergePercentage: 79, color: 'red', available: true }, { avg: 0.7, categoryKey: 'repo.divergenceLow' });
+    expect(normalizeSnapshotReviewMetrics(saved)).toEqual(saved);
+  });
+
+  it('does not touch other fields or mutate the input', () => {
+    const legacy = { fullName: 'o/r', codeReview: { selfMergePercentage: 0 }, metrics: { stars: 3, divergence: { avg: 0 } } };
+    const copy = structuredClone(legacy);
+    const normalized = normalizeSnapshotReviewMetrics(legacy);
+    expect(legacy).toEqual(copy);
+    expect(normalized.fullName).toBe('o/r');
+    expect(normalized.metrics.stars).toBe(3);
   });
 });

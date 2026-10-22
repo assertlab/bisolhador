@@ -74,7 +74,7 @@
     "closedIssuesTooltip": "Total resolved issues, with resolution rate showing efficiency.",
     "codeChurnTooltip": "Ratio between new code added and code removed/refactored. Indicates change quality.",
     "leadTimeTooltip": "Average time between Pull Request creation and approval/merge. Indicates review process speed.",
-    "divergenceTooltip": "Average comments (general and code review) per PR, over the 20 most recent PRs. Requires a GitHub token."
+    "divergenceTooltip": "Average comments (general and code review) per PR, over the {{n}} most recent PRs. Requires a GitHub token."
   },
   "language": {
     "pt": "PT",

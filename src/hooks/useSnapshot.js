@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import analytics from '../services/analytics.js';
 import { createMockRepoData, parseFullReport } from '../utils/snapshotAdapter.js';
+import { normalizeSnapshotReviewMetrics } from '../utils/prReviewStats.js';
 import { CACHE_STALE_TIME_MS } from '../constants.js';
 
 // Converte o registro do Supabase no formato que o Dashboard renderiza:
 // full_report (JSON completo) quando existe, senão um mock a partir das colunas.
 function toRepoData(snapshotResult) {
-  const data = parseFullReport(snapshotResult.full_report, 'useSnapshot')
-    ?? createMockRepoData(snapshotResult);
+  const report = parseFullReport(snapshotResult.full_report, 'useSnapshot');
+  const data = report ? normalizeSnapshotReviewMetrics(report) : createMockRepoData(snapshotResult);
 
   if (typeof data === 'object') {
     data.analysisDate = snapshotResult.created_at || new Date().toISOString();
