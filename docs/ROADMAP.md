@@ -141,7 +141,7 @@ Ver [Especificação Técnica v2.6.0](docs/SPECS_v2.6.md)
 - [x] **Exportação PDF:** Funcionalidade completa de relatórios com correção de quebra de página.
 - [x] **Dados Precisos:** Correção crítica nas queries da Search API (Merges/Issues zerados) e lógica de "Smart Trim" para gráficos de projetos novos.
 - [x] **Identidade Visual:** Implementação do logo oficial ASSERT Lab e Favicon.
-- [x] **Deploy Automatizado:** Fluxo CI/CD para GitHub Pages via branch `gh-pages`.
+- [x] **Deploy Automatizado:** Fluxo CI/CD para GitHub Pages via branch `gh-pages` (substituído em 2026-10 pelo deploy por tag `v*` em `.github/workflows/deploy.yml`).
 
 ### v2.0.0 - A Grande Migração (Novembro 2025)
 - [x] **Reescrita Arquitetural:** Migração total de Vanilla JS para **React + Vite**.
