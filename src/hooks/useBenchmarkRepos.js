@@ -51,7 +51,7 @@ export function useBenchmarkRepos(selectedRepos) {
           busFactorTopContributor: reportData?.busFactor?.topContributor || '',
           lastUpdate: new Date(latestSnapshot.created_at),
           history: history.map((snapshot) => {
-            const data = parseFullReport(snapshot.full_report, 'Benchmark');
+            const data = parseFullReport(snapshot.full_report, `Benchmark ${repo.fullName}`);
             return {
               date: new Date(snapshot.created_at),
               stars: data?.metrics?.stars || snapshot.stars || 0,

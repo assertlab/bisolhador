@@ -30,6 +30,7 @@ describe('createMockRepoData', () => {
     const data = createMockRepoData({ repo_name: 'owner/repo', stars: 5, forks: 2 });
     expect(data.fullName).toBe('owner/repo');
     expect(data.url).toBe('https://github.com/owner/repo');
+    expect(data.metrics).toMatchObject({ stars: 5, forks: 2, openIssues: 0 });
   });
 
   it('falls back to N/A without a repo name', () => {

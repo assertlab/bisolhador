@@ -9,7 +9,7 @@ function toRepoData(snapshotResult) {
   const data = parseFullReport(snapshotResult.full_report, 'useSnapshot')
     ?? createMockRepoData(snapshotResult);
 
-  if (data && typeof data === 'object') {
+  if (typeof data === 'object') {
     data.analysisDate = snapshotResult.created_at || new Date().toISOString();
   }
 
