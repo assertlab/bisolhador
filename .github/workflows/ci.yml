@@ -15,7 +15,8 @@ concurrency:
 
 jobs:
   # Nome estável: é o status check obrigatório no ruleset protect-main.
-  # Renomear este job exige atualizar o ruleset também.
+  # Renomear este job exige atualizar o ruleset também (por isso continua
+  # "lint + build" mesmo rodando os testes unitários).
   verify:
     name: lint + build
     runs-on: ubuntu-latest
@@ -33,6 +34,8 @@ jobs:
       - run: npm ci
 
       - run: npm run lint
+
+      - run: npm test
 
       # Sem secrets: valida que compila; o bundle gerado aqui não é publicado.
       - run: npm run build

@@ -15,6 +15,7 @@ import { TimeRangeFilter } from "../components/TimeRangeFilter";
 import { useState, useMemo, useEffect } from "react";
 import { ensureChartSetup } from "../lib/chartSetup.js";
 import { formatters } from "../utils/formatters.js";
+import { parseFullReport } from "../utils/snapshotAdapter.js";
 
 export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
@@ -54,19 +55,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
 
       // Processar dados do histórico
       const processedData = history.map((snapshot) => {
-        let reportData = null;
-
-        // Parse do full_report se for string
-        if (snapshot.full_report) {
-          try {
-            reportData =
-              typeof snapshot.full_report === "string"
-                ? JSON.parse(snapshot.full_report)
-                : snapshot.full_report;
-          } catch (e) {
-            console.warn("[Timeline] Failed to parse full_report:", e);
-          }
-        }
+        const reportData = parseFullReport(snapshot.full_report, "Timeline");
 
         return {
           date: new Date(snapshot.created_at),

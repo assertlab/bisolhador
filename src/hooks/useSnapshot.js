@@ -1,26 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import analytics from '../services/analytics.js';
-import { createMockRepoData } from '../utils/snapshotAdapter.js';
+import { createMockRepoData, parseFullReport } from '../utils/snapshotAdapter.js';
 import { CACHE_STALE_TIME_MS } from '../constants.js';
 
 // Converte o registro do Supabase no formato que o Dashboard renderiza:
 // full_report (JSON completo) quando existe, senão um mock a partir das colunas.
 function toRepoData(snapshotResult) {
-  let data = null;
-
-  if (snapshotResult.full_report) {
-    try {
-      data = typeof snapshotResult.full_report === 'string'
-        ? JSON.parse(snapshotResult.full_report)
-        : snapshotResult.full_report;
-    } catch (e) {
-      console.error('[useSnapshot] Erro fatal ao decodificar JSON:', e);
-    }
-  }
-
-  if (!data) {
-    data = createMockRepoData(snapshotResult);
-  }
+  const data = parseFullReport(snapshotResult.full_report, 'useSnapshot')
+    ?? createMockRepoData(snapshotResult);
 
   if (data && typeof data === 'object') {
     data.analysisDate = snapshotResult.created_at || new Date().toISOString();

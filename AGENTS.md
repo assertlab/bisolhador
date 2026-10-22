@@ -7,6 +7,7 @@ npm run dev        # Start dev server (http://localhost:5173)
 npm run build      # Production build
 npm run lint       # Run ESLint
 npm run preview    # Preview production build locally
+npm test           # Unit tests (Vitest): src/**/*.test.js
 npm run smoke:csp  # CSP + PDF-export smoke test (Playwright, build + dev modes)
 ```
 
@@ -81,7 +82,7 @@ src/
 Calculated locally from GitHub's community profile API:
 1. README, 2. License, 3. Contributing, 4. Description, 5. Code of Conduct, 6. Issue Template, 7. PR Template
 
-Score = (items present / 7) × 100%. Colors: Green (>75%), Yellow (>50%), Red (below).
+Score = (items present / 7) × 100%. Colors (`HealthScoreCard.jsx`): Green (≥75%), Yellow (≥50%), Red (below).
 
 ## Style Guidelines
 
@@ -155,12 +156,14 @@ VITE_SUPABASE_ANON_KEY=...    # Supabase anonymous key
 
 ### Automated Testing
 CI (rationale in each workflow's comments):
-- `ci.yml` → **`lint + build`** (required on `protect-main`; PRs and `main`). Builds without secrets, so `%VITE_SUPABASE_URL%` stays unresolved in the CSP — green CI proves the app compiles, not that the shipped CSP is valid.
+- `ci.yml` → **`lint + build`** (required on `protect-main`; PRs and `main`): lint, unit tests (`npm test`), build. Builds without secrets, so `%VITE_SUPABASE_URL%` stays unresolved in the CSP — green CI proves the app compiles, not that the shipped CSP is valid.
 - `ci.yml` → **`dependency review`** (PRs): blocks a PR that *introduces* a runtime dependency with a high+ vulnerability.
 - `audit.yml` → **`npm audit (runtime)`** (weekly + lockfile changes on `main`, not on PRs): alarm for new advisories against what's already installed.
 - `smoke:csp` does **not** run in CI yet. Dependabot config: `.github/dependabot.yml`. Node: `.nvmrc` (CI/dev) and `engines` in `package.json` (minimum).
 
-`scripts/csp-smoke-test.mjs` is the project's only automated test (Playwright). Run via `npm run smoke:csp`. A live-search run goes through the real app flow, so — when `VITE_SUPABASE_*` are set locally — it **writes a `facebook/react` row to production Supabase per mode, i.e. two rows per run** (`analytics.saveSearch` → `registrar_busca`) and sends real GA4 events; `SMOKE_SNAPSHOT_ID` mode only reads (`obter_snapshot`), though GA4 still fires. Optional process env vars (never `VITE_`-prefixed, never bundled):
+Unit tests: Vitest, colocated as `src/**/*.test.js` (pure functions in `src/utils/`: health score, maturity detectors, code review, lead time, divergence, both bus factor variants, code churn, `full_report` parsing). They run in CI on every PR.
+
+`scripts/csp-smoke-test.mjs` is the end-to-end smoke test (Playwright), not run in CI yet. Run via `npm run smoke:csp`. A live-search run goes through the real app flow, so — when `VITE_SUPABASE_*` are set locally — it **writes a `facebook/react` row to production Supabase per mode, i.e. two rows per run** (`analytics.saveSearch` → `registrar_busca`) and sends real GA4 events; `SMOKE_SNAPSHOT_ID` mode only reads (`obter_snapshot`), though GA4 still fires. Optional process env vars (never `VITE_`-prefixed, never bundled):
 - `SMOKE_SNAPSHOT_ID` — loads an existing `analytics_searches` id via the app's `?id=` permalink instead of live-searching, to bypass the unauthenticated GitHub rate limit (60 req/h).
 - `SMOKE_GITHUB_TOKEN` — a real GitHub PAT, injected into the test browser's `localStorage` (mirrors what `SettingsModal` does manually) so the live search actually gets 5,000 req/h. Never logged.
 

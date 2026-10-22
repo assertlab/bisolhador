@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import analytics from '../services/analytics.js';
+import { parseFullReport } from '../utils/snapshotAdapter.js';
+import { CACHE_STALE_TIME_MS } from '../constants.js';
 
 /**
  * Hook customizado para buscar dados de múltiplos repositórios em paralelo
@@ -22,18 +24,7 @@ export function useBenchmarkRepos(selectedRepos) {
         }
 
         const latestSnapshot = history[history.length - 1];
-        let reportData = null;
-
-        if (latestSnapshot.full_report) {
-          try {
-            reportData =
-              typeof latestSnapshot.full_report === 'string'
-                ? JSON.parse(latestSnapshot.full_report)
-                : latestSnapshot.full_report;
-          } catch (e) {
-            console.warn(`[Benchmark] Failed to parse full_report for ${repo.fullName}:`, e);
-          }
-        }
+        const reportData = parseFullReport(latestSnapshot.full_report, `Benchmark ${repo.fullName}`);
 
         const primaryLanguage = reportData?.language ||
                                 reportData?.primaryLanguage ||
@@ -60,16 +51,7 @@ export function useBenchmarkRepos(selectedRepos) {
           busFactorTopContributor: reportData?.busFactor?.topContributor || '',
           lastUpdate: new Date(latestSnapshot.created_at),
           history: history.map((snapshot) => {
-            let data = null;
-            if (snapshot.full_report) {
-              try {
-                data = typeof snapshot.full_report === 'string'
-                  ? JSON.parse(snapshot.full_report)
-                  : snapshot.full_report;
-              } catch (e) {
-                console.warn(`[Benchmark] Failed to parse snapshot:`, e);
-              }
-            }
+            const data = parseFullReport(snapshot.full_report, 'Benchmark');
             return {
               date: new Date(snapshot.created_at),
               stars: data?.metrics?.stars || snapshot.stars || 0,
@@ -83,7 +65,7 @@ export function useBenchmarkRepos(selectedRepos) {
         };
       },
       retry: 1,
-      staleTime: 5 * 60 * 1000,
+      staleTime: CACHE_STALE_TIME_MS,
       enabled: !!repo.fullName,
     })),
     [selectedRepos],
