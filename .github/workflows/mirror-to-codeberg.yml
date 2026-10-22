@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout do código
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # Puxa todo o histórico, branches e tags
           persist-credentials: false # Evita interferência do helper de credenciais do checkout
