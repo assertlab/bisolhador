@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [3.6.3] - 2026-10-22
 
 ### 🐛 Fixed
 
@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **REFACTOR**: Snapshots passam a ser carregados via TanStack Query (`src/hooks/useSnapshot.js`), chaveados pela URL, como já era a busca ao vivo; o estado do Dashboard derivado da URL deixou de ser copiado num `useEffect` (exigido pela regra `react-hooks/set-state-in-effect` do `eslint-plugin-react-hooks` 7.1).
 - **DEV**: ESLint 10 (`eslint` 10.13, `@eslint/js` 10, `eslint-plugin-react-hooks` 7.1.1). A regra `no-useless-assignment`, nova no `recommended`, apontou 4 valores iniciais nunca lidos (removidos, sem mudança de comportamento). O `dependabot.yml` agora agrupa a família ESLint, majors inclusive, num único PR.
-- **DEPS**: `@supabase/supabase-js` 2.118, `@tanstack/react-query` 5.104, `react`/`react-dom` 19.3, `react-router-dom` 7.18.4 e outros minor/patch (#29).
+- **DEPS**: `@supabase/supabase-js` 2.118, `@tanstack/react-query` 5.104, `react`/`react-dom` 19.3, `react-router-dom` 7.18.4 e outros minor/patch (#29); `react-ga4` 3.0.1 (reescrito em TypeScript/ESM, mesma API; #31).
 
 ---
 

@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.6.2
+# 🦈 Bisolhador Dashboard v3.6.3
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -28,6 +28,11 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.6.3 - Dashboard & Snapshot Fixes
+- **🐛 Snapshot vs. Busca ao Vivo**: voltar (Back) de uma busca para um permalink de snapshot não mostra mais os dados da busca por baixo do banner de snapshot — a URL decide o que é exibido
+- **🐛 Erro em Snapshot Inexistente**: link de snapshot inválido ou sem registro agora mostra uma mensagem de erro, em vez de uma página vazia
+- **🔧 Dependências**: Supabase, React 19.3, TanStack Query, react-router e react-ga4 3 atualizados; ESLint 10
 
 ### v3.6.2 - CSP Fix
 - **🐛 Pixel do GA4 Liberado na CSP**: `img-src` passou a liberar os hosts de coleta do GA4 (`*.google-analytics.com`, `www.googletagmanager.com`), evitando a violação de CSP que bloqueava os hits via `<img>` do gtag.js
