@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect, useCallback, useRef } from 'react';
+import { useState, lazy, Suspense, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '../components/Header';
@@ -15,7 +15,7 @@ import { SkeletonDashboard } from '../components/skeletons/SkeletonDashboard.jsx
 import { SkeletonChart } from '../components/skeletons/SkeletonChart.jsx';
 import { PartialDataAlert } from '../components/PartialDataAlert.jsx';
 import { useRepository } from '../hooks/useRepository.js';
-import { createMockRepoData } from '../utils/snapshotAdapter.js';
+import { useSnapshot, getSnapshotParams } from '../hooks/useSnapshot.js';
 import analytics from '../services/analytics.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 
@@ -36,141 +36,51 @@ const WeekDaysChart = lazy(() =>
 export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
   const location = useLocation();
-  const [, setSearchParams] = useSearchParams();
-  const { data: repoData, loading, error, search, clearSearch } = useRepository();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dismissedError, setDismissedError] = useState(false);
-  const [isSnapshotMode, setIsSnapshotMode] = useState(false);
-  const [snapshotId, setSnapshotId] = useState(null);
-  const [snapshotData, setSnapshotData] = useState(null);
-  const [snapshotLoading, setSnapshotLoading] = useState(false);
-  const [semanticDate, setSemanticDate] = useState(null);
+  const [snapshotAlertDismissed, setSnapshotAlertDismissed] = useState(false);
   const [searchBarKey, setSearchBarKey] = useState(0);
 
-  const lastFetchedParams = useRef('');
+  // A URL decide o que é exibido (prioridade: ID > Semântico > Live), uma vez só:
+  // nunca dados de uma busca ao vivo anterior por baixo do banner de snapshot.
+  const snapshotParams = getSnapshotParams(searchParams);
+  const isSnapshotUrl = Boolean(snapshotParams);
+  const snapshot = useSnapshot(snapshotParams);
+  const { data: repoData, loading, error } = useRepository(isSnapshotUrl ? null : searchParams.get('q'));
+  const displayData = isSnapshotUrl ? snapshot.data : repoData;
+  const displayLoading = isSnapshotUrl ? snapshot.loading : loading;
+  const displayError = isSnapshotUrl
+    ? (snapshot.failed ? t('errors.snapshotUnavailable') : null)
+    : error;
+  const isSnapshotMode = isSnapshotUrl && !snapshotAlertDismissed;
 
-  // Limpa todo o resíduo de uma busca/snapshot anterior (dados, erros e input)
-  const handleClearSearch = useCallback(() => {
-    clearSearch();
-    setIsSnapshotMode(false);
-    setSnapshotId(null);
-    setSnapshotData(null);
-    setSemanticDate(null);
+  // Sincroniza URL → estado durante o render, quando a query string muda (padrão
+  // "ajustar estado quando um valor muda" da doc do React), em vez de setState
+  // num effect. null inicial: a primeira renderização também processa a URL.
+  const [syncedSearch, setSyncedSearch] = useState(null);
+  if (syncedSearch !== location.search) {
+    setSyncedSearch(location.search);
+    // Toda mudança de URL (inclusive Back/Forward) volta a exibir os alertas.
     setDismissedError(false);
-    setSearchBarKey((key) => key + 1); // Força remount do SearchBar (limpa o input)
-  }, [clearSearch]);
+    setSnapshotAlertDismissed(false);
 
-  const loadSnapshot = useCallback(async (id) => {
-    setSnapshotLoading(true);
-    try {
-      const snapshotResult = await analytics.getSnapshot(id);
-      if (snapshotResult) {
-        let finalData = null;
-
-        if (snapshotResult.full_report) {
-          try {
-            finalData = typeof snapshotResult.full_report === 'string'
-              ? JSON.parse(snapshotResult.full_report)
-              : snapshotResult.full_report;
-          } catch (e) {
-            console.error('[Dashboard] Erro fatal ao decodificar JSON:', e);
-            finalData = null;
-          }
-        }
-
-        if (!finalData) {
-          finalData = createMockRepoData(snapshotResult);
-        }
-
-        if (finalData && typeof finalData === 'object') {
-           finalData.analysisDate = snapshotResult.created_at || new Date().toISOString();
-        }
-
-        setSnapshotData(finalData);
-      } else {
-        throw new Error('Snapshot não encontrado');
-      }
-    } catch (error) {
-      console.error('Erro ao carregar snapshot:', error);
-      setDismissedError(false);
-    } finally {
-      setSnapshotLoading(false);
+    // Navegação para "/" sem parâmetros (ex.: ícones de Home/Busca): os dados
+    // somem sozinhos (nenhum hook habilitado); falta limpar o input do SearchBar.
+    if (!isSnapshotUrl && !searchParams.get('q')) {
+      setSearchBarKey((key) => key + 1); // Força remount do SearchBar
     }
-  }, []);
+  }
 
-  const loadSnapshotByDate = useCallback(async (repoName, dateString) => {
-    setSnapshotLoading(true);
-    try {
-      const snapshotResult = await analytics.getSnapshotByDate(repoName, dateString);
-      if (snapshotResult) {
-        let finalData = null;
-
-        if (snapshotResult.full_report) {
-          try {
-            finalData = typeof snapshotResult.full_report === 'string'
-              ? JSON.parse(snapshotResult.full_report)
-              : snapshotResult.full_report;
-          } catch (e) {
-            console.error('[Dashboard] Erro fatal ao decodificar JSON:', e);
-            finalData = null;
-          }
-        }
-
-        if (!finalData) {
-          finalData = createMockRepoData(snapshotResult);
-        }
-
-        if (finalData && typeof finalData === 'object') {
-           finalData.analysisDate = snapshotResult.created_at || new Date().toISOString();
-        }
-
-        setSnapshotData(finalData);
-      } else {
-        throw new Error(`Nenhum registro encontrado para ${repoName} em ${dateString}`);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar snapshot por data:', error);
-      setDismissedError(false);
-    } finally {
-      setSnapshotLoading(false);
-    }
-  }, []);
-
+  // Efeito externo de verdade (GA4): só o pageview fica em effect.
+  const lastTrackedSearch = useRef(null);
   useEffect(() => {
-    const currentParams = location.search;
-    if (lastFetchedParams.current === currentParams) return;
-
-    lastFetchedParams.current = currentParams;
-
+    if (lastTrackedSearch.current === location.search) return;
+    lastTrackedSearch.current = location.search;
     analytics.trackPageView(location.pathname);
-
-    const urlParams = new URLSearchParams(location.search);
-    const idParam = urlParams.get('id');
-    const repoParam = urlParams.get('repo');
-    const dateParam = urlParams.get('date');
-    const queryParam = urlParams.get('q');
-
-    if (idParam) {
-      setIsSnapshotMode(true);
-      setSnapshotId(idParam);
-      setSemanticDate(null);
-      loadSnapshot(parseInt(idParam));
-    } else if (repoParam && dateParam) {
-      setIsSnapshotMode(true);
-      setSnapshotId(null);
-      setSemanticDate(dateParam);
-      loadSnapshotByDate(repoParam, dateParam);
-    } else if (queryParam) {
-      search(queryParam);
-    } else {
-      // Navegação para "/" sem parâmetros (ex.: ícones de Home/Busca) — limpa resíduo da busca anterior
-      handleClearSearch();
-    }
-  }, [location.search, location.pathname, loadSnapshot, loadSnapshotByDate, search, handleClearSearch]);
+  }, [location.search, location.pathname]);
 
   const handleSearch = (repositoryName) => {
-    setDismissedError(false);
-    setIsSnapshotMode(false);
-    search(repositoryName);
+    setDismissedError(false); // reenviar a mesma busca não muda a URL
     setSearchParams({ q: repositoryName });
   };
 
@@ -204,15 +114,15 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                   <div>
                     <h3 className="text-sm font-medium">{t('snapshot.title')}</h3>
                     <p className="text-sm mt-1">
-                      {semanticDate
-                        ? t('snapshot.byDate', { date: semanticDate })
-                        : t('snapshot.byId', { id: snapshotId })
+                      {snapshotParams.date
+                        ? t('snapshot.byDate', { date: snapshotParams.date })
+                        : t('snapshot.byId', { id: snapshotParams.id })
                       }
                     </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setIsSnapshotMode(false)}
+                  onClick={() => setSnapshotAlertDismissed(true)}
                   className="ml-4 text-blue-400 hover:text-blue-600 transition-colors"
                   aria-label={t('snapshot.closeAlert')}
                 >
@@ -225,7 +135,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
           )}
 
           {/* Alerta de Erro Condicional */}
-          {error && !dismissedError && (
+          {displayError && !dismissedError && (
             <div className="w-full max-w-2xl mx-auto">
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
                 <div className="flex items-center">
@@ -234,7 +144,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                   </svg>
                   <div>
                     <h3 className="text-sm font-medium">{t('app.errorTitle')}</h3>
-                    <p className="text-sm mt-1">{error}</p>
+                    <p className="text-sm mt-1">{displayError}</p>
                   </div>
                 </div>
                 <button
@@ -251,44 +161,44 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
           )}
 
           {/* Alerta de Dados Parciais */}
-          <PartialDataAlert warnings={(repoData || snapshotData)?._warnings} />
+          <PartialDataAlert warnings={displayData?._warnings} />
         </div>
 
         {/* Lógica de Renderização */}
-        {loading || snapshotLoading ? (
+        {displayLoading ? (
           <SkeletonDashboard />
-        ) : (repoData || snapshotData) ? (
+        ) : displayData ? (
           <div className="space-y-6 animate-fade-in-up">
 
             {/* 1. Card Principal */}
-            <RepoInfoCard data={repoData || snapshotData} onShareSuccess={handleShareSuccess} />
+            <RepoInfoCard data={displayData} onShareSuccess={handleShareSuccess} />
 
             {/* 2. Grid de Métricas de Volume */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard
                 title={t('stats.stars')}
-                value={(repoData || snapshotData).metrics.stars}
+                value={displayData.metrics.stars}
                 tooltipText={t('stats.starsTooltip')}
               />
               <StatCard
                 title={t('stats.forks')}
-                value={(repoData || snapshotData).metrics.forks}
+                value={displayData.metrics.forks}
                 tooltipText={t('stats.forksTooltip')}
               />
               <StatCard
                 title={t('stats.openIssues')}
-                value={(repoData || snapshotData).metrics.openIssues}
+                value={displayData.metrics.openIssues}
                 tooltipText={t('stats.openIssuesTooltip')}
               />
               <StatCard
                 title={t('stats.closedIssues')}
-                value={(repoData || snapshotData).metrics.closedIssues}
-                subValue={(repoData || snapshotData).metrics.resolutionRate}
+                value={displayData.metrics.closedIssues}
+                subValue={displayData.metrics.resolutionRate}
                 tooltipText={t('stats.closedIssuesTooltip')}
               />
               <StatCard
                 title={t('stats.codeChurn')}
-                value={(repoData || snapshotData).codeChurn?.ratio || 'N/A'}
+                value={displayData.codeChurn?.ratio || 'N/A'}
                 tooltipText={t('stats.codeChurnTooltip')}
               />
             </div>
@@ -298,14 +208,14 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <StatCard
                 title={t('stats.leadTime')}
-                value={(repoData || snapshotData).metrics.leadTime.value === 'N/A' ? 'N/A' : (repoData || snapshotData).metrics.leadTime.value + ' ' + t('units.' + (repoData || snapshotData).metrics.leadTime.unit, {count: (repoData || snapshotData).metrics.leadTime.count})}
+                value={displayData.metrics.leadTime.value === 'N/A' ? 'N/A' : displayData.metrics.leadTime.value + ' ' + t('units.' + displayData.metrics.leadTime.unit, {count: displayData.metrics.leadTime.count})}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
                 tooltipText={t('stats.leadTimeTooltip')}
               />
               <StatCard
                 title={t('stats.divergence')}
-                value={(repoData || snapshotData).metrics.divergence.avg}
-                subValue={t((repoData || snapshotData).metrics.divergence.categoryKey)}
+                value={displayData.metrics.divergence.avg}
+                subValue={t(displayData.metrics.divergence.categoryKey)}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>}
                 tooltipText={t('stats.divergenceTooltip')}
               />
@@ -314,15 +224,15 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             {/* 4. Governança e Maturidade */}
             <h3 className="text-lg font-semibold text-shark dark:text-white pt-4">{t('app.governanceMaturity')}</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <HealthScoreCard score={(repoData || snapshotData).health.score} files={(repoData || snapshotData).health.files} />
-              <MaturityCard maturity={(repoData || snapshotData).maturity} codeReview={(repoData || snapshotData).codeReview} />
+              <HealthScoreCard score={displayData.health.score} files={displayData.health.files} />
+              <MaturityCard maturity={displayData.maturity} codeReview={displayData.codeReview} />
             </div>
 
             {/* 4.5. Análise de Risco (Bus Factor) */}
-            {(repoData || snapshotData).busFactorAnalysis?.busFactor > 0 && (
+            {displayData.busFactorAnalysis?.busFactor > 0 && (
               <>
                 <h3 className="text-lg font-semibold text-shark dark:text-white pt-4">{t('busFactor.sectionTitle')}</h3>
-                <BusFactorCard busFactorAnalysis={(repoData || snapshotData).busFactorAnalysis} />
+                <BusFactorCard busFactorAnalysis={displayData.busFactorAnalysis} />
               </>
             )}
 
@@ -330,26 +240,26 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Suspense fallback={<SkeletonChart />}>
                 <CommitActivityChart
-                  data={(repoData || snapshotData).charts.activity}
-                  createdAt={(repoData || snapshotData).createdAt}
-                  key={`chart-${(repoData || snapshotData).fullName}`}
+                  data={displayData.charts.activity}
+                  createdAt={displayData.createdAt}
+                  key={`chart-${displayData.fullName}`}
                 />
               </Suspense>
               <Suspense fallback={<SkeletonChart />}>
-                <TechStackChart data={(repoData || snapshotData).charts.techStack} />
+                <TechStackChart data={displayData.charts.techStack} />
               </Suspense>
             </div>
 
             {/* 6. Padrões de Trabalho */}
             <Suspense fallback={<SkeletonChart />}>
-              <WeekDaysChart commits={(repoData || snapshotData).recentCommits} />
+              <WeekDaysChart commits={displayData.recentCommits} />
             </Suspense>
 
             {/* 7. Contribuições */}
-            <ContributorsTable contributors={(repoData || snapshotData).contributors} busFactor={(repoData || snapshotData).busFactor} />
+            <ContributorsTable contributors={displayData.contributors} busFactor={displayData.busFactor} />
 
             {/* 8. Atividades Recentes */}
-            <ActivityLogs commits={(repoData || snapshotData).recentCommits} pullRequests={(repoData || snapshotData).recentPRs} />
+            <ActivityLogs commits={displayData.recentCommits} pullRequests={displayData.recentPRs} />
 
           </div>
         ) : (

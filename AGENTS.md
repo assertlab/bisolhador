@@ -50,6 +50,7 @@ src/
 │   └── skeletons/              # Skeleton loading screens
 ├── hooks/
 │   ├── useRepository.js        # Main data hook (15+ GitHub endpoints, Promise.allSettled)
+│   ├── useSnapshot.js          # Supabase snapshot by URL (?id= / ?repo=&date=), TanStack Query
 │   ├── useBenchmarkRepos.js    # Parallel fetch via TanStack useQueries
 │   ├── useTimeFilter.js        # Unified time range filtering logic
 │   ├── useChartTheme.js        # Chart colors for light/dark mode
