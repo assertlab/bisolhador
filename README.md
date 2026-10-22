@@ -102,7 +102,7 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 ## 🚀 Como Rodar
 
 ### Pré-requisitos
-- Node.js 18+
+- Node.js 24 (ver `.nvmrc`; mínimo suportado em `engines` no `package.json`)
 - npm ou yarn
 
 ### Instalação e Execução

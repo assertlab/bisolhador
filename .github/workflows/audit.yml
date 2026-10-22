@@ -1,0 +1,29 @@
+name: npm audit
+
+# Alarme para advisories novos contra o que já está no lockfile. Advisories
+# saem no ritmo deles, não no dos PRs — por isso roda agendado, e não em PR
+# (onde só repetiria o resultado de main e pintaria PRs não relacionados de vermelho).
+on:
+  schedule:
+    - cron: '0 11 * * 1' # segundas, 08:00 BRT
+  push:
+    branches: [main]
+    paths: [package-lock.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: npm audit (runtime)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Só lê o lockfile: não precisa de npm ci nem de setup-node.
+      # --omit=dev: só o que chega ao bundle; devDependencies ficam com o Dependabot.
+      - run: npm audit --omit=dev --audit-level=high

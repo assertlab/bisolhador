@@ -142,7 +142,13 @@ VITE_SUPABASE_ANON_KEY=...    # Supabase anonymous key
 ```
 
 ### Automated Testing
-`scripts/csp-smoke-test.mjs` is the project's only automated test (Playwright). Run via `npm run smoke:csp`. Optional process env vars (never `VITE_`-prefixed, never bundled):
+CI (rationale in each workflow's comments):
+- `ci.yml` → **`lint + build`** (required on `protect-main`; PRs and `main`). Builds without secrets, so `%VITE_SUPABASE_URL%` stays unresolved in the CSP — green CI proves the app compiles, not that the shipped CSP is valid.
+- `ci.yml` → **`dependency review`** (PRs): blocks a PR that *introduces* a runtime dependency with a high+ vulnerability.
+- `audit.yml` → **`npm audit (runtime)`** (weekly + lockfile changes on `main`, not on PRs): alarm for new advisories against what's already installed.
+- `smoke:csp` does **not** run in CI yet. Dependabot config: `.github/dependabot.yml`. Node: `.nvmrc` (CI/dev) and `engines` in `package.json` (minimum).
+
+`scripts/csp-smoke-test.mjs` is the project's only automated test (Playwright). Run via `npm run smoke:csp`. A live-search run goes through the real app flow, so — when `VITE_SUPABASE_*` are set locally — it **writes a `facebook/react` row to production Supabase per mode, i.e. two rows per run** (`analytics.saveSearch` → `registrar_busca`) and sends real GA4 events; `SMOKE_SNAPSHOT_ID` mode only reads (`obter_snapshot`), though GA4 still fires. Optional process env vars (never `VITE_`-prefixed, never bundled):
 - `SMOKE_SNAPSHOT_ID` — loads an existing `analytics_searches` id via the app's `?id=` permalink instead of live-searching, to bypass the unauthenticated GitHub rate limit (60 req/h).
 - `SMOKE_GITHUB_TOKEN` — a real GitHub PAT, injected into the test browser's `localStorage` (mirrors what `SettingsModal` does manually) so the live search actually gets 5,000 req/h. Never logged.
 
