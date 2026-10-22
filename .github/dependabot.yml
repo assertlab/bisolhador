@@ -26,9 +26,9 @@ updates:
         update-types: [minor, patch]
         exclude-patterns: ['eslint', '@eslint/*', 'eslint-plugin-*']
     ignore:
-      # Substitui um check que o CI ainda não tem: o v4 passa em lint+build mas
-      # quebra o export de PDF (ver docs/ROADMAP.md). Remover quando smoke:csp
-      # rodar no CI.
+      # Substitui um check obrigatório que o CI ainda não tem: o v4 passa em lint+build mas
+      # quebra o export de PDF (ver docs/ROADMAP.md). O job `smoke` do CI já
+      # pega isso, mas ainda não é obrigatório: remover quando for.
       - dependency-name: tailwindcss
         update-types: [version-update:semver-major]
 

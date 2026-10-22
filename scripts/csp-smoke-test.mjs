@@ -4,6 +4,16 @@
 // and reports every CSP violation observed in either mode. Does NOT modify
 // index.html — this is a read-only diagnostic.
 //
+// Never writes to production: Supabase registrar_busca (save-on-load) and
+// GA4 collection hits are intercepted and answered locally. CSP is still
+// fully exercised — the browser enforces CSP before a request reaches
+// Playwright's route handler, so a blocked origin still shows up as a
+// violation and an allowed one is still recorded in gaRequests.
+//
+// Exit code: 0 only if every mode navigated, loaded the dashboard, started
+// the PDF download, and had zero CSP violations and zero page errors.
+// Runs in CI (.github/workflows/ci.yml, job "smoke") in snapshot mode.
+//
 // Optional environment variables (both are ways to work around the
 // unauthenticated GitHub rate limit of 60 req/h, which the live-search flow
 // burns through fast — 1 search = ~16 API calls):
@@ -102,6 +112,7 @@ async function runBrowserFlow(baseUrl, label) {
   const websockets = [];
   const gaRequests = [];
   const gaRequestRecordByRequest = new Map();
+  const writesIntercepted = [];
 
   // Positive proof that GA4 traffic actually left the page — a missing
   // console violation is NOT proof it wasn't blocked (CSP can silently drop
@@ -158,6 +169,18 @@ async function runBrowserFlow(baseUrl, label) {
 
   page.on('pageerror', (err) => {
     pageErrors.push(String(err && err.stack ? err.stack : err));
+  });
+
+  // No production writes from a test run (see header). Only the collection
+  // endpoints are stubbed — gtag.js itself still loads, so script-src and
+  // the request-side CSP checks stay real.
+  await page.route('**/rest/v1/rpc/registrar_busca', (route) => {
+    writesIntercepted.push('registrar_busca');
+    return route.fulfill({ status: 200, contentType: 'application/json', body: 'null' });
+  });
+  await page.route((url) => isGaHost(url.href) && /\/(g\/collect|collect|td)(\/|$|\?)/.test(url.pathname + url.search), (route) => {
+    writesIntercepted.push('ga4');
+    return route.fulfill({ status: 204, body: '' });
   });
 
   page.on('websocket', (ws) => {
@@ -258,7 +281,7 @@ async function runBrowserFlow(baseUrl, label) {
 
   await browser.close();
 
-  return { flow, consoleLogs, cspViolations, pageErrors, websockets, gaRequests };
+  return { flow, consoleLogs, cspViolations, pageErrors, websockets, gaRequests, writesIntercepted };
 }
 
 function printReport({ flow, consoleLogs, cspViolations, pageErrors, websockets, gaRequests }, serverOutput) {
@@ -355,7 +378,8 @@ async function main() {
       `${r.flow.label}: navigationOk=${r.flow.navigationOk} searchSubmitted=${r.flow.searchSubmitted} ` +
         `dashboardLoaded=${r.flow.dashboardLoaded} pdfClicked=${r.flow.pdfClicked} downloadStarted=${r.flow.downloadStarted} ` +
         `cspViolations=${r.cspViolations.length} gaRequests=${r.gaRequests.length} websockets=${r.websockets.length} ` +
-        `pageErrors=${r.pageErrors.length} flowError=${r.flow.error ?? 'none'}`,
+        `pageErrors=${r.pageErrors.length} writesIntercepted=${r.writesIntercepted.length} ` +
+        `flowError=${r.flow.error ?? 'none'}`,
     );
   }
   const totalGaRequests = reports.reduce((sum, r) => sum + r.gaRequests.length, 0);
@@ -365,6 +389,22 @@ async function main() {
         'cobrirem google-analytics.com/googletagmanager.com deve ser tratado como NÃO TESTADO, não como aprovado.',
     );
   }
+
+  const failures = reports.flatMap((r) => {
+    const f = r.flow;
+    const problems = [];
+    if (!f.navigationOk) problems.push('navigation');
+    if (!f.dashboardLoaded) problems.push('dashboard did not load');
+    if (!f.downloadStarted) problems.push('PDF download did not start');
+    if (r.cspViolations.length) problems.push(`${r.cspViolations.length} CSP violation(s)`);
+    if (r.pageErrors.length) problems.push(`${r.pageErrors.length} page error(s)`);
+    return problems.map((p) => `${f.label}: ${p}`);
+  });
+  if (failures.length) {
+    console.log('\nFALHOU:\n  ' + failures.join('\n  '));
+    process.exit(1);
+  }
+  console.log('\nOK: todos os modos passaram.');
 }
 
 main().catch((err) => {
