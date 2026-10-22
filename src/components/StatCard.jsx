@@ -35,8 +35,6 @@ export function StatCard({ title, value, subValue, icon, type = 'default', toolt
       <div className={`text-3xl font-bold ${valueColor} tracking-tight`}>
         {typeof value === 'string' && (value.includes('hora') || value.includes('dia'))
           ? value
-          : title === 'Divergência'
-          ? `${formatters.formatNumber(value, i18n.language === 'pt' ? 'pt-BR' : 'en-US')}%`
           : formatters.formatNumber(value, i18n.language === 'pt' ? 'pt-BR' : 'en-US')}
       </div>
 

@@ -43,6 +43,8 @@
     "ageMonths": "{{count}} months",
     "ageOneYear": "1 year",
     "ageYears": "{{count}} years",
+    "divergenceNeedsToken": "Requires a GitHub token",
+    "divergenceUnavailable": "Unavailable",
     "divergenceNone": "No data (0 PRs)",
     "divergenceLow": "Low (Quiet)",
     "divergenceMedium": "Healthy",
@@ -72,7 +74,7 @@
     "closedIssuesTooltip": "Total resolved issues, with resolution rate showing efficiency.",
     "codeChurnTooltip": "Ratio between new code added and code removed/refactored. Indicates change quality.",
     "leadTimeTooltip": "Average time between Pull Request creation and approval/merge. Indicates review process speed.",
-    "divergenceTooltip": "Percentage of PRs that received formal change requests (Request Changes)."
+    "divergenceTooltip": "Average comments (general and code review) per PR, over the {{n}} most recent PRs. Requires a GitHub token."
   },
   "language": {
     "pt": "PT",
@@ -110,12 +112,18 @@
       "ciCd": "⚡ CI/CD",
       "docker": "🐳 Docker",
       "codeReview": "🛡️ Code Review ({{percentage}}%)",
+      "codeReviewUnavailable": "🛡️ Code Review (n/a)",
       "noZombies": "✅ No Zombie Branches",
       "zombies": "🧟 {{count}} Zombie Branches Detected"
     },
     "alert": {
       "title": "Warning: Self-Merges Detected",
       "message": "{{percentage}}% of PRs were merged by their own author. Consider implementing mandatory reviews to improve quality."
+    },
+    "unavailable": {
+      "noToken": "Code Review and Divergence need a GitHub token (settings icon at the top): without one, the GitHub API doesn't say who merged each PR or how many comments it got.",
+      "error": "Couldn't load PR review data (GitHub GraphQL API failure or rate limit). Try again in a moment.",
+      "snapshot": "This historical snapshot didn't record PR review data."
     }
   },
   "contributors": {

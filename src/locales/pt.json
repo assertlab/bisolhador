@@ -43,6 +43,8 @@
     "ageMonths": "{{count}} meses",
     "ageOneYear": "1 ano",
     "ageYears": "{{count}} anos",
+    "divergenceNeedsToken": "Requer token do GitHub",
+    "divergenceUnavailable": "Indisponível",
     "divergenceNone": "Sem dados (0 PRs)",
     "divergenceLow": "Baixa (Silencioso)",
     "divergenceMedium": "Saudável",
@@ -72,7 +74,7 @@
     "closedIssuesTooltip": "Total de issues já resolvidas, com taxa de resolução mostrando eficiência.",
     "codeChurnTooltip": "Razão entre código novo adicionado e código removido/refatorado. Indica qualidade das mudanças.",
     "leadTimeTooltip": "Tempo médio entre a criação de um Pull Request e sua aprovação/merge. Indica velocidade do processo de revisão.",
-    "divergenceTooltip": "Porcentagem de PRs que receberam pedido formal de mudanças (Request Changes)."
+    "divergenceTooltip": "Média de comentários (gerais e de revisão de código) por PR, nos {{n}} PRs mais recentes. Requer token do GitHub."
   },
   "language": {
     "pt": "PT",
@@ -110,12 +112,18 @@
       "ciCd": "⚡ CI/CD",
       "docker": "🐳 Docker",
       "codeReview": "🛡️ Code Review ({{percentage}}%)",
+      "codeReviewUnavailable": "🛡️ Code Review (n/d)",
       "noZombies": "✅ Nenhuma Branch Zumbi",
       "zombies": "🧟 {{count}} Branches Zumbis detectadas"
     },
     "alert": {
       "title": "Atenção: Self-Merges Detectados",
       "message": "{{percentage}}% dos PRs foram merged pelo próprio autor. Considere implementar revisões obrigatórias para melhorar a qualidade."
+    },
+    "unavailable": {
+      "noToken": "Code Review e Divergência exigem um token do GitHub (ícone de configurações no topo): sem token, a API do GitHub não informa quem fez o merge de cada PR nem quantos comentários ele recebeu.",
+      "error": "Não foi possível obter os dados de revisão dos PRs (falha ou limite da API GraphQL do GitHub). Tente novamente em instantes.",
+      "snapshot": "Este snapshot histórico não registrou os dados de revisão dos PRs."
     }
   },
   "contributors": {
