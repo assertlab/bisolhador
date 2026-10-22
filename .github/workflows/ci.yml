@@ -8,9 +8,12 @@ on:
 permissions:
   contents: read
 
+# PR: um grupo por PR, cancelando runs antigos. main: um grupo por commit.
+# Agrupar main por ref não basta: o GitHub mantém só um run pendente por grupo,
+# e um push novo substitui o pendente anterior mesmo com cancel-in-progress
+# false (aconteceu com o merge do #42, cancelado pelo do #37).
 concurrency:
-  group: ci-${{ github.ref }}
-  # Só cancela runs antigas de PR; em main cada commit precisa do próprio resultado.
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
