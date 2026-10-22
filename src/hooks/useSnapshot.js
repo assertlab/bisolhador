@@ -31,33 +31,51 @@ function toRepoData(snapshotResult) {
 
 async function fetchSnapshot({ id, repo, date }) {
   const snapshotResult = id
-    ? await analytics.getSnapshot(parseInt(id))
+    ? await analytics.getSnapshot(Number(id))
     : await analytics.getSnapshotByDate(repo, date);
 
+  // Lança em vez de retornar null: o TanStack cachearia null como sucesso
+  // (com staleTime Infinity para ?id=), e uma falha momentânea do Supabase
+  // ficaria presa até o garbage collection. Erro é refeito ao revisitar a URL.
+  // getSnapshot/getSnapshotByDate retornam null tanto para "não existe" quanto para falha de rede.
   if (!snapshotResult) {
-    console.error(id
-      ? 'Erro ao carregar snapshot: Snapshot não encontrado'
-      : `Erro ao carregar snapshot por data: Nenhum registro encontrado para ${repo} em ${date}`);
-    return null;
+    const message = id
+      ? `Snapshot ${id} não encontrado`
+      : `Nenhum registro encontrado para ${repo} em ${date}`;
+    console.error('[useSnapshot] Erro ao carregar snapshot:', message);
+    throw new Error(message);
   }
 
   return toRepoData(snapshotResult);
 }
 
-// Snapshot histórico identificado pela URL: `?id=` (permalink imutável) tem
-// prioridade sobre `?repo=&date=` (busca semântica). Sem nenhum dos dois, não busca.
-export function useSnapshot({ id, repo, date }) {
-  const params = id ? { id } : { repo, date };
-  const enabled = Boolean(id || (repo && date));
+// Lê da URL qual snapshot exibir. `?id=` (permalink imutável) tem prioridade
+// sobre `?repo=&date=` (busca semântica); null quando a URL não é de snapshot.
+export function getSnapshotParams(searchParams) {
+  const id = searchParams.get('id');
+  if (id) return { id };
+  const repo = searchParams.get('repo');
+  const date = searchParams.get('date');
+  return repo && date ? { repo, date } : null;
+}
 
-  const { data, isLoading } = useQuery({
+const VALID_SNAPSHOT_ID = /^\d+$/;
+
+export function useSnapshot(params) {
+  const invalidId = Boolean(params?.id) && !VALID_SNAPSHOT_ID.test(params.id);
+
+  const { data, isLoading, error } = useQuery({
     queryKey: ['snapshot', params],
     queryFn: () => fetchSnapshot(params),
-    enabled,
+    enabled: Boolean(params) && !invalidId,
     // Snapshot por id nunca muda; por data pode ganhar registro novo no mesmo dia.
-    staleTime: id ? Infinity : CACHE_STALE_TIME_MS,
+    staleTime: params?.id ? Infinity : CACHE_STALE_TIME_MS,
     retry: false,
   });
 
-  return { data: data ?? null, loading: enabled && isLoading };
+  return {
+    data: data ?? null,
+    loading: Boolean(params) && !invalidId && isLoading,
+    failed: invalidId || Boolean(error),
+  };
 }

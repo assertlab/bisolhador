@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🐛 Fixed
+
+- **FIX**: Ao voltar (Back) de uma busca ao vivo para um permalink de snapshot (`?id=` / `?repo=&date=`), o Dashboard exibia os dados da busca ao vivo por baixo do banner de snapshot. A URL agora decide qual fonte é exibida.
+- **FIX**: Snapshot inexistente, id inválido (ex: `?id=12abc`) ou falha ao carregar o histórico deixavam a página vazia sem explicação; agora aparece uma mensagem de erro (`errors.snapshotUnavailable`).
+- **FIX**: Alertas de erro e de snapshot fechados pelo usuário continuavam escondidos ao navegar com Back/Forward para outra URL; agora reaparecem a cada mudança de URL.
+
+### 🔧 Changed
+
+- **REFACTOR**: Snapshots passam a ser carregados via TanStack Query (`src/hooks/useSnapshot.js`), chaveados pela URL, como já era a busca ao vivo; o estado do Dashboard derivado da URL deixou de ser copiado num `useEffect` (exigido pela regra `react-hooks/set-state-in-effect` do `eslint-plugin-react-hooks` 7.1).
+- **DEPS**: `@supabase/supabase-js` 2.118, `@tanstack/react-query` 5.104, `react`/`react-dom` 19.3, `react-router-dom` 7.18.4 e outros minor/patch (#29).
+
+---
+
 ## [3.6.2] - 2026-10-22
 
 ### 🐛 Fixed
