@@ -1,4 +1,25 @@
 /**
+ * Parses a snapshot's `full_report`, which Supabase returns either as a JSON
+ * string or as an already-decoded object. Anything that isn't a report object
+ * (malformed JSON, or JSON like `false`/`0`) degrades to null so callers fall
+ * back to the flat columns. A malformed report is corrupted persisted data,
+ * so it's logged as an error, with the caller's context.
+ */
+export function parseFullReport(fullReport, context) {
+  if (!fullReport) return null;
+  let report = fullReport;
+  if (typeof fullReport === 'string') {
+    try {
+      report = JSON.parse(fullReport);
+    } catch (e) {
+      console.error(`[${context}] Failed to parse full_report:`, e);
+      return null;
+    }
+  }
+  return report !== null && typeof report === 'object' && !Array.isArray(report) ? report : null;
+}
+
+/**
  * Adapter: converts flat Supabase snapshot data into the nested format expected by the Dashboard.
  */
 export function createMockRepoData(snapshotData) {
