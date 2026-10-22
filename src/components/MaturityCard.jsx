@@ -5,8 +5,9 @@ const BADGE_COLORS = { green: 'bg-green-500', yellow: 'bg-yellow-500', red: 'bg-
 
 export function MaturityCard({ maturity, codeReview }) {
   const { t } = useTranslation();
-  // Snapshots antigos não têm `available`: trata como disponível (valor gravado).
-  const reviewAvailable = codeReview?.available !== false;
+  // Só mostra a taxa quando ela foi de fato medida (ver prReviewStats.js);
+  // snapshots antigos chegam aqui já normalizados como indisponíveis.
+  const reviewAvailable = codeReview?.available === true;
   // Função auxiliar para renderizar badge: cor explícita, senão verde/cinza por `detected`
   const renderBadge = (text, detected, customColor) => {
     const bgColor = BADGE_COLORS[customColor] ?? (detected ? 'bg-green-500' : 'bg-gray-500');
