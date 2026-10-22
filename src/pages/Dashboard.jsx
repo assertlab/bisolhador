@@ -37,7 +37,6 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data: repoData, loading, error, search, clearSearch } = useRepository();
   const [dismissedError, setDismissedError] = useState(false);
   const [snapshotAlertDismissed, setSnapshotAlertDismissed] = useState(false);
   const [searchBarKey, setSearchBarKey] = useState(0);
@@ -47,6 +46,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const snapshotParams = getSnapshotParams(searchParams);
   const isSnapshotUrl = Boolean(snapshotParams);
   const snapshot = useSnapshot(snapshotParams);
+  const { data: repoData, loading, error } = useRepository(isSnapshotUrl ? null : searchParams.get('q'));
   const displayData = isSnapshotUrl ? snapshot.data : repoData;
   const displayLoading = isSnapshotUrl ? snapshot.loading : loading;
   const displayError = isSnapshotUrl
@@ -64,14 +64,10 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
     setDismissedError(false);
     setSnapshotAlertDismissed(false);
 
-    const queryParam = searchParams.get('q');
-    if (!isSnapshotUrl && queryParam) {
-      search(queryParam);
-    } else if (!isSnapshotUrl) {
-      // Navegação para "/" sem parâmetros (ex.: ícones de Home/Busca) — limpa
-      // resíduo da busca anterior: dados e input do SearchBar.
-      clearSearch();
-      setSearchBarKey((key) => key + 1); // Força remount do SearchBar (limpa o input)
+    // Navegação para "/" sem parâmetros (ex.: ícones de Home/Busca): os dados
+    // somem sozinhos (nenhum hook habilitado); falta limpar o input do SearchBar.
+    if (!isSnapshotUrl && !searchParams.get('q')) {
+      setSearchBarKey((key) => key + 1); // Força remount do SearchBar
     }
   }
 
@@ -84,8 +80,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   }, [location.search, location.pathname]);
 
   const handleSearch = (repositoryName) => {
-    setDismissedError(false);
-    search(repositoryName);
+    setDismissedError(false); // reenviar a mesma busca não muda a URL
     setSearchParams({ q: repositoryName });
   };
 

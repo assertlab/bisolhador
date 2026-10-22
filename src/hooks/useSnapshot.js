@@ -75,7 +75,7 @@ export function useSnapshot(params) {
 
   return {
     data: data ?? null,
-    loading: Boolean(params) && !invalidId && isLoading,
+    loading: isLoading, // v5: false when the query is disabled
     failed: invalidId || Boolean(error),
   };
 }

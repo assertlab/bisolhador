@@ -1,4 +1,3 @@
-import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { githubService } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
@@ -252,37 +251,25 @@ async function fetchRepositoryData(repoName) {
     return formattedData;
 }
 
-// Custom Hook for repository data fetching and analysis with TanStack Query
-export function useRepository() {
-    const [repoName, setRepoName] = useState(null);
+// Custom Hook for repository data fetching and analysis with TanStack Query.
+// The caller passes the name (the Dashboard reads it from `?q=`); null/invalid
+// disables the query, so a hidden search never refetches or re-saves.
+export function useRepository(repoName) {
+    const name = repoName && repoName.includes('/') ? repoName : null;
 
     const { data, isLoading, error } = useQuery({
-        queryKey: ['repository', repoName],
-        queryFn: () => fetchRepositoryData(repoName),
-        enabled: !!repoName,
+        queryKey: ['repository', name],
+        queryFn: () => fetchRepositoryData(name),
+        enabled: Boolean(name),
         staleTime: CACHE_STALE_TIME_MS,
         retry: 1
     });
-
-    const search = useCallback((name) => {
-        if (name && name.includes('/')) {
-            setRepoName(name);
-        } else {
-            setRepoName(null);
-        }
-    }, []);
-
-    const clearSearch = useCallback(() => {
-        setRepoName(null);
-    }, []);
 
     return {
         data,
         loading: isLoading,
         error: error?.message || null,
         errorCode: error?.code || null,
-        search,
-        clearSearch
     };
 }
 
