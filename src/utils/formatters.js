@@ -25,12 +25,13 @@ export const formatters = {
     // analysis timestamp needs to be shown, not just the day (RepoInfoCard's
     // "analysisDate"). Accepts anything `new Date()` accepts (Date, ISO
     // string, or timestamp) so callers don't need to normalize first.
-    formatDateTime(date, locale = 'pt-BR') {
+    formatDateTime(date, locale = 'pt-BR', timeZone = undefined) {
         return new Intl.DateTimeFormat(locale, {
             ...BASE_DATE_OPTIONS,
             month: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
+            timeZone,
         }).format(new Date(date));
     },
 

@@ -401,7 +401,8 @@
   },
   "snapshot": {
     "title": "Historical Mode",
-    "byDate": "Viewing history from {{date}} (Semantic Snapshot). This data is static and does not reflect the current GitHub state.",
+    "byDate": "Viewing the most recent record up to {{date}}. This data is static and doesn't reflect GitHub's current state.",
+    "byDateRecorded": "Viewing the most recent record up to {{date}} (recorded on {{recordedAt}}, Recife time). This data is static and doesn't reflect GitHub's current state.",
     "byId": "Viewing record #{{id}}. This data is static and does not reflect the current GitHub state.",
     "closeAlert": "Close alert"
   },

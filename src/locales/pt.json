@@ -409,7 +409,8 @@
   },
   "snapshot": {
     "title": "Modo Histórico",
-    "byDate": "Visualizando histórico de {{date}} (Snapshot Semântico). Estes dados são estáticos e não refletem o estado atual do GitHub.",
+    "byDate": "Visualizando o registro mais recente até {{date}}. Estes dados são estáticos e não refletem o estado atual do GitHub.",
+    "byDateRecorded": "Visualizando o registro mais recente até {{date}} (registrado em {{recordedAt}}, horário de Recife). Estes dados são estáticos e não refletem o estado atual do GitHub.",
     "byId": "Visualizando registro #{{id}}. Estes dados são estáticos e não refletem o estado atual do GitHub.",
     "closeAlert": "Fechar alerta"
   },

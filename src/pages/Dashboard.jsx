@@ -18,8 +18,9 @@ import { useRepository } from '../hooks/useRepository.js';
 import { useSnapshot, getSnapshotParams } from '../hooks/useSnapshot.js';
 import analytics from '../services/analytics.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
-import { MERGED_PR_SAMPLE } from '../constants.js';
+import { MERGED_PR_SAMPLE, SNAPSHOT_TIMEZONE } from '../constants.js';
 import { formatDuration } from '../utils/prReviewStats.js';
+import { formatters } from '../utils/formatters.js';
 
 // Lazy-loaded chart components (Code Splitting). Each also waits on
 // ensureChartSetup() so chart.js registration — now dynamically imported
@@ -36,7 +37,7 @@ const WeekDaysChart = lazy(() =>
 );
 
 export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [dismissedError, setDismissedError] = useState(false);
@@ -120,7 +121,13 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                     <h3 className="text-sm font-medium">{t('snapshot.title')}</h3>
                     <p className="text-sm mt-1">
                       {snapshotParams.date
-                        ? t('snapshot.byDate', { date: snapshotParams.date })
+                        ? displayData?.analysisDate
+                          // Recife time, like the day boundary in buscar_snapshot_por_data
+                          ? t('snapshot.byDateRecorded', {
+                              date: snapshotParams.date,
+                              recordedAt: formatters.formatDateTime(displayData.analysisDate, i18n.language === 'pt' ? 'pt-BR' : 'en-US', SNAPSHOT_TIMEZONE),
+                            })
+                          : t('snapshot.byDate', { date: snapshotParams.date })
                         : t('snapshot.byId', { id: snapshotParams.id })
                       }
                     </p>
