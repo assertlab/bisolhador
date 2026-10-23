@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.7.1
+# 🦈 Bisolhador Dashboard v3.8.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -28,6 +28,12 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.8.0 - Contribuidores Confiáveis & Carregamento Mais Rápido
+- **👥 Contribuidores e Bus Factor corrigidos**: todos os principais contribuidores (antes só os 30 primeiros), **sem bots**, nos **últimos 12 meses** quando há atividade — no express, o "risco crítico" deixou de apontar um mantenedor inativo desde 2014; card e tabela usam a mesma base e os mesmos limites do Benchmark
+- **🧭 Termos claros**: a tabela mostra a concentração no principal contribuidor (não mais "Bus Factor Baixo" como estado saudável), com a janela de tempo e os bots excluídos explícitos
+- **⚡ Primeiro acesso ~2,6× mais leve** (~1,56 MB → ~592 KB de JavaScript): o gerador de PDF só é baixado ao exportar
+- **🔧 Vite 8**
 
 ### v3.7.1 - Indicadores Indisponíveis ≠ Zero
 - **🐛 N/A em vez de 0**: quando o GitHub não responde (limite de requisições, erro), issues, PRs, merges, branches e Health Score aparecem como N/A, com aviso de dados parciais, em vez de um 0 falso — e esse resultado parcial não é gravado no histórico
