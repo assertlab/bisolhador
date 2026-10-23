@@ -1,12 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 
-export function HealthScoreCard({ score, files }) {
+export function HealthScoreCard({ score, files, reason }) {
   const { t } = useTranslation();
+  // null = not measured (no community profile / request failed): n/d, not 0%.
+  const unavailable = score === null || score === undefined || !files;
   // Determinar cor baseada no score
   let scoreColor;
   let bgColor;
-  if (score >= 75) {
+  if (unavailable) {
+    scoreColor = 'text-gray-500 dark:text-slate-400';
+    bgColor = 'bg-gray-50 dark:bg-slate-700/40';
+  } else if (score >= 75) {
     scoreColor = 'text-green-600';
     bgColor = 'bg-green-50 dark:bg-green-900/20';
   } else if (score >= 50) {
@@ -33,12 +38,19 @@ export function HealthScoreCard({ score, files }) {
       {/* Score Central */}
       <div className={`text-center py-6 ${bgColor} rounded-lg mb-6`}>
         <div className={`text-5xl font-bold ${scoreColor}`}>
-          {score}%
+          {unavailable ? t('health.notAvailable') : `${score}%`}
         </div>
         <div className="text-sm text-gray-600 dark:text-slate-400 mt-1">{t('health.communityHealth')}</div>
       </div>
 
+      {unavailable && (
+        <p className="text-sm text-gray-600 dark:text-slate-400">
+          {t(`health.unavailable.${reason}`, { defaultValue: t('health.unavailable.error') })}
+        </p>
+      )}
+
       {/* Checklist Grid */}
+      {!unavailable && (
       <div className="grid grid-cols-2 gap-3">
         <div className="flex items-center gap-2 text-sm">
           {files.hasReadme ? '✅' : '❌'}
@@ -83,6 +95,7 @@ export function HealthScoreCard({ score, files }) {
           </span>
         </div>
       </div>
+      )}
     </div>
   );
 }

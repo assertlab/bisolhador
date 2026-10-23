@@ -30,6 +30,16 @@ function getHeaders() {
   return headers;
 }
 
+async function fetchSearchCount(owner, repo, qualifiers) {
+  const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+${qualifiers}`;
+  const response = await fetch(`${GITHUB_BASE_URL}/search/issues?q=${query}`, { headers: getHeaders() });
+  if (!response.ok) {
+    throw new Error(`Search "${qualifiers}" failed: HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  return data.total_count;
+}
+
 export const githubService = {
   async fetchRepository(owner, repo) {
     if (!owner || !repo) {
@@ -66,56 +76,48 @@ export const githubService = {
   },
 
   async fetchBranches(owner, repo) {
-    if (!owner || !repo) {
-      return { count: 0, zombies: 0 };
+    // Throws on failure (the caller shows n/d) instead of { count: 0, zombies: 0 },
+    // which rendered as a green "no zombie branches" badge.
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=${GITHUB_PER_PAGE_BRANCHES}`;
+    const response = await fetch(url, { headers: getHeaders() });
+
+    if (!response.ok) {
+      throw new Error(`Branches failed: HTTP ${response.status}`);
     }
 
-    try {
-      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=${GITHUB_PER_PAGE_BRANCHES}`;
-      const response = await fetch(url, { headers: getHeaders() });
+    const data = await response.json();
+    const count = data.length;
+    let zombies = 0;
+    const now = new Date();
+    const ninetyDaysAgo = new Date(
+      now.getTime() - ZOMBIE_BRANCH_DAYS * 24 * 60 * 60 * 1000,
+    );
 
-      if (!response.ok) {
-        console.warn(`Failed to fetch branches: ${response.status}`);
-        return { count: 0, zombies: 0 };
-      }
+    for (const branch of data) {
+      if (!branch.commit || !branch.commit.url) continue;
 
-      const data = await response.json();
-      const count = data.length;
-      let zombies = 0;
-      const now = new Date();
-      const ninetyDaysAgo = new Date(
-        now.getTime() - ZOMBIE_BRANCH_DAYS * 24 * 60 * 60 * 1000,
-      );
-
-      for (const branch of data) {
-        if (!branch.commit || !branch.commit.url) continue;
-
-        try {
-          const commitResponse = await fetch(branch.commit.url, {
-            headers: getHeaders(),
-          });
-          if (commitResponse.ok) {
-            const commitData = await commitResponse.json();
-            const commitDate = new Date(commitData.commit.author.date);
-            if (commitDate < ninetyDaysAgo) {
-              zombies++;
-            }
+      try {
+        const commitResponse = await fetch(branch.commit.url, {
+          headers: getHeaders(),
+        });
+        if (commitResponse.ok) {
+          const commitData = await commitResponse.json();
+          const commitDate = new Date(commitData.commit.author.date);
+          if (commitDate < ninetyDaysAgo) {
+            zombies++;
           }
-        } catch (error) {
-          console.warn(
-            "Error fetching commit details for branch:",
-            branch.name,
-            error,
-          );
-          // Ignore, as per fail-safe
         }
+      } catch (error) {
+        console.warn(
+          "Error fetching commit details for branch:",
+          branch.name,
+          error,
+        );
+        // Ignore, as per fail-safe
       }
-
-      return { count, zombies };
-    } catch (error) {
-      console.warn("Error fetching branches:", error);
-      return { count: 0, zombies: 0 };
     }
+
+    return { count, zombies };
   },
 
   async fetchContributors(owner, repo) {
@@ -140,27 +142,12 @@ export const githubService = {
     }
   },
 
+  // Counts below come from the Search API. A failure (HTTP error, network,
+  // rate limit — search allows ~10 req/min without a token) THROWS instead of
+  // returning 0/null: useRepository then reports the metric as unavailable
+  // (partial-data warning) rather than showing and persisting a fake zero.
   async fetchPullRequests(owner, repo) {
-    if (!owner || !repo) {
-      return null;
-    }
-
-    try {
-      const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+type:pr`;
-      const url = `${GITHUB_BASE_URL}/search/issues?q=${query}`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch pull requests: ${response.status}`);
-        return null;
-      }
-
-      const data = await response.json();
-      return data.total_count;
-    } catch (error) {
-      console.warn("Error fetching pull requests:", error);
-      return null;
-    }
+    return fetchSearchCount(owner, repo, 'type:pr');
   },
 
   async fetchLanguages(owner, repo) {
@@ -186,75 +173,23 @@ export const githubService = {
   },
 
   async fetchOpenIssuesCount(owner, repo) {
-    if (!owner || !repo) {
-      return null;
-    }
-
-    try {
-      const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+is:issue+is:open`;
-      const url = `${GITHUB_BASE_URL}/search/issues?q=${query}`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch open issues: ${response.status}`);
-        return null;
-      }
-
-      const data = await response.json();
-      return data.total_count;
-    } catch (error) {
-      console.warn("Error fetching open issues:", error);
-      return null;
-    }
+    return fetchSearchCount(owner, repo, 'is:issue+is:open');
   },
 
   async fetchClosedIssuesCount(owner, repo) {
-    if (!owner || !repo) {
-      return null;
-    }
-
-    try {
-      const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+is:issue+is:closed`;
-      const url = `${GITHUB_BASE_URL}/search/issues?q=${query}`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch closed issues: ${response.status}`);
-        return null;
-      }
-
-      const data = await response.json();
-      return data.total_count;
-    } catch (error) {
-      console.warn("Error fetching closed issues:", error);
-      return null;
-    }
+    return fetchSearchCount(owner, repo, 'is:issue+is:closed');
   },
 
+  // null = GitHub has no community profile for this repo (it returns 404 for
+  // forks): "unavailable", not an error. Any other failure throws.
   async fetchCommunityProfile(owner, repo) {
-    if (!owner || !repo) {
-      return null;
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/community/profile`;
+    const response = await fetch(url, { headers: getHeaders() });
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error(`Community profile failed: HTTP ${response.status}`);
     }
-
-    try {
-      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/community/profile`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          // No community profile, return null or score 0
-          return null;
-        }
-        console.warn(`Failed to fetch community profile: ${response.status}`);
-        return null;
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.warn("Error fetching community profile:", error);
-      return null;
-    }
+    return response.json();
   },
 
   async fetchRecentPullRequests(owner, repo) {
@@ -282,67 +217,53 @@ export const githubService = {
   },
 
   async fetchReleasesCount(owner, repo) {
-    if (!owner || !repo) {
-      return 0;
+    // Throws on failure (the caller shows n/d) instead of returning 0.
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases?per_page=${GITHUB_PER_PAGE_RELEASES}`;
+    const response = await fetch(url, { headers: getHeaders() });
+
+    if (!response.ok) {
+      throw new Error(`Releases failed: HTTP ${response.status}`);
     }
 
-    try {
-      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases?per_page=${GITHUB_PER_PAGE_RELEASES}`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return 0;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Parse Link header for last page to get total count
-      const linkHeader = response.headers.get("link");
-      if (linkHeader) {
-        const lastMatch = linkHeader.match(/<([^>]+)>;\s*rel="last"/);
-        if (lastMatch) {
-          const lastUrl = new URL(lastMatch[1]);
-          const page = lastUrl.searchParams.get("page");
-          if (page) {
-            return parseInt(page);
-          }
+    // Parse Link header for last page to get total count
+    const linkHeader = response.headers.get("link");
+    if (linkHeader) {
+      const lastMatch = linkHeader.match(/<([^>]+)>;\s*rel="last"/);
+      if (lastMatch) {
+        const lastUrl = new URL(lastMatch[1]);
+        const page = lastUrl.searchParams.get("page");
+        if (page) {
+          return parseInt(page);
         }
       }
+    }
 
-      // Fallback for MVP: fetch all releases and count
-      const allUrl = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases`;
-      const allResponse = await fetch(allUrl, { headers: getHeaders() });
+    // Fallback for MVP: fetch all releases and count
+    const allUrl = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases`;
+    const allResponse = await fetch(allUrl, { headers: getHeaders() });
 
-      if (!allResponse.ok) {
-        if (allResponse.status === 404) {
-          return 0;
-        }
-        throw new Error(`HTTP error! status: ${allResponse.status}`);
-      }
+    if (!allResponse.ok) {
+      throw new Error(`Releases failed: HTTP ${allResponse.status}`);
+    }
 
-      const data = await allResponse.json();
-      const allLinkHeader = allResponse.headers.get("link");
+    const data = await allResponse.json();
+    const allLinkHeader = allResponse.headers.get("link");
 
-      if (allLinkHeader) {
-        const allLastMatch = allLinkHeader.match(/<([^>]+)>;\s*rel="last"/);
-        if (allLastMatch) {
-          const allLastUrl = new URL(allLastMatch[1]);
-          const allPage = allLastUrl.searchParams.get("page");
-          if (allPage) {
-            return parseInt(allPage);
-          }
-        } else {
-          // If paginated but can't parse last page, assume 30+
-          return "30+";
+    if (allLinkHeader) {
+      const allLastMatch = allLinkHeader.match(/<([^>]+)>;\s*rel="last"/);
+      if (allLastMatch) {
+        const allLastUrl = new URL(allLastMatch[1]);
+        const allPage = allLastUrl.searchParams.get("page");
+        if (allPage) {
+          return parseInt(allPage);
         }
       } else {
-        // No pagination, exact count
-        return data.length;
+        // If paginated but can't parse last page, assume 30+
+        return "30+";
       }
-    } catch (error) {
-      console.warn("Error fetching releases count:", error);
-      return 0;
+    } else {
+      // No pagination, exact count
+      return data.length;
     }
   },
 
@@ -505,25 +426,6 @@ export const githubService = {
   },
 
   async fetchMergedPRsCount(owner, repo) {
-    if (!owner || !repo) {
-      return 0;
-    }
-
-    try {
-      const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+is:pr+is:merged`;
-      const url = `${GITHUB_BASE_URL}/search/issues?q=${query}`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch merged PRs count: ${response.status}`);
-        return 0;
-      }
-
-      const data = await response.json();
-      return data.total_count;
-    } catch (error) {
-      console.warn("Error fetching merged PRs count:", error);
-      return 0;
-    }
+    return fetchSearchCount(owner, repo, 'is:pr+is:merged');
   },
 };

@@ -81,7 +81,7 @@ export function createMockRepoData(snapshotData) {
       ciCd: false,
       docker: false,
       noZombies: false,
-      zombies: 0
+      zombies: null // não registrado no snapshot: n/d, não o badge verde "nenhuma zumbi"
     },
 
     // Code review: indisponível (mesmo formato de analyzeReviewMetrics)

@@ -94,6 +94,11 @@
     "title": "Health Score",
     "tooltip": "Measures community health based on 7 open-source governance indicators",
     "communityHealth": "Community Health",
+    "notAvailable": "n/a",
+    "unavailable": {
+      "noProfile": "GitHub provides no community profile for this repository (this happens with forks), so the Health Score couldn't be calculated.",
+      "error": "Couldn't load the GitHub community profile (API failure or rate limit). Try again in a moment."
+    },
     "files": {
       "readme": "README",
       "license": "License",
@@ -113,6 +118,7 @@
       "docker": "🐳 Docker",
       "codeReview": "🛡️ Code Review ({{percentage}}%)",
       "codeReviewUnavailable": "🛡️ Code Review (n/a)",
+      "zombiesUnavailable": "🧟 Zombie Branches (n/a)",
       "noZombies": "✅ No Zombie Branches",
       "zombies": "🧟 {{count}} Zombie Branches Detected"
     },

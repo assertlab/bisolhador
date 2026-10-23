@@ -70,18 +70,18 @@ export function RepoInfoCard({ data, onShareSuccess }) {
       [t('benchmark.tableRepo')]: data.fullName,
       [t('stats.stars')]: data.metrics.stars,
       [t('stats.forks')]: data.metrics.forks,
-      [t('stats.openIssues')]: data.metrics.openIssues,
-      [t('stats.closedIssues')]: data.metrics.closedIssues,
-      [t('health.title')]: `${data.health.score}%`,
+      [t('stats.openIssues')]: data.metrics.openIssues ?? 'N/A',
+      [t('stats.closedIssues')]: data.metrics.closedIssues ?? 'N/A',
+      [t('health.title')]: data.health.score == null ? 'N/A' : `${data.health.score}%`,
       [t('stats.leadTime')]: data.metrics.leadTime
         ? `${data.metrics.leadTime.value} ${t('units.' + data.metrics.leadTime.unit, data.metrics.leadTime.unit)}`
         : 'N/A',
       [t('stats.codeChurn')]: data.codeChurn?.ratio ?? 'N/A',
       [t('stats.divergence')]: data.metrics.divergence?.avg ?? 'N/A',
-      [t('repo.totalBranches')]: data.stats.branches,
-      [t('repo.totalPRs')]: data.stats.prs,
-      [t('repo.totalMerges')]: data.stats.merges,
-      [t('repo.totalReleases')]: data.stats.releases,
+      [t('repo.totalBranches')]: data.stats.branches ?? 'N/A',
+      [t('repo.totalPRs')]: data.stats.prs ?? 'N/A',
+      [t('repo.totalMerges')]: data.stats.merges ?? 'N/A',
+      [t('repo.totalReleases')]: data.stats.releases ?? 'N/A',
     };
     const filename = `bisolhador-${data.fullName.replace('/', '-')}.csv`;
     exportToCsv(filename, [row]);
@@ -251,7 +251,7 @@ export function RepoInfoCard({ data, onShareSuccess }) {
             </li>
             <li className="flex justify-between text-sm font-semibold text-ocean dark:text-blue-400">
               <span>{t('repo.totalReleases')}</span>
-              <span>{data.stats.releases}</span>
+              <span>{data.stats.releases ?? 'N/A'}</span>
             </li>
           </ul>
         </div>
