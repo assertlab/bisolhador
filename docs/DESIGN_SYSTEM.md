@@ -141,7 +141,7 @@ src/
 - **Vite HMR** para desenvolvimento rápido
 - **React.lazy() + Suspense** para code splitting de charts (CommitActivityChart, TechStackChart, BenchmarkEvolutionChart, BenchmarkComparisonChart)
 - **useMemo** para filtragem de dados temporais (Timeline, Benchmark)
-- **Manual chunks** no Vite: vendor (react), charts-vendor (chart.js), pdf-vendor (html2pdf)
+- **Sem manual chunks** (Vite 8): a divisão segue os imports dinâmicos — `chart.js` via `ensureChartSetup()` e `html2pdf.js` só no clique de exportar (`exportToPDF`)
 
 ### Build
 - **ESLint** integrado para qualidade de código

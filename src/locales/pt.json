@@ -3,7 +3,9 @@
     "privateRepo": "Este repositório é privado. O Bisolhador funciona apenas com repositórios públicos, pois os dados analisados podem ser compartilhados publicamente.",
     "privacyCheckFailed": "Não foi possível confirmar se este repositório é público (falha de rede ou limite de requisições do GitHub). Por segurança, ele não foi adicionado — tente novamente em instantes.",
     "invalidRepoName": "Não foi possível abrir o histórico: o nome deste repositório contém caracteres inválidos.",
-    "snapshotUnavailable": "Não foi possível carregar este snapshot: ele não existe, o link está incorreto ou o histórico está temporariamente indisponível. Confira o link ou tente novamente em instantes."
+    "snapshotUnavailable": "Não foi possível carregar este snapshot: ele não existe, o link está incorreto ou o histórico está temporariamente indisponível. Confira o link ou tente novamente em instantes.",
+    "pdfExport": "Não foi possível gerar o relatório PDF. Tente novamente em instantes.",
+    "pdfModuleLoad": "Não foi possível carregar o gerador de PDF, provavelmente porque o Bisolhador foi atualizado depois que esta página foi aberta. Recarregue a página e tente de novo."
   },
   "header": {
     "title": "Bisolhador",
