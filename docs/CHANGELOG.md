@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [3.9.0] - 2026-10-23
+
 ### 🐛 Fixed
 
 - **FIX**: **Maturidade de Engenharia** deixava de detectar configurações comuns e confundia "não verifiquei" com "não tem": o express aparecia **sem testes** (usa `test/`), projetos com GitLab CI **sem CI**, o immich **sem Docker** (Dockerfiles em subpastas), e o linter nem era exibido, embora o tooltip o prometesse. Os padrões foram ampliados (testes em qualquer pasta `test/`/`tests/`/`__tests__/` e `.tsx`/`_test.py`/`_spec.rb`; CI de GitLab, CircleCI, Jenkins, Azure, Travis e outros; Docker em subpastas e `compose.yaml`; linters modernos como `eslint.config.js`, Biome, golangci, Ruff, inclusive em `packages/*`/`apps/*` de monorepos), e cada badge mostra **✓ encontrado · ✗ não encontrado · ? não verificado** (lista de arquivos truncada, como no linux, ou indisponível), com um tooltip explicando o que é procurado. Repositórios vazios aparecem como "não encontrado", não como falha da API. Snapshots antigos, verificados com os critérios limitados, mostram "?" em vez de ✗.
