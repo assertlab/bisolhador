@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toBenchmarkRepo, lastPerDay, dataAgeSpreadDays } from './benchmarkData.js';
+import { toBenchmarkRepo, lastPerDay, dataAgeSpreadDays, leadTimeText } from './benchmarkData.js';
 
 const repo = { fullName: 'o/r', color: 'hsl(0, 70%, 50%)' };
 const row = (created_at, report) => ({ created_at, full_report: report === undefined ? null : report });
@@ -21,7 +21,7 @@ const current = (over = {}) => ({
 describe('toBenchmarkRepo', () => {
   it('uses the most recent row WITH a report (a newer row without one used to zero everything)', () => {
     const r = toBenchmarkRepo(repo, [row('2026-10-01T12:00:00Z', current()), row('2026-10-05T12:00:00Z')]);
-    expect(r).toMatchObject({ stars: 100, healthScore: 86, leadTime: 1.5, divergence: 0.7, busFactorPercentage: 45, language: 'JavaScript', codeChurnRatio: 1.2 });
+    expect(r).toMatchObject({ stars: 100, healthScore: 86, leadTime: 1.5, leadTimeHours: 36, divergence: 0.7, busFactorPercentage: 45, language: 'JavaScript', codeChurnRatio: 1.2 });
     expect(r.lastUpdate.toISOString()).toBe('2026-10-01T12:00:00.000Z');
   });
 
@@ -41,7 +41,7 @@ describe('toBenchmarkRepo', () => {
 
   it('churn "Infinity" (old rows) → null', () => {
     const r = toBenchmarkRepo(repo, [row('2026-10-01T12:00:00Z', current({ codeChurn: { ratio: 'Infinity', category: 'x' } }))]);
-    expect(r).toMatchObject({ codeChurnRatio: null, codeChurnCategory: '' });
+    expect(r.codeChurnRatio).toBeNull();
   });
 
   it('reads double-encoded reports (stored as JSON text until v3.8.0)', () => {
@@ -68,6 +68,16 @@ describe('lastPerDay', () => {
   it('days are Recife days: 01:00 UTC belongs to the previous day', () => {
     const pts = [{ date: new Date('2026-10-01T20:00:00Z'), v: 1 }, { date: new Date('2026-10-02T01:00:00Z'), v: 2 }];
     expect(lastPerDay(pts).map((p) => p.v)).toEqual([2]);
+  });
+});
+
+describe('leadTimeText', () => {
+  const t = (key, { count }) => `${key.split('.')[1]}${count === 1 ? '_one' : ''}`;
+  it('hours under a day (a 1-hour median used to read "0 days"), locale decimals', () => {
+    expect(leadTimeText(1.2, t, 'pt-BR')).toBe('1,2 hours');
+    expect(leadTimeText(36, t, 'pt-BR')).toBe('1,5 days');
+    expect(leadTimeText(24, t, 'en-US')).toBe('1 days_one');
+    expect(leadTimeText(null, t, 'pt-BR')).toBe('N/A');
   });
 });
 

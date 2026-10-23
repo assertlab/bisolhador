@@ -1,5 +1,5 @@
 import { parseFullReport } from './snapshotAdapter.js';
-import { normalizeSnapshotProcessMetrics, leadTimeDays } from './prReviewStats.js';
+import { normalizeSnapshotProcessMetrics, leadTimeDays, formatDuration } from './prReviewStats.js';
 import { SNAPSHOT_TIMEZONE } from '../constants.js';
 
 // Benchmark data from a repo's Supabase history (get_repo_history: id,
@@ -15,7 +15,8 @@ const finiteOrNull = (x) => {
   return Number.isFinite(n) ? n : null; // churn "Infinity" in old bisolhador rows
 };
 
-const dayKey = (date) => new Intl.DateTimeFormat('en-CA', { timeZone: SNAPSHOT_TIMEZONE }).format(date);
+const DAY_FORMAT = new Intl.DateTimeFormat('en-CA', { timeZone: SNAPSHOT_TIMEZONE });
+const dayKey = (date) => DAY_FORMAT.format(date);
 
 /** Keeps the last point of each day (Recife), sorted: 16 searches in one afternoon are one point. */
 export function lastPerDay(points) {
@@ -36,10 +37,10 @@ function metricsOf(report) {
     openIssues: r.metrics?.openIssues ?? null,
     closedIssues: r.metrics?.closedIssues ?? null,
     healthScore: r.health?.score ?? null,
-    leadTime: leadTimeDays(r.metrics?.leadTime),
+    leadTime: leadTimeDays(r.metrics?.leadTime), // days, for the chart
+    leadTimeHours: leadTimeDays(r.metrics?.leadTime) == null ? null : r.metrics.leadTime.medianHours, // for text
     divergence: r.metrics?.divergence?.avg ?? null,
     codeChurnRatio: finiteOrNull(r.codeChurn?.ratio),
-    codeChurnCategory: finiteOrNull(r.codeChurn?.ratio) == null ? '' : r.codeChurn?.category || '',
     busFactorPercentage: busFactorMeasured ? r.busFactor.percentage : null,
     busFactorTopContributor: busFactorMeasured ? r.busFactor.topContributor || '' : '',
     language: r.language || r.primaryLanguage || r.charts?.techStack?.[0]?.language || null,
@@ -61,13 +62,19 @@ export function toBenchmarkRepo(repo, history) {
     fullName: repo.fullName,
     color: repo.color,
     ...metricsOf(latest.report),
-    leadTimeUnit: 'days',
     lastUpdate: latest.date,
     history: lastPerDay(withReport.map(({ date, report }) => {
       const m = metricsOf(report);
       return { date, stars: m.stars, forks: m.forks, openIssues: m.openIssues, closedIssues: m.closedIssues, leadTime: m.leadTime, codeChurnRatio: m.codeChurnRatio };
     })),
   };
+}
+
+/** Lead time as text in the best unit ("7.7 horas", "1,4 dia"); the chart keeps days. */
+export function leadTimeText(hours, t, locale) {
+  if (hours == null) return 'N/A';
+  const { value, unit } = formatDuration(hours);
+  return `${value.toLocaleString(locale)} ${t('units.' + unit, { count: value })}`;
 }
 
 /** Days between the oldest and newest data among the compared repos (null with < 2 repos). */

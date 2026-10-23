@@ -12,9 +12,9 @@ import { BenchmarkRepoChips } from '../components/benchmark/BenchmarkRepoChips';
 import { BenchmarkHealthBars } from '../components/benchmark/BenchmarkHealthBars';
 import { BenchmarkBusFactorRisk } from '../components/benchmark/BenchmarkBusFactorRisk';
 import { BenchmarkDetailTable } from '../components/benchmark/BenchmarkDetailTable';
-import { MAX_BENCHMARK_REPOS, BENCHMARK_DATE_GAP_DAYS } from '../constants';
+import { MAX_BENCHMARK_REPOS, BENCHMARK_DATE_GAP_DAYS, SNAPSHOT_TIMEZONE } from '../constants';
 import { formatters } from '../utils/formatters.js';
-import { dataAgeSpreadDays } from '../utils/benchmarkData.js';
+import { dataAgeSpreadDays, leadTimeText } from '../utils/benchmarkData.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 import { showToast } from '../hooks/useToast.js';
 import { generateColor } from '../utils/colors.js';
@@ -31,6 +31,7 @@ const BenchmarkComparisonChart = lazy(() =>
 
 export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
+  const locale = intlLocale(i18n.language);
   const [selectedRepos, setSelectedRepos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [metricCategory, setMetricCategory] = useState('popularity');
@@ -145,7 +146,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
     const newRepo = {
       fullName: canonicalName,
       // Rows saved before the rename are under the typed name (facebook/react)
-      aliases: canonicalName.toLowerCase() === repoName.toLowerCase() ? [] : [repoName],
+      aliases: canonicalName.toLowerCase() === `${owner}/${repo}`.toLowerCase() ? [] : [`${owner}/${repo}`],
       owner: canonicalOwner,
       repo: canonicalRepo,
       color: generateColor(selectedRepos.length)
@@ -270,15 +271,15 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                       <div className="space-y-2 text-xs text-gray-600 dark:text-slate-400">
                         <div className="flex justify-between">
                           <span>⭐ Stars:</span>
-                          <span className="font-medium">{formatters.formatNumber(repo.stars, intlLocale(i18n.language))}</span>
+                          <span className="font-medium">{formatters.formatNumber(repo.stars, locale)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>🔱 Forks:</span>
-                          <span className="font-medium">{formatters.formatNumber(repo.forks, intlLocale(i18n.language))}</span>
+                          <span className="font-medium">{formatters.formatNumber(repo.forks, locale)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>🏥 Health:</span>
-                          <span className="font-medium">{repo.healthScore == null ? 'N/A' : `${repo.healthScore}%`}</span>
+                          <span className="font-medium">{formatters.formatPercent(repo.healthScore, locale)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>📊 Language:</span>
@@ -287,18 +288,18 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                         <div className="flex justify-between">
                           <span>⏱️ Lead Time:</span>
                           <span className="font-medium">
-                            {repo.leadTime != null ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, { count: repo.leadTime })}` : 'N/A'}
+                            {leadTimeText(repo.leadTimeHours, t, locale)}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>🚌 Bus Factor:</span>
                           <span className="font-medium">
-                            {repo.busFactorPercentage == null ? 'N/A' : `${repo.busFactorPercentage}%`}
+                            {formatters.formatPercent(repo.busFactorPercentage, locale)}
                           </span>
                         </div>
                         <div className="flex justify-between pt-1 border-t border-gray-100 dark:border-slate-700">
                           <span>📅 {t('benchmark.dataFrom')}:</span>
-                          <span className="font-medium">{formatters.formatDateShort(repo.lastUpdate, intlLocale(i18n.language))}</span>
+                          <span className="font-medium">{formatters.formatDateShort(repo.lastUpdate, locale, SNAPSHOT_TIMEZONE)}</span>
                         </div>
                       </div>
                     </div>

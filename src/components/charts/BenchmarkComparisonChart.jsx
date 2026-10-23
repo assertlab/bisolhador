@@ -90,7 +90,7 @@ export default function BenchmarkComparisonChart({ repos, metricCategory = 'popu
               label: (context) => {
                 const label = context.dataset.label || '';
                 const value = metricCategory === 'quality'
-                  ? context.parsed.y.toFixed(2)
+                  ? context.parsed.y.toLocaleString(intlLocale(i18n.language), { maximumFractionDigits: 2 })
                   : context.parsed.y.toLocaleString(intlLocale(i18n.language));
                 return `${label}: ${value}`;
               },
@@ -106,7 +106,7 @@ export default function BenchmarkComparisonChart({ repos, metricCategory = 'popu
             ticks: {
               callback: (value) =>
                 metricCategory === 'quality'
-                  ? value.toFixed(1)
+                  ? value.toLocaleString(intlLocale(i18n.language), { maximumFractionDigits: 1 })
                   : value.toLocaleString(intlLocale(i18n.language)),
             },
           },
@@ -124,9 +124,14 @@ export default function BenchmarkComparisonChart({ repos, metricCategory = 'popu
       <h3 className="text-lg font-semibold text-shark dark:text-white mb-4">
         {t('benchmark.comparisonChart', 'Comparação de Métricas')} — {categoryTitles[metricCategory]}
       </h3>
-      <div style={{ height: '400px' }}>
-        <Bar data={chartData} options={chartOptions} />
-      </div>
+      {chartData.datasets.every((d) => d.data.every((v) => v == null)) ? (
+        // Old snapshots: these metrics weren't recorded with the current method
+        <p className="text-sm text-gray-500 dark:text-slate-400 py-12 text-center">{t('benchmark.notRecorded')}</p>
+      ) : (
+        <div style={{ height: '400px' }}>
+          <Bar data={chartData} options={chartOptions} />
+        </div>
+      )}
     </div>
   );
 }

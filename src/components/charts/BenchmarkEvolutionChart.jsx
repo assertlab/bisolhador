@@ -25,7 +25,7 @@ export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
     if (!repos || repos.length === 0) return null;
 
     return repos.map((repo) => {
-      const sortedHistory = [...repo.history].sort((a, b) => a.date - b.date);
+      const sortedHistory = repo.history; // already sorted, one point per day (benchmarkData.lastPerDay)
       return {
         label: repo.fullName,
         data: sortedHistory.map((point) => ({

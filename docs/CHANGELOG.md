@@ -25,7 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - a linha de evolução tem um ponto por dia;
   - o filtro de período fica junto do único gráfico que ele afeta;
   - repositórios renomeados juntam o histórico salvo sob o nome antigo (facebook/react → react/react);
-  - as cores dos gráficos deixam de usar uma string CSS inválida (`hsl(...)80`).
+  - as cores dos gráficos deixam de usar uma string CSS inválida (`hsl(...)80`);
+  - lead time em texto na melhor unidade (horas abaixo de um dia, não "0 dias") e decimais com vírgula.
+
+  Na prática, até os repositórios serem analisados de novo, lead time, divergência, churn e bus factor aparecem como N/A no Benchmark: todos os registros salvos até hoje são anteriores aos métodos atuais. A aba Qualidade e o risco de bus factor dizem isso em vez de mostrar um gráfico vazio.
 
 ---
 

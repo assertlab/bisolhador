@@ -355,6 +355,7 @@
   },
   "benchmark": {
     "dataFrom": "Dados de",
+    "notRecorded": "Nenhum dos repositórios tem esses dados registrados com o método atual: os registros salvos são anteriores à v3.8.0/v3.9.0. Analise-os novamente na página de busca para preencher a comparação.",
     "dateGap": "Os repositórios comparados têm dados de datas diferentes (até {{days}} dias de distância): cada um mostra o último registro salvo, com a data no seu card. Para comparar o mesmo momento, analise-os novamente na página de busca.",
     "title": "Benchmark de Repositórios",
     "subtitle": "Compare até 10 repositórios simultaneamente e visualize a evolução de métricas",

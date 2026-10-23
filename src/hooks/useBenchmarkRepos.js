@@ -15,7 +15,7 @@ export function useBenchmarkRepos(selectedRepos) {
   // Memoiza o array de query configs para evitar recriação a cada render
   const queryConfigs = useMemo(
     () => selectedRepos.map((repo) => ({
-      queryKey: ['benchmark', repo.fullName],
+      queryKey: ['benchmark', repo.fullName, ...(repo.aliases ?? [])],
       queryFn: async () => {
         // Renamed repos: rows saved under the typed (old) name are merged in.
         const names = [repo.fullName, ...(repo.aliases ?? [])];

@@ -1,11 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { exportToCsv } from '../../utils/csvExporter.js';
+import { formatters } from '../../utils/formatters.js';
+import { leadTimeText } from '../../utils/benchmarkData.js';
+import { intlLocale } from '../../i18n.js';
 import { topShareLevel, TOP_SHARE_STYLE } from '../../utils/contributors.js';
 
 // Level recomputed from the stored percentage (not the stored level) on purpose:
 // old snapshots then get the current thresholds, same as the Dashboard.
 export function BenchmarkDetailTable({ repos }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = intlLocale(i18n.language);
 
   const handleExportCsv = () => {
     const rows = repos.map((repo) => {
@@ -13,14 +17,12 @@ export function BenchmarkDetailTable({ repos }) {
 
       return {
         [t('benchmark.tableRepo')]: repo.fullName,
-        [t('benchmark.healthComparison')]: repo.healthScore == null ? 'N/A' : `${repo.healthScore}%`,
-        [t('stats.leadTime')]: repo.leadTime != null
-          ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, { count: repo.leadTime })}`
-          : 'N/A',
-        [t('stats.divergence')]: repo.divergence != null ? repo.divergence.toFixed(1) : 'N/A',
-        [t('stats.codeChurn')]: repo.codeChurnRatio != null ? repo.codeChurnRatio.toFixed(2) : 'N/A',
+        [t('benchmark.healthComparison')]: formatters.formatPercent(repo.healthScore, locale),
+        [t('stats.leadTime')]: leadTimeText(repo.leadTimeHours, t, locale),
+        [t('stats.divergence')]: formatters.formatDecimal(repo.divergence, locale, 1),
+        [t('stats.codeChurn')]: formatters.formatDecimal(repo.codeChurnRatio, locale, 2),
         [t('benchmark.busFactorRisk')]: repo.busFactorPercentage != null
-          ? `${repo.busFactorPercentage}% — ${riskLabel}`
+          ? `${formatters.formatPercent(repo.busFactorPercentage, locale)} — ${riskLabel}`
           : 'N/A',
       };
     });
@@ -89,22 +91,20 @@ export function BenchmarkDetailTable({ repos }) {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                    {repo.healthScore == null ? 'N/A' : `${repo.healthScore}%`}
+                    {formatters.formatPercent(repo.healthScore, locale)}
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                    {repo.leadTime != null
-                      ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, { count: repo.leadTime })}`
-                      : 'N/A'}
+                    {leadTimeText(repo.leadTimeHours, t, locale)}
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                    {repo.divergence != null ? repo.divergence.toFixed(1) : 'N/A'}
+                    {formatters.formatDecimal(repo.divergence, locale, 1)}
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                    {repo.codeChurnRatio != null ? repo.codeChurnRatio.toFixed(2) : 'N/A'}
+                    {formatters.formatDecimal(repo.codeChurnRatio, locale, 2)}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadge}`}>
-                      {repo.busFactorPercentage != null ? `${repo.busFactorPercentage}% — ${riskLabel}` : 'N/A'}
+                      {repo.busFactorPercentage != null ? `${formatters.formatPercent(repo.busFactorPercentage, locale)} — ${riskLabel}` : 'N/A'}
                     </span>
                   </td>
                 </tr>

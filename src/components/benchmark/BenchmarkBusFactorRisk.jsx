@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next';
+import { formatters } from '../../utils/formatters.js';
+import { intlLocale } from '../../i18n.js';
 import { topShareLevel, TOP_SHARE_STYLE } from '../../utils/contributors.js';
 
 // Level recomputed from the stored percentage on purpose (current thresholds for old snapshots).
 export function BenchmarkBusFactorRisk({ repos }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const noneMeasured = repos.every((repo) => repo.busFactorPercentage == null);
 
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">
@@ -13,6 +16,9 @@ export function BenchmarkBusFactorRisk({ repos }) {
       <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">
         {t('benchmark.busFactorDescription', 'Concentração de trabalho no principal contribuidor. Quanto maior, mais arriscado.')}
       </p>
+      {noneMeasured && (
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-3">{t('benchmark.notRecorded')}</p>
+      )}
       <div className="space-y-3">
         {repos.map((repo) => {
           const pct = repo.busFactorPercentage;
@@ -30,7 +36,7 @@ export function BenchmarkBusFactorRisk({ repos }) {
                     {repo.fullName}
                   </span>
                   <span className={`font-semibold ${textBadge}`}>
-                    {pct == null ? 'N/A' : `${pct}%`}
+                    {formatters.formatPercent(pct, intlLocale(i18n.language))}
                     {repo.busFactorTopContributor && pct != null && (
                       <span className="text-xs text-gray-400 dark:text-slate-500 ml-1">
                         ({repo.busFactorTopContributor})
