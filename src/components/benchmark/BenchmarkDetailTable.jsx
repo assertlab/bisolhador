@@ -1,17 +1,27 @@
 import { useTranslation } from 'react-i18next';
 import { exportToCsv } from '../../utils/csvExporter.js';
+import { topShareLevel } from '../../utils/contributors.js';
+
+// Same thresholds as the Dashboard (TOP_SHARE_* in constants.js via topShareLevel).
+const RISK_LABEL = {
+  critical: (t) => t('benchmark.riskCritical', 'Crítico'),
+  warning: (t) => t('benchmark.riskModerate', 'Moderado'),
+  healthy: (t) => t('benchmark.riskLow', 'Baixo'),
+  none: (t) => t('benchmark.riskLow', 'Baixo'),
+};
+const RISK_BADGE = {
+  critical: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+  healthy: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  none: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+};
 
 export function BenchmarkDetailTable({ repos }) {
   const { t } = useTranslation();
 
   const handleExportCsv = () => {
     const rows = repos.map((repo) => {
-      let riskLabel = t('benchmark.riskLow', 'Low');
-      if (repo.busFactorPercentage > 80) {
-        riskLabel = t('benchmark.riskCritical', 'Critical');
-      } else if (repo.busFactorPercentage > 60) {
-        riskLabel = t('benchmark.riskModerate', 'Moderate');
-      }
+      const riskLabel = RISK_LABEL[topShareLevel(repo.busFactorPercentage)](t);
 
       return {
         [t('benchmark.tableRepo')]: repo.fullName,
@@ -73,15 +83,9 @@ export function BenchmarkDetailTable({ repos }) {
           </thead>
           <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
             {repos.map((repo) => {
-              let riskBadge = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-              let riskLabel = t('benchmark.riskLow', 'Baixo');
-              if (repo.busFactorPercentage > 80) {
-                riskBadge = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-                riskLabel = t('benchmark.riskCritical', 'Crítico');
-              } else if (repo.busFactorPercentage > 60) {
-                riskBadge = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-                riskLabel = t('benchmark.riskModerate', 'Moderado');
-              }
+              const level = topShareLevel(repo.busFactorPercentage);
+              const riskBadge = RISK_BADGE[level];
+              const riskLabel = RISK_LABEL[level](t);
 
               return (
                 <tr key={repo.fullName} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">

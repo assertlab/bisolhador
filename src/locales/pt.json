@@ -135,30 +135,42 @@
     }
   },
   "contributors": {
-    "title": "Contribuições (Bus Factor)",
-    "tooltip": "Avalia o risco de dependência de poucos contribuidores. Bus Factor alto indica vulnerabilidade.",
+    "title": "Contribuidores",
+    "tooltip": "Quem faz os commits e quão concentrado está o trabalho. Bots (Dependabot, Renovate, GitHub Actions…) não são contados. Concentração alta em uma pessoa significa risco de dependência.",
     "headers": {
       "contributor": "Contribuidor",
       "commits": "Commits",
-      "workPercentage": "% do Trabalho"
+      "workPercentage": "% dos commits"
     },
     "busFactor": {
       "none": {
         "title": "Nenhum Contribuidor",
-        "message": "Este repositório não possui contribuidores analisáveis."
+        "message": "Este repositório não tem contribuidores humanos analisáveis."
+      },
+      "unavailable": {
+        "title": "Contribuidores Indisponíveis",
+        "message": "Não foi possível obter os contribuidores do GitHub (falha ou limite da API). Tente novamente em instantes."
       },
       "healthy": {
-        "title": "Bus Factor Baixo",
-        "message": "Time balanceado. Nenhum usuário concentra mais de 40% dos commits."
+        "title": "Trabalho Distribuído",
+        "message": "Ninguém concentra mais de 40% dos commits."
       },
       "warning": {
-        "title": "Bus Factor Moderado",
-        "message": "O usuário <bold>{{contributor}}</bold> concentra <bold>{{percentage}}%</bold> do trabalho. Considere diversificar as contribuições."
+        "title": "Concentração Moderada",
+        "message": "<bold>{{contributor}}</bold> concentra <bold>{{percentage}}%</bold> dos commits. Considere diversificar as contribuições."
       },
       "critical": {
-        "title": "Bus Factor Crítico",
-        "message": "O usuário <bold>{{contributor}}</bold> concentra <bold>{{percentage}}%</bold> do trabalho. Alto risco de dependência."
+        "title": "Concentração Alta",
+        "message": "<bold>{{contributor}}</bold> concentra <bold>{{percentage}}%</bold> dos commits. Alto risco de dependência de uma pessoa."
       }
+    },
+    "scope": {
+      "recent": "Commits dos últimos 12 meses",
+      "allTime": "Commits de todo o histórico (pouca atividade recente)",
+      "allTimeOnly": "Commits de todo o histórico (janela de 12 meses indisponível no momento)",
+      "botsExcluded_one": "{{count}} bot excluído",
+      "botsExcluded_other": "{{count}} bots excluídos",
+      "partial": "lista parcial: até os 100 maiores contribuidores"
     }
   },
   "activity": {
@@ -373,8 +385,8 @@
   "busFactor": {
     "sectionTitle": "Análise de Risco",
     "title": "Bus Factor",
-    "tooltip": "Número mínimo de desenvolvedores que concentram 70% dos commits. Quanto menor, maior o risco de dependência.",
-    "description": "{{count}} dev(s) concentram 70% do trabalho",
+    "tooltip": "Número mínimo de pessoas que somam 70% dos commits (sem bots, na mesma janela da tabela abaixo). Quanto menor, maior o risco de o projeto depender de poucas pessoas. Heurística simples, não o \"truck factor\" acadêmico (que usa autoria de arquivos).",
+    "description": "{{count}} pessoa(s) somam 70% dos commits",
     "others": "Outros",
     "risk": {
       "critical": "Risco Crítico",

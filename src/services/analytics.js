@@ -37,7 +37,13 @@ const analytics = {
           Object.keys(fullData).length > 0
             ? (() => {
                 try {
-                  return JSON.stringify(fullData);
+                  // A plain object for the jsonb parameter. It used to be
+                  // JSON.stringify'd, and supabase-js encodes the body again,
+                  // so every full_report was stored as a JSON *string* inside
+                  // jsonb (found in the 2026-10 audit; readers use
+                  // parseFullReport, which accepts both). The round-trip drops
+                  // anything non-serializable.
+                  return JSON.parse(JSON.stringify(fullData));
                 } catch (e) {
                   console.warn(
                     "[Analytics] Failed to serialize fullData:",

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { githubService, hasGithubToken } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
 import { analyzeReviewMetrics } from '../utils/prReviewStats.js';
-import { calculateBusFactor as calculateAdvancedBusFactor } from '../utils/busFactor.js';
+import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
@@ -13,7 +13,21 @@ import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE } from
 // health-14 snapshots found in the 2026-10 audit. Names match endpointNames.
 // "No community profile" (forks, 404) is not a failure: forks are saved, with
 // health unavailable.
-const PERSIST_BLOCKERS = ['communityProfile', 'openIssues', 'closedIssues', 'pullRequests', 'mergedPRs'];
+const PERSIST_BLOCKERS = ['communityProfile', 'openIssues', 'closedIssues', 'pullRequests', 'mergedPRs', 'contributors'];
+
+// Contributor analysis: /stats/contributors (weekly data → recent window, bots
+// flagged); if GitHub is still computing it (202) or it fails, the top-100
+// /contributors list (all-time, marked partial). Throws only if both fail.
+async function fetchContributorAnalysis(owner, repo) {
+    try {
+        const stats = await githubService.fetchContributorStats(owner, repo, { retries: 2, delayMs: 1000 });
+        return analyzeContributors(peopleFromStats(stats), { source: 'stats' });
+    } catch (error) {
+        console.warn('[useRepository] Contributor stats unavailable, using /contributors fallback:', error.message);
+        const list = await githubService.fetchContributors(owner, repo);
+        return analyzeContributors(peopleFromContributors(list), { source: 'contributors' });
+    }
+}
 
 // Repository data fetching function for TanStack Query
 async function fetchRepositoryData(repoName) {
@@ -58,7 +72,7 @@ async function fetchRepositoryData(repoName) {
     const results = await Promise.allSettled([
         githubService.fetchCommits(owner, repo),
         githubService.fetchBranches(owner, repo),
-        githubService.fetchContributors(owner, repo),
+        fetchContributorAnalysis(owner, repo),
         githubService.fetchPullRequests(owner, repo),
         githubService.fetchOpenIssuesCount(owner, repo),
         githubService.fetchClosedIssuesCount(owner, repo),
@@ -96,7 +110,7 @@ async function fetchRepositoryData(repoName) {
     const commits = results[0]?.status === 'fulfilled' ? results[0].value : [];
     // Counts/branches/profile: null when the request failed (see _warnings), never a fake 0.
     const branches = results[1]?.status === 'fulfilled' ? results[1].value : null;
-    const contributors = results[2]?.status === 'fulfilled' ? results[2].value : [];
+    const contributorAnalysis = results[2]?.status === 'fulfilled' ? results[2].value : null;
     const pulls = results[3]?.status === 'fulfilled' ? results[3].value : null;
     const issuesOpenCount = results[4]?.status === 'fulfilled' ? results[4].value : null;
     const issuesClosedCount = results[5]?.status === 'fulfilled' ? results[5].value : null;
@@ -139,9 +153,22 @@ async function fetchRepositoryData(repoName) {
     // Analyze process metrics
     const leadTime = analyzers.calculateLeadTime(pullRequestsStats);
 
-    // Analyze bus factor
-    const busFactor = analyzers.calculateBusFactor(contributors);
-    const busFactorAnalysis = calculateAdvancedBusFactor(contributors);
+    // Contributors: one analysis (same people, window and denominator) feeds the
+    // Pareto bus factor card, the top-contributor concentration and the table.
+    // busFactor keeps the {level, topContributor, percentage} shape Benchmark reads.
+    const busFactor = contributorAnalysis?.top
+        ? { level: contributorAnalysis.top.level, topContributor: contributorAnalysis.top.login, percentage: contributorAnalysis.top.percentage }
+        : { level: contributorAnalysis ? 'none' : 'unavailable' };
+    const busFactorAnalysis = contributorAnalysis && {
+        busFactor: contributorAnalysis.busFactor,
+        riskLevel: contributorAnalysis.riskLevel,
+        keyDevelopers: contributorAnalysis.keyDevelopers,
+        window: contributorAnalysis.window,
+        source: contributorAnalysis.source,
+        partial: contributorAnalysis.partial,
+        botsExcluded: contributorAnalysis.botsExcluded,
+        peopleCount: contributorAnalysis.peopleCount,
+    };
 
     // Analyze code churn
     const codeChurn = analyzers.calculateCodeChurn(codeFrequency);
@@ -155,12 +182,6 @@ async function fetchRepositoryData(repoName) {
         }
     }
 
-    // Format contributors for display
-    const totalContributions = contributors.reduce((sum, c) => sum + c.contributions, 0);
-    const formattedContributors = contributors.map(contributor => ({
-        ...contributor,
-        percentage: totalContributions > 0 ? ((contributor.contributions / totalContributions) * 100).toFixed(1) : 0
-    }));
 
     // One report object: shown on screen and persisted as the snapshot's full_report.
     const report = {
@@ -194,7 +215,7 @@ async function fetchRepositoryData(repoName) {
       health,
       maturity,
       codeReview,
-      contributors: formattedContributors,
+      contributors: contributorAnalysis?.table ?? null,
       busFactor,
       busFactorAnalysis,
       recentCommits,

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🐛 Fixed
+
+- **FIX**: **Contribuidores e Bus Factor** usavam só os 30 primeiros contribuidores, contavam bots como pessoas e olhavam todo o histórico. No express, o "risco crítico" apontava um mantenedor inativo desde 2014; no renovate, "o usuário renovate[bot]". Agora: dados semanais de todos os principais contribuidores, **bots excluídos**, janela dos **últimos 12 meses** quando há atividade suficiente (senão todo o histórico, com aviso), e o card de Bus Factor e a tabela usam **as mesmas pessoas, janela e denominador**. Se o GitHub ainda está calculando as estatísticas, usa a lista de até 100 contribuidores, marcada como parcial; se tudo falhar, aparece "indisponível" e o resultado não é gravado.
+- **FIX**: Terminologia: a tabela não se chama mais "Bus Factor" (é a concentração no principal contribuidor), e o estado saudável não aparece mais como "Bus Factor Baixo" (no uso padrão, *baixo* é o arriscado). Dashboard e Benchmark usam os mesmos limites (40% / 60%); o Benchmark usava 60% / 80%.
+- **FIX**: O relatório completo (`full_report`) era gravado como texto JSON dentro do campo jsonb (codificado duas vezes). Agora é gravado como objeto; os snapshots antigos continuam legíveis.
+
+### ⚡ Performance
+
+- **PERF**: Primeiro carregamento cai de ~1,56 MB para ~592 KB de JavaScript: o gerador de PDF (`html2pdf.js`, ~916 KB) era pré-carregado em toda visita e agora só é baixado ao clicar em exportar (#59). Exportar várias vezes seguidas não gera mais PDFs duplicados.
+
+### 🔧 Changed
+
+- **DEV**: Vite 8 e `@vitejs/plugin-react` 6, atualizados juntos (um exige o outro). Build ~5× mais rápido. `dependabot.yml` ganha o grupo `vite` (#59).
+
+---
+
 ## [3.7.1] - 2026-10-23
 
 ### 🐛 Fixed

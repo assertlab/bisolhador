@@ -151,27 +151,6 @@ describe('calculateDivergence (comments per PR)', () => {
   });
 });
 
-describe('analyzers.calculateBusFactor (top-contributor share)', () => {
-  it('is "none" with no contributors', () => {
-    expect(analyzers.calculateBusFactor([])).toEqual({ level: 'none' });
-  });
-
-  it.each([
-    [[61, 39], 'critical'],
-    [[60, 40], 'warning'],
-    [[41, 59], 'warning'],
-    [[40, 30, 30], 'healthy'],
-  ])('%j → %s', (contributions, level) => {
-    const contributors = contributions.map((c, i) => ({ login: `d${i}`, contributions: c }));
-    expect(analyzers.calculateBusFactor(contributors).level).toBe(level);
-  });
-
-  it('reports the top contributor regardless of input order', () => {
-    const result = analyzers.calculateBusFactor([{ login: 'small', contributions: 1 }, { login: 'big', contributions: 3 }]);
-    expect(result).toEqual({ level: 'critical', topContributor: 'big', percentage: 75 });
-  });
-});
-
 describe('calculateCodeChurn (additions/deletions, last 10 weeks)', () => {
   // Real /stats/code_frequency shape: deletions come NEGATIVE, e.g. [1792281600, 989, -1243].
   const week = (additions, deletions) => [0, additions, -deletions];

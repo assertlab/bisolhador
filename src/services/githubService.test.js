@@ -93,6 +93,33 @@ describe('githubService: failures are errors, not zeros', () => {
     await expect(githubService.fetchReleasesCount('o', 'r')).resolves.toBe(137);
   });
 
+  describe('fetchContributorStats', () => {
+    it('retries while GitHub computes (202) and returns the stats', async () => {
+      fetchMock
+        .mockReturnValueOnce(json({}, { status: 202 }))
+        .mockReturnValueOnce(json([{ author: { login: 'a' }, total: 3, weeks: [] }]));
+      await expect(githubService.fetchContributorStats('o', 'r', { delayMs: 0 })).resolves.toHaveLength(1);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws after the retries if it is still 202 (caller uses the fallback)', async () => {
+      fetchMock.mockReturnValue(json({}, { status: 202 }));
+      await expect(githubService.fetchContributorStats('o', 'r', { retries: 2, delayMs: 0 })).rejects.toThrow(/202/);
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+
+    it('empty repository (204) → []', async () => {
+      fetchMock.mockReturnValue(Promise.resolve(new Response(null, { status: 204 })));
+      await expect(githubService.fetchContributorStats('o', 'r', { delayMs: 0 })).resolves.toEqual([]);
+    });
+  });
+
+  it('fetchContributors asks for 100 per page and throws on failure', async () => {
+    fetchMock.mockReturnValue(json({ message: 'rate limited' }, { status: 403 }));
+    await expect(githubService.fetchContributors('o', 'r')).rejects.toThrow(/403/);
+    expect(fetchMock.mock.calls[0][0]).toContain('per_page=100');
+  });
+
   it('fetchReleasesCount throws on failure instead of returning 0', async () => {
     fetchMock.mockReturnValue(json({ message: 'boom' }, { status: 500 }));
     await expect(githubService.fetchReleasesCount('react', 'react')).rejects.toThrow(/500/);

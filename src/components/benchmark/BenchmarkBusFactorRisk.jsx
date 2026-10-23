@@ -1,4 +1,13 @@
 import { useTranslation } from 'react-i18next';
+import { topShareLevel } from '../../utils/contributors.js';
+
+// Same thresholds as the Dashboard (TOP_SHARE_* in constants.js via topShareLevel).
+const LEVEL_STYLE = {
+  critical: { barColor: 'bg-red-500', textBadge: 'text-red-700 dark:text-red-400' },
+  warning: { barColor: 'bg-yellow-500', textBadge: 'text-yellow-700 dark:text-yellow-400' },
+  healthy: { barColor: 'bg-green-500', textBadge: 'text-green-700 dark:text-green-400' },
+  none: { barColor: 'bg-green-500', textBadge: 'text-green-700 dark:text-green-400' },
+};
 
 export function BenchmarkBusFactorRisk({ repos }) {
   const { t } = useTranslation();
@@ -14,15 +23,7 @@ export function BenchmarkBusFactorRisk({ repos }) {
       <div className="space-y-3">
         {repos.map((repo) => {
           const pct = repo.busFactorPercentage;
-          let barColor = 'bg-green-500';
-          let textBadge = 'text-green-700 dark:text-green-400';
-          if (pct > 80) {
-            barColor = 'bg-red-500';
-            textBadge = 'text-red-700 dark:text-red-400';
-          } else if (pct > 60) {
-            barColor = 'bg-yellow-500';
-            textBadge = 'text-yellow-700 dark:text-yellow-400';
-          }
+          const { barColor, textBadge } = LEVEL_STYLE[topShareLevel(pct)];
 
           return (
             <div key={repo.fullName} className="flex items-center gap-3">

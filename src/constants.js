@@ -3,6 +3,7 @@ export const GITHUB_PER_PAGE_COMMITS = 15;
 export const GITHUB_PER_PAGE_BRANCHES = 20;
 export const GITHUB_PER_PAGE_RECENT_PRS = 10;
 export const GITHUB_PER_PAGE_PR_STATS = 20;
+export const GITHUB_PER_PAGE_CONTRIBUTORS = 100; // fallback list (max page size)
 export const GITHUB_PER_PAGE_RELEASES = 1;
 
 // Time thresholds
@@ -24,3 +25,11 @@ export const PDF_CANVAS_SCALE = 2;
 
 // Toast notifications
 export const TOAST_AUTO_DISMISS_MS = 1000 * 5; // 5 seconds
+
+// Contributor concentration (Dashboard table + Benchmark use the same thresholds)
+export const TOP_SHARE_CRITICAL_PERCENT = 60; // > 60% of commits from one person
+export const TOP_SHARE_WARNING_PERCENT = 40;  // > 40%
+// Concentration is computed over the last 12 months when there is enough
+// recent activity; otherwise all-time (a long-gone maintainer is not today's risk).
+export const CONTRIBUTORS_RECENT_WEEKS = 52;
+export const CONTRIBUTORS_MIN_RECENT_COMMITS = 20;
