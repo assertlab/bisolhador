@@ -27,6 +27,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      release-title: ${{ steps.notes.outputs.title }}
     env:
       TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
       # Nenhum destes é segredo de fato (todos acabam no bundle público);
@@ -83,6 +85,27 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # Release notes are generated here, BEFORE deploying: a version without a
+      # CHANGELOG section fails closed like the other checks, instead of going
+      # live and then failing the release. Tags older than this script (rollback
+      # via dispatch) skip it — their releases already exist.
+      - name: release notes from CHANGELOG
+        id: notes
+        run: |
+          if [ ! -f scripts/release-notes.mjs ]; then
+            echo "No scripts/release-notes.mjs in $TAG (older tag) — no release notes."
+            exit 0
+          fi
+          title=$(node scripts/release-notes.mjs "$TAG" release-notes.md)
+          echo "title=$title" >> "$GITHUB_OUTPUT"
+
+      - if: steps.notes.outputs.title
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-notes
+          path: release-notes.md
+          retention-days: 1
+
       - run: npm ci
 
       - run: npm run build
@@ -105,29 +128,33 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
-  # GitHub release for the tag, with notes from docs/CHANGELOG.md (the deploy
-  # used to publish the site without one; v3.6.2–v3.8.0 were backfilled by hand).
+  # GitHub release for the tag, with the notes the build job generated (the
+  # deploy used to publish the site without one; v3.6.2–v3.8.0 were backfilled
+  # by hand). No checkout: nothing from the tag runs with this write token.
   # Skips when the release already exists (e.g. workflow_dispatch rollback).
   release:
-    needs: deploy
+    needs: [build, deploy]
+    if: needs.build.outputs.release-title
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
     env:
       TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      TITLE: ${{ needs.build.outputs.release-title }}
       GH_TOKEN: ${{ github.token }}
+      # Only a new tag becomes "Latest"; a dispatch (rollback/redeploy) never does.
+      LATEST: ${{ github.event_name == 'push' }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          ref: refs/tags/${{ env.TAG }}
-          persist-credentials: false
+          name: release-notes
 
-      - name: create release from CHANGELOG
+      - name: create release
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Release $TAG already exists — skipping."
             exit 0
           fi
-          title=$(node scripts/release-notes.mjs "$TAG" release-notes.md)
-          gh release create "$TAG" --verify-tag --title "$title" --notes-file release-notes.md
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "$TITLE" --notes-file release-notes.md --latest="$LATEST"

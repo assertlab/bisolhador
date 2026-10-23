@@ -36,7 +36,7 @@ describe('releaseNotes', () => {
     expect(() => releaseNotes('v9.9.9', { changelog, readme })).toThrow(/no "## \[9\.9\.9\]" section/);
   });
 
-  it('works on the real docs for the current release', () => {
+  it('the real docs have a CHANGELOG section and a README title for the current version (release PRs must add both)', () => {
     const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
     const real = releaseNotes(`v${pkg.version}`, {
       changelog: readFileSync('docs/CHANGELOG.md', 'utf8'),
