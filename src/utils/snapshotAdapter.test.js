@@ -43,6 +43,8 @@ describe('createMockRepoData', () => {
     expect(data.metrics).toMatchObject({ openIssues: null, closedIssues: null });
     expect(data.health).toEqual({ score: null, files: null });
     expect(data.maturity.zombies).toBeNull();
+    expect(data.contributors).toBeNull();
+    expect(data.busFactor.level).toBe('notRecorded');
   });
 
   it('keeps recorded flat columns', () => {

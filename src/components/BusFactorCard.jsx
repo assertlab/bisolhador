@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
-import { ContributorsScope } from './ContributorsTable.jsx';
+import { ContributorsScope } from './ContributorsScope.jsx';
 
 const DEVELOPER_COLORS = [
   '#3b82f6', '#ef4444', '#f97316', '#eab308',

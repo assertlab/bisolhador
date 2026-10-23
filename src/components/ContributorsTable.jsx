@@ -1,22 +1,10 @@
 import { useTranslation, Trans } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
-
-// Window/source note shared with BusFactorCard: which commits these numbers count.
-export function ContributorsScope({ analysis }) {
-  const { t } = useTranslation();
-  if (!analysis?.window) return null; // snapshots saved before 2026-10 don't record it
-  return (
-    <p className="text-xs text-gray-500 dark:text-slate-400">
-      {t(`contributors.scope.${analysis.partial ? 'allTimeOnly' : analysis.window}`)}
-      {analysis.botsExcluded > 0 && ` · ${t('contributors.scope.botsExcluded', { count: analysis.botsExcluded })}`}
-      {analysis.partial && ` · ${t('contributors.scope.partial')}`}
-    </p>
-  );
-}
+import { ContributorsScope } from './ContributorsScope.jsx';
 
 export function ContributorsTable({ contributors, busFactor, analysis }) {
   const { t } = useTranslation();
-  const unavailable = !contributors || busFactor?.level === 'unavailable';
+  const unavailable = !contributors || ['unavailable', 'notRecorded'].includes(busFactor?.level);
 
   // Determinar cor do alerta baseado no level
   let alertColor = 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600';
@@ -32,7 +20,7 @@ export function ContributorsTable({ contributors, busFactor, analysis }) {
     textColor = 'text-green-800 dark:text-green-200';
   }
 
-  const level = unavailable ? 'unavailable' : busFactor.level;
+  const level = busFactor?.level === 'notRecorded' ? 'notRecorded' : unavailable ? 'unavailable' : busFactor.level;
   const busFactorTitle = t(`contributors.busFactor.${level}.title`);
 
   return (

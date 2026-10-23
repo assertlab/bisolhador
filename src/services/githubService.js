@@ -138,25 +138,22 @@ export const githubService = {
   },
 
   // Top contributors with weekly commit counts (all-time AND recent windows,
-  // bots flagged as type "Bot"). GitHub answers 202 while it computes the
-  // stats: retry a few times, then throw so the caller uses the fallback.
-  async fetchContributorStats(owner, repo, { retries = 4, delayMs = 1500 } = {}) {
+  // bots flagged as type "Bot"). One request, no retry: GitHub answers 202
+  // while it computes the stats, and waiting for it held the whole dashboard
+  // (this runs inside useRepository's allSettled) — the caller falls back to
+  // /contributors instead; the next search usually finds the stats ready.
+  async fetchContributorStats(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/contributors`;
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      const response = await fetch(url, { headers: getHeaders() });
-      if (response.status === 202) {
-        if (attempt < retries) await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)));
-        continue;
-      }
-      if (response.status === 204) return []; // empty repository
-      if (!response.ok) {
-        throw new Error(`Contributor stats failed: HTTP ${response.status}`);
-      }
-      return response.json();
+    const response = await fetch(url, { headers: getHeaders() });
+    if (response.status === 202) {
+      throw new Error("Contributor stats still being computed by GitHub (HTTP 202)");
     }
-    throw new Error("Contributor stats still being computed by GitHub (HTTP 202)");
+    if (response.status === 204) return []; // empty repository
+    if (!response.ok) {
+      throw new Error(`Contributor stats failed: HTTP ${response.status}`);
+    }
+    return response.json();
   },
-
 
   // Counts below come from the Search API. A failure (HTTP error, network,
   // rate limit — search allows ~10 req/min without a token) THROWS instead of

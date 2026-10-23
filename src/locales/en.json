@@ -147,6 +147,10 @@
         "title": "No Contributors",
         "message": "This repository has no analyzable human contributors."
       },
+      "notRecorded": {
+        "title": "Contributors Not Recorded",
+        "message": "This historical snapshot didn't record contributor data."
+      },
       "unavailable": {
         "title": "Contributors Unavailable",
         "message": "Couldn't load contributors from GitHub (API failure or rate limit). Try again in a moment."
@@ -170,7 +174,7 @@
       "allTimeOnly": "Commits from the whole history (12-month window unavailable right now)",
       "botsExcluded_one": "{{count}} bot excluded",
       "botsExcluded_other": "{{count}} bots excluded",
-      "partial": "partial list: up to the top 100 contributors"
+      "capped": "only the top 100 contributors are counted"
     }
   },
   "activity": {

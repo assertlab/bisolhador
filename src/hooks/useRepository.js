@@ -20,7 +20,7 @@ const PERSIST_BLOCKERS = ['communityProfile', 'openIssues', 'closedIssues', 'pul
 // /contributors list (all-time, marked partial). Throws only if both fail.
 async function fetchContributorAnalysis(owner, repo) {
     try {
-        const stats = await githubService.fetchContributorStats(owner, repo, { retries: 2, delayMs: 1000 });
+        const stats = await githubService.fetchContributorStats(owner, repo);
         return analyzeContributors(peopleFromStats(stats), { source: 'stats' });
     } catch (error) {
         console.warn('[useRepository] Contributor stats unavailable, using /contributors fallback:', error.message);
@@ -159,16 +159,8 @@ async function fetchRepositoryData(repoName) {
     const busFactor = contributorAnalysis?.top
         ? { level: contributorAnalysis.top.level, topContributor: contributorAnalysis.top.login, percentage: contributorAnalysis.top.percentage }
         : { level: contributorAnalysis ? 'none' : 'unavailable' };
-    const busFactorAnalysis = contributorAnalysis && {
-        busFactor: contributorAnalysis.busFactor,
-        riskLevel: contributorAnalysis.riskLevel,
-        keyDevelopers: contributorAnalysis.keyDevelopers,
-        window: contributorAnalysis.window,
-        source: contributorAnalysis.source,
-        partial: contributorAnalysis.partial,
-        botsExcluded: contributorAnalysis.botsExcluded,
-        peopleCount: contributorAnalysis.peopleCount,
-    };
+    // table/top already go out as `contributors` and `busFactor`; not stored twice.
+    const { table: _table, top: _top, ...busFactorAnalysis } = contributorAnalysis ?? {};
 
     // Analyze code churn
     const codeChurn = analyzers.calculateCodeChurn(codeFrequency);
@@ -232,6 +224,9 @@ async function fetchRepositoryData(repoName) {
     // health-14 snapshots found in the 2026-10 audit. The live view still
     // renders, with the partial-data warning.
     const blockers = warnings.filter((w) => PERSIST_BLOCKERS.includes(w));
+    // Fallback contributor data (all-time, no window) is a different method:
+    // persisting it would mix methods in Timeline/Benchmark history.
+    if (contributorAnalysis?.partial) blockers.push('contributors (partial)');
     let searchId = null;
     if (blockers.length === 0) {
         searchId = await analytics.saveSearch({

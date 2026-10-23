@@ -94,23 +94,20 @@ describe('githubService: failures are errors, not zeros', () => {
   });
 
   describe('fetchContributorStats', () => {
-    it('retries while GitHub computes (202) and returns the stats', async () => {
-      fetchMock
-        .mockReturnValueOnce(json({}, { status: 202 }))
-        .mockReturnValueOnce(json([{ author: { login: 'a' }, total: 3, weeks: [] }]));
-      await expect(githubService.fetchContributorStats('o', 'r', { delayMs: 0 })).resolves.toHaveLength(1);
-      expect(fetchMock).toHaveBeenCalledTimes(2);
+    it('returns the stats', async () => {
+      fetchMock.mockReturnValue(json([{ author: { login: 'a' }, total: 3, weeks: [] }]));
+      await expect(githubService.fetchContributorStats('o', 'r')).resolves.toHaveLength(1);
     });
 
-    it('throws after the retries if it is still 202 (caller uses the fallback)', async () => {
+    it('202 (GitHub still computing) throws at once, no waiting: the caller falls back', async () => {
       fetchMock.mockReturnValue(json({}, { status: 202 }));
-      await expect(githubService.fetchContributorStats('o', 'r', { retries: 2, delayMs: 0 })).rejects.toThrow(/202/);
-      expect(fetchMock).toHaveBeenCalledTimes(3);
+      await expect(githubService.fetchContributorStats('o', 'r')).rejects.toThrow(/202/);
+      expect(fetchMock).toHaveBeenCalledOnce();
     });
 
     it('empty repository (204) → []', async () => {
       fetchMock.mockReturnValue(Promise.resolve(new Response(null, { status: 204 })));
-      await expect(githubService.fetchContributorStats('o', 'r', { delayMs: 0 })).resolves.toEqual([]);
+      await expect(githubService.fetchContributorStats('o', 'r')).resolves.toEqual([]);
     });
   });
 

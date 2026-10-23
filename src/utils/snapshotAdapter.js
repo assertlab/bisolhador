@@ -86,13 +86,9 @@ export function createMockRepoData(snapshotData) {
       reason: 'snapshot'
     },
 
-    // Contribuições (valores padrão)
-    contributors: [],
-    busFactor: {
-      level: 'none',
-      message: 'Dados históricos - informações de contribuição não disponíveis',
-      criticalContributors: []
-    },
+    // Contribuições: não registradas neste snapshot (não é "sem contribuidores")
+    contributors: null,
+    busFactor: { level: 'notRecorded' },
 
     // Commits e PRs recentes (vazios para snapshots)
     recentCommits: [],

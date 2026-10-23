@@ -49,7 +49,7 @@ describe('peopleFromContributors (REST fallback: all-time only)', () => {
       { login: 'a', avatar_url: 'x', contributions: 5, type: 'User' },
       { login: 'renovate[bot]', avatar_url: 'y', contributions: 9, type: 'Bot' },
     ]);
-    expect(result).toEqual({ allTime: [{ login: 'a', avatar_url: 'x', commits: 5 }], recent: null, botsExcluded: 1 });
+    expect(result).toEqual({ allTime: [{ login: 'a', avatar_url: 'x', commits: 5 }], recent: null, botsExcluded: 1, capped: false });
   });
 });
 
@@ -79,6 +79,11 @@ describe('analyzeContributors', () => {
     const a = analyzeContributors(people, { source: 'stats' });
     expect(a.top).toEqual({ login: 'alice', avatar_url: 'https://avatars/alice', percentage: 60, level: 'warning' });
     expect(a.table.map((p) => p.percentage)).toEqual([60, 40]);
+  });
+
+  it('flags lists capped at the top 100 contributors (both sources are)', () => {
+    const many = Array.from({ length: 100 }, (_, i) => statsEntry(`p${i}`, recent(1)));
+    expect(analyzeContributors(peopleFromStats(many, { nowSeconds: NOW }), { source: 'stats' }).capped).toBe(true);
   });
 
   it('no humans → none', () => {

@@ -147,6 +147,10 @@
         "title": "Nenhum Contribuidor",
         "message": "Este repositório não tem contribuidores humanos analisáveis."
       },
+      "notRecorded": {
+        "title": "Contribuidores Não Registrados",
+        "message": "Este snapshot histórico não registrou os dados de contribuidores."
+      },
       "unavailable": {
         "title": "Contribuidores Indisponíveis",
         "message": "Não foi possível obter os contribuidores do GitHub (falha ou limite da API). Tente novamente em instantes."
@@ -170,7 +174,7 @@
       "allTimeOnly": "Commits de todo o histórico (janela de 12 meses indisponível no momento)",
       "botsExcluded_one": "{{count}} bot excluído",
       "botsExcluded_other": "{{count}} bots excluídos",
-      "partial": "lista parcial: até os 100 maiores contribuidores"
+      "capped": "considera só os 100 maiores contribuidores"
     }
   },
   "activity": {

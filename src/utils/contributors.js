@@ -7,6 +7,8 @@ import {
 } from '../constants.js';
 
 const WEEK_SECONDS = 7 * 24 * 3600;
+// Both GitHub sources return at most the top 100 contributors.
+const CAPPED_AT = 100;
 
 // dependabot[bot], renovate[bot], github-actions… are automation, not people:
 // counting them made "renovate[bot]" a key developer and a "user" in the UI.
@@ -37,7 +39,7 @@ export function peopleFromStats(stats, { nowSeconds = Date.now() / 1000, recentW
     const recentCommits = (entry.weeks ?? []).filter((w) => w.w >= since).reduce((sum, w) => sum + w.c, 0);
     if (recentCommits > 0) recent.push({ ...person, commits: recentCommits });
   }
-  return { allTime: allTime.sort(byCommitsDesc), recent: recent.sort(byCommitsDesc), botsExcluded };
+  return { allTime: allTime.sort(byCommitsDesc), recent: recent.sort(byCommitsDesc), botsExcluded, capped: (stats ?? []).length >= CAPPED_AT };
 }
 
 /** Fallback from GET /contributors: all-time only, no time window. */
@@ -47,8 +49,18 @@ export function peopleFromContributors(contributors) {
     allTime: people.map((c) => ({ login: c.login, avatar_url: c.avatar_url, commits: c.contributions })).sort(byCommitsDesc),
     recent: null,
     botsExcluded: (contributors ?? []).length - people.length,
+    capped: (contributors ?? []).length >= CAPPED_AT,
   };
 }
+
+// One style/label table for every place that shows the top-contributor level.
+const HEALTHY_STYLE = { bar: 'bg-green-500', text: 'text-green-700 dark:text-green-400', badge: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', labelKey: 'benchmark.riskLow' };
+export const TOP_SHARE_STYLE = {
+  critical: { bar: 'bg-red-500', text: 'text-red-700 dark:text-red-400', badge: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', labelKey: 'benchmark.riskCritical' },
+  warning: { bar: 'bg-yellow-500', text: 'text-yellow-700 dark:text-yellow-400', badge: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400', labelKey: 'benchmark.riskModerate' },
+  healthy: HEALTHY_STYLE,
+  none: HEALTHY_STYLE,
+};
 
 export function topShareLevel(percentage) {
   if (percentage == null) return 'none';
@@ -71,9 +83,7 @@ export function analyzeContributors(people, { source }) {
   const group = window === 'recent' ? people.recent : people.allTime;
   const total = group.reduce((sum, p) => sum + p.commits, 0);
 
-  const { busFactor, riskLevel, keyDevelopers } = calculateBusFactor(
-    group.map((p) => ({ login: p.login, avatar_url: p.avatar_url, contributions: p.commits })),
-  );
+  const { busFactor, riskLevel, keyDevelopers } = calculateBusFactor(group);
   const table = group.map((p) => ({ ...p, percentage: total > 0 ? round1((p.commits / total) * 100) : 0 }));
   const top = table[0]
     ? { login: table[0].login, avatar_url: table[0].avatar_url, percentage: table[0].percentage, level: topShareLevel(table[0].percentage) }
@@ -84,8 +94,9 @@ export function analyzeContributors(people, { source }) {
     source,
     partial: source !== 'stats',
     botsExcluded: people.botsExcluded,
+    capped: Boolean(people.capped),
     peopleCount: group.length,
-    busFactor: group.length ? busFactor : 0,
+    busFactor,
     riskLevel,
     keyDevelopers,
     top,
