@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 Fixed
+
+- **FIX**: **Benchmark** comparava dados incomparáveis sem avisar:
+  - lia o último registro mesmo sem relatório, o que zerava tudo;
+  - transformava todo valor ausente em 0 (health de fork "0%", quedas falsas para "0 ⭐" na linha de evolução);
+  - misturava métodos antigos e novos (lead time médio, self-merge, bus factor com bots e só 30 contribuidores);
+  - e não mostrava de quando era cada dado.
+
+  Agora:
+  - usa o registro mais recente **com relatório**;
+  - "não medido" aparece como N/A;
+  - valores medidos com métodos antigos aparecem como "não registrado", como no Dashboard;
+  - cada repositório mostra a data dos seus dados, e um aviso aparece quando os comparados têm mais de 7 dias de distância;
+  - a linha de evolução tem um ponto por dia;
+  - o filtro de período fica junto do único gráfico que ele afeta;
+  - repositórios renomeados juntam o histórico salvo sob o nome antigo (facebook/react → react/react);
+  - as cores dos gráficos deixam de usar uma string CSS inválida (`hsl(...)80`).
+
 ---
 
 ## [3.9.1] - 2026-10-23

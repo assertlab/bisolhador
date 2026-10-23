@@ -13,13 +13,13 @@ export function BenchmarkDetailTable({ repos }) {
 
       return {
         [t('benchmark.tableRepo')]: repo.fullName,
-        [t('benchmark.healthComparison')]: `${repo.healthScore}%`,
-        [t('stats.leadTime')]: repo.leadTime > 0
-          ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, repo.leadTimeUnit)}`
+        [t('benchmark.healthComparison')]: repo.healthScore == null ? 'N/A' : `${repo.healthScore}%`,
+        [t('stats.leadTime')]: repo.leadTime != null
+          ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, { count: repo.leadTime })}`
           : 'N/A',
-        [t('stats.divergence')]: repo.divergence > 0 ? repo.divergence.toFixed(1) : 'N/A',
-        [t('stats.codeChurn')]: repo.codeChurnRatio > 0 ? repo.codeChurnRatio.toFixed(2) : 'N/A',
-        [t('benchmark.busFactorRisk')]: repo.busFactorPercentage > 0
+        [t('stats.divergence')]: repo.divergence != null ? repo.divergence.toFixed(1) : 'N/A',
+        [t('stats.codeChurn')]: repo.codeChurnRatio != null ? repo.codeChurnRatio.toFixed(2) : 'N/A',
+        [t('benchmark.busFactorRisk')]: repo.busFactorPercentage != null
           ? `${repo.busFactorPercentage}% — ${riskLabel}`
           : 'N/A',
       };
@@ -89,22 +89,22 @@ export function BenchmarkDetailTable({ repos }) {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                    {repo.healthScore}%
+                    {repo.healthScore == null ? 'N/A' : `${repo.healthScore}%`}
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                    {repo.leadTime > 0
-                      ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, repo.leadTimeUnit)}`
+                    {repo.leadTime != null
+                      ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, { count: repo.leadTime })}`
                       : 'N/A'}
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                    {repo.divergence > 0 ? repo.divergence.toFixed(1) : 'N/A'}
+                    {repo.divergence != null ? repo.divergence.toFixed(1) : 'N/A'}
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
-                    {repo.codeChurnRatio > 0 ? repo.codeChurnRatio.toFixed(2) : 'N/A'}
+                    {repo.codeChurnRatio != null ? repo.codeChurnRatio.toFixed(2) : 'N/A'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadge}`}>
-                      {repo.busFactorPercentage > 0 ? `${repo.busFactorPercentage}% — ${riskLabel}` : 'N/A'}
+                      {repo.busFactorPercentage != null ? `${repo.busFactorPercentage}% — ${riskLabel}` : 'N/A'}
                     </span>
                   </td>
                 </tr>

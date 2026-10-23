@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import useChartTheme from '../../hooks/useChartTheme';
 import { createBaseChartOptions } from '../../lib/chartDefaults';
 import { intlLocale } from '../../i18n.js';
+import { withAlpha } from '../../utils/colors.js';
 
 const datasetConfigs = {
   popularity: [
@@ -11,13 +12,13 @@ const datasetConfigs = {
       labelKey: 'stats.stars',
       fallback: 'Stars',
       accessor: (repo) => repo.stars,
-      alphaHex: '80',
+      alpha: 0.5,
     },
     {
       labelKey: 'stats.forks',
       fallback: 'Forks',
       accessor: (repo) => repo.forks,
-      alphaHex: '60',
+      alpha: 0.375,
     },
   ],
   velocity: [
@@ -25,13 +26,13 @@ const datasetConfigs = {
       labelKey: 'stats.openIssues',
       fallback: 'Open Issues',
       accessor: (repo) => repo.openIssues,
-      alphaHex: '80',
+      alpha: 0.5,
     },
     {
       labelKey: 'stats.closedIssues',
       fallback: 'Closed Issues',
       accessor: (repo) => repo.closedIssues,
-      alphaHex: '60',
+      alpha: 0.375,
     },
   ],
   quality: [
@@ -39,13 +40,13 @@ const datasetConfigs = {
       labelKey: 'benchmark.leadTimeDays',
       fallback: 'Lead Time (days)',
       accessor: (repo) => repo.leadTime,
-      alphaHex: '80',
+      alpha: 0.5,
     },
     {
       labelKey: 'stats.codeChurn',
       fallback: 'Code Churn',
       accessor: (repo) => repo.codeChurnRatio,
-      alphaHex: '60',
+      alpha: 0.375,
     },
   ],
 };
@@ -72,7 +73,7 @@ export default function BenchmarkComparisonChart({ repos, metricCategory = 'popu
       datasets: activeConfigs.map((config) => ({
         label: t(config.labelKey, config.fallback),
         data: repos?.map(config.accessor) ?? [],
-        backgroundColor: repos?.map((repo) => repo.color + config.alphaHex) ?? [],
+        backgroundColor: repos?.map((repo) => withAlpha(repo.color, config.alpha)) ?? [],
         borderColor: repos?.map((repo) => repo.color) ?? [],
         borderWidth: 2,
       })),

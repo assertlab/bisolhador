@@ -21,14 +21,14 @@ export function BenchmarkHealthBars({ repos }) {
                   {repo.fullName}
                 </span>
                 <span className="font-semibold text-shark dark:text-white">
-                  {repo.healthScore}%
+                  {repo.healthScore == null ? 'N/A' : `${repo.healthScore}%`}
                 </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                 <div
                   className="h-2 rounded-full transition-all"
                   style={{
-                    width: `${repo.healthScore}%`,
+                    width: `${repo.healthScore ?? 0}%`,
                     backgroundColor: repo.color,
                   }}
                 ></div>

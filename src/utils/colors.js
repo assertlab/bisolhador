@@ -10,3 +10,10 @@ export function generateColor(seed) {
   const hue = (seed * GOLDEN_ANGLE) % 360;
   return `hsl(${hue}, 70%, 50%)`;
 }
+
+// Translucent variant for chart fills. Appending a hex alpha ("hsl(...)80"),
+// as the charts did until 2026-10, is an invalid CSS color.
+export function withAlpha(color, alpha) {
+  const hsl = /^hsl\(([^)]+)\)$/.exec(color);
+  return hsl ? `hsla(${hsl[1]}, ${alpha})` : color;
+}

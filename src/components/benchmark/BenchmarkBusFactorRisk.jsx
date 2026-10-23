@@ -30,8 +30,8 @@ export function BenchmarkBusFactorRisk({ repos }) {
                     {repo.fullName}
                   </span>
                   <span className={`font-semibold ${textBadge}`}>
-                    {pct > 0 ? `${pct}%` : 'N/A'}
-                    {repo.busFactorTopContributor && pct > 0 && (
+                    {pct == null ? 'N/A' : `${pct}%`}
+                    {repo.busFactorTopContributor && pct != null && (
                       <span className="text-xs text-gray-400 dark:text-slate-500 ml-1">
                         ({repo.busFactorTopContributor})
                       </span>
@@ -41,7 +41,7 @@ export function BenchmarkBusFactorRisk({ repos }) {
                 <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                   <div
                     className={`h-2 rounded-full transition-all ${barColor}`}
-                    style={{ width: `${Math.min(pct, 100)}%` }}
+                    style={{ width: `${Math.min(pct ?? 0, 100)}%` }}
                   ></div>
                 </div>
               </div>

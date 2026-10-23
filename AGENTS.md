@@ -65,6 +65,7 @@ src/
 │   ├── analyzers.js            # Pure functions: health score, process metrics
 │   ├── repoTree.js             # Maturity detectors (tests/CI/Docker/linter: ✓/✗/? not verified), issue-template dir, fork profile from tree
 │   ├── branches.js             # Zombie branches: excludes default, protected and release/maintenance lines
+│   ├── benchmarkData.js        # Benchmark rows from history: latest row with a report, null = N/A, old-method values not recorded, one point per day
 │   ├── contributors.js         # Contributor analysis: bots excluded, 12-month window, top concentration (feeds busFactor.js)
 │   ├── busFactor.js            # Advanced Bus Factor (Pareto 70% threshold)
 │   ├── formatters.js           # Date/number formatting

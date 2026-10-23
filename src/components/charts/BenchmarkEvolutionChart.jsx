@@ -5,6 +5,7 @@ import useChartTheme from '../../hooks/useChartTheme';
 import { createBaseChartOptions } from '../../lib/chartDefaults';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
+import { withAlpha } from '../../utils/colors.js';
 
 /**
  * Gráfico de evolução temporal comparativa
@@ -29,10 +30,11 @@ export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
         label: repo.fullName,
         data: sortedHistory.map((point) => ({
           x: point.date,
-          y: point[metric] || 0,
+          y: point[metric] ?? null, // not measured: a gap, not a drop to 0
         })),
         borderColor: repo.color,
-        backgroundColor: repo.color + '20',
+        backgroundColor: withAlpha(repo.color, 0.125),
+        spanGaps: true,
         tension: 0.4,
         fill: false,
         pointRadius: 3,

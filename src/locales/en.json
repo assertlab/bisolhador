@@ -346,6 +346,8 @@
     }
   },
   "benchmark": {
+    "dataFrom": "Data from",
+    "dateGap": "The compared repositories have data from different dates (up to {{days}} days apart): each shows its latest saved record, dated in its card. To compare the same moment, analyze them again on the search page.",
     "title": "Repository Benchmark",
     "subtitle": "Compare up to 10 repositories simultaneously and visualize metrics evolution",
     "searchLabel": "Add repository",
