@@ -5,12 +5,11 @@ import { getItem } from "../utils/storage.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
 import {
   GITHUB_PER_PAGE_COMMITS,
-  GITHUB_PER_PAGE_BRANCHES,
+  BRANCH_SCAN_MAX,
   GITHUB_PER_PAGE_RECENT_PRS,
   GITHUB_PER_PAGE_PR_STATS,
   GITHUB_PER_PAGE_CONTRIBUTORS,
   GITHUB_PER_PAGE_RELEASES,
-  ZOMBIE_BRANCH_DAYS,
   WEEKS_IN_YEAR,
 } from "../constants.js";
 
@@ -29,6 +28,35 @@ function getHeaders() {
     headers["Authorization"] = `token ${token}`;
   }
   return headers;
+}
+
+function lastPageFromLink(linkHeader) {
+  const match = linkHeader?.match(/<([^>]+)>;\s*rel="last"/);
+  if (!match) return null;
+  const page = Number(new URL(match[1]).searchParams.get("page"));
+  return Number.isFinite(page) && page > 0 ? page : null;
+}
+
+// POST a query to the GitHub GraphQL API (token required). owner/repo always
+// go in `variables`, never interpolated into the query. Returns `data`;
+// throws when there is none; partial errors (data + errors) are logged.
+async function graphql(query, variables, label) {
+  const response = await fetch(`${GITHUB_BASE_URL}/graphql`, {
+    method: "POST",
+    headers: { ...getHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!response.ok) {
+    throw new Error(`GraphQL ${label} failed: HTTP ${response.status}`);
+  }
+  const body = await response.json();
+  if (!body.data) {
+    throw new Error(`GraphQL ${label} failed: ${body.errors?.[0]?.message ?? "no data"}`);
+  }
+  if (body.errors?.length) {
+    console.warn(`[githubService] GraphQL ${label} returned partial data:`, body.errors[0].message);
+  }
+  return body.data;
 }
 
 async function fetchSearchCount(owner, repo, qualifiers) {
@@ -76,53 +104,60 @@ export const githubService = {
     return data;
   },
 
-  async fetchBranches(owner, repo) {
-    // Throws on failure (the caller shows n/d) instead of { count: 0, zombies: 0 },
-    // which rendered as a green "no zombie branches" badge.
-    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=${GITHUB_PER_PAGE_BRANCHES}`;
+  // Exact branch count with one request: per_page=1, so the Link header's
+  // rel="last" page number IS the count. Used without a token (the old
+  // per_page=20 list made "Total de Branches" 20 for repos with 1,000+).
+  async fetchBranchCount(owner, repo) {
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=1`;
     const response = await fetch(url, { headers: getHeaders() });
-
     if (!response.ok) {
       throw new Error(`Branches failed: HTTP ${response.status}`);
     }
+    const lastPage = lastPageFromLink(response.headers.get("link"));
+    if (lastPage !== null) return lastPage;
+    return (await response.json()).length;
+  },
 
-    const data = await response.json();
-    const count = data.length;
-    let zombies = 0;
-    // A branch whose last commit couldn't be checked makes the zombie count
-    // unknown (null → n/d), not "one fewer zombie".
-    let unchecked = 0;
-    const now = new Date();
-    const ninetyDaysAgo = new Date(
-      now.getTime() - ZOMBIE_BRANCH_DAYS * 24 * 60 * 60 * 1000,
-    );
-
-    for (const branch of data) {
-      if (!branch.commit || !branch.commit.url) {
-        unchecked++;
-        continue;
-      }
-
-      try {
-        const commitResponse = await fetch(branch.commit.url, {
-          headers: getHeaders(),
-        });
-        if (commitResponse.ok) {
-          const commitData = await commitResponse.json();
-          const commitDate = new Date(commitData.commit.author.date);
-          if (commitDate < ninetyDaysAgo) {
-            zombies++;
+  // With a token: every branch's last commit date via GraphQL (100 per page,
+  // up to BRANCH_SCAN_MAX), instead of one REST request per branch for the
+  // first 20 only. Throws on failure; requires a token (callers check).
+  async fetchBranchActivity(owner, repo) {
+    // refUpdateRule reflects the effective protection (rulesets included);
+    // branchProtectionRule only classic rules.
+    const query = `query($owner: String!, $name: String!, $after: String) {
+      repository(owner: $owner, name: $name) {
+        refs(refPrefix: "refs/heads/", first: 100, after: $after) {
+          totalCount
+          pageInfo { hasNextPage endCursor }
+          nodes {
+            name
+            branchProtectionRule { id }
+            refUpdateRule { requiredApprovingReviewCount }
+            target { ... on Commit { committedDate } }
           }
-        } else {
-          unchecked++;
         }
-      } catch (error) {
-        console.warn("Error fetching commit details for branch:", branch.name, error);
-        unchecked++;
       }
+    }`;
+    const branches = [];
+    let after = null;
+    let totalCount = 0;
+    let hasNextPage = true;
+    while (hasNextPage && branches.length < BRANCH_SCAN_MAX) {
+      const data = await graphql(query, { owner, name: repo, after }, "branches");
+      const refs = data.repository?.refs;
+      if (!refs) throw new Error("GraphQL branches failed: no refs");
+      totalCount = refs.totalCount;
+      for (const node of refs.nodes ?? []) {
+        if (!node) continue; // partial-error responses can contain null nodes
+        branches.push({
+          name: node.name,
+          protected: Boolean(node.branchProtectionRule || node.refUpdateRule),
+          committedDate: node.target?.committedDate ?? null,
+        });
+      }
+      ({ hasNextPage, endCursor: after } = refs.pageInfo);
     }
-
-    return { count, zombies: unchecked > 0 ? null : zombies };
+    return { totalCount, branches, capped: hasNextPage };
   },
 
   // Fallback for contributor analysis when /stats/contributors isn't ready:
@@ -238,18 +273,9 @@ export const githubService = {
       throw new Error(`Releases failed: HTTP ${response.status}`);
     }
 
-    // Parse Link header for last page to get total count
-    const linkHeader = response.headers.get("link");
-    if (linkHeader) {
-      const lastMatch = linkHeader.match(/<([^>]+)>;\s*rel="last"/);
-      if (lastMatch) {
-        const lastUrl = new URL(lastMatch[1]);
-        const page = lastUrl.searchParams.get("page");
-        if (page) {
-          return parseInt(page);
-        }
-      }
-    }
+    // per_page=1, so the Link header's rel="last" page number is the total
+    const lastPage = lastPageFromLink(response.headers.get("link"));
+    if (lastPage !== null) return lastPage;
 
     // No Link header = single page: the first response already has the full list.
     const data = await response.json();
@@ -364,29 +390,11 @@ export const githubService = {
       }
     }`;
 
-    const response = await fetch(`${GITHUB_BASE_URL}/graphql`, {
-      method: "POST",
-      headers: { ...getHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query,
-        // Sent as GraphQL variables, never interpolated into the query string.
-        variables: { owner, name: repo, n: GITHUB_PER_PAGE_PR_STATS },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`GraphQL PR review stats failed: ${response.status}`);
-    }
-
-    // GraphQL can return partial data alongside `errors` (e.g. one node
-    // FORBIDDEN); use the data when it's there, fail only when it isn't.
-    const body = await response.json();
-    const nodes = body.data?.repository?.pullRequests?.nodes;
+    // Sent as GraphQL variables, never interpolated into the query string.
+    const data = await graphql(query, { owner, name: repo, n: GITHUB_PER_PAGE_PR_STATS }, "PR review stats");
+    const nodes = data.repository?.pullRequests?.nodes;
     if (!Array.isArray(nodes)) {
-      throw new Error(`GraphQL PR review stats failed: ${body.errors?.[0]?.message ?? "no data"}`);
-    }
-    if (body.errors?.length) {
-      console.warn("[githubService] GraphQL PR review stats returned partial data:", body.errors[0].message);
+      throw new Error("GraphQL PR review stats failed: no pull requests");
     }
 
     return toPullRequestStats(nodes);

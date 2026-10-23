@@ -63,6 +63,7 @@ src/
 │   └── analytics.js            # Hybrid analytics (GA4 + Supabase)
 ├── utils/
 │   ├── analyzers.js            # Pure functions: health score, maturity, process metrics
+│   ├── branches.js             # Zombie branches: excludes default, protected and release/maintenance lines
 │   ├── contributors.js         # Contributor analysis: bots excluded, 12-month window, top concentration (feeds busFactor.js)
 │   ├── busFactor.js            # Advanced Bus Factor (Pareto 70% threshold)
 │   ├── formatters.js           # Date/number formatting

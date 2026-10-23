@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🐛 Fixed
+
+- **FIX**: **Total de Branches e Branches Zumbis** olhavam só as 20 primeiras branches em ordem alfabética: o react aparecia com "20 branches" (tem 1.011) e 20 zumbis — todas branches de release intencionais (`0.3-stable`…). Agora o total é exato (com ou sem token), e com token os zumbis vêm de **todas** as branches (até 1.000) via uma consulta GraphQL, **sem contar a principal, as protegidas e as de release/manutenção** (`1.x`, `0.3-stable`, `release/…`). O critério aparece no tooltip do badge. Sem token, zumbis ficam N/A (calcular exigiria uma requisição por branch). Antes eram até 20 requisições sequenciais por busca.
+
+---
+
 ## [3.8.0] - 2026-10-23
 
 ### 🐛 Fixed

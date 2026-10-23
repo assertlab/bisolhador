@@ -226,7 +226,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <h3 className="text-lg font-semibold text-shark dark:text-white pt-4">{t('app.governanceMaturity')}</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <HealthScoreCard health={displayData.health} />
-              <MaturityCard maturity={displayData.maturity} codeReview={displayData.codeReview} />
+              <MaturityCard maturity={displayData.maturity} codeReview={displayData.codeReview} branchAnalysis={displayData.stats.branchAnalysis} />
             </div>
 
             {/* 4.5. Análise de Risco (Bus Factor) */}
