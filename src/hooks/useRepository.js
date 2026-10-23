@@ -8,6 +8,13 @@ import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE } from '../constants.js';
 
+// A snapshot isn't persisted when any of these failed: it would become
+// permanent history (Timeline/Benchmark/Ranking) with fake values — e.g. the
+// health-14 snapshots found in the 2026-10 audit. Names match endpointNames.
+// "No community profile" (forks, 404) is not a failure: forks are saved, with
+// health unavailable.
+const PERSIST_BLOCKERS = ['communityProfile', 'openIssues', 'closedIssues', 'pullRequests', 'mergedPRs'];
+
 // Repository data fetching function for TanStack Query
 async function fetchRepositoryData(repoName) {
     if (!repoName || !repoName.includes('/')) {
@@ -203,9 +210,7 @@ async function fetchRepositoryData(repoName) {
     // permanent history (Timeline/Benchmark/Ranking) with fake zeros — e.g. the
     // health-14 snapshots found in the 2026-10 audit. The live view still
     // renders, with the partial-data warning.
-    const PERSIST_BLOCKERS = ['communityProfile', 'openIssues', 'closedIssues', 'pullRequests', 'mergedPRs'];
     const blockers = warnings.filter((w) => PERSIST_BLOCKERS.includes(w));
-    if (!health.available) blockers.push('healthScore');
     let searchId = null;
     if (blockers.length === 0) {
         searchId = await analytics.saveSearch({

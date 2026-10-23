@@ -63,6 +63,36 @@ describe('githubService: failures are errors, not zeros', () => {
     await expect(githubService.fetchBranches('react', 'react')).rejects.toThrow(/403/);
   });
 
+  it('fetchBranches: zombies unknown (null) when any branch commit could not be checked', async () => {
+    const old = new Date(Date.now() - 400 * 864e5).toISOString();
+    fetchMock
+      .mockReturnValueOnce(json([{ name: 'a', commit: { url: 'u/a' } }, { name: 'b', commit: { url: 'u/b' } }]))
+      .mockReturnValueOnce(json({ commit: { author: { date: old } } }))
+      .mockReturnValueOnce(json({ message: 'rate limited' }, { status: 403 }));
+    await expect(githubService.fetchBranches('o', 'r')).resolves.toEqual({ count: 2, zombies: null });
+  });
+
+  it('fetchBranches: counts zombies when every branch was checked', async () => {
+    const old = new Date(Date.now() - 400 * 864e5).toISOString();
+    const fresh = new Date().toISOString();
+    fetchMock
+      .mockReturnValueOnce(json([{ name: 'a', commit: { url: 'u/a' } }, { name: 'b', commit: { url: 'u/b' } }]))
+      .mockReturnValueOnce(json({ commit: { author: { date: old } } }))
+      .mockReturnValueOnce(json({ commit: { author: { date: fresh } } }));
+    await expect(githubService.fetchBranches('o', 'r')).resolves.toEqual({ count: 2, zombies: 1 });
+  });
+
+  it('fetchReleasesCount: single page (no Link header) counts the first response, no second request', async () => {
+    fetchMock.mockReturnValue(json([{ id: 1 }]));
+    await expect(githubService.fetchReleasesCount('o', 'r')).resolves.toBe(1);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('fetchReleasesCount: reads the total from the Link header', async () => {
+    fetchMock.mockReturnValue(json([{ id: 1 }], { headers: { link: '<https://api.github.com/repositories/1/releases?per_page=1&page=137>; rel="last"' } }));
+    await expect(githubService.fetchReleasesCount('o', 'r')).resolves.toBe(137);
+  });
+
   it('fetchReleasesCount throws on failure instead of returning 0', async () => {
     fetchMock.mockReturnValue(json({ message: 'boom' }, { status: 500 }));
     await expect(githubService.fetchReleasesCount('react', 'react')).rejects.toThrow(/500/);

@@ -108,6 +108,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
     // 3x same as a transient failure would — wasteful but not incorrect.
     // Fixing that cleanly requires attaching a status code in githubService.js.
     setIsCheckingRepo(true);
+    let canonicalName = repoName;
     try {
       const repoInfo = await withExponentialBackoff(
         () => githubService.fetchRepository(owner, repo),
@@ -118,6 +119,9 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
         showToast(t('errors.privateRepo'), 'error');
         return;
       }
+      // Snapshots are saved under the canonical name (renames: facebook/react
+      // → react/react); looking history up by the typed name finds stale rows.
+      canonicalName = repoInfo?.full_name || repoName;
     } catch {
       // All retries exhausted — fail closed. We can't confirm this repo is
       // public, so we refuse to add it rather than risk processing a private one.
@@ -127,10 +131,16 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
       setIsCheckingRepo(false);
     }
 
+    if (selectedRepos.some(r => r.fullName.toLowerCase() === canonicalName.toLowerCase())) {
+      showToast(t('benchmark.alerts.alreadyAdded', 'Este repositório já foi adicionado'), 'warning');
+      return;
+    }
+
+    const [canonicalOwner, canonicalRepo] = canonicalName.split('/');
     const newRepo = {
-      fullName: repoName,
-      owner,
-      repo,
+      fullName: canonicalName,
+      owner: canonicalOwner,
+      repo: canonicalRepo,
       color: generateColor(selectedRepos.length)
     };
 

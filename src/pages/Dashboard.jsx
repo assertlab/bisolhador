@@ -225,7 +225,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             {/* 4. Governança e Maturidade */}
             <h3 className="text-lg font-semibold text-shark dark:text-white pt-4">{t('app.governanceMaturity')}</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <HealthScoreCard score={displayData.health.score} files={displayData.health.files} reason={displayData.health.reason} />
+              <HealthScoreCard health={displayData.health} />
               <MaturityCard maturity={displayData.maturity} codeReview={displayData.codeReview} />
             </div>
 

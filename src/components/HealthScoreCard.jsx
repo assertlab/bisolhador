@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 
-export function HealthScoreCard({ score, files, reason }) {
+export function HealthScoreCard({ health }) {
   const { t } = useTranslation();
-  // null = not measured (no community profile / request failed): n/d, not 0%.
-  const unavailable = score === null || score === undefined || !files;
+  const { score, files, reason } = health ?? {};
+  // null score = not measured (no community profile / request failed): N/A, not 0%.
+  // files null = checklist not recorded (old snapshots without full_report).
+  const unavailable = score == null;
   // Determinar cor baseada no score
   let scoreColor;
   let bgColor;
@@ -50,7 +52,7 @@ export function HealthScoreCard({ score, files, reason }) {
       )}
 
       {/* Checklist Grid */}
-      {!unavailable && (
+      {files && (
       <div className="grid grid-cols-2 gap-3">
         <div className="flex items-center gap-2 text-sm">
           {files.hasReadme ? '✅' : '❌'}

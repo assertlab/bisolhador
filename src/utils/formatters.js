@@ -8,11 +8,8 @@ export const formatters = {
     // Format large numbers with dynamic locale
     formatNumber(value, locale = 'pt-BR') {
         // null/undefined = not measured: show N/A, never an empty cell or a 0.
-        if (value === null || value === undefined) {
+        if (value == null || value === 'N/A') {
             return 'N/A';
-        }
-        if (value === 'N/A') {
-            return value;
         }
 
         const num = typeof value === 'string' ? parseFloat(value) : value;

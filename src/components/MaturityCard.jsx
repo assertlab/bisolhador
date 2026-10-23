@@ -40,7 +40,7 @@ export function MaturityCard({ maturity, codeReview }) {
           ? renderBadge(t('maturity.badges.codeReview', { percentage: codeReview.selfMergePercentage }), true, codeReview.color)
           : renderBadge(t('maturity.badges.codeReviewUnavailable'), false, 'gray')
         }
-        {maturity.zombies === null || maturity.zombies === undefined
+        {maturity.zombies == null
           ? renderBadge(t('maturity.badges.zombiesUnavailable'), false, 'gray')
           : maturity.zombies === 0
           ? renderBadge(t('maturity.badges.noZombies'), true, 'green')

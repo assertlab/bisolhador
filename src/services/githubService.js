@@ -88,13 +88,19 @@ export const githubService = {
     const data = await response.json();
     const count = data.length;
     let zombies = 0;
+    // A branch whose last commit couldn't be checked makes the zombie count
+    // unknown (null → n/d), not "one fewer zombie".
+    let unchecked = 0;
     const now = new Date();
     const ninetyDaysAgo = new Date(
       now.getTime() - ZOMBIE_BRANCH_DAYS * 24 * 60 * 60 * 1000,
     );
 
     for (const branch of data) {
-      if (!branch.commit || !branch.commit.url) continue;
+      if (!branch.commit || !branch.commit.url) {
+        unchecked++;
+        continue;
+      }
 
       try {
         const commitResponse = await fetch(branch.commit.url, {
@@ -106,18 +112,16 @@ export const githubService = {
           if (commitDate < ninetyDaysAgo) {
             zombies++;
           }
+        } else {
+          unchecked++;
         }
       } catch (error) {
-        console.warn(
-          "Error fetching commit details for branch:",
-          branch.name,
-          error,
-        );
-        // Ignore, as per fail-safe
+        console.warn("Error fetching commit details for branch:", branch.name, error);
+        unchecked++;
       }
     }
 
-    return { count, zombies };
+    return { count, zombies: unchecked > 0 ? null : zombies };
   },
 
   async fetchContributors(owner, repo) {
@@ -238,33 +242,9 @@ export const githubService = {
       }
     }
 
-    // Fallback for MVP: fetch all releases and count
-    const allUrl = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases`;
-    const allResponse = await fetch(allUrl, { headers: getHeaders() });
-
-    if (!allResponse.ok) {
-      throw new Error(`Releases failed: HTTP ${allResponse.status}`);
-    }
-
-    const data = await allResponse.json();
-    const allLinkHeader = allResponse.headers.get("link");
-
-    if (allLinkHeader) {
-      const allLastMatch = allLinkHeader.match(/<([^>]+)>;\s*rel="last"/);
-      if (allLastMatch) {
-        const allLastUrl = new URL(allLastMatch[1]);
-        const allPage = allLastUrl.searchParams.get("page");
-        if (allPage) {
-          return parseInt(allPage);
-        }
-      } else {
-        // If paginated but can't parse last page, assume 30+
-        return "30+";
-      }
-    } else {
-      // No pagination, exact count
-      return data.length;
-    }
+    // No Link header = single page: the first response already has the full list.
+    const data = await response.json();
+    return data.length;
   },
 
   async fetchCommitActivity(owner, repo) {

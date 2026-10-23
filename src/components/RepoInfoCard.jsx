@@ -90,7 +90,8 @@ export function RepoInfoCard({ data, onShareSuccess }) {
   const handleShare = async () => {
     try {
       if (!data.searchId) {
-        showToast(t('share.errorNoData'), 'error');
+        // Partial results aren't saved (useRepository PERSIST_BLOCKERS), so there's no permalink.
+        showToast(t(data._warnings?.length ? 'share.errorNotSaved' : 'share.errorNoData'), 'error');
         return;
       }
 

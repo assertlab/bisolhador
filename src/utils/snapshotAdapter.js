@@ -34,20 +34,22 @@ export function createMockRepoData(snapshotData) {
     searchId: snapshotData.id,
 
     // Estatísticas básicas
+    // Snapshot sem full_report só tem as colunas planas: o resto é null (N/A),
+    // não 0 — "não registrado" não é "zero".
     stats: {
-      branches: 0,
-      prs: 0,
-      merges: 0,
+      branches: null,
+      prs: null,
+      merges: null,
       prsPerBranch: 'N/A',
-      releases: 0
+      releases: null
     },
 
     // Métricas calculadas
     metrics: {
       stars: snapshotData.stars || 0,
       forks: snapshotData.forks || 0,
-      openIssues: snapshotData.issues || 0,
-      closedIssues: 0,
+      openIssues: snapshotData.issues ?? null,
+      closedIssues: null,
       resolutionRate: 'N/A',
       leadTime: {
         value: 'N/A',
@@ -63,16 +65,8 @@ export function createMockRepoData(snapshotData) {
 
     // Health score
     health: {
-      score: snapshotData.health_score || 0,
-      files: {
-        readme: false,
-        license: false,
-        contributing: false,
-        description: false,
-        codeOfConduct: false,
-        issueTemplate: false,
-        prTemplate: false
-      }
+      score: snapshotData.health_score ?? null,
+      files: null // checklist não registrado no snapshot
     },
 
     // Maturidade (valores padrão)

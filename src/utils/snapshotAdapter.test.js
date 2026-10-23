@@ -34,7 +34,21 @@ describe('createMockRepoData', () => {
     const data = createMockRepoData({ repo_name: 'owner/repo', stars: 5, forks: 2 });
     expect(data.fullName).toBe('owner/repo');
     expect(data.url).toBe('https://github.com/owner/repo');
-    expect(data.metrics).toMatchObject({ stars: 5, forks: 2, openIssues: 0 });
+    expect(data.metrics).toMatchObject({ stars: 5, forks: 2 });
+  });
+
+  it('leaves what the flat columns do not record as null (N/A), never 0', () => {
+    const data = createMockRepoData({ repo_name: 'owner/repo' });
+    expect(data.stats).toMatchObject({ branches: null, prs: null, merges: null, releases: null });
+    expect(data.metrics).toMatchObject({ openIssues: null, closedIssues: null });
+    expect(data.health).toEqual({ score: null, files: null });
+    expect(data.maturity.zombies).toBeNull();
+  });
+
+  it('keeps recorded flat columns', () => {
+    const data = createMockRepoData({ repo_name: 'owner/repo', issues: 7, health_score: 57 });
+    expect(data.metrics.openIssues).toBe(7);
+    expect(data.health.score).toBe(57);
   });
 
   it('marks review metrics unavailable instead of inventing 0%', () => {
