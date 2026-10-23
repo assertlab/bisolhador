@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    # Um PR semanal por grupo em vez de um por pacote; majors continuam isolados, exceto nos grupos eslint e i18n.
+    # Um PR semanal por grupo em vez de um por pacote; majors continuam isolados, exceto nos grupos eslint, i18n e vite.
     groups:
       # ESLint e plugins quebram separados (peer ranges, regras novas no
       # recommended): todas as versões, majors inclusive, num PR só.
@@ -17,6 +17,9 @@ updates:
       # Mesmo problema: react-i18next N exige i18next de uma faixa específica.
       i18n:
         patterns: ['i18next', 'react-i18next', 'i18next-*']
+      # @vitejs/plugin-react N exige vite N (e vice-versa): #50/#52 falharam separados.
+      vite:
+        patterns: ['vite', '@vitejs/*', 'vitest', '@vitest/*'] # vitest também depende do major do vite
       runtime-minor-patch:
         dependency-type: production
         update-types: [minor, patch]
@@ -24,7 +27,7 @@ updates:
       dev-minor-patch:
         dependency-type: development
         update-types: [minor, patch]
-        exclude-patterns: ['eslint', '@eslint/*', 'eslint-plugin-*']
+        exclude-patterns: ['eslint', '@eslint/*', 'eslint-plugin-*', 'vite', '@vitejs/*', 'vitest', '@vitest/*']
     ignore:
       # Substitui um check obrigatório que o CI ainda não tem: o v4 passa em lint+build mas
       # quebra o export de PDF (ver docs/ROADMAP.md). O job `smoke` do CI já

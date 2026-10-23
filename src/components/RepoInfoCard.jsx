@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { formatters } from '../utils/formatters.js';
@@ -18,6 +19,7 @@ export function RepoInfoCard({ data, onShareSuccess }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === 'pt' ? 'pt-BR' : 'en-US';
   const navigate = useNavigate();
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   if (!data) return null;
 
   const [timelineOwner, timelineRepo] = (data.fullName || '').split('/');
@@ -56,8 +58,13 @@ export function RepoInfoCard({ data, onShareSuccess }) {
     return t('repo.ageYears', { count: years });
   };
 
-  const handleDownloadPDF = () => {
-    exportToPDF();
+  const handleDownloadPDF = async () => {
+    setIsExportingPdf(true);
+    try {
+      await exportToPDF();
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const handleDownloadJSON = () => {
@@ -201,7 +208,9 @@ export function RepoInfoCard({ data, onShareSuccess }) {
           </button>
           <button
             onClick={handleDownloadPDF}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg border border-blue-600 hover:border-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors"
+            disabled={isExportingPdf}
+            aria-busy={isExportingPdf}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg border border-blue-600 hover:border-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors disabled:opacity-60 disabled:cursor-wait"
             title={t('header.downloadTitle')}
           >
             <svg aria-hidden="true" className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
