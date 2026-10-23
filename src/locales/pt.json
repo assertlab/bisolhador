@@ -47,10 +47,10 @@
     "ageYears": "{{count}} anos",
     "divergenceNeedsToken": "Requer token do GitHub",
     "divergenceUnavailable": "Indisponível",
-    "divergenceNone": "Sem dados (0 PRs)",
-    "divergenceLow": "Baixa (Silencioso)",
-    "divergenceMedium": "Saudável",
-    "divergenceHigh": "Alta (Debate Intenso)"
+    "divergenceNone": "Sem PRs mergeados",
+    "divergenceLow": "Pouca discussão",
+    "divergenceMedium": "Discussão moderada",
+    "divergenceHigh": "Muita discussão"
   },
   "app": {
     "loadingPage": "Carregando...",
@@ -75,15 +75,24 @@
     "openIssuesTooltip": "Número de issues (problemas ou solicitações) que ainda estão abertas no repositório.",
     "closedIssuesTooltip": "Total de issues já resolvidas, com taxa de resolução mostrando eficiência.",
     "codeChurnTooltip": "Razão entre código novo adicionado e código removido/refatorado. Indica qualidade das mudanças.",
-    "leadTimeTooltip": "Tempo médio entre a criação de um Pull Request e sua aprovação/merge. Indica velocidade do processo de revisão.",
-    "divergenceTooltip": "Média de comentários (gerais e de revisão de código) por PR, nos {{n}} PRs mais recentes. Requer token do GitHub."
+    "leadTimeTooltip": "Mediana do tempo entre a criação e o merge de um Pull Request, nos até {{n}} PRs mergeados mais recentes (sem contar bots). A mediana não é distorcida por poucos PRs muito lentos; o p90 mostra a cauda (90% foram mergeados até esse tempo).",
+    "divergenceTooltip": "Média de comentários de pessoas (gerais e de revisão de código) por PR, nos até {{n}} PRs mergeados mais recentes. Comentários e PRs de bots não contam. Requer token do GitHub.",
+    "leadTimeSample": "mediana de {{n}} PRs · p90 {{p90}}",
+    "leadTimeUnavailable": {
+      "noMerged": "Nenhum PR mergeado recentemente",
+      "error": "Não foi possível obter os PRs",
+      "snapshot": "Não registrado neste snapshot"
+    },
+    "prSample": "{{n}} PRs"
   },
   "language": {
     "pt": "PT",
     "en": "EN"
   },
   "units": {
+    "hours_one": "hora",
     "hours": "horas",
+    "days_one": "dia",
     "days": "dias"
   },
   "button": {
@@ -120,7 +129,7 @@
       "tests": "🧪 Testes",
       "ciCd": "⚡ CI/CD",
       "docker": "🐳 Docker",
-      "codeReview": "🛡️ Code Review ({{percentage}}%)",
+      "codeReview": "🛡️ Sem aprovação ({{percentage}}%)",
       "codeReviewUnavailable": "🛡️ Code Review (N/A)",
       "zombiesUnavailable": "🧟 Branches Zumbis (N/A)",
       "noZombies": "✅ Nenhuma Branch Zumbi",
@@ -128,15 +137,16 @@
       "linter": "🧹 Linter"
     },
     "alert": {
-      "title": "Atenção: Self-Merges Detectados",
-      "message": "{{percentage}}% dos PRs foram merged pelo próprio autor. Considere implementar revisões obrigatórias para melhorar a qualidade."
+      "title": "Atenção: PRs mergeados sem aprovação",
+      "message": "{{percentage}}% dos {{n}} PRs mergeados mais recentes não tiveram aprovação de outra pessoa antes do merge. Considere exigir revisão (branch protection) para melhorar a qualidade."
     },
     "zombieCriteria": "Branches sem commits há mais de {{days}} dias, sem contar a principal, as protegidas e as de release/manutenção (ex.: 1.x, 0.3-stable, release/2.0). {{checked}} branches verificadas.",
     "zombieCapped": "Varredura limitada às primeiras {{max}} branches: o número é um mínimo.",
     "unavailable": {
-      "noToken": "Code Review, Divergência e Branches Zumbis exigem um token do GitHub (ícone de configurações no topo): sem token, a API do GitHub não informa quem fez o merge de cada PR, quantos comentários ele recebeu, nem a data do último commit de cada branch.",
+      "noToken": "Code Review, Divergência e Branches Zumbis exigem um token do GitHub (ícone de configurações no topo): sem token, a API do GitHub não informa as aprovações e os comentários de cada PR, nem a data do último commit de cada branch.",
       "error": "Não foi possível obter os dados de revisão dos PRs (falha ou limite da API GraphQL do GitHub). Tente novamente em instantes.",
-      "snapshot": "Este snapshot histórico não registrou os dados de revisão dos PRs."
+      "snapshot": "Este snapshot histórico não registrou os dados de revisão dos PRs.",
+      "noMerged": "Nenhum PR mergeado recentemente (sem contar bots): não há revisão nem discussão para medir."
     },
     "detectors": {
       "tests": "Procura pastas test/, tests/, __tests__/ e arquivos *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/.",
@@ -148,7 +158,8 @@
       "truncated": "Não verificado: o GitHub devolveu a lista de arquivos truncada (repositório muito grande), então \"não encontrado\" não seria confiável.",
       "unavailable": "Não verificado: não foi possível obter a lista de arquivos do GitHub (falha ou limite da API).",
       "legacy": "Snapshot antigo: verificado com critérios mais limitados, então \"não encontrado\" não é confiável."
-    }
+    },
+    "codeReviewDetail": "Dos {{n}} PRs mergeados mais recentes (sem contar bots), {{unapproved}}% foram mergeados sem aprovação (Approve) de outra pessoa; {{selfMerge}}% foram mergeados pelo próprio autor. Só conta a aprovação formal do GitHub: projetos que aprovam por comando ou bot (ex: /lgtm) aparecem como sem aprovação."
   },
   "contributors": {
     "title": "Contribuidores",

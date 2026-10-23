@@ -3,6 +3,7 @@ import { useQueries } from '@tanstack/react-query';
 import analytics from '../services/analytics.js';
 import { parseFullReport } from '../utils/snapshotAdapter.js';
 import { CACHE_STALE_TIME_MS } from '../constants.js';
+import { leadTimeDays } from '../utils/prReviewStats.js';
 
 /**
  * Hook customizado para buscar dados de múltiplos repositórios em paralelo
@@ -41,8 +42,9 @@ export function useBenchmarkRepos(selectedRepos) {
           healthScore: reportData?.health?.score || latestSnapshot.health_score || 0,
           language: primaryLanguage,
           closedIssues: reportData?.metrics?.closedIssues || 0,
-          leadTime: reportData?.metrics?.leadTime?.count || 0,
-          leadTimeUnit: reportData?.metrics?.leadTime?.unit || 'days',
+          // Always days (the chart plots days); old mean-based values → 0 (N/A)
+          leadTime: leadTimeDays(reportData?.metrics?.leadTime) ?? 0,
+          leadTimeUnit: 'days',
           codeChurnRatio: parseFloat(reportData?.codeChurn?.ratio) || 0,
           codeChurnCategory: reportData?.codeChurn?.category || '',
           divergence: reportData?.metrics?.divergence?.avg || 0,
@@ -58,7 +60,7 @@ export function useBenchmarkRepos(selectedRepos) {
               forks: data?.metrics?.forks || snapshot.forks || 0,
               openIssues: data?.metrics?.openIssues || snapshot.issues || 0,
               closedIssues: data?.metrics?.closedIssues || 0,
-              leadTime: data?.metrics?.leadTime?.count || 0,
+              leadTime: leadTimeDays(data?.metrics?.leadTime) ?? 0,
               codeChurnRatio: parseFloat(data?.codeChurn?.ratio) || 0,
             };
           }),

@@ -273,7 +273,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                         <div className="flex justify-between">
                           <span>⏱️ Lead Time:</span>
                           <span className="font-medium">
-                            {repo.leadTime > 0 ? `${repo.leadTime} ${repo.leadTimeUnit}` : 'N/A'}
+                            {repo.leadTime > 0 ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, { count: repo.leadTime })}` : 'N/A'}
                           </span>
                         </div>
                         <div className="flex justify-between">

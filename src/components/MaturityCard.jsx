@@ -60,7 +60,8 @@ export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
         {/* Snapshots before 2026-10 have no treeStatus and used narrower linter patterns. */}
         {maturity.treeStatus && renderDetector('linter', maturity.lintDetected)}
         {reviewAvailable
-          ? renderBadge(t('maturity.badges.codeReview', { percentage: codeReview.selfMergePercentage }), true, codeReview.color)
+          ? renderBadge(t('maturity.badges.codeReview', { percentage: codeReview.unapprovedPercentage }), true, codeReview.color,
+              t('maturity.codeReviewDetail', { n: codeReview.n, unapproved: codeReview.unapprovedPercentage, selfMerge: codeReview.selfMergePercentage }))
           : renderBadge(t('maturity.badges.codeReviewUnavailable'), false, 'gray')
         }
         {maturity.zombies == null
@@ -78,7 +79,7 @@ export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
       )}
 
       {/* Alerta de Code Review */}
-      {reviewAvailable && codeReview.selfMergePercentage > 0 && (
+      {reviewAvailable && codeReview.color !== 'green' && (
         <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -92,7 +93,7 @@ export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
               </h3>
               <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
                 <p>
-                  {t('maturity.alert.message', { percentage: codeReview.selfMergePercentage })}
+                  {t('maturity.alert.message', { percentage: codeReview.unapprovedPercentage, n: codeReview.n })}
                 </p>
               </div>
             </div>

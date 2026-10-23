@@ -80,7 +80,7 @@ export function RepoInfoCard({ data, onShareSuccess }) {
       [t('stats.openIssues')]: data.metrics.openIssues ?? 'N/A',
       [t('stats.closedIssues')]: data.metrics.closedIssues ?? 'N/A',
       [t('health.title')]: data.health.score == null ? 'N/A' : `${data.health.score}%`,
-      [t('stats.leadTime')]: data.metrics.leadTime
+      [t('stats.leadTime')]: data.metrics.leadTime?.n > 0
         ? `${data.metrics.leadTime.value} ${t('units.' + data.metrics.leadTime.unit, data.metrics.leadTime.unit)}`
         : 'N/A',
       [t('stats.codeChurn')]: data.codeChurn?.ratio ?? 'N/A',

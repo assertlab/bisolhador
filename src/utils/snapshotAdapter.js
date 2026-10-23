@@ -51,11 +51,7 @@ export function createMockRepoData(snapshotData) {
       openIssues: snapshotData.issues ?? null,
       closedIssues: null,
       resolutionRate: 'N/A',
-      leadTime: {
-        value: 'N/A',
-        unit: 'hours',
-        count: 0
-      },
+      leadTime: { value: 'N/A', unit: '', count: null, n: 0, reason: 'snapshot' },
       // Snapshot sem full_report não registrou revisão de PRs (ver prReviewStats.js).
       divergence: {
         avg: null,
@@ -80,6 +76,7 @@ export function createMockRepoData(snapshotData) {
 
     // Code review: indisponível (mesmo formato de analyzeReviewMetrics)
     codeReview: {
+      unapprovedPercentage: null,
       selfMergePercentage: null,
       color: 'gray',
       available: false,

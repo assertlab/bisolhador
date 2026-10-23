@@ -1,104 +1,200 @@
 import { describe, it, expect } from 'vitest';
-import { toPullRequestStats, analyzeReviewMetrics, normalizeSnapshotReviewMetrics } from './prReviewStats.js';
-import { analyzers } from './analyzers.js';
+import {
+  percentile, formatDuration, analyzeLeadTime, leadTimeDays, toPullRequestStats, analyzeReviewMetrics, normalizeSnapshotProcessMetrics,
+} from './prReviewStats.js';
 
-// Shape returned by the GraphQL query in githubService.fetchPullRequestReviewStats.
-const node = ({ author = 'a', mergedBy = null, merged = true, comments = 0, reviewComments = [] } = {}) => ({
-  author: author === null ? null : { login: author },
-  mergedBy: mergedBy ? { login: mergedBy } : null,
-  createdAt: '2026-10-01T00:00:00Z',
-  mergedAt: merged ? '2026-10-01T05:00:00Z' : null,
-  comments: { totalCount: comments },
-  reviews: { nodes: reviewComments.map((n) => ({ comments: { totalCount: n } })) },
+const HOUR = 60 * 60 * 1000;
+const T0 = Date.UTC(2026, 9, 1);
+const iso = (ms) => new Date(ms).toISOString();
+
+// REST /pulls?state=closed item
+const restPr = ({ login = 'a', type = 'User', hours, mergedAtMs = T0 } = {}) => ({
+  user: { login, type },
+  created_at: iso(mergedAtMs - (hours ?? 1) * HOUR),
+  merged_at: hours == null ? null : iso(mergedAtMs),
 });
 
-describe('toPullRequestStats (GraphQL → REST-like shape the analyzers expect)', () => {
-  it('maps author, mergedBy, dates and comment counts', () => {
-    expect(toPullRequestStats([node({ author: 'a', mergedBy: 'b', comments: 2, reviewComments: [1, 3] })])).toEqual([{
-      user: { login: 'a' },
-      merged_by: { login: 'b' },
-      created_at: '2026-10-01T00:00:00Z',
-      merged_at: '2026-10-01T05:00:00Z',
-      comments: 2,
-      review_comments: 4,
-    }]);
+// GraphQL merged-PR node (githubService.fetchPullRequestReviewStats)
+const user = (login) => ({ login, __typename: /\[bot\]$/.test(login) ? 'Bot' : 'User' });
+const node = ({ author = 'a', mergedBy = 'a', approvedBy = [], comments = [], reviewComments = 0, mergedAtMs = T0 } = {}) => ({
+  author: author === null ? null : user(author),
+  mergedBy: mergedBy ? { login: mergedBy } : null,
+  createdAt: iso(mergedAtMs - HOUR),
+  mergedAt: iso(mergedAtMs),
+  comments: { totalCount: comments.length, nodes: comments.map((c) => ({ author: user(c) })) },
+  reviews: {
+    nodes: [
+      ...approvedBy.map((r) => ({ state: 'APPROVED', author: user(r), comments: { totalCount: 0 } })),
+      ...(reviewComments ? [{ state: 'COMMENTED', author: user('rev'), comments: { totalCount: reviewComments } }] : []),
+    ],
+  },
+});
+
+describe('percentile / formatDuration', () => {
+  it('median and p90 with interpolation', () => {
+    expect(percentile([1, 2, 3, 4], 0.5)).toBe(2.5);
+    expect(percentile([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 0.9)).toBeCloseTo(9.1);
+    expect(percentile([], 0.5)).toBeNull();
   });
 
-  it('keeps deleted (ghost) authors and unmerged PRs as null', () => {
-    const [pr] = toPullRequestStats([node({ author: null, merged: false })]);
-    expect(pr.user).toBeNull();
-    expect(pr.merged_by).toBeNull();
-    expect(pr.merged_at).toBeNull();
+  it.each([[2.46, { value: 2.5, unit: 'hours' }], [24, { value: 1, unit: 'days' }], [36, { value: 1.5, unit: 'days' }]])('%s h → %j', (h, out) => {
+    expect(formatDuration(h)).toEqual(out);
+  });
+});
+
+describe('analyzeLeadTime (median over merged PRs, not mean over created ones)', () => {
+  it('median + p90 + n; unmerged PRs ignored', () => {
+    const prs = [restPr({ hours: 1 }), restPr({ hours: 2 }), restPr({ hours: 100 }), restPr({ hours: null })];
+    expect(analyzeLeadTime(prs)).toMatchObject({ value: 2, unit: 'hours', count: 2, medianHours: 2, n: 3, method: 'median' });
+  });
+
+  it('one slow PR does not drag the result like the mean did', () => {
+    const prs = [1, 1, 1, 1, 500].map((hours) => restPr({ hours }));
+    expect(analyzeLeadTime(prs).medianHours).toBe(1); // mean would be 100.8 h
+  });
+
+  it('excludes bots (dependabot PRs merge in minutes)', () => {
+    const prs = [restPr({ hours: 48 }), restPr({ login: 'dependabot[bot]', type: 'Bot', hours: 0.1 })];
+    expect(analyzeLeadTime(prs)).toMatchObject({ value: 2, unit: 'days', n: 1, botsExcluded: 1 });
+  });
+
+  it('keeps only the 50 most recently merged', () => {
+    const prs = Array.from({ length: 60 }, (_, i) => restPr({ hours: i < 10 ? 1000 : 1, mergedAtMs: T0 - i * HOUR * (i < 10 ? -1 : 1) }));
+    expect(analyzeLeadTime(prs).n).toBe(50);
+  });
+
+  it('no merged PRs → N/A with reason (not a fake 0)', () => {
+    expect(analyzeLeadTime([restPr({ hours: null })])).toMatchObject({ value: 'N/A', count: null, n: 0, reason: 'noMerged', method: 'median' });
+  });
+
+  it('records the sample source; Benchmark gets days only for the current method', () => {
+    const lt = analyzeLeadTime([restPr({ hours: 36 })], 'graphql');
+    expect(lt.source).toBe('graphql');
+    expect(leadTimeDays(lt)).toBe(1.5);
+    expect(leadTimeDays({ value: 7.7, unit: 'hours', count: 7.7 })).toBeNull(); // old mean, no method
+  });
+
+  it('request failed → unavailable "error", no method (never persisted as measured)', () => {
+    expect(analyzeLeadTime(null)).toEqual({ value: 'N/A', unit: '', count: null, n: 0, reason: 'error' });
+  });
+});
+
+describe('toPullRequestStats', () => {
+  it('counts human comments only and approvals from someone else', () => {
+    const [pr] = toPullRequestStats([node({ author: 'a', approvedBy: ['b'], comments: ['meta-cla[bot]', 'github-actions[bot]', 'b'], reviewComments: 3 })]);
+    expect(pr).toMatchObject({ user: { login: 'a', type: 'User' }, comments: 1, review_comments: 3, approvedByOther: true });
+  });
+
+  it('an approval submitted after the merge is not a review before it', () => {
+    const n = node({ approvedBy: ['b'] });
+    n.reviews.nodes[0].submittedAt = iso(T0 + HOUR);
+    expect(toPullRequestStats([n])[0].approvedByOther).toBe(false);
+    n.reviews.nodes[0].submittedAt = iso(T0 - HOUR);
+    expect(toPullRequestStats([n])[0].approvedByOther).toBe(true);
+  });
+
+  it('author approving their own PR or a bot approving is not an approval', () => {
+    expect(toPullRequestStats([node({ author: 'a', approvedBy: ['a'] })])[0].approvedByOther).toBe(false);
+    expect(toPullRequestStats([node({ author: 'a', approvedBy: ['auto-approve[bot]'] })])[0].approvedByOther).toBe(false);
+  });
+
+  it('comments beyond the fetched page count as human', () => {
+    const n = node({ comments: ['x[bot]'] });
+    n.comments.totalCount = 150;
+    expect(toPullRequestStats([n])[0].comments).toBe(149);
   });
 
   it.each([[null], [undefined], ['x']])('returns [] for non-array input (%j)', (input) => {
     expect(toPullRequestStats(input)).toEqual([]);
   });
-
-  // These were `it.fails` in analyzers.test.js against the REST /pulls list,
-  // which has no merged_by/comments. With the GraphQL data they now work.
-  it('lets analyzeCodeReview detect self-merges', () => {
-    const stats = toPullRequestStats([node({ author: 'a', mergedBy: 'a' }), node({ author: 'a', mergedBy: 'a' })]);
-    expect(analyzers.analyzeCodeReview(stats)).toEqual({ selfMergePercentage: 100, color: 'red' });
-  });
-
-  it('lets calculateDivergence count PR discussion', () => {
-    const stats = toPullRequestStats([node({ comments: 4, reviewComments: [4] }), node({ comments: 2 })]);
-    expect(analyzers.calculateDivergence(stats)).toEqual({ avg: 5, categoryKey: 'repo.divergenceMedium' });
-  });
 });
 
 describe('analyzeReviewMetrics', () => {
-  it('computes both metrics and marks them available when data exists', () => {
-    const stats = toPullRequestStats([node({ author: 'a', mergedBy: 'b', comments: 1 })]);
-    expect(analyzeReviewMetrics(stats)).toEqual({
-      codeReview: { selfMergePercentage: 0, color: 'green', available: true },
-      divergence: { avg: 1, categoryKey: 'repo.divergenceMedium' },
+  it('react case: self-merged but approved by someone else is reviewed', () => {
+    const stats = toPullRequestStats([
+      node({ author: 'a', mergedBy: 'a', approvedBy: ['b'] }),
+      node({ author: 'a', mergedBy: 'a', approvedBy: ['c'] }),
+      node({ author: 'a', mergedBy: 'a' }),
+      node({ author: 'c', mergedBy: 'd' }),
+    ]);
+    expect(analyzeReviewMetrics(stats).codeReview).toEqual({
+      unapprovedPercentage: 50, selfMergePercentage: 75, color: 'red', available: true, n: 4, botsExcluded: 0, method: 'approval',
     });
+  });
+
+  it.each([[10, 'green'], [30, 'yellow'], [60, 'red']])('%s%% unapproved → %s', (pct, color) => {
+    const prs = Array.from({ length: 10 }, (_, i) => node({ approvedBy: i < pct / 10 ? [] : ['b'] }));
+    expect(analyzeReviewMetrics(toPullRequestStats(prs)).codeReview).toMatchObject({ unapprovedPercentage: pct, color });
+  });
+
+  it('divergence: human comments per merged PR, bot-authored PRs excluded', () => {
+    const stats = toPullRequestStats([
+      node({ comments: ['b', 'c', 'meta-cla[bot]'], reviewComments: 2 }),
+      node({ comments: [] }),
+      node({ author: 'renovate[bot]', comments: ['x', 'y', 'z'] }),
+    ]);
+    expect(analyzeReviewMetrics(stats).divergence).toEqual({ avg: 2, categoryKey: 'repo.divergenceMedium', n: 2, method: 'approval' });
+  });
+
+  it('no merged human PRs → unavailable with reason noMerged (not "0%")', () => {
+    const { codeReview, divergence } = analyzeReviewMetrics(toPullRequestStats([node({ author: 'dependabot[bot]' })]));
+    expect(codeReview).toMatchObject({ available: false, reason: 'noMerged', unapprovedPercentage: null, botsExcluded: 1 });
+    expect(divergence).toMatchObject({ avg: null, categoryKey: 'repo.divergenceNone' });
   });
 
   it.each([
     ['noToken', 'repo.divergenceNeedsToken'],
     ['error', 'repo.divergenceUnavailable'],
-  ])('marks both unavailable with reason %s (no fake 0%%)', (reason, categoryKey) => {
+  ])('null data: both unavailable with reason %s', (reason, categoryKey) => {
     expect(analyzeReviewMetrics(null, reason)).toEqual({
-      codeReview: { selfMergePercentage: null, color: 'gray', available: false, reason },
+      codeReview: { unapprovedPercentage: null, selfMergePercentage: null, color: 'gray', available: false, reason },
       divergence: { avg: null, categoryKey },
     });
   });
 });
 
-describe('normalizeSnapshotReviewMetrics (reading persisted full_report)', () => {
-  const report = (codeReview, divergence) => ({ codeReview, metrics: { divergence } });
-  const UNAVAILABLE = {
-    codeReview: { selfMergePercentage: null, color: 'gray', available: false, reason: 'snapshot' },
-    divergence: { avg: null, categoryKey: 'repo.divergenceUnavailable' },
+describe('normalizeSnapshotProcessMetrics (reading persisted full_report)', () => {
+  const current = {
+    codeReview: { unapprovedPercentage: 40, selfMergePercentage: 70, color: 'yellow', available: true, n: 50, method: 'approval' },
+    metrics: {
+      stars: 3,
+      leadTime: { value: 6, unit: 'days', count: 6, n: 50, method: 'median' },
+      divergence: { avg: 0.4, categoryKey: 'repo.divergenceLow', n: 50, method: 'approval' },
+    },
   };
 
-  it('treats pre-fix snapshots (no `available`) as unavailable: their 0% came from data without merged_by', () => {
-    const legacy = report({ selfMergePercentage: 0, color: 'green' }, { avg: 0, categoryKey: 'repo.divergenceLow' });
-    const normalized = normalizeSnapshotReviewMetrics(legacy);
-    expect(normalized.codeReview).toEqual(UNAVAILABLE.codeReview);
-    expect(normalized.metrics.divergence).toEqual(UNAVAILABLE.divergence);
+  it('keeps values measured with the current method', () => {
+    expect(normalizeSnapshotProcessMetrics(current)).toEqual(current);
   });
 
-  it.each(['noToken', 'error'])('rewrites reason %s to "snapshot" (adding a token cannot refetch a snapshot)', (reason) => {
-    const saved = report({ ...UNAVAILABLE.codeReview, reason }, { avg: null, categoryKey: 'repo.divergenceNeedsToken' });
-    const normalized = normalizeSnapshotReviewMetrics(saved);
-    expect(normalized.codeReview.reason).toBe('snapshot');
-    expect(normalized.metrics.divergence.categoryKey).toBe('repo.divergenceUnavailable');
+  it('old method (created PRs, mean, self-merge) → not recorded', () => {
+    const old = {
+      codeReview: { selfMergePercentage: 79, color: 'red', available: true },
+      metrics: { leadTime: { value: 2.5, unit: 'hours', count: 2.5 }, divergence: { avg: 1.2, categoryKey: 'repo.divergenceMedium' } },
+    };
+    const normalized = normalizeSnapshotProcessMetrics(old);
+    expect(normalized.codeReview).toMatchObject({ available: false, reason: 'snapshot', unapprovedPercentage: null });
+    expect(normalized.metrics.divergence).toEqual({ avg: null, categoryKey: 'repo.divergenceUnavailable' });
+    expect(normalized.metrics.leadTime).toMatchObject({ value: 'N/A', reason: 'snapshot' });
   });
 
-  it('keeps real measured values', () => {
-    const saved = report({ selfMergePercentage: 79, color: 'red', available: true }, { avg: 0.7, categoryKey: 'repo.divergenceLow' });
-    expect(normalizeSnapshotReviewMetrics(saved)).toEqual(saved);
+  it.each(['noToken', 'error'])('saved as unavailable (%s) → "snapshot" (a token cannot refetch it)', (reason) => {
+    const saved = { codeReview: { available: false, reason }, metrics: { divergence: { avg: null } } };
+    expect(normalizeSnapshotProcessMetrics(saved).codeReview.reason).toBe('snapshot');
   });
 
-  it('does not touch other fields or mutate the input', () => {
-    const legacy = { fullName: 'o/r', codeReview: { selfMergePercentage: 0 }, metrics: { stars: 3, divergence: { avg: 0 } } };
-    const copy = structuredClone(legacy);
-    const normalized = normalizeSnapshotReviewMetrics(legacy);
-    expect(legacy).toEqual(copy);
+  it('noMerged is a measured fact and survives', () => {
+    const saved = { codeReview: { available: false, reason: 'noMerged', method: 'approval' }, metrics: { leadTime: { value: 'N/A', reason: 'noMerged', method: 'median' } } };
+    const normalized = normalizeSnapshotProcessMetrics(saved);
+    expect(normalized.codeReview.reason).toBe('noMerged');
+    expect(normalized.metrics.leadTime.reason).toBe('noMerged');
+  });
+
+  it('does not mutate the input or drop other fields', () => {
+    const old = { fullName: 'o/r', codeReview: { selfMergePercentage: 0 }, metrics: { stars: 3, leadTime: { value: 1 } } };
+    const copy = structuredClone(old);
+    const normalized = normalizeSnapshotProcessMetrics(old);
+    expect(old).toEqual(copy);
     expect(normalized.fullName).toBe('o/r');
     expect(normalized.metrics.stars).toBe(3);
   });

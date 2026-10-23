@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { githubService, hasGithubToken } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
-import { analyzeReviewMetrics } from '../utils/prReviewStats.js';
+import { analyzeReviewMetrics, analyzeLeadTime } from '../utils/prReviewStats.js';
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
 import { analyzeBranches } from '../utils/branches.js';
 import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf } from '../utils/repoTree.js';
@@ -117,9 +117,11 @@ async function fetchRepositoryData(repoName) {
         'prReviewStats'
     ];
 
-    // Collect warnings from rejected promises
+    // Collect warnings from rejected promises. The REST PR list only feeds lead
+    // time when the GraphQL sample is missing: its failure alone isn't partial data.
     const warnings = results.reduce((acc, result, index) => {
-        if (result.status === 'rejected') {
+        const unused = endpointNames[index] === 'prStats' && results[15]?.status === 'fulfilled' && results[15].value;
+        if (result.status === 'rejected' && !unused) {
             acc.push(endpointNames[index]);
         }
         return acc;
@@ -139,7 +141,7 @@ async function fetchRepositoryData(repoName) {
     const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : null;
     const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value : null;
     const commitActivity = results[11]?.status === 'fulfilled' ? results[11].value : { all: [] };
-    const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : [];
+    const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : null;
     const codeFrequency = results[13]?.status === 'fulfilled' ? results[13].value : null;
     const mergedPRsCount = results[14]?.status === 'fulfilled' ? results[14].value : null;
     const prReviewStats = results[15]?.status === 'fulfilled' ? results[15].value : null;
@@ -181,11 +183,13 @@ async function fetchRepositoryData(repoName) {
     // Analyze maturity (zombies null = branch data unavailable)
     const maturity = analyzeMaturity(repositoryTree, branches?.zombies ?? null);
 
-    // Self-merge rate and divergence: GraphQL-backed, unavailable without a token
+    // Merged-without-approval rate and divergence: GraphQL-backed, unavailable without a token
     const { codeReview, divergence } = analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken');
 
-    // Analyze process metrics
-    const leadTime = analyzers.calculateLeadTime(pullRequestsStats);
+    // Lead time: median over the latest merged PRs. With a token, the same
+    // merged sample as review/divergence (GraphQL); otherwise REST closed PRs,
+    // where unmerged ones shrink the sample.
+    const leadTime = prReviewStats ? analyzeLeadTime(prReviewStats, 'graphql') : analyzeLeadTime(pullRequestsStats, 'rest');
 
     // Contributors: one analysis (same people, window and denominator) feeds the
     // Pareto bus factor card, the top-contributor concentration and the table.
@@ -264,6 +268,7 @@ async function fetchRepositoryData(repoName) {
     if (contributorAnalysis?.partial) blockers.push('contributors (partial)');
     // Health that the tree couldn't confirm (tree failed/truncated) may undercount.
     if (health.uncertain) blockers.push('healthScore (tree unconfirmed)');
+    if (leadTime.reason === 'error') blockers.push('leadTime');
     let searchId = null;
     if (blockers.length === 0) {
         searchId = await analytics.saveSearch({

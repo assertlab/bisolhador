@@ -69,7 +69,7 @@ export function topShareLevel(percentage) {
   return 'healthy';
 }
 
-const round1 = (n) => Math.round(n * 10) / 10;
+export const round1 = (n) => Math.round(n * 10) / 10;
 
 /**
  * One analysis for every contributor indicator on screen (Pareto bus factor

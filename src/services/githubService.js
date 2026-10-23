@@ -7,7 +7,8 @@ import {
   GITHUB_PER_PAGE_COMMITS,
   BRANCH_SCAN_MAX,
   GITHUB_PER_PAGE_RECENT_PRS,
-  GITHUB_PER_PAGE_PR_STATS,
+  CLOSED_PR_SCAN,
+  MERGED_PR_SCAN,
   GITHUB_PER_PAGE_CONTRIBUTORS,
   GITHUB_PER_PAGE_RELEASES,
   WEEKS_IN_YEAR,
@@ -350,31 +351,24 @@ export const githubService = {
   },
 
 
+  // Lead time sample: recently updated CLOSED PRs (merging updates a PR), from
+  // which analyzeLeadTime keeps the latest merged ones. Was the 20 most recently
+  // *created* PRs, mostly still open in active repos. Throws on failure.
   async fetchPullRequestStats(owner, repo) {
-    if (!owner || !repo) {
-      return [];
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=closed&sort=updated&direction=desc&per_page=${CLOSED_PR_SCAN}`;
+    const response = await fetch(url, { headers: getHeaders() });
+    if (response.status === 404) return []; // pull requests disabled (torvalds/linux): no PRs, not a failure
+    if (!response.ok) {
+      throw new Error(`PR stats failed: HTTP ${response.status}`);
     }
-
-    try {
-      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=all&per_page=${GITHUB_PER_PAGE_PR_STATS}&sort=created&direction=desc`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch PR stats: ${response.status}`);
-        return [];
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.warn("Error fetching PR stats:", error);
-      return [];
-    }
+    return response.json();
   },
 
-  // Review data (merged_by, comment counts) for the same recent PRs as
-  // fetchPullRequestStats, in one GraphQL call instead of up to
-  // GITHUB_PER_PAGE_PR_STATS per-PR REST calls. Why: see src/utils/prReviewStats.js.
+  // Review data for recently merged PRs (who merged, approvals, comment
+  // authors) in one GraphQL call — the REST list has none of it. Ordered by
+  // last update (no merge-date order exists): old PRs with a recent comment
+  // come along, so MERGED_PR_SCAN > MERGED_PR_SAMPLE and prReviewStats keeps
+  // the latest merged. reviews(last:) so the final approval is included.
   // Requires a token (callers check hasGithubToken()). Unlike the other
   // fetchers it throws on failure, so useRepository can tell "failed" from
   // "no token" and list it in the partial-data warning.
@@ -385,21 +379,21 @@ export const githubService = {
 
     const query = `query($owner: String!, $name: String!, $n: Int!) {
       repository(owner: $owner, name: $name) {
-        pullRequests(first: $n, orderBy: { field: CREATED_AT, direction: DESC }) {
+        pullRequests(states: MERGED, first: $n, orderBy: { field: UPDATED_AT, direction: DESC }) {
           nodes {
             createdAt
             mergedAt
-            author { login }
+            author { login __typename }
             mergedBy { login }
-            comments { totalCount }
-            reviews(first: 100) { nodes { comments { totalCount } } }
+            comments(first: 100) { totalCount nodes { author { login __typename } } }
+            reviews(last: 50) { nodes { state submittedAt author { login __typename } comments { totalCount } } }
           }
         }
       }
     }`;
 
     // Sent as GraphQL variables, never interpolated into the query string.
-    const data = await graphql(query, { owner, name: repo, n: GITHUB_PER_PAGE_PR_STATS }, "PR review stats");
+    const data = await graphql(query, { owner, name: repo, n: MERGED_PR_SCAN }, "PR review stats");
     const nodes = data.repository?.pullRequests?.nodes;
     if (!Array.isArray(nodes)) {
       throw new Error("GraphQL PR review stats failed: no pull requests");
