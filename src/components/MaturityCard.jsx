@@ -27,6 +27,18 @@ export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
     return tooltip ? <Tooltip text={tooltip}>{badge}</Tooltip> : badge;
   };
 
+  // ✓ found · ✗ not found · ? not verified (truncated tree / API failure /
+  // old snapshot) — the state is in the text, not only in the color.
+  const legacy = !maturity.treeStatus; // snapshot from before 2026-10: narrower patterns, failures read as false
+  const renderDetector = (key, detected) => {
+    const state = detected == null || (legacy && detected === false) ? null : detected;
+    const mark = state === true ? '✓' : state === false ? '✗' : '?';
+    const tooltip = state === null
+      ? t(`maturity.notVerified.${legacy ? 'legacy' : maturity.treeStatus}`)
+      : t(`maturity.detectors.${key}`);
+    return renderBadge(`${t(`maturity.badges.${key}`)} ${mark}`, state === true, state === null ? 'gray' : undefined, tooltip);
+  };
+
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow relative overflow-hidden">
       <div className="flex items-center justify-between mb-4">
@@ -42,9 +54,11 @@ export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
 
       {/* Badges de Tecnologias */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {renderBadge(t('maturity.badges.tests'), maturity.testsDetected)}
-        {renderBadge(t('maturity.badges.ciCd'), maturity.ciCdDetected)}
-        {renderBadge(t('maturity.badges.docker'), maturity.dockerDetected)}
+        {renderDetector('tests', maturity.testsDetected)}
+        {renderDetector('ciCd', maturity.ciCdDetected)}
+        {renderDetector('docker', maturity.dockerDetected)}
+        {/* Snapshots before 2026-10 have no treeStatus and used narrower linter patterns. */}
+        {maturity.treeStatus && renderDetector('linter', maturity.lintDetected)}
         {reviewAvailable
           ? renderBadge(t('maturity.badges.codeReview', { percentage: codeReview.selfMergePercentage }), true, codeReview.color)
           : renderBadge(t('maturity.badges.codeReviewUnavailable'), false, 'gray')

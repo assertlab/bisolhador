@@ -62,7 +62,8 @@ src/
 │   ├── leaderboardService.js   # RPC calls for public ranking
 │   └── analytics.js            # Hybrid analytics (GA4 + Supabase)
 ├── utils/
-│   ├── analyzers.js            # Pure functions: health score, maturity, process metrics
+│   ├── analyzers.js            # Pure functions: health score, process metrics
+│   ├── repoTree.js             # Maturity detectors (tests/CI/Docker/linter: ✓/✗/? not verified), issue-template dir, fork profile from tree
 │   ├── branches.js             # Zombie branches: excludes default, protected and release/maintenance lines
 │   ├── contributors.js         # Contributor analysis: bots excluded, 12-month window, top concentration (feeds busFactor.js)
 │   ├── busFactor.js            # Advanced Bus Factor (Pareto 70% threshold)

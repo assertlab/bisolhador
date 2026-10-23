@@ -308,39 +308,47 @@ export const githubService = {
     }
   },
 
-  async fetchRepositoryTree(owner, repo, defaultBranch) {
-    if (!owner || !repo || !defaultBranch) {
-      return { tree: [] };
+  // Recursive file tree of the default branch. Returns { tree, truncated }:
+  // GitHub truncates huge trees (linux), and a 422 (too large) falls back to
+  // the root level only — both reported as truncated so detectors say "not
+  // verified" instead of "absent". Throws on failure (was { tree: [] }).
+  // Targeted check for when the recursive tree came back truncated: does any of
+  // the directories GitHub reads issue templates from exist? 404 = absent;
+  // anything else throws (unknown, not "absent"). Contents paths are
+  // case-sensitive: a lowercase issue_template/ stays uncertain (not saved).
+  async hasIssueTemplateDirectory(owner, repo) {
+    const base = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents`;
+    const responses = await Promise.all(
+      ['.github/ISSUE_TEMPLATE', 'docs/ISSUE_TEMPLATE', 'ISSUE_TEMPLATE'].map((dir) => fetch(`${base}/${dir}`, { headers: getHeaders() }))
+    );
+    const failed = responses.find((r) => !r.ok && r.status !== 404);
+    if (failed) throw new Error(`Issue template check failed: HTTP ${failed.status}`);
+    for (const r of responses.filter((res) => res.ok)) {
+      const entries = await r.json();
+      if (Array.isArray(entries) && entries.some((e) => !/^config\.ya?ml$/i.test(e.name))) return true;
     }
-
-    try {
-      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}?recursive=1`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        if (response.status === 422) {
-          // Repository too large, try without recursive
-          const urlNoRecursive = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}`;
-          const responseNoRecursive = await fetch(urlNoRecursive, {
-            headers: getHeaders(),
-          });
-          if (!responseNoRecursive.ok) {
-            return { tree: [] };
-          }
-          const dataNoRecursive = await responseNoRecursive.json();
-          return dataNoRecursive;
-        }
-        console.warn(`Failed to fetch repository tree: ${response.status}`);
-        return { tree: [] };
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.warn("Error fetching repository tree:", error);
-      return { tree: [] };
-    }
+    return false;
   },
+
+  async fetchRepositoryTree(owner, repo, defaultBranch) {
+    if (!defaultBranch) return { tree: [], truncated: false }; // empty repository: nothing to find
+    const base = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}`;
+    const response = await fetch(`${base}?recursive=1`, { headers: getHeaders() });
+    if (response.status === 422) {
+      const rootOnly = await fetch(base, { headers: getHeaders() });
+      if (!rootOnly.ok) {
+        throw new Error(`Repository tree failed: HTTP ${rootOnly.status}`);
+      }
+      return { tree: (await rootOnly.json()).tree ?? [], truncated: true };
+    }
+    if (response.status === 409) return { tree: [], truncated: false }; // "Git Repository is empty": complete and empty, not a failure
+    if (!response.ok) {
+      throw new Error(`Repository tree failed: HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    return { tree: data.tree ?? [], truncated: Boolean(data.truncated) };
+  },
+
 
   async fetchPullRequestStats(owner, repo) {
     if (!owner || !repo) {

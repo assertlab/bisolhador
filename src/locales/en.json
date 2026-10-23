@@ -109,20 +109,23 @@
       "codeOfConduct": "Code of Conduct",
       "issueTemplate": "Issue Template",
       "prTemplate": "PR Template"
-    }
+    },
+    "fromTree": "The Health Score was calculated from the repository files, because GitHub provides no community profile for forks.",
+    "uncertain": "May be underestimated: couldn't confirm the Issue Template is absent (GitHub file list incomplete or unavailable). This result isn't saved to history."
   },
   "maturity": {
     "title": "Engineering Maturity",
-    "tooltip": "Checks for professional infrastructure presence: tests, CI/CD, linters and auditing",
+    "tooltip": "Checks the repository files for signs of professional infrastructure: tests, CI/CD, Docker and a linter. ✓ found · ✗ not found · ? not verified.",
     "badges": {
-      "tests": "🧪 Tests Detected",
+      "tests": "🧪 Tests",
       "ciCd": "⚡ CI/CD",
       "docker": "🐳 Docker",
       "codeReview": "🛡️ Code Review ({{percentage}}%)",
       "codeReviewUnavailable": "🛡️ Code Review (N/A)",
       "zombiesUnavailable": "🧟 Zombie Branches (N/A)",
       "noZombies": "✅ No Zombie Branches",
-      "zombies": "🧟 {{count}} Zombie Branches Detected"
+      "zombies": "🧟 {{count}} Zombie Branches Detected",
+      "linter": "🧹 Linter"
     },
     "alert": {
       "title": "Warning: Self-Merges Detected",
@@ -134,6 +137,17 @@
       "noToken": "Code Review, Divergence and Zombie Branches need a GitHub token (settings icon at the top): without one, the GitHub API doesn't say who merged each PR, how many comments it got, or each branch's last commit date.",
       "error": "Couldn't load PR review data (GitHub GraphQL API failure or rate limit). Try again in a moment.",
       "snapshot": "This historical snapshot didn't record PR review data."
+    },
+    "detectors": {
+      "tests": "Looks for test/, tests/, __tests__/ folders and *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/ files.",
+      "ciCd": "Looks for CI configuration: GitHub Actions, GitLab CI, CircleCI, Jenkinsfile, Azure Pipelines, Travis, Buildkite, Bitbucket, Drone, AppVeyor.",
+      "docker": "Looks for a Dockerfile (including Dockerfile.* and in subfolders), Containerfile and docker-compose/compose.yml.",
+      "linter": "Looks for linter configuration at the root, one level down or in packages/, apps/, crates/…: ESLint (incl. eslint.config.js), Biome, golangci-lint, Ruff, Flake8, Pylint, RuboCop, Clippy, Stylelint, SwiftLint, Checkstyle, Sonar. Configuration inside pyproject.toml (Ruff) or package.json (eslintConfig) isn't detected."
+    },
+    "notVerified": {
+      "truncated": "Not verified: GitHub returned a truncated file list (very large repository), so \"not found\" wouldn't be reliable.",
+      "unavailable": "Not verified: couldn't load the file list from GitHub (API failure or rate limit).",
+      "legacy": "Old snapshot: checked with narrower criteria, so \"not found\" isn't reliable."
     }
   },
   "contributors": {

@@ -4,6 +4,7 @@ import { analyzers } from '../utils/analyzers.js';
 import { analyzeReviewMetrics } from '../utils/prReviewStats.js';
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
 import { analyzeBranches } from '../utils/branches.js';
+import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf } from '../utils/repoTree.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
@@ -135,7 +136,7 @@ async function fetchRepositoryData(repoName) {
     const pullRequests = results[6]?.status === 'fulfilled' ? results[6].value : [];
     const languages = results[7]?.status === 'fulfilled' ? results[7].value : {};
     const communityProfile = results[8]?.status === 'fulfilled' ? results[8].value : null;
-    const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : { tree: [] };
+    const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : null;
     const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value : null;
     const commitActivity = results[11]?.status === 'fulfilled' ? results[11].value : { all: [] };
     const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : [];
@@ -158,12 +159,27 @@ async function fetchRepositoryData(repoName) {
 
     // Health score: unavailable (not 14%) when the community profile is missing
     // (404 — GitHub has none for forks) or the request failed.
-    const health = communityProfile
-        ? { ...analyzers.calculateHealthScore(communityProfile, repoData.description), available: true }
+    // Profile files completed with the tree (issue-forms directory; forks with
+    // no profile → files from the tree). See mergeProfileWithTree.
+    // Truncated tree (huge repos): settle the issue-template point with a
+    // targeted check instead of leaving it uncertain on every search.
+    let issueTemplateDirectory = null;
+    if (communityProfile && !communityProfile.files?.issue_template && repositoryTree?.truncated && !hasIssueTemplate(treePathsOf(repositoryTree))) {
+        issueTemplateDirectory = await githubService.hasIssueTemplateDirectory(owner, repo).catch(() => null);
+    }
+    const profileMissing = results[8]?.status === 'fulfilled' && !communityProfile; // fork (404), not a failed request
+    const profileFiles = mergeProfileWithTree(communityProfile, repositoryTree, { profileMissing, issueTemplateDirectory });
+    const health = profileFiles
+        ? {
+            ...analyzers.calculateHealthScore({ files: profileFiles.files }, repoData.description),
+            available: true,
+            ...(profileFiles.source === 'tree' && { source: 'tree' }),
+            ...(profileFiles.uncertain && { uncertain: true }),
+        }
         : { score: null, files: null, available: false, reason: results[8]?.status === 'fulfilled' ? 'noProfile' : 'error' };
 
     // Analyze maturity (zombies null = branch data unavailable)
-    const maturity = analyzers.analyzeEngineeringMaturity(repositoryTree.tree, branches?.zombies ?? null);
+    const maturity = analyzeMaturity(repositoryTree, branches?.zombies ?? null);
 
     // Self-merge rate and divergence: GraphQL-backed, unavailable without a token
     const { codeReview, divergence } = analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken');
@@ -246,6 +262,8 @@ async function fetchRepositoryData(repoName) {
     // Fallback contributor data (all-time, no window) is a different method:
     // persisting it would mix methods in Timeline/Benchmark history.
     if (contributorAnalysis?.partial) blockers.push('contributors (partial)');
+    // Health that the tree couldn't confirm (tree failed/truncated) may undercount.
+    if (health.uncertain) blockers.push('healthScore (tree unconfirmed)');
     let searchId = null;
     if (blockers.length === 0) {
         searchId = await analytics.saveSearch({

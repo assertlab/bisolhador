@@ -109,20 +109,23 @@
       "codeOfConduct": "Code of Conduct",
       "issueTemplate": "Issue Template",
       "prTemplate": "PR Template"
-    }
+    },
+    "fromTree": "O Health Score foi calculado a partir dos arquivos do repositório, porque o GitHub não fornece o perfil de comunidade para forks.",
+    "uncertain": "Pode estar subestimado: não foi possível confirmar a ausência de Issue Template (lista de arquivos do GitHub incompleta ou indisponível). Este resultado não é salvo no histórico."
   },
   "maturity": {
     "title": "Maturidade de Engenharia",
-    "tooltip": "Verifica presença de infraestrutura profissional: testes, CI/CD, linters e auditoria",
+    "tooltip": "Verifica, nos arquivos do repositório, sinais de infraestrutura profissional: testes, CI/CD, Docker e linter. ✓ encontrado · ✗ não encontrado · ? não verificado.",
     "badges": {
-      "tests": "🧪 Testes Detectados",
+      "tests": "🧪 Testes",
       "ciCd": "⚡ CI/CD",
       "docker": "🐳 Docker",
       "codeReview": "🛡️ Code Review ({{percentage}}%)",
       "codeReviewUnavailable": "🛡️ Code Review (N/A)",
       "zombiesUnavailable": "🧟 Branches Zumbis (N/A)",
       "noZombies": "✅ Nenhuma Branch Zumbi",
-      "zombies": "🧟 {{count}} Branches Zumbis detectadas"
+      "zombies": "🧟 {{count}} Branches Zumbis detectadas",
+      "linter": "🧹 Linter"
     },
     "alert": {
       "title": "Atenção: Self-Merges Detectados",
@@ -134,6 +137,17 @@
       "noToken": "Code Review, Divergência e Branches Zumbis exigem um token do GitHub (ícone de configurações no topo): sem token, a API do GitHub não informa quem fez o merge de cada PR, quantos comentários ele recebeu, nem a data do último commit de cada branch.",
       "error": "Não foi possível obter os dados de revisão dos PRs (falha ou limite da API GraphQL do GitHub). Tente novamente em instantes.",
       "snapshot": "Este snapshot histórico não registrou os dados de revisão dos PRs."
+    },
+    "detectors": {
+      "tests": "Procura pastas test/, tests/, __tests__/ e arquivos *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/.",
+      "ciCd": "Procura configuração de CI: GitHub Actions, GitLab CI, CircleCI, Jenkinsfile, Azure Pipelines, Travis, Buildkite, Bitbucket, Drone, AppVeyor.",
+      "docker": "Procura Dockerfile (inclusive Dockerfile.* e em subpastas), Containerfile e docker-compose/compose.yml.",
+      "linter": "Procura configuração de linter na raiz, um nível abaixo ou em packages/, apps/, crates/…: ESLint (incl. eslint.config.js), Biome, golangci-lint, Ruff, Flake8, Pylint, RuboCop, Clippy, Stylelint, SwiftLint, Checkstyle, Sonar. Configuração dentro do pyproject.toml (Ruff) ou do package.json (eslintConfig) não é detectada."
+    },
+    "notVerified": {
+      "truncated": "Não verificado: o GitHub devolveu a lista de arquivos truncada (repositório muito grande), então \"não encontrado\" não seria confiável.",
+      "unavailable": "Não verificado: não foi possível obter a lista de arquivos do GitHub (falha ou limite da API).",
+      "legacy": "Snapshot antigo: verificado com critérios mais limitados, então \"não encontrado\" não é confiável."
     }
   },
   "contributors": {
