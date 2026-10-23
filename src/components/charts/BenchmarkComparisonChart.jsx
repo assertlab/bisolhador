@@ -55,7 +55,7 @@ const datasetConfigs = {
  * Categorias: popularity (Stars/Forks), velocity (Open/Closed Issues), quality (Lead Time/Code Churn)
  */
 export default function BenchmarkComparisonChart({ repos, metricCategory = 'popularity' }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const chartTheme = useChartTheme();
 
   const categoryTitles = {
@@ -90,7 +90,7 @@ export default function BenchmarkComparisonChart({ repos, metricCategory = 'popu
                 const label = context.dataset.label || '';
                 const value = metricCategory === 'quality'
                   ? context.parsed.y.toFixed(2)
-                  : context.parsed.y.toLocaleString(intlLocale());
+                  : context.parsed.y.toLocaleString(intlLocale(i18n.language));
                 return `${label}: ${value}`;
               },
             },
@@ -106,12 +106,12 @@ export default function BenchmarkComparisonChart({ repos, metricCategory = 'popu
               callback: (value) =>
                 metricCategory === 'quality'
                   ? value.toFixed(1)
-                  : value.toLocaleString(intlLocale()),
+                  : value.toLocaleString(intlLocale(i18n.language)),
             },
           },
         },
       }),
-    [chartTheme, metricCategory],
+    [chartTheme, metricCategory, i18n.language],
   );
 
   if (!repos || repos.length === 0) {

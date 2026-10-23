@@ -11,13 +11,14 @@ const SUPPORTED = ['pt', 'en'];
 // them in localStorage. Without normalizing, i18n.language was 'pt-BR', every
 // `i18n.language === 'pt'` check failed and Brazilian users got US dates and
 // numbers ("12/18/2025, 06:09 PM") under Portuguese text (until v3.9.1).
-// Anything else ('es', 'fr') falls back to Portuguese.
+// Only the region is stripped: an unsupported code ('es') is then skipped by
+// supportedLngs, so ['es-ES', 'en-US'] still picks English; nothing supported
+// at all → fallbackLng (Portuguese).
 export function normalizeLanguage(lng) {
-  const base = String(lng ?? '').toLowerCase().split(/[-_]/)[0];
-  return SUPPORTED.includes(base) ? base : 'pt';
+  return String(lng ?? '').toLowerCase().split(/[-_]/)[0];
 }
 
-/** Intl/toLocaleString locale for the current UI language. */
+/** Intl/toLocaleString locale for the current UI language (anything but English → pt-BR). */
 export function intlLocale(lng = i18n.language) {
   return normalizeLanguage(lng) === 'en' ? 'en-US' : 'pt-BR';
 }
@@ -39,7 +40,7 @@ i18n
     },
   });
 
-// Screen readers and browser translation read <html lang>; index.html ships "en".
+// Screen readers and browser translation read <html lang> (index.html ships the default, pt-BR).
 const syncHtmlLang = (lng) => {
   if (typeof document !== 'undefined') document.documentElement.lang = intlLocale(lng);
 };

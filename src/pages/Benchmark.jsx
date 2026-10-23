@@ -28,7 +28,7 @@ const BenchmarkComparisonChart = lazy(() =>
 );
 
 export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedRepos, setSelectedRepos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [metricCategory, setMetricCategory] = useState('popularity');
@@ -257,11 +257,11 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                       <div className="space-y-2 text-xs text-gray-600 dark:text-slate-400">
                         <div className="flex justify-between">
                           <span>⭐ Stars:</span>
-                          <span className="font-medium">{repo.stars.toLocaleString(intlLocale())}</span>
+                          <span className="font-medium">{repo.stars.toLocaleString(intlLocale(i18n.language))}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>🔱 Forks:</span>
-                          <span className="font-medium">{repo.forks.toLocaleString(intlLocale())}</span>
+                          <span className="font-medium">{repo.forks.toLocaleString(intlLocale(i18n.language))}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>🏥 Health:</span>

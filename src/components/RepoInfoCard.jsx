@@ -31,6 +31,7 @@ export function RepoInfoCard({ data, onShareSuccess }) {
     SAFE_GITHUB_NAME_PATTERN.test(timelineRepo);
 
   const calculateAgeText = (createdAt) => {
+    if (!createdAt) return 'N/A';
     const now = new Date();
     const created = new Date(createdAt);
     const diffMs = now - created;
@@ -234,7 +235,9 @@ export function RepoInfoCard({ data, onShareSuccess }) {
             {calculateAgeText(data.createdAt)}
           </p>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
-            {t('repo.since', { createdAt: data.createdAtFormatted || data.createdAt || 'N/A' })}
+            {/* Formatted here, in the UI language: createdAtFormatted (kept in the data for
+                exports/old snapshots) was always dd/mm/yyyy. */}
+            {t('repo.since', { createdAt: data.createdAt ? formatters.formatDate(data.createdAt, locale) : 'N/A' })}
           </p>
         </div>
 

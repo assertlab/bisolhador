@@ -29,8 +29,9 @@ export function createMockRepoData(snapshotData) {
     url: `https://github.com/${snapshotData.repo_name || ''}`,
     description: 'Dados históricos - descrição não disponível',
     ageText: 'N/A',
-    createdAt: snapshotData.last_push_at || null,
-    createdAtFormatted: snapshotData.last_push_at ? new Date(snapshotData.last_push_at).toLocaleDateString('pt-BR') : 'N/A',
+    // Creation date isn't a column: unknown (was last_push_at, shown as "Since <last push>").
+    createdAt: null,
+    createdAtFormatted: 'N/A',
     searchId: snapshotData.id,
 
     // Estatísticas básicas
