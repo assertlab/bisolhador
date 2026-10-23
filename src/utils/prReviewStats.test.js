@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  percentile, formatDuration, analyzeLeadTime, toPullRequestStats, analyzeReviewMetrics, normalizeSnapshotProcessMetrics,
+  percentile, formatDuration, analyzeLeadTime, leadTimeDays, toPullRequestStats, analyzeReviewMetrics, normalizeSnapshotProcessMetrics,
 } from './prReviewStats.js';
 
 const HOUR = 60 * 60 * 1000;
@@ -67,6 +67,13 @@ describe('analyzeLeadTime (median over merged PRs, not mean over created ones)',
     expect(analyzeLeadTime([restPr({ hours: null })])).toMatchObject({ value: 'N/A', count: null, n: 0, reason: 'noMerged', method: 'median' });
   });
 
+  it('records the sample source; Benchmark gets days only for the current method', () => {
+    const lt = analyzeLeadTime([restPr({ hours: 36 })], 'graphql');
+    expect(lt.source).toBe('graphql');
+    expect(leadTimeDays(lt)).toBe(1.5);
+    expect(leadTimeDays({ value: 7.7, unit: 'hours', count: 7.7 })).toBeNull(); // old mean, no method
+  });
+
   it('request failed → unavailable "error", no method (never persisted as measured)', () => {
     expect(analyzeLeadTime(null)).toEqual({ value: 'N/A', unit: '', count: null, n: 0, reason: 'error' });
   });
@@ -76,6 +83,14 @@ describe('toPullRequestStats', () => {
   it('counts human comments only and approvals from someone else', () => {
     const [pr] = toPullRequestStats([node({ author: 'a', approvedBy: ['b'], comments: ['meta-cla[bot]', 'github-actions[bot]', 'b'], reviewComments: 3 })]);
     expect(pr).toMatchObject({ user: { login: 'a', type: 'User' }, comments: 1, review_comments: 3, approvedByOther: true });
+  });
+
+  it('an approval submitted after the merge is not a review before it', () => {
+    const n = node({ approvedBy: ['b'] });
+    n.reviews.nodes[0].submittedAt = iso(T0 + HOUR);
+    expect(toPullRequestStats([n])[0].approvedByOther).toBe(false);
+    n.reviews.nodes[0].submittedAt = iso(T0 - HOUR);
+    expect(toPullRequestStats([n])[0].approvedByOther).toBe(true);
   });
 
   it('author approving their own PR or a bot approving is not an approval', () => {

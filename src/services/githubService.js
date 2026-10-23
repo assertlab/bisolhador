@@ -8,7 +8,7 @@ import {
   BRANCH_SCAN_MAX,
   GITHUB_PER_PAGE_RECENT_PRS,
   CLOSED_PR_SCAN,
-  MERGED_PR_SAMPLE,
+  MERGED_PR_SCAN,
   GITHUB_PER_PAGE_CONTRIBUTORS,
   GITHUB_PER_PAGE_RELEASES,
   WEEKS_IN_YEAR,
@@ -364,10 +364,11 @@ export const githubService = {
     return response.json();
   },
 
-  // Review data for the latest merged PRs (who merged, approvals, comment
-  // authors) in one GraphQL call — the REST list has none of it. Why and how
-  // it's measured: src/utils/prReviewStats.js. reviews(last:) so the final
-  // approval of a long review is included.
+  // Review data for recently merged PRs (who merged, approvals, comment
+  // authors) in one GraphQL call — the REST list has none of it. Ordered by
+  // last update (no merge-date order exists): old PRs with a recent comment
+  // come along, so MERGED_PR_SCAN > MERGED_PR_SAMPLE and prReviewStats keeps
+  // the latest merged. reviews(last:) so the final approval is included.
   // Requires a token (callers check hasGithubToken()). Unlike the other
   // fetchers it throws on failure, so useRepository can tell "failed" from
   // "no token" and list it in the partial-data warning.
@@ -385,14 +386,14 @@ export const githubService = {
             author { login __typename }
             mergedBy { login }
             comments(first: 100) { totalCount nodes { author { login __typename } } }
-            reviews(last: 50) { nodes { state author { login __typename } comments { totalCount } } }
+            reviews(last: 50) { nodes { state submittedAt author { login __typename } comments { totalCount } } }
           }
         }
       }
     }`;
 
     // Sent as GraphQL variables, never interpolated into the query string.
-    const data = await graphql(query, { owner, name: repo, n: MERGED_PR_SAMPLE }, "PR review stats");
+    const data = await graphql(query, { owner, name: repo, n: MERGED_PR_SCAN }, "PR review stats");
     const nodes = data.repository?.pullRequests?.nodes;
     if (!Array.isArray(nodes)) {
       throw new Error("GraphQL PR review stats failed: no pull requests");

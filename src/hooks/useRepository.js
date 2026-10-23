@@ -117,9 +117,11 @@ async function fetchRepositoryData(repoName) {
         'prReviewStats'
     ];
 
-    // Collect warnings from rejected promises
+    // Collect warnings from rejected promises. The REST PR list only feeds lead
+    // time when the GraphQL sample is missing: its failure alone isn't partial data.
     const warnings = results.reduce((acc, result, index) => {
-        if (result.status === 'rejected') {
+        const unused = endpointNames[index] === 'prStats' && results[15]?.status === 'fulfilled' && results[15].value;
+        if (result.status === 'rejected' && !unused) {
             acc.push(endpointNames[index]);
         }
         return acc;
@@ -187,7 +189,7 @@ async function fetchRepositoryData(repoName) {
     // Lead time: median over the latest merged PRs. With a token, the same
     // merged sample as review/divergence (GraphQL); otherwise REST closed PRs,
     // where unmerged ones shrink the sample.
-    const leadTime = analyzeLeadTime(prReviewStats ?? pullRequestsStats);
+    const leadTime = prReviewStats ? analyzeLeadTime(prReviewStats, 'graphql') : analyzeLeadTime(pullRequestsStats, 'rest');
 
     // Contributors: one analysis (same people, window and denominator) feeds the
     // Pareto bus factor card, the top-contributor concentration and the table.

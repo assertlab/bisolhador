@@ -1,11 +1,13 @@
-import { isBot } from './contributors.js';
+import { isBot, round1 } from './contributors.js';
 import { MERGED_PR_SAMPLE } from '../constants.js';
 
 // PR process metrics: lead time, merged-without-approval rate and divergence.
-// All three are measured over the most recent MERGED PRs, bots excluded. Before
-// 2026-10 they used the 20 most recently *created* PRs: in active repos those
-// are mostly still open, so lead time was biased low (or N/A) and the review
-// rate read "0%" (react, express). Lead time was also a mean (2–3× the median).
+// All three are measured over the latest merged PRs by humans (up to
+// MERGED_PR_SAMPLE, by merge date, among the recently updated ones fetched).
+// Before 2026-10 they used the 20 most recently *created* PRs: in active repos
+// those are mostly still open, so lead time was biased low (or N/A) and the
+// review rate read "0%" (react, express). Lead time was also a mean, often far
+// above the median (react: ~19×).
 //
 // Persisted reports carry `method`; reports without it were measured the old
 // way and are shown as "not recorded" (normalizeSnapshotProcessMetrics).
@@ -13,7 +15,6 @@ const LEAD_TIME_METHOD = 'median';
 const REVIEW_METHOD = 'approval';
 
 const HOUR_MS = 60 * 60 * 1000;
-const round1 = (x) => Math.round(x * 10) / 10;
 const toAuthor = (a) => (a ? { login: a.login, type: a.__typename } : null);
 const byMergedDesc = (a, b) => Date.parse(b.merged_at) - Date.parse(a.merged_at);
 
@@ -43,17 +44,19 @@ function leadTimeUnavailable(reason, extra = {}) {
 }
 
 /**
- * Lead time (creation → merge) from the REST list of recently updated closed
- * PRs (githubService.fetchPullRequestStats; no token needed): median over the
- * latest MERGED_PR_SAMPLE merged PRs by humans, plus p90 and n.
- * `count` mirrors `value` for readers of the old shape (Benchmark).
+ * Lead time (creation → merge): median over the latest MERGED_PR_SAMPLE merged
+ * PRs by humans, plus p90 and n. Input: the GraphQL merged sample (with a
+ * token, same PRs as review/divergence) or the REST list of recently updated
+ * closed PRs (githubService.fetchPullRequestStats). `source` records which, so
+ * history can tell the samples apart. `count` mirrors `value` for old readers.
  *
- * @param {Array|null} closedPulls - null when the request failed
+ * @param {Array|null} prs - null when the request failed
+ * @param {'graphql'|'rest'} source
  */
-export function analyzeLeadTime(closedPulls) {
-  if (!Array.isArray(closedPulls)) return leadTimeUnavailable('error');
-  const { sample, botsExcluded } = mergedSample(closedPulls);
-  if (sample.length === 0) return leadTimeUnavailable('noMerged', { botsExcluded, method: LEAD_TIME_METHOD });
+export function analyzeLeadTime(prs, source) {
+  if (!Array.isArray(prs)) return leadTimeUnavailable('error');
+  const { sample, botsExcluded } = mergedSample(prs);
+  if (sample.length === 0) return leadTimeUnavailable('noMerged', { botsExcluded, source, method: LEAD_TIME_METHOD });
   const hours = sample.map((pr) => (Date.parse(pr.merged_at) - Date.parse(pr.created_at)) / HOUR_MS).sort((a, b) => a - b);
   const median = percentile(hours, 0.5);
   const { value, unit } = formatDuration(median);
@@ -63,8 +66,14 @@ export function analyzeLeadTime(closedPulls) {
     p90Hours: round1(percentile(hours, 0.9)),
     n: sample.length,
     botsExcluded,
+    source,
     method: LEAD_TIME_METHOD,
   };
+}
+
+/** Median lead time in days for comparisons (Benchmark); null when not measured with the current method. */
+export function leadTimeDays(leadTime) {
+  return leadTime?.method === LEAD_TIME_METHOD && leadTime.medianHours != null ? round1(leadTime.medianHours / 24) : null;
 }
 
 /**
@@ -78,6 +87,9 @@ export function toPullRequestStats(nodes) {
     const comments = pr.comments?.nodes ?? [];
     const botComments = comments.filter((c) => isBot(toAuthor(c.author))).length;
     const humanReviews = (pr.reviews?.nodes ?? []).filter((r) => r.author && !isBot(toAuthor(r.author)));
+    // An approval submitted after the merge doesn't count as review before it
+    const approvedBeforeMerge = (r) => r.state === 'APPROVED' && r.author.login !== pr.author?.login
+      && !(r.submittedAt && pr.mergedAt && Date.parse(r.submittedAt) > Date.parse(pr.mergedAt));
     return {
       user: toAuthor(pr.author),
       merged_by: pr.mergedBy ? { login: pr.mergedBy.login } : null,
@@ -86,7 +98,7 @@ export function toPullRequestStats(nodes) {
       // totalCount beyond the fetched page is assumed human
       comments: (pr.comments?.totalCount ?? comments.length) - botComments,
       review_comments: humanReviews.reduce((sum, r) => sum + (r.comments?.totalCount ?? 0), 0),
-      approvedByOther: humanReviews.some((r) => r.state === 'APPROVED' && r.author.login !== pr.author?.login),
+      approvedByOther: humanReviews.some(approvedBeforeMerge),
     };
   });
 }

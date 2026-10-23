@@ -57,6 +57,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const isSnapshotMode = isSnapshotUrl && !snapshotAlertDismissed;
   const leadTime = displayData?.metrics?.leadTime ?? {};
   const leadTimeP90 = leadTime.p90Hours != null ? formatDuration(leadTime.p90Hours) : null;
+  const duration = ({ value, unit }) => `${value} ${t('units.' + unit, { count: value })}`;
 
   // Sincroniza URL → estado durante o render, quando a query string muda (padrão
   // "ajustar estado quando um valor muda" da doc do React), em vez de setState
@@ -212,9 +213,9 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <StatCard
                 title={t('stats.leadTime')}
-                value={leadTime.n > 0 ? `${leadTime.value} ${t('units.' + leadTime.unit, { count: leadTime.value })}` : 'N/A'}
+                value={leadTime.n > 0 ? duration(leadTime) : 'N/A'}
                 subValue={leadTime.n > 0 && leadTimeP90
-                  ? t('stats.leadTimeSample', { n: leadTime.n, p90: `${leadTimeP90.value} ${t('units.' + leadTimeP90.unit, { count: leadTimeP90.value })}` })
+                  ? t('stats.leadTimeSample', { n: leadTime.n, p90: duration(leadTimeP90) })
                   : t(`stats.leadTimeUnavailable.${leadTime.reason}`, { defaultValue: t('stats.leadTimeUnavailable.error') })}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
                 tooltipText={t('stats.leadTimeTooltip', { n: MERGED_PR_SAMPLE })}
