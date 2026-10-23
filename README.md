@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.8.0
+# 🦈 Bisolhador Dashboard v3.9.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -28,6 +28,14 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.9.0 - Indicadores de Processo Confiáveis
+- **⏱️ Lead time real**: mediana (com p90 e tamanho da amostra) dos últimos PRs **mergeados**, sem bots — antes era a média dos 20 PRs mais recentes *criados*, quase todos ainda abertos (react e express: N/A)
+- **🛡️ Code Review = "mergeado sem aprovação"**: o badge mede PRs mergeados sem aprovação de outra pessoa, não mais a taxa de self-merge (no react: 54% self-merge, 0% sem aprovação); Divergência sem comentários de bots
+- **🧪 Maturidade de Engenharia**: testes, CI, Docker e linter detectados em configurações comuns (express, GitLab CI, Dockerfiles em subpastas, monorepos), com **✓ encontrado · ✗ não encontrado · ? não verificado**
+- **❤️ Health Score**: reconhece os formulários de issue (`.github/ISSUE_TEMPLATE/`) — react 86% → 100%, igual ao GitHub; forks calculados a partir dos arquivos
+- **🌿 Branches**: total exato e zumbis sobre todas as branches, sem contar a principal, as protegidas e as de release
+- **🔗 Permalink por data** (`?repo=&date=`) voltou a funcionar: mostra o registro mais recente até aquele dia
 
 ### v3.8.0 - Contribuidores Confiáveis & Carregamento Mais Rápido
 - **👥 Contribuidores e Bus Factor corrigidos**: todos os principais contribuidores (antes só os 30 primeiros), **sem bots**, nos **últimos 12 meses** quando há atividade — no express, o "risco crítico" deixou de apontar um mantenedor inativo desde 2014; card e tabela usam a mesma base e os mesmos limites do Benchmark
