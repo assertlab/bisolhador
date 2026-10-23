@@ -5,6 +5,24 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import pt from './locales/pt.json';
 import en from './locales/en.json';
 
+const SUPPORTED = ['pt', 'en'];
+
+// Browsers report regional codes ('pt-BR', 'en-US'), and the detector caches
+// them in localStorage. Without normalizing, i18n.language was 'pt-BR', every
+// `i18n.language === 'pt'` check failed and Brazilian users got US dates and
+// numbers ("12/18/2025, 06:09 PM") under Portuguese text (until v3.9.1).
+// Only the region is stripped: an unsupported code ('es') is then skipped by
+// supportedLngs, so ['es-ES', 'en-US'] still picks English; nothing supported
+// at all → fallbackLng (Portuguese).
+export function normalizeLanguage(lng) {
+  return String(lng ?? '').toLowerCase().split(/[-_]/)[0];
+}
+
+/** Intl/toLocaleString locale for the current UI language (anything but English → pt-BR). */
+export function intlLocale(lng = i18n.language) {
+  return normalizeLanguage(lng) === 'en' ? 'en-US' : 'pt-BR';
+}
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -13,11 +31,20 @@ i18n
       pt: { translation: pt },
       en: { translation: en },
     },
+    supportedLngs: SUPPORTED,
+    detection: { convertDetectedLanguage: normalizeLanguage },
     fallbackLng: 'pt',
     debug: false,
     interpolation: {
       escapeValue: false,
     },
   });
+
+// Screen readers and browser translation read <html lang> (index.html ships the default, pt-BR).
+const syncHtmlLang = (lng) => {
+  if (typeof document !== 'undefined') document.documentElement.lang = intlLocale(lng);
+};
+syncHtmlLang(i18n.language);
+i18n.on('languageChanged', syncHtmlLang);
 
 export default i18n;

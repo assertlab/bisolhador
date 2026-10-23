@@ -21,6 +21,7 @@ import { ensureChartSetup } from '../lib/chartSetup.js';
 import { MERGED_PR_SAMPLE, SNAPSHOT_TIMEZONE } from '../constants.js';
 import { formatDuration } from '../utils/prReviewStats.js';
 import { formatters } from '../utils/formatters.js';
+import { intlLocale } from '../i18n.js';
 
 // Lazy-loaded chart components (Code Splitting). Each also waits on
 // ensureChartSetup() so chart.js registration — now dynamically imported
@@ -125,7 +126,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                           // Recife time, like the day boundary in buscar_snapshot_por_data
                           ? t('snapshot.byDateRecorded', {
                               date: snapshotParams.date,
-                              recordedAt: formatters.formatDateTime(displayData.analysisDate, i18n.language === 'pt' ? 'pt-BR' : 'en-US', SNAPSHOT_TIMEZONE),
+                              recordedAt: formatters.formatDateTime(displayData.analysisDate, intlLocale(i18n.language), SNAPSHOT_TIMEZONE),
                             })
                           : t('snapshot.byDate', { date: snapshotParams.date })
                         : t('snapshot.byId', { id: snapshotParams.id })

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import useChartTheme from '../../hooks/useChartTheme';
 import { createBaseChartOptions } from '../../lib/chartDefaults';
 import { formatters } from '../../utils/formatters.js';
+import { intlLocale } from '../../i18n.js';
 
 /**
  * Gráfico de evolução temporal comparativa
@@ -52,13 +53,13 @@ export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
             callbacks: {
               title: (context) => {
                 if (context[0]?.parsed?.x) {
-                  return formatters.formatDateShort(context[0].parsed.x, i18n.language === 'pt' ? 'pt-BR' : 'en-US');
+                  return formatters.formatDateShort(context[0].parsed.x, intlLocale(i18n.language));
                 }
                 return '';
               },
               label: (context) => {
                 const label = context.dataset.label || '';
-                const value = context.parsed.y.toLocaleString();
+                const value = context.parsed.y.toLocaleString(intlLocale(i18n.language));
                 return `${label}: ${value}`;
               },
             },
@@ -72,7 +73,7 @@ export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
             grid: { display: true },
           },
           y: {
-            ticks: { callback: (value) => value.toLocaleString() },
+            ticks: { callback: (value) => value.toLocaleString(intlLocale(i18n.language)) },
           },
         },
       }),

@@ -4,9 +4,10 @@ import { fetchLeaderboard } from '../services/leaderboardService.js';
 import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
 import { PageLoadingState } from '../components/skeletons/PageLoadingState.jsx';
+import { intlLocale } from '../i18n.js';
 
 export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data, isLoading, error } = useQuery({
     queryKey: ['leaderboard'],
     queryFn: () => fetchLeaderboard(50),
@@ -114,7 +115,7 @@ export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                           <span aria-label={`${item.stars} ${t('ranking.ariaLabels.stars')}`}>
-                            ⭐ {item.stars?.toLocaleString() || 0}
+                            ⭐ {item.stars?.toLocaleString(intlLocale(i18n.language)) || 0}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">

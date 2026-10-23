@@ -3,6 +3,7 @@ import { Bar } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import useChartTheme from '../../hooks/useChartTheme';
 import { createBaseChartOptions } from '../../lib/chartDefaults';
+import { intlLocale } from '../../i18n.js';
 
 const datasetConfigs = {
   popularity: [
@@ -54,7 +55,7 @@ const datasetConfigs = {
  * Categorias: popularity (Stars/Forks), velocity (Open/Closed Issues), quality (Lead Time/Code Churn)
  */
 export default function BenchmarkComparisonChart({ repos, metricCategory = 'popularity' }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const chartTheme = useChartTheme();
 
   const categoryTitles = {
@@ -89,7 +90,7 @@ export default function BenchmarkComparisonChart({ repos, metricCategory = 'popu
                 const label = context.dataset.label || '';
                 const value = metricCategory === 'quality'
                   ? context.parsed.y.toFixed(2)
-                  : context.parsed.y.toLocaleString();
+                  : context.parsed.y.toLocaleString(intlLocale(i18n.language));
                 return `${label}: ${value}`;
               },
             },
@@ -105,12 +106,12 @@ export default function BenchmarkComparisonChart({ repos, metricCategory = 'popu
               callback: (value) =>
                 metricCategory === 'quality'
                   ? value.toFixed(1)
-                  : value.toLocaleString(),
+                  : value.toLocaleString(intlLocale(i18n.language)),
             },
           },
         },
       }),
-    [chartTheme, metricCategory],
+    [chartTheme, metricCategory, i18n.language],
   );
 
   if (!repos || repos.length === 0) {

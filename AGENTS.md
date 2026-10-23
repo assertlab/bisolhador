@@ -121,7 +121,7 @@ Score = (items present / 7) × 100%. Colors (`HealthScoreCard.jsx`): Green (≥7
 ## Project Context
 
 ### Purpose
-Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.9.0). Transforms GitHub repository data into visual insights for students and professors.
+Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.9.1). Transforms GitHub repository data into visual insights for students and professors.
 
 ### Token System
 - Stored in `localStorage['github_token']` (via safe storage wrapper)
@@ -217,6 +217,7 @@ Stale documentation isn't a cosmetic problem in this project. It has already, co
 
 ## Boas Práticas de Código
 
+- Formato de data/número (`Intl`, `toLocaleString`, `formatters.*`) sempre via `intlLocale()` de `src/i18n.js` — nunca comparar `i18n.language` com `'pt'` à mão nem chamar `toLocaleString()` sem locale. O idioma é normalizado para `pt`/`en` na detecção (`normalizeLanguage`); antes da v3.9.1 ele chegava como `pt-BR` e as comparações `=== 'pt'` falhavam em silêncio, mostrando formato americano para usuários brasileiros.
 - Mensagens de erro traduzidas seguem o namespace `errors.*` em `src/locales/{pt,en}.json` (ex: `errors.privateRepo`, `errors.privacyCheckFailed`, `errors.invalidRepoName`) — sempre com uma frase explicando o motivo, não só "operação não permitida".
 - Registro do Chart.js é sempre via `ensureChartSetup()` (`src/lib/chartSetup.js`, import dinâmico memoizado numa promise compartilhada) — nunca importado estaticamente/eager em nenhum arquivo, nem mesmo `main.jsx`.
 - Páginas novas em `src/pages/` entram no `App.jsx` via `React.lazy()`, seguindo o padrão já usado para Dashboard/Ranking/Timeline/Benchmark — nunca import estático de página inteira.

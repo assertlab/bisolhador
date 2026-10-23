@@ -16,10 +16,11 @@ import { useState, useMemo, useEffect } from "react";
 import { ensureChartSetup } from "../lib/chartSetup.js";
 import { formatters } from "../utils/formatters.js";
 import { parseFullReport } from "../utils/snapshotAdapter.js";
+import { intlLocale } from '../i18n.js';
 
 export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language === "pt" ? "pt-BR" : "en-US";
+  const locale = intlLocale(i18n.language);
   const { owner, repo } = useParams();
   const navigate = useNavigate();
   const chartTheme = useChartTheme();

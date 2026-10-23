@@ -35,6 +35,12 @@ export const formatters = {
         }).format(new Date(date));
     },
 
+    // Numeric date only (e.g. "18/12/2025" / "12/18/2025") — repository
+    // creation date ("Since …").
+    formatDate(date, locale = 'pt-BR') {
+        return new Intl.DateTimeFormat(locale, { ...BASE_DATE_OPTIONS, month: '2-digit' }).format(new Date(date));
+    },
+
     // Compact date only, abbreviated month (e.g. "28 jul 2026") — used for
     // chart axis labels and summary stats (BenchmarkEvolutionChart, Timeline)
     // where day-level precision is enough and a numeric month is less
