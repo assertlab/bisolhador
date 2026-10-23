@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🐛 Fixed
+
+- **FIX**: Falhas da API de busca do GitHub (rate limit, erro, repositório renomeado) apareciam como **0** issues abertas/fechadas, PRs e merges, sem aviso, e o 0 era gravado no histórico. Agora o indicador aparece como **N/A**, entra no aviso de dados parciais, e o snapshot **não é gravado** quando um indicador crítico falhou. Branches, releases e Health Score seguem o mesmo padrão (o badge verde "nenhuma branch zumbi" não aparece mais quando a lista de branches falhou).
+- **FIX**: Repositórios **renomeados** (ex.: `facebook/react` → `react/react`) mostravam 0 issues: a API de busca não segue renomeações. Todas as chamadas agora usam o nome canônico, e o histórico deixa de se dividir entre os dois nomes.
+- **FIX**: **Forks** mostravam Health Score ~14% (o GitHub não fornece perfil de comunidade para forks). Agora aparece "N/A" com a explicação.
+- **FIX**: Snapshots antigos sem relatório completo mostravam 0 branches, 0 PRs, 0 releases, 0 issues fechadas e um checklist de Health Score todo ❌ (dados que nunca foram registrados). Agora mostram N/A.
+- **FIX**: Compartilhar um resultado que não foi salvo (dados parciais) agora explica o motivo, em vez de um erro genérico.
+- **FIX**: Benchmark usa o nome canônico do repositório (renomeados encontram o histórico atual).
+
+---
+
 ## [3.7.0] - 2026-10-23
 
 ### ✨ Changed

@@ -94,6 +94,11 @@
     "title": "Health Score",
     "tooltip": "Mede a saúde comunitária baseada em 7 indicadores de governança open-source",
     "communityHealth": "Saúde Comunitária",
+    "notAvailable": "N/A",
+    "unavailable": {
+      "noProfile": "O GitHub não fornece o perfil de comunidade deste repositório (acontece com forks), então o Health Score não pôde ser calculado.",
+      "error": "Não foi possível obter o perfil de comunidade do GitHub (falha ou limite da API). Tente novamente em instantes."
+    },
     "files": {
       "readme": "README",
       "license": "License",
@@ -112,7 +117,8 @@
       "ciCd": "⚡ CI/CD",
       "docker": "🐳 Docker",
       "codeReview": "🛡️ Code Review ({{percentage}}%)",
-      "codeReviewUnavailable": "🛡️ Code Review (n/d)",
+      "codeReviewUnavailable": "🛡️ Code Review (N/A)",
+      "zombiesUnavailable": "🧟 Branches Zumbis (N/A)",
       "noZombies": "✅ Nenhuma Branch Zumbi",
       "zombies": "🧟 {{count}} Branches Zumbis detectadas"
     },
@@ -353,6 +359,7 @@
     "buttonLabel": "Compartilhar",
     "linkCopied": "Link copiado!",
     "errorNoData": "Erro: Dados não salvos. Tente recarregar a página.",
+    "errorNotSaved": "Este resultado não foi salvo porque alguns indicadores não puderam ser carregados (veja o aviso de dados parciais), então não há link permanente. Tente de novo em instantes ou configure um token do GitHub.",
     "errorGeneral": "Erro ao gerar link de compartilhamento"
   },
   "snapshot": {

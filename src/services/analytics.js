@@ -28,7 +28,8 @@ const analytics = {
         p_forks: parseInt(data.forks) || 0,
         p_issues: parseInt(data.issues) || 0,
         p_subscribers: parseInt(data.subscribers) || 0,
-        p_health_score: parseFloat(data.healthScore) || 0,
+        // null = not measured (e.g. forks have no community profile), not 0%.
+        p_health_score: Number.isFinite(parseFloat(data.healthScore)) ? parseFloat(data.healthScore) : null,
         p_last_push_at: data.lastPush || null,
         p_full_report:
           fullData &&

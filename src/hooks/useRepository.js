@@ -8,6 +8,13 @@ import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE } from '../constants.js';
 
+// A snapshot isn't persisted when any of these failed: it would become
+// permanent history (Timeline/Benchmark/Ranking) with fake values — e.g. the
+// health-14 snapshots found in the 2026-10 audit. Names match endpointNames.
+// "No community profile" (forks, 404) is not a failure: forks are saved, with
+// health unavailable.
+const PERSIST_BLOCKERS = ['communityProfile', 'openIssues', 'closedIssues', 'pullRequests', 'mergedPRs'];
+
 // Repository data fetching function for TanStack Query
 async function fetchRepositoryData(repoName) {
     if (!repoName || !repoName.includes('/')) {
@@ -22,10 +29,10 @@ async function fetchRepositoryData(repoName) {
         console.warn('[useRepository] Chart.js prefetch failed (non-fatal, will retry on chart mount):', err);
     });
 
-    const [owner, repo] = repoName.split('/');
+    const [requestedOwner, requestedRepo] = repoName.split('/');
 
     // First fetch repository data to get default branch
-    const repoData = await githubService.fetchRepository(owner, repo);
+    const repoData = await githubService.fetchRepository(requestedOwner, requestedRepo);
     if (!repoData) {
         throw new Error('Não foi possível buscar informações do repositório');
     }
@@ -38,6 +45,12 @@ async function fetchRepositoryData(repoName) {
         privateRepoError.code = 'PRIVATE_REPO_UNSUPPORTED';
         throw privateRepoError;
     }
+
+    // Canonical name from here on: /repos follows renames (facebook/react →
+    // react/react), but the Search API does not — querying the typed name gave
+    // HTTP 422 → 0 issues/PRs, and the history split across two names.
+    const fullName = repoData.full_name;
+    const [owner, repo] = fullName.split('/');
 
     const hasToken = hasGithubToken();
 
@@ -81,7 +94,8 @@ async function fetchRepositoryData(repoName) {
 
     // Extract results with fail-safe handling
     const commits = results[0]?.status === 'fulfilled' ? results[0].value : [];
-    const branches = results[1]?.status === 'fulfilled' ? results[1].value : { count: 0, zombies: 0 };
+    // Counts/branches/profile: null when the request failed (see _warnings), never a fake 0.
+    const branches = results[1]?.status === 'fulfilled' ? results[1].value : null;
     const contributors = results[2]?.status === 'fulfilled' ? results[2].value : [];
     const pulls = results[3]?.status === 'fulfilled' ? results[3].value : null;
     const issuesOpenCount = results[4]?.status === 'fulfilled' ? results[4].value : null;
@@ -90,11 +104,11 @@ async function fetchRepositoryData(repoName) {
     const languages = results[7]?.status === 'fulfilled' ? results[7].value : {};
     const communityProfile = results[8]?.status === 'fulfilled' ? results[8].value : null;
     const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : { tree: [] };
-    const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value : 0;
+    const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value : null;
     const commitActivity = results[11]?.status === 'fulfilled' ? results[11].value : { all: [] };
     const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : [];
     const codeFrequency = results[13]?.status === 'fulfilled' ? results[13].value : null;
-    const mergedPRsCount = results[14]?.status === 'fulfilled' ? results[14].value : 0;
+    const mergedPRsCount = results[14]?.status === 'fulfilled' ? results[14].value : null;
     const prReviewStats = results[15]?.status === 'fulfilled' ? results[15].value : null;
 
     // Get recent commits and PRs for activity logs
@@ -108,14 +122,16 @@ async function fetchRepositoryData(repoName) {
     const formattedDate = `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`;
 
     // Calculate PRs per branch
-    const totalBranches = branches.count;
-    const prsPerBranch = branches.count === 0 || pulls === null ? 'N/A' : (pulls / totalBranches).toFixed(1);
+    const prsPerBranch = !branches?.count || pulls === null ? 'N/A' : (pulls / branches.count).toFixed(1);
 
-    // Analyze health score
-    const health = analyzers.calculateHealthScore(communityProfile, repoData.description);
+    // Health score: unavailable (not 14%) when the community profile is missing
+    // (404 — GitHub has none for forks) or the request failed.
+    const health = communityProfile
+        ? { ...analyzers.calculateHealthScore(communityProfile, repoData.description), available: true }
+        : { score: null, files: null, available: false, reason: results[8]?.status === 'fulfilled' ? 'noProfile' : 'error' };
 
-    // Analyze maturity
-    const maturity = analyzers.analyzeEngineeringMaturity(repositoryTree.tree, branches.zombies);
+    // Analyze maturity (zombies null = branch data unavailable)
+    const maturity = analyzers.analyzeEngineeringMaturity(repositoryTree.tree, branches?.zombies ?? null);
 
     // Self-merge rate and divergence: GraphQL-backed, unavailable without a token
     const { codeReview, divergence } = analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken');
@@ -140,42 +156,28 @@ async function fetchRepositoryData(repoName) {
     }
 
     // Format contributors for display
-    const formattedContributors = contributors.map(contributor => {
-        const totalContributions = contributors.reduce((sum, c) => sum + c.contributions, 0);
-        return {
-            ...contributor,
-            percentage: totalContributions > 0 ? ((contributor.contributions / totalContributions) * 100).toFixed(1) : 0
-        };
-    });
+    const totalContributions = contributors.reduce((sum, c) => sum + c.contributions, 0);
+    const formattedContributors = contributors.map(contributor => ({
+        ...contributor,
+        percentage: totalContributions > 0 ? ((contributor.contributions / totalContributions) * 100).toFixed(1) : 0
+    }));
 
-    // Prepare search metadata
-    const searchData = {
-      name: repoData.full_name,
-      ownerType: repoData.owner.type,
-      language: repoData.language,
-      stars: repoData.stargazers_count || 0,
-      forks: repoData.forks_count || 0,
-      issues: issuesOpenCount || 0,
-      subscribers: repoData.subscribers_count || 0,
-      lastPush: repoData.pushed_at,
-      healthScore: health.score
-    };
-
-    // Prepare sanitized full report data
-    const fullReportData = {
-      fullName: repoName,
-      url: `https://github.com/${repoName}`,
+    // One report object: shown on screen and persisted as the snapshot's full_report.
+    const report = {
+      fullName,
+      url: `https://github.com/${fullName}`,
       description: repoData.description,
       language: repoData.language,
       ownerType: repoData.owner?.type || 'User',
       subscribers: repoData.subscribers_count || 0,
       pushedAt: repoData.pushed_at,
       ageText: age,
-      createdAt: repoData.created_at,
-      createdAtFormatted: formattedDate,
+      createdAt: repoData.created_at, // ISO string for calculations
+      createdAtFormatted: formattedDate, // Formatted string for display
+      analysisDate: new Date().toISOString(),
       stats: {
-          branches: branches.count,
-          prs: pulls || 0,
+          branches: branches?.count ?? null,
+          prs: pulls,
           merges: mergedPRsCount,
           prsPerBranch,
           releases: releasesCount
@@ -183,8 +185,8 @@ async function fetchRepositoryData(repoName) {
       metrics: {
           stars: repoData.stargazers_count || 0,
           forks: repoData.forks_count || 0,
-          openIssues: issuesOpenCount || 0,
-          closedIssues: issuesClosedCount || 0,
+          openIssues: issuesOpenCount,
+          closedIssues: issuesClosedCount,
           resolutionRate,
           leadTime,
           divergence
@@ -201,56 +203,34 @@ async function fetchRepositoryData(repoName) {
           techStack: formatLanguages(languages),
           activity: formatCommitActivity(commitActivity)
       },
-      codeChurn,
-      analysisDate: new Date().toISOString()
+      codeChurn
     };
 
-    // Save search with full report automatically
-    const searchId = await analytics.saveSearch(searchData, fullReportData);
-
-    // Build final data structure matching component expectations
-    const formattedData = {
-        fullName: repoName,
-        url: `https://github.com/${repoName}`,
-        description: repoData.description,
-        language: repoData.language,
-        ownerType: repoData.owner?.type || 'User',
-        subscribers: repoData.subscribers_count || 0,
-        pushedAt: repoData.pushed_at,
-        ageText: age,
-        createdAt: repoData.created_at, // ISO string for calculations
-        createdAtFormatted: formattedDate, // Formatted string for display
-        analysisDate: new Date().toISOString(), // Data/hora da análise ao vivo
-        searchId, // ID da busca salva no banco
-        stats: {
-            branches: branches.count,
-            prs: pulls || 0,
-            merges: mergedPRsCount,
-            prsPerBranch,
-            releases: releasesCount
-        },
-        metrics: {
+    // Don't persist a snapshot built on failed critical data: it would become
+    // permanent history (Timeline/Benchmark/Ranking) with fake zeros — e.g. the
+    // health-14 snapshots found in the 2026-10 audit. The live view still
+    // renders, with the partial-data warning.
+    const blockers = warnings.filter((w) => PERSIST_BLOCKERS.includes(w));
+    let searchId = null;
+    if (blockers.length === 0) {
+        searchId = await analytics.saveSearch({
+            name: fullName,
+            ownerType: repoData.owner.type,
+            language: repoData.language,
             stars: repoData.stargazers_count || 0,
             forks: repoData.forks_count || 0,
-            openIssues: issuesOpenCount || 0,
-            closedIssues: issuesClosedCount || 0,
-            resolutionRate,
-            leadTime,
-            divergence
-        },
-        health,
-        maturity,
-        codeReview,
-        contributors: formattedContributors,
-        busFactor,
-        busFactorAnalysis,
-        recentCommits,
-        recentPRs,
-        charts: {
-            techStack: formatLanguages(languages),
-            activity: formatCommitActivity(commitActivity)
-        },
-        codeChurn,
+            issues: issuesOpenCount,
+            subscribers: repoData.subscribers_count || 0,
+            lastPush: repoData.pushed_at,
+            healthScore: health.score
+        }, report);
+    } else {
+        console.warn('[useRepository] Snapshot not saved, unavailable:', blockers.join(', '));
+    }
+
+    const formattedData = {
+        ...report,
+        searchId, // ID da busca salva no banco (null quando não foi gravada)
         _warnings: warnings.length > 0 ? warnings : undefined
     };
 

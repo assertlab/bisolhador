@@ -7,8 +7,9 @@ const BASE_DATE_OPTIONS = { day: '2-digit', year: 'numeric' };
 export const formatters = {
     // Format large numbers with dynamic locale
     formatNumber(value, locale = 'pt-BR') {
-        if (value === null || value === undefined || value === 'N/A') {
-            return value;
+        // null/undefined = not measured: show N/A, never an empty cell or a 0.
+        if (value == null || value === 'N/A') {
+            return 'N/A';
         }
 
         const num = typeof value === 'string' ? parseFloat(value) : value;

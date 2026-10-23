@@ -94,6 +94,11 @@
     "title": "Health Score",
     "tooltip": "Measures community health based on 7 open-source governance indicators",
     "communityHealth": "Community Health",
+    "notAvailable": "N/A",
+    "unavailable": {
+      "noProfile": "GitHub provides no community profile for this repository (this happens with forks), so the Health Score couldn't be calculated.",
+      "error": "Couldn't load the GitHub community profile (API failure or rate limit). Try again in a moment."
+    },
     "files": {
       "readme": "README",
       "license": "License",
@@ -112,7 +117,8 @@
       "ciCd": "⚡ CI/CD",
       "docker": "🐳 Docker",
       "codeReview": "🛡️ Code Review ({{percentage}}%)",
-      "codeReviewUnavailable": "🛡️ Code Review (n/a)",
+      "codeReviewUnavailable": "🛡️ Code Review (N/A)",
+      "zombiesUnavailable": "🧟 Zombie Branches (N/A)",
       "noZombies": "✅ No Zombie Branches",
       "zombies": "🧟 {{count}} Zombie Branches Detected"
     },
@@ -345,6 +351,7 @@
     "buttonLabel": "Share",
     "linkCopied": "Link copied!",
     "errorNoData": "Error: Data not saved. Try reloading the page.",
+    "errorNotSaved": "This result wasn't saved because some indicators couldn't be loaded (see the partial-data warning), so there's no permanent link. Try again in a moment or set a GitHub token.",
     "errorGeneral": "Error generating share link"
   },
   "snapshot": {
