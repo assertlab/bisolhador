@@ -23,8 +23,14 @@ async function fetchBranchAnalysis(owner, repo, defaultBranch, hasToken) {
     if (!hasToken) {
         return { count: await githubService.fetchBranchCount(owner, repo), zombies: null, zombiesReason: 'noToken' };
     }
-    const { totalCount, branches, capped } = await githubService.fetchBranchActivity(owner, repo);
-    return { count: totalCount, capped, ...analyzeBranches(branches, { defaultBranch }) };
+    try {
+        const { totalCount, branches, capped } = await githubService.fetchBranchActivity(owner, repo);
+        return { count: totalCount, capped, ...analyzeBranches(branches, { defaultBranch }) };
+    } catch (error) {
+        // Keep the exact total from REST; only zombies become unavailable.
+        console.warn('[useRepository] GraphQL branches failed, falling back to REST count:', error.message);
+        return { count: await githubService.fetchBranchCount(owner, repo), zombies: null, zombiesReason: 'error' };
+    }
 }
 
 // Contributor analysis: /stats/contributors (weekly data → recent window, bots

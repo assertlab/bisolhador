@@ -2,11 +2,16 @@ import { ZOMBIE_BRANCH_DAYS } from '../constants.js';
 
 // Release/maintenance lines and integration branches are long-lived on
 // purpose: react's 1,000+ "X.Y-stable" branches were all counted as zombies.
+// hotfix/* is NOT here: hotfixes are short-lived, a stale one is a real zombie.
+// Bare numbers ("123", "123-fix": GitHub's create-branch-from-issue names) are
+// not version lines either — those need a separator, an .x or a v prefix.
+const VERSION_SUFFIX = '(-(stable|dev|lts|maint))?';
 const LONG_LIVED = [
   /^(main|master|develop|dev|trunk|stable|lts|gh-pages)$/i,
-  /^v?\d+([.-]\d+)*(\.x)?(-[a-z]+)?$/i, // 17.0.1, 18-3-1, v4, v4-dev, 5.x, 1.2.x
-  /^\d+(\.\d+)*-stable$/i,            // 0.3-stable
-  /^(release|releases|hotfix)([/-].+)?$/i,
+  new RegExp(`^v\\d+([.-]\\d+)*${VERSION_SUFFIX}$`, 'i'),            // v4, v4-dev, v1.2
+  new RegExp(`^\\d+([.-]\\d+)+(\\.x)?${VERSION_SUFFIX}$`, 'i'),     // 17.0.1, 18-3-1, 1.2.x, 0.3-stable
+  /^\d+\.x$/i,                                                      // 5.x
+  /^(release|releases)([/-].+)?$/i,                                    // release/1.2, release-3.0
 ];
 
 export function isLongLivedBranch(name) {
@@ -20,9 +25,13 @@ export function isLongLivedBranch(name) {
  */
 export function analyzeBranches(branches, { defaultBranch, nowMs = Date.now(), zombieDays = ZOMBIE_BRANCH_DAYS }) {
   const cutoff = nowMs - zombieDays * 24 * 3600 * 1000;
-  const result = { zombies: 0, checked: 0, excludedLongLived: 0, excludedProtected: 0 };
+  const result = { zombies: 0, checked: 0, excludedDefault: 0, excludedLongLived: 0, excludedProtected: 0, unknownDate: 0 };
   for (const b of branches) {
-    if (b.name === defaultBranch || isLongLivedBranch(b.name)) {
+    if (b.name === defaultBranch) {
+      result.excludedDefault++;
+      continue;
+    }
+    if (isLongLivedBranch(b.name)) {
       result.excludedLongLived++;
       continue;
     }
@@ -30,7 +39,10 @@ export function analyzeBranches(branches, { defaultBranch, nowMs = Date.now(), z
       result.excludedProtected++;
       continue;
     }
-    if (!b.committedDate) continue;
+    if (!b.committedDate) {
+      result.unknownDate++; // ref target isn't a commit: counted, not silently dropped
+      continue;
+    }
     result.checked++;
     if (Date.parse(b.committedDate) < cutoff) result.zombies++;
   }

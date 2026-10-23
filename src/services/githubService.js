@@ -33,8 +33,30 @@ function getHeaders() {
 function lastPageFromLink(linkHeader) {
   const match = linkHeader?.match(/<([^>]+)>;\s*rel="last"/);
   if (!match) return null;
-  const page = new URL(match[1]).searchParams.get("page");
-  return page ? parseInt(page, 10) : null;
+  const page = Number(new URL(match[1]).searchParams.get("page"));
+  return Number.isFinite(page) && page > 0 ? page : null;
+}
+
+// POST a query to the GitHub GraphQL API (token required). owner/repo always
+// go in `variables`, never interpolated into the query. Returns `data`;
+// throws when there is none; partial errors (data + errors) are logged.
+async function graphql(query, variables, label) {
+  const response = await fetch(`${GITHUB_BASE_URL}/graphql`, {
+    method: "POST",
+    headers: { ...getHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!response.ok) {
+    throw new Error(`GraphQL ${label} failed: HTTP ${response.status}`);
+  }
+  const body = await response.json();
+  if (!body.data) {
+    throw new Error(`GraphQL ${label} failed: ${body.errors?.[0]?.message ?? "no data"}`);
+  }
+  if (body.errors?.length) {
+    console.warn(`[githubService] GraphQL ${label} returned partial data:`, body.errors[0].message);
+  }
+  return body.data;
 }
 
 async function fetchSearchCount(owner, repo, qualifiers) {
@@ -100,6 +122,8 @@ export const githubService = {
   // up to BRANCH_SCAN_MAX), instead of one REST request per branch for the
   // first 20 only. Throws on failure; requires a token (callers check).
   async fetchBranchActivity(owner, repo) {
+    // refUpdateRule reflects the effective protection (rulesets included);
+    // branchProtectionRule only classic rules.
     const query = `query($owner: String!, $name: String!, $after: String) {
       repository(owner: $owner, name: $name) {
         refs(refPrefix: "refs/heads/", first: 100, after: $after) {
@@ -108,6 +132,7 @@ export const githubService = {
           nodes {
             name
             branchProtectionRule { id }
+            refUpdateRule { requiredApprovingReviewCount }
             target { ... on Commit { committedDate } }
           }
         }
@@ -118,24 +143,15 @@ export const githubService = {
     let totalCount = 0;
     let hasNextPage = true;
     while (hasNextPage && branches.length < BRANCH_SCAN_MAX) {
-      const response = await fetch(`${GITHUB_BASE_URL}/graphql`, {
-        method: "POST",
-        headers: { ...getHeaders(), "Content-Type": "application/json" },
-        body: JSON.stringify({ query, variables: { owner, name: repo, after } }),
-      });
-      if (!response.ok) {
-        throw new Error(`GraphQL branches failed: HTTP ${response.status}`);
-      }
-      const body = await response.json();
-      const refs = body.data?.repository?.refs;
-      if (!refs) {
-        throw new Error(`GraphQL branches failed: ${body.errors?.[0]?.message ?? "no data"}`);
-      }
+      const data = await graphql(query, { owner, name: repo, after }, "branches");
+      const refs = data.repository?.refs;
+      if (!refs) throw new Error("GraphQL branches failed: no refs");
       totalCount = refs.totalCount;
-      for (const node of refs.nodes) {
+      for (const node of refs.nodes ?? []) {
+        if (!node) continue; // partial-error responses can contain null nodes
         branches.push({
           name: node.name,
-          protected: Boolean(node.branchProtectionRule),
+          protected: Boolean(node.branchProtectionRule || node.refUpdateRule),
           committedDate: node.target?.committedDate ?? null,
         });
       }
@@ -143,7 +159,6 @@ export const githubService = {
     }
     return { totalCount, branches, capped: hasNextPage };
   },
-
 
   // Fallback for contributor analysis when /stats/contributors isn't ready:
   // the top 100 contributors, all-time only. Throws on failure (used to return
@@ -375,29 +390,11 @@ export const githubService = {
       }
     }`;
 
-    const response = await fetch(`${GITHUB_BASE_URL}/graphql`, {
-      method: "POST",
-      headers: { ...getHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query,
-        // Sent as GraphQL variables, never interpolated into the query string.
-        variables: { owner, name: repo, n: GITHUB_PER_PAGE_PR_STATS },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`GraphQL PR review stats failed: ${response.status}`);
-    }
-
-    // GraphQL can return partial data alongside `errors` (e.g. one node
-    // FORBIDDEN); use the data when it's there, fail only when it isn't.
-    const body = await response.json();
-    const nodes = body.data?.repository?.pullRequests?.nodes;
+    // Sent as GraphQL variables, never interpolated into the query string.
+    const data = await graphql(query, { owner, name: repo, n: GITHUB_PER_PAGE_PR_STATS }, "PR review stats");
+    const nodes = data.repository?.pullRequests?.nodes;
     if (!Array.isArray(nodes)) {
-      throw new Error(`GraphQL PR review stats failed: ${body.errors?.[0]?.message ?? "no data"}`);
-    }
-    if (body.errors?.length) {
-      console.warn("[githubService] GraphQL PR review stats returned partial data:", body.errors[0].message);
+      throw new Error("GraphQL PR review stats failed: no pull requests");
     }
 
     return toPullRequestStats(nodes);
