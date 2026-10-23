@@ -1,17 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { exportToCsv } from '../../utils/csvExporter.js';
+import { topShareLevel, TOP_SHARE_STYLE } from '../../utils/contributors.js';
 
+// Level recomputed from the stored percentage (not the stored level) on purpose:
+// old snapshots then get the current thresholds, same as the Dashboard.
 export function BenchmarkDetailTable({ repos }) {
   const { t } = useTranslation();
 
   const handleExportCsv = () => {
     const rows = repos.map((repo) => {
-      let riskLabel = t('benchmark.riskLow', 'Low');
-      if (repo.busFactorPercentage > 80) {
-        riskLabel = t('benchmark.riskCritical', 'Critical');
-      } else if (repo.busFactorPercentage > 60) {
-        riskLabel = t('benchmark.riskModerate', 'Moderate');
-      }
+      const riskLabel = t(TOP_SHARE_STYLE[topShareLevel(repo.busFactorPercentage)].labelKey);
 
       return {
         [t('benchmark.tableRepo')]: repo.fullName,
@@ -73,15 +71,9 @@ export function BenchmarkDetailTable({ repos }) {
           </thead>
           <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
             {repos.map((repo) => {
-              let riskBadge = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-              let riskLabel = t('benchmark.riskLow', 'Baixo');
-              if (repo.busFactorPercentage > 80) {
-                riskBadge = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-                riskLabel = t('benchmark.riskCritical', 'Crítico');
-              } else if (repo.busFactorPercentage > 60) {
-                riskBadge = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-                riskLabel = t('benchmark.riskModerate', 'Moderado');
-              }
+              const style = TOP_SHARE_STYLE[topShareLevel(repo.busFactorPercentage)];
+              const riskBadge = style.badge;
+              const riskLabel = t(style.labelKey);
 
               return (
                 <tr key={repo.fullName} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">

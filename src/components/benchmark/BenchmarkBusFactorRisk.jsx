@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
+import { topShareLevel, TOP_SHARE_STYLE } from '../../utils/contributors.js';
 
+// Level recomputed from the stored percentage on purpose (current thresholds for old snapshots).
 export function BenchmarkBusFactorRisk({ repos }) {
   const { t } = useTranslation();
 
@@ -14,15 +16,7 @@ export function BenchmarkBusFactorRisk({ repos }) {
       <div className="space-y-3">
         {repos.map((repo) => {
           const pct = repo.busFactorPercentage;
-          let barColor = 'bg-green-500';
-          let textBadge = 'text-green-700 dark:text-green-400';
-          if (pct > 80) {
-            barColor = 'bg-red-500';
-            textBadge = 'text-red-700 dark:text-red-400';
-          } else if (pct > 60) {
-            barColor = 'bg-yellow-500';
-            textBadge = 'text-yellow-700 dark:text-yellow-400';
-          }
+          const { bar: barColor, text: textBadge } = TOP_SHARE_STYLE[topShareLevel(pct)];
 
           return (
             <div key={repo.fullName} className="flex items-center gap-3">

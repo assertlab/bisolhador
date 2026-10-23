@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
+import { ContributorsScope } from './ContributorsScope.jsx';
 
 const DEVELOPER_COLORS = [
   '#3b82f6', '#ef4444', '#f97316', '#eab308',
@@ -52,6 +53,7 @@ export function BusFactorCard({ busFactorAnalysis }) {
         <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">
           {t('busFactor.description', { count: busFactor })}
         </div>
+        <div className="mt-1"><ContributorsScope analysis={busFactorAnalysis} /></div>
       </div>
 
       {/* Key Developers */}

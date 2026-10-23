@@ -135,30 +135,46 @@
     }
   },
   "contributors": {
-    "title": "Contributions (Bus Factor)",
-    "tooltip": "Assesses the risk of dependency on few contributors. High Bus Factor indicates vulnerability.",
+    "title": "Contributors",
+    "tooltip": "Who makes the commits and how concentrated the work is. Bots (Dependabot, Renovate, GitHub Actions…) aren't counted. High concentration in one person means dependency risk.",
     "headers": {
       "contributor": "Contributor",
       "commits": "Commits",
-      "workPercentage": "% of Work"
+      "workPercentage": "% of commits"
     },
     "busFactor": {
       "none": {
         "title": "No Contributors",
-        "message": "This repository has no analyzable contributors."
+        "message": "This repository has no analyzable human contributors."
+      },
+      "notRecorded": {
+        "title": "Contributors Not Recorded",
+        "message": "This historical snapshot didn't record contributor data."
+      },
+      "unavailable": {
+        "title": "Contributors Unavailable",
+        "message": "Couldn't load contributors from GitHub (API failure or rate limit). Try again in a moment."
       },
       "healthy": {
-        "title": "Low Bus Factor",
-        "message": "Balanced team. No user concentrates more than 40% of commits."
+        "title": "Distributed Work",
+        "message": "No one accounts for more than 40% of the commits."
       },
       "warning": {
-        "title": "Moderate Bus Factor",
-        "message": "User <bold>{{contributor}}</bold> concentrates <bold>{{percentage}}%</bold> of the work. Consider diversifying contributions."
+        "title": "Moderate Concentration",
+        "message": "<bold>{{contributor}}</bold> accounts for <bold>{{percentage}}%</bold> of the commits. Consider spreading contributions."
       },
       "critical": {
-        "title": "Critical Bus Factor",
-        "message": "User <bold>{{contributor}}</bold> concentrates <bold>{{percentage}}%</bold> of the work. High dependency risk."
+        "title": "High Concentration",
+        "message": "<bold>{{contributor}}</bold> accounts for <bold>{{percentage}}%</bold> of the commits. High risk of depending on one person."
       }
+    },
+    "scope": {
+      "recent": "Commits from the last 12 months",
+      "allTime": "Commits from the whole history (little recent activity)",
+      "allTimeOnly": "Commits from the whole history (12-month window unavailable right now)",
+      "botsExcluded_one": "{{count}} bot excluded",
+      "botsExcluded_other": "{{count}} bots excluded",
+      "capped": "only the top 100 contributors are counted"
     }
   },
   "activity": {
@@ -365,8 +381,8 @@
   "busFactor": {
     "sectionTitle": "Risk Analysis",
     "title": "Bus Factor",
-    "tooltip": "Minimum number of developers who account for 70% of commits. Lower values indicate higher dependency risk.",
-    "description": "{{count}} dev(s) account for 70% of the work",
+    "tooltip": "Minimum number of people who together make 70% of the commits (no bots, same window as the table below). The lower, the more the project depends on few people. A simple heuristic, not the academic \"truck factor\" (which uses file authorship).",
+    "description": "{{count}} person(s) make 70% of the commits",
     "others": "Others",
     "risk": {
       "critical": "Critical Risk",

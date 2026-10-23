@@ -62,7 +62,8 @@ src/
 │   ├── leaderboardService.js   # RPC calls for public ranking
 │   └── analytics.js            # Hybrid analytics (GA4 + Supabase)
 ├── utils/
-│   ├── analyzers.js            # Pure functions: health score, bus factor, maturity
+│   ├── analyzers.js            # Pure functions: health score, maturity, process metrics
+│   ├── contributors.js         # Contributor analysis: bots excluded, 12-month window, top concentration (feeds busFactor.js)
 │   ├── busFactor.js            # Advanced Bus Factor (Pareto 70% threshold)
 │   ├── formatters.js           # Date/number formatting
 │   ├── pdfExporter.js          # PDF export via html2pdf.js
@@ -74,7 +75,7 @@ src/
 ### Data Flow
 1. User searches for repo in `owner/repo` format
 2. `useRepository` hook orchestrates all GitHub API calls via `githubService`
-3. `analyzers.js` and `busFactor.js` compute metrics locally (health score, bus factor, maturity, etc.)
+3. `analyzers.js`, `contributors.js` and `busFactor.js` compute metrics locally (health score, maturity, contributor concentration, bus factor, etc.)
 4. Results rendered in Dashboard with charts, cards, and tables
 5. Analytics tracked via hybrid system: Supabase (critical) + GA4 (engagement)
 

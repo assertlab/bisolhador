@@ -200,37 +200,6 @@ export const analyzers = {
         return { avg: formattedAvg, categoryKey };
     },
 
-    // Bus Factor Analysis
-    calculateBusFactor(contributors) {
-        if (!contributors || contributors.length === 0) {
-            return {
-                level: 'none'
-            };
-        }
-
-        // Sort by contributions descending
-        const sortedContributors = [...contributors].sort((a, b) => b.contributions - a.contributions);
-        const totalContributions = sortedContributors.reduce((sum, c) => sum + c.contributions, 0);
-
-        const topContributor = sortedContributors[0];
-        const topPercentage = (topContributor.contributions / totalContributions) * 100;
-
-        let level;
-        if (topPercentage > 60) {
-            level = 'critical';
-        } else if (topPercentage > 40) {
-            level = 'warning';
-        } else {
-            level = 'healthy';
-        }
-
-        return {
-            level,
-            topContributor: topContributor.login,
-            percentage: Math.round(topPercentage * 10) / 10
-        };
-    },
-
     // Code Churn Analysis
     calculateCodeChurn(codeFrequencyData) {
         if (!codeFrequencyData || !Array.isArray(codeFrequencyData) || codeFrequencyData.length === 0) {

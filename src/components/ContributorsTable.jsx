@@ -1,8 +1,10 @@
 import { useTranslation, Trans } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
+import { ContributorsScope } from './ContributorsScope.jsx';
 
-export function ContributorsTable({ contributors, busFactor }) {
+export function ContributorsTable({ contributors, busFactor, analysis }) {
   const { t } = useTranslation();
+  const unavailable = !contributors || ['unavailable', 'notRecorded'].includes(busFactor?.level);
 
   // Determinar cor do alerta baseado no level
   let alertColor = 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600';
@@ -18,7 +20,8 @@ export function ContributorsTable({ contributors, busFactor }) {
     textColor = 'text-green-800 dark:text-green-200';
   }
 
-  const busFactorTitle = t(`contributors.busFactor.${busFactor.level}.title`);
+  const level = busFactor?.level === 'notRecorded' ? 'notRecorded' : unavailable ? 'unavailable' : busFactor.level;
+  const busFactorTitle = t(`contributors.busFactor.${level}.title`);
 
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow relative overflow-hidden">
@@ -32,8 +35,9 @@ export function ContributorsTable({ contributors, busFactor }) {
           </Tooltip>
         </h3>
       </div>
+      <div className="-mt-2 mb-4"><ContributorsScope analysis={analysis} /></div>
 
-      {/* Alerta do Bus Factor */}
+      {/* Alerta: concentração no principal contribuidor */}
       <div className={`mb-6 p-4 rounded-md border ${alertColor}`}>
         <div className="flex">
           <div className="flex-shrink-0">
@@ -48,7 +52,7 @@ export function ContributorsTable({ contributors, busFactor }) {
             <div className={`mt-2 text-sm ${textColor}`}>
               <p>
                 <Trans
-                  i18nKey={`contributors.busFactor.${busFactor.level}.message`}
+                  i18nKey={`contributors.busFactor.${level}.message`}
                   values={{ contributor: busFactor.topContributor, percentage: busFactor.percentage }}
                   components={{ bold: <strong /> }}
                 />
@@ -59,6 +63,7 @@ export function ContributorsTable({ contributors, busFactor }) {
       </div>
 
       {/* Tabela */}
+      {!unavailable && (
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
           <thead className="bg-gray-50 dark:bg-slate-700">
@@ -90,7 +95,7 @@ export function ContributorsTable({ contributors, busFactor }) {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-white">{contributor.contributions}</div>
+                  <div className="text-sm text-gray-900 dark:text-white">{contributor.commits ?? contributor.contributions}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
@@ -108,6 +113,7 @@ export function ContributorsTable({ contributors, busFactor }) {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

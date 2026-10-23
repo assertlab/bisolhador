@@ -8,6 +8,7 @@ import {
   GITHUB_PER_PAGE_BRANCHES,
   GITHUB_PER_PAGE_RECENT_PRS,
   GITHUB_PER_PAGE_PR_STATS,
+  GITHUB_PER_PAGE_CONTRIBUTORS,
   GITHUB_PER_PAGE_RELEASES,
   ZOMBIE_BRANCH_DAYS,
   WEEKS_IN_YEAR,
@@ -124,26 +125,34 @@ export const githubService = {
     return { count, zombies: unchecked > 0 ? null : zombies };
   },
 
+  // Fallback for contributor analysis when /stats/contributors isn't ready:
+  // the top 100 contributors, all-time only. Throws on failure (used to return
+  // [] → "no contributors" and a persisted empty bus factor).
   async fetchContributors(owner, repo) {
-    if (!owner || !repo) {
-      return [];
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors?per_page=${GITHUB_PER_PAGE_CONTRIBUTORS}`;
+    const response = await fetch(url, { headers: getHeaders() });
+    if (!response.ok) {
+      throw new Error(`Contributors failed: HTTP ${response.status}`);
     }
+    return response.json();
+  },
 
-    try {
-      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch contributors: ${response.status}`);
-        return [];
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.warn("Error fetching contributors:", error);
-      return [];
+  // Top contributors with weekly commit counts (all-time AND recent windows,
+  // bots flagged as type "Bot"). One request, no retry: GitHub answers 202
+  // while it computes the stats, and waiting for it held the whole dashboard
+  // (this runs inside useRepository's allSettled) — the caller falls back to
+  // /contributors instead; the next search usually finds the stats ready.
+  async fetchContributorStats(owner, repo) {
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/contributors`;
+    const response = await fetch(url, { headers: getHeaders() });
+    if (response.status === 202) {
+      throw new Error("Contributor stats still being computed by GitHub (HTTP 202)");
     }
+    if (response.status === 204) return []; // empty repository
+    if (!response.ok) {
+      throw new Error(`Contributor stats failed: HTTP ${response.status}`);
+    }
+    return response.json();
   },
 
   // Counts below come from the Search API. A failure (HTTP error, network,
