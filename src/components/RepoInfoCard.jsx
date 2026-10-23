@@ -6,6 +6,7 @@ import { exportToPDF } from '../utils/pdfExporter.js';
 import { exportJson } from '../utils/exportJson.js';
 import { exportToCsv } from '../utils/csvExporter.js';
 import { showToast } from '../hooks/useToast.js';
+import { intlLocale } from '../i18n.js';
 
 // GitHub owner/repo segments: alphanumeric, dots, hyphens, underscores only —
 // no slashes, backslashes or control characters. Defense in depth for the
@@ -17,7 +18,7 @@ const SAFE_GITHUB_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 export function RepoInfoCard({ data, onShareSuccess }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language === 'pt' ? 'pt-BR' : 'en-US';
+  const locale = intlLocale(i18n.language);
   const navigate = useNavigate();
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   if (!data) return null;

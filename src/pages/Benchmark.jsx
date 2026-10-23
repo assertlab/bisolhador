@@ -16,6 +16,7 @@ import { MAX_BENCHMARK_REPOS } from '../constants';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 import { showToast } from '../hooks/useToast.js';
 import { generateColor } from '../utils/colors.js';
+import { intlLocale } from '../i18n.js';
 
 // Lazy load chart components. Each also waits on ensureChartSetup() so
 // chart.js registration (dynamically imported itself) is done before mount.
@@ -256,11 +257,11 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                       <div className="space-y-2 text-xs text-gray-600 dark:text-slate-400">
                         <div className="flex justify-between">
                           <span>⭐ Stars:</span>
-                          <span className="font-medium">{repo.stars.toLocaleString()}</span>
+                          <span className="font-medium">{repo.stars.toLocaleString(intlLocale())}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>🔱 Forks:</span>
-                          <span className="font-medium">{repo.forks.toLocaleString()}</span>
+                          <span className="font-medium">{repo.forks.toLocaleString(intlLocale())}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>🏥 Health:</span>

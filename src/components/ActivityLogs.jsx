@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 import { formatters } from '../utils/formatters.js';
+import { intlLocale } from '../i18n.js';
 
 export function ActivityLogs({ commits, pullRequests }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language === 'pt' ? 'pt-BR' : 'en-US';
+  const locale = intlLocale(i18n.language);
 
   const formatDate = (dateString) => formatters.formatDateLong(dateString, locale);
 
