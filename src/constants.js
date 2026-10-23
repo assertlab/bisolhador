@@ -38,3 +38,6 @@ export const CONTRIBUTORS_MIN_RECENT_COMMITS = 20;
 
 // Day boundary of the date permalink (?repo=&date=); must match supabase-migrations/buscar_snapshot_por_data.sql
 export const SNAPSHOT_TIMEZONE = 'America/Recife';
+
+// Benchmark warns when the compared repos' latest data are further apart than this
+export const BENCHMARK_DATE_GAP_DAYS = 7;

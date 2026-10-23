@@ -45,11 +45,23 @@ export const formatters = {
     // chart axis labels and summary stats (BenchmarkEvolutionChart, Timeline)
     // where day-level precision is enough and a numeric month is less
     // scannable in a chart tick or stat card.
-    formatDateShort(date, locale = 'pt-BR') {
+    formatDateShort(date, locale = 'pt-BR', timeZone = undefined) {
         return new Intl.DateTimeFormat(locale, {
             ...BASE_DATE_OPTIONS,
             month: 'short',
+            timeZone,
         }).format(new Date(date));
+    },
+
+    // null = not measured → N/A. Decimal separator follows the locale ("1,5").
+    formatDecimal(value, locale = 'pt-BR', digits = 1) {
+        if (value == null || !Number.isFinite(value)) return 'N/A';
+        return value.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    },
+
+    formatPercent(value, locale = 'pt-BR') {
+        if (value == null || !Number.isFinite(value)) return 'N/A';
+        return `${value.toLocaleString(locale, { maximumFractionDigits: 1 })}%`;
     },
 
     // Full written-out date + time (e.g. "28 de julho de 2026 às 14:32") —

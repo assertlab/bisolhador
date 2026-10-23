@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
+import { formatters } from '../../utils/formatters.js';
+import { intlLocale } from '../../i18n.js';
 
 export function BenchmarkHealthBars({ repos }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">
@@ -21,14 +23,14 @@ export function BenchmarkHealthBars({ repos }) {
                   {repo.fullName}
                 </span>
                 <span className="font-semibold text-shark dark:text-white">
-                  {repo.healthScore}%
+                  {formatters.formatPercent(repo.healthScore, intlLocale(i18n.language))}
                 </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                 <div
                   className="h-2 rounded-full transition-all"
                   style={{
-                    width: `${repo.healthScore}%`,
+                    width: `${repo.healthScore ?? 0}%`,
                     backgroundColor: repo.color,
                   }}
                 ></div>

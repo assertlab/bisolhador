@@ -12,7 +12,9 @@ import { BenchmarkRepoChips } from '../components/benchmark/BenchmarkRepoChips';
 import { BenchmarkHealthBars } from '../components/benchmark/BenchmarkHealthBars';
 import { BenchmarkBusFactorRisk } from '../components/benchmark/BenchmarkBusFactorRisk';
 import { BenchmarkDetailTable } from '../components/benchmark/BenchmarkDetailTable';
-import { MAX_BENCHMARK_REPOS } from '../constants';
+import { MAX_BENCHMARK_REPOS, BENCHMARK_DATE_GAP_DAYS, SNAPSHOT_TIMEZONE } from '../constants';
+import { formatters } from '../utils/formatters.js';
+import { dataAgeSpreadDays, leadTimeText } from '../utils/benchmarkData.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 import { showToast } from '../hooks/useToast.js';
 import { generateColor } from '../utils/colors.js';
@@ -29,6 +31,7 @@ const BenchmarkComparisonChart = lazy(() =>
 
 export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
+  const locale = intlLocale(i18n.language);
   const [selectedRepos, setSelectedRepos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [metricCategory, setMetricCategory] = useState('popularity');
@@ -45,6 +48,8 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
       repo.history.map((point) => ({ ...point, _repoFullName: repo.fullName }))
     );
   }, [successfulRepos]);
+
+  const ageSpread = useMemo(() => dataAgeSpreadDays(successfulRepos), [successfulRepos]);
 
   const dateAccessor = useCallback((d) => d.date, []);
   const filteredHistory = useTimeFilter(allHistory, timeRange, dateAccessor);
@@ -140,6 +145,8 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
     const [canonicalOwner, canonicalRepo] = canonicalName.split('/');
     const newRepo = {
       fullName: canonicalName,
+      // Rows saved before the rename are under the typed name (facebook/react)
+      aliases: canonicalName.toLowerCase() === `${owner}/${repo}`.toLowerCase() ? [] : [`${owner}/${repo}`],
       owner: canonicalOwner,
       repo: canonicalRepo,
       color: generateColor(selectedRepos.length)
@@ -230,6 +237,13 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
               </div>
             )}
 
+            {/* Compared data from different dates: say so instead of implying a same-day comparison */}
+            {ageSpread != null && ageSpread > BENCHMARK_DATE_GAP_DAYS && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 px-4 py-3 rounded-md text-sm">
+                📅 {t('benchmark.dateGap', { days: ageSpread })}
+              </div>
+            )}
+
             {/* Repository Preview Cards */}
             {successfulRepos.length > 0 && (
               <div>
@@ -257,31 +271,35 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                       <div className="space-y-2 text-xs text-gray-600 dark:text-slate-400">
                         <div className="flex justify-between">
                           <span>⭐ Stars:</span>
-                          <span className="font-medium">{repo.stars.toLocaleString(intlLocale(i18n.language))}</span>
+                          <span className="font-medium">{formatters.formatNumber(repo.stars, locale)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>🔱 Forks:</span>
-                          <span className="font-medium">{repo.forks.toLocaleString(intlLocale(i18n.language))}</span>
+                          <span className="font-medium">{formatters.formatNumber(repo.forks, locale)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>🏥 Health:</span>
-                          <span className="font-medium">{repo.healthScore}%</span>
+                          <span className="font-medium">{formatters.formatPercent(repo.healthScore, locale)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>📊 Language:</span>
-                          <span className="font-medium">{repo.language}</span>
+                          <span className="font-medium">{repo.language ?? 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>⏱️ Lead Time:</span>
                           <span className="font-medium">
-                            {repo.leadTime > 0 ? `${repo.leadTime} ${t('units.' + repo.leadTimeUnit, { count: repo.leadTime })}` : 'N/A'}
+                            {leadTimeText(repo.leadTimeHours, t, locale)}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>🚌 Bus Factor:</span>
                           <span className="font-medium">
-                            {repo.busFactorPercentage > 0 ? `${repo.busFactorPercentage}%` : 'N/A'}
+                            {formatters.formatPercent(repo.busFactorPercentage, locale)}
                           </span>
+                        </div>
+                        <div className="flex justify-between pt-1 border-t border-gray-100 dark:border-slate-700">
+                          <span>📅 {t('benchmark.dataFrom')}:</span>
+                          <span className="font-medium">{formatters.formatDateShort(repo.lastUpdate, locale, SNAPSHOT_TIMEZONE)}</span>
                         </div>
                       </div>
                     </div>
@@ -293,17 +311,9 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
             {/* Charts Section */}
             {successfulRepos.length > 0 && (
               <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <h3 className="text-xl font-semibold text-shark dark:text-white">
-                    {t('benchmark.visualizationTitle', 'Comparação de Métricas')}
-                  </h3>
-
-                  <TimeRangeFilter
-                    currentRange={timeRange}
-                    onRangeChange={setTimeRange}
-                    i18nPrefix="benchmark"
-                  />
-                </div>
+                <h3 className="text-xl font-semibold text-shark dark:text-white">
+                  {t('benchmark.visualizationTitle', 'Comparação de Métricas')}
+                </h3>
 
                 <Suspense
                   fallback={
@@ -315,7 +325,15 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                   }
                 >
                   <div className="space-y-6">
-                    {/* Evolution Chart - Stars over time */}
+                    {/* The period filter only applies to the evolution line; everything
+                        else compares each repo's latest data (dated in its card). */}
+                    <div className="flex justify-end">
+                      <TimeRangeFilter
+                        currentRange={timeRange}
+                        onRangeChange={setTimeRange}
+                        i18nPrefix="benchmark"
+                      />
+                    </div>
                     <BenchmarkEvolutionChart repos={filteredRepos} metric="stars" />
 
                     {/* Metric Category Tabs */}
@@ -340,7 +358,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                     </div>
 
                     {/* Comparison Bar Chart */}
-                    <BenchmarkComparisonChart repos={filteredRepos} metricCategory={metricCategory} />
+                    <BenchmarkComparisonChart repos={successfulRepos} metricCategory={metricCategory} />
 
                     {/* Health & Language side-by-side */}
                     {successfulRepos.length >= 2 && (
@@ -365,7 +383,7 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
                                   </span>
                                 </div>
                                 <span className="font-medium text-gray-900 dark:text-white">
-                                  {repo.language}
+                                  {repo.language ?? 'N/A'}
                                 </span>
                               </div>
                             ))}
