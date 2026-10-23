@@ -139,14 +139,12 @@ const analytics = {
     }
 
     try {
-      // Detecção automática do fuso (Ex: 'America/Recife', 'Europe/Lisbon')
-      const userTimezone =
-        Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-
+      // Most recent snapshot up to the end of that day, in a fixed timezone on
+      // the server (supabase-migrations/buscar_snapshot_por_data.sql): the same
+      // link shows the same record in any timezone. Used to send the browser's.
       const { data, error } = await supabase.rpc("buscar_snapshot_por_data", {
         p_repo_name: repoName,
         p_date: dateString,
-        p_timezone: userTimezone, // <--- Novo parâmetro
       });
 
       if (error) {

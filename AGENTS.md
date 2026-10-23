@@ -133,14 +133,14 @@ Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.8.0)
 
 ### Backend / Supabase
 - **Write**: All writes via validated RPCs (`registrar_busca`), no direct INSERT
-- **Read**: History via RPC (`buscar_snapshot_por_data`) with dynamic timezone
+- **Read**: snapshot by id (`obter_snapshot`), by date (`buscar_snapshot_por_data`: most recent record up to the end of that day, fixed `America/Recife` timezone — `p_timezone` accepted and ignored for old clients; versioned in `supabase-migrations/` since 2026-10, it returned null for every input before), history (`get_repo_history`), ranking (`get_leaderboard`). The smoke test opens the date permalink of `SMOKE_SNAPSHOT_ID`'s record.
 - **Schema**: `analytics_searches` uses `BIGINT` IDs and `NUMERIC` health_score
 - **Security**: Direct table access (INSERT/SELECT) for the `anon` role is revoked via RLS — all access goes through `SECURITY DEFINER` RPCs. This was **not** true before v3.5.0: two public RLS policies ("Permitir inserts publicos", "Permitir leitura publica") let `anon` read/write `analytics_searches` directly, bypassing every RPC, despite this file previously claiming otherwise. See `## Security` below and `docs/CHANGELOG.md` [3.5.0].
 
 ### URL / Deep Linking
 - `/?q=owner/repo` — live search
 - `/?id=123` — immutable snapshot permalink
-- `/?repo=owner/project&date=YYYY-MM-DD` — semantic historical search
+- `/?repo=owner/project&date=YYYY-MM-DD` — semantic historical search: most recent snapshot up to that day (America/Recife); the banner shows when it was actually recorded. Not rename-aware: old snapshots stay under the old name (e.g. `facebook/react`).
 - Priority: ID > Semantic > Live
 
 ### Release / Deploy

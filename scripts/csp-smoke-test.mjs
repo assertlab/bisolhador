@@ -16,7 +16,9 @@
 // SMOKE_REQUIRE_GA=1 (set in CI), zero GA4 requests also fails: GA4's CSP
 // coverage would otherwise go untested silently (e.g. VITE_GA_ID missing).
 // Runs in CI (.github/workflows/ci.yml, job "smoke") in snapshot mode; it
-// depends on SMOKE_SNAPSHOT_ID existing in production Supabase.
+// depends on SMOKE_SNAPSHOT_ID existing in production Supabase. Snapshot mode
+// also opens the semantic permalink (?repo=&date=) for that same record
+// (buscar_snapshot_por_data, which returned null for everything until 2026-10).
 //
 // Optional environment variables (both are ways to work around the
 // unauthenticated GitHub rate limit of 60 req/h, which the live-search flow
@@ -259,8 +261,23 @@ async function runBrowserFlow(baseUrl, label) {
     pdfClicked: false,
     downloadStarted: false,
     downloadFilename: null,
+    datePermalink: null, // snapshot mode: ?repo=&date= of the same record
+    datePermalinkOk: usingSnapshot ? false : null,
     error: null,
   };
+
+  // obter_snapshot's answer gives the repo and date for the semantic permalink.
+  let snapshotRecord = null;
+  if (usingSnapshot) {
+    page.on('response', async (res) => {
+      if (!res.url().includes('/rest/v1/rpc/obter_snapshot') || res.request().method() !== 'POST') return;
+      try {
+        snapshotRecord = await res.json();
+      } catch {
+        // reported below as datePermalinkOk=false
+      }
+    });
+  }
 
   try {
     const targetPath = usingSnapshot ? `${APP_BASE_PATH}?id=${SNAPSHOT_ID}` : APP_BASE_PATH;
@@ -290,6 +307,16 @@ async function runBrowserFlow(baseUrl, label) {
     flow.pdfClicked = true;
     flow.downloadStarted = true;
     flow.downloadFilename = download.suggestedFilename();
+
+    if (usingSnapshot) {
+      if (!snapshotRecord?.repo_name || !snapshotRecord?.created_at) throw new Error('obter_snapshot response not captured');
+      // Same fixed timezone as the RPC (supabase-migrations/buscar_snapshot_por_data.sql)
+      const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife' }).format(new Date(snapshotRecord.created_at));
+      flow.datePermalink = `?repo=${snapshotRecord.repo_name}&date=${date}`;
+      await page.goto(baseUrl + APP_BASE_PATH + flow.datePermalink, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+      await page.getByRole('button', { name: PDF_BUTTON_NAME }).waitFor({ state: 'visible', timeout: DASHBOARD_TIMEOUT_MS });
+      flow.datePermalinkOk = true;
+    }
   } catch (err) {
     flow.error = String(err && err.message ? err.message : err);
   }
@@ -402,7 +429,7 @@ async function main() {
   for (const r of reports) {
     console.log(
       `${r.flow.label}: navigationOk=${r.flow.navigationOk} searchSubmitted=${r.flow.searchSubmitted} ` +
-        `dashboardLoaded=${r.flow.dashboardLoaded} pdfClicked=${r.flow.pdfClicked} downloadStarted=${r.flow.downloadStarted} ` +
+        `dashboardLoaded=${r.flow.dashboardLoaded} pdfClicked=${r.flow.pdfClicked} downloadStarted=${r.flow.downloadStarted} datePermalinkOk=${r.flow.datePermalinkOk} ` +
         `cspViolations=${r.cspViolations.length} gaRequests=${r.gaRequests.length} websockets=${r.websockets.length} ` +
         `pageErrors=${r.pageErrors.length} intercepted=${JSON.stringify(r.writesIntercepted)} ` +
         `flowError=${r.flow.error ?? 'none'}`,
@@ -422,6 +449,7 @@ async function main() {
     if (!f.navigationOk) problems.push('navigation');
     if (!f.dashboardLoaded) problems.push('dashboard did not load');
     if (!f.downloadStarted) problems.push('PDF download did not start');
+    if (f.datePermalinkOk === false) problems.push(`date permalink ${f.datePermalink ?? '(not built)'} did not load (buscar_snapshot_por_data)`);
     if (r.cspViolations.length) problems.push(`${r.cspViolations.length} CSP violation(s)`);
     if (r.pageErrors.length) problems.push(`${r.pageErrors.length} page error(s)`);
     return problems.map((p) => `${f.label}: ${p}`);

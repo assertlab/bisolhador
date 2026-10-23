@@ -174,8 +174,9 @@ https://bisolhador.assertlab.com/?id=123
 
 **Busca Semântica Histórica (por Data):**
 ```
-https://bisolhador.assertlab.com/?repo=facebook/react&date=2025-12-17
+https://bisolhador.assertlab.com/?repo=facebook/react&date=2025-12-18
 ```
+Mostra o registro mais recente até o fim desse dia (fuso de Recife); o aviso no topo informa quando ele foi registrado.
 
 ### Funcionalidades Principais
 
