@@ -8,6 +8,9 @@
 --
 -- Extra guards per row: mocks must have a "Mocked..." description, degraded
 -- rows must have health_score = 14.
+--
+-- First run (2026-10-23) aborted on the mocks guard with "got 0": the
+-- description lives inside a double-encoded full_report (fixed below).
 
 BEGIN;
 
@@ -23,7 +26,9 @@ BEGIN
     1028, 1032, 1036, 1040, 1044, 1048,                                     -- vuejs/vue
     1046, 1050                                                              -- sveltejs/svelte
   )
-  AND full_report->>'description' ILIKE 'Mocked%';
+  -- full_report is stored as a JSON *string* inside jsonb (double-encoded), so
+  -- full_report->>'description' is NULL; #>> '{}' unwraps it (works for objects too).
+  AND (full_report #>> '{}')::jsonb ->> 'description' ILIKE 'Mocked%';
   GET DIAGNOSTICS n = ROW_COUNT;
   IF n <> 30 THEN
     RAISE EXCEPTION 'mocks: expected 30 rows, got % — aborting, nothing deleted', n;
