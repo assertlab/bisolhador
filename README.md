@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.6.4
+# 🦈 Bisolhador Dashboard v3.7.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -28,6 +28,11 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.7.0 - Novo Endereço
+- **🌐 https://bisolhador.assertlab.com**: o endereço antigo (`assertlab.com/bisolhador/`) redireciona automaticamente, inclusive permalinks
+- **⚠️ Reconfigure o token do GitHub** no novo endereço (o navegador guarda configurações por domínio)
+- **🐛 Links diretos**: abrir ou recarregar `/ranking`, `/benchmark` e `/timeline/...` direto no navegador não dá mais 404
 
 ### v3.6.4 - Metrics Accuracy Fixes
 - **🐛 Code Churn**: deixou de mostrar `Infinity` / "Acúmulo Intenso" para quase todo repositório ativo (a API do GitHub devolve as deleções com sinal negativo)
@@ -148,17 +153,17 @@ A aplicação estará disponível em `http://localhost:5173`
 
 **Busca Direta por URL:**
 ```
-https://assertlab.github.io/bisolhador/?q=facebook/react
+https://bisolhador.assertlab.com/?q=facebook/react
 ```
 
 **Acesso a Snapshot Histórico (Permalink):**
 ```
-https://assertlab.github.io/bisolhador/?id=123
+https://bisolhador.assertlab.com/?id=123
 ```
 
 **Busca Semântica Histórica (por Data):**
 ```
-https://assertlab.github.io/bisolhador/?repo=facebook/react&date=2025-12-17
+https://bisolhador.assertlab.com/?repo=facebook/react&date=2025-12-17
 ```
 
 ### Funcionalidades Principais

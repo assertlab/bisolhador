@@ -38,7 +38,7 @@ import http from 'node:http';
 const REPO_TO_SEARCH = 'facebook/react';
 const SEARCH_INPUT_SELECTOR = '#search';
 const PDF_BUTTON_NAME = 'Baixar Relatório'; // src/locales/pt.json -> header.downloadButton
-const APP_BASE_PATH = '/bisolhador/';
+const APP_BASE_PATH = '/';
 const NAV_TIMEOUT_MS = 30_000;
 const DASHBOARD_TIMEOUT_MS = 60_000; // ~16 sequential/parallel unauthenticated GitHub API calls
 const DOWNLOAD_TIMEOUT_MS = 30_000;

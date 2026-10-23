@@ -21,7 +21,7 @@ npm run smoke:csp  # CSP + PDF-export smoke test (Playwright, build + dev modes)
 - **API**: GitHub REST API v3
 - **Analytics**: Hybrid — Supabase (critical data, AdBlock-proof) + GA4 (engagement)
 - **i18n**: react-i18next (PT-BR / EN-US) with auto-detection
-- **Deploy**: GitHub Pages (base URL: `/bisolhador/`) via `.github/workflows/deploy.yml` — see `### Release / Deploy`
+- **Deploy**: GitHub Pages at **https://bisolhador.assertlab.com** (repo custom domain, base `/`) via `.github/workflows/deploy.yml` — see `### Release / Deploy`. `assertlab.com/bisolhador/*` 301-redirects there (Cloudflare Redirect Rule, path + query preserved). The build also writes `dist/404.html` = `index.html` (`scripts/spa-fallback.mjs`) because Pages has no SPA rewrite.
 
 ### Folder Structure
 ```
@@ -116,7 +116,7 @@ Score = (items present / 7) × 100%. Colors (`HealthScoreCard.jsx`): Green (≥7
 ## Project Context
 
 ### Purpose
-Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.6.4). Transforms GitHub repository data into visual insights for students and professors.
+Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.7.0). Transforms GitHub repository data into visual insights for students and professors.
 
 ### Token System
 - Stored in `localStorage['github_token']` (via safe storage wrapper)
