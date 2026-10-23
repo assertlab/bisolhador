@@ -35,3 +35,6 @@ export const TOP_SHARE_WARNING_PERCENT = 40;  // > 40%
 // recent activity; otherwise all-time (a long-gone maintainer is not today's risk).
 export const CONTRIBUTORS_RECENT_WEEKS = 52;
 export const CONTRIBUTORS_MIN_RECENT_COMMITS = 20;
+
+// Day boundary of the date permalink (?repo=&date=); must match supabase-migrations/buscar_snapshot_por_data.sql
+export const SNAPSHOT_TIMEZONE = 'America/Recife';

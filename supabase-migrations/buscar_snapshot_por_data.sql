@@ -47,5 +47,11 @@ AS $$
   ) s;
 $$;
 
+-- Overload with another signature (varchar, timestamptz…) not dropped above
+-- would make PostgREST fail with PGRST203 (ambiguous). Expect exactly ONE row:
+--   SELECT oid::regprocedure FROM pg_proc WHERE proname = 'buscar_snapshot_por_data';
+
 COMMENT ON FUNCTION public.buscar_snapshot_por_data(text, date, text) IS
   'Snapshot mais recente de um repositório até o fim de p_date (fuso fixo America/Recife; p_timezone ignorado, só compatibilidade). Mesmo formato de obter_snapshot.';
+
+SELECT oid::regprocedure AS deployed_signature FROM pg_proc WHERE proname = 'buscar_snapshot_por_data';
