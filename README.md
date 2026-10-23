@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.7.0
+# 🦈 Bisolhador Dashboard v3.7.1
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -28,6 +28,11 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.7.1 - Indicadores Indisponíveis ≠ Zero
+- **🐛 N/A em vez de 0**: quando o GitHub não responde (limite de requisições, erro), issues, PRs, merges, branches e Health Score aparecem como N/A, com aviso de dados parciais, em vez de um 0 falso — e esse resultado parcial não é gravado no histórico
+- **🐛 Repositórios renomeados**: `facebook/react` (hoje `react/react`) mostrava 0 issues; agora usa o nome atual
+- **🐛 Forks**: Health Score aparece como N/A com explicação, em vez de ~14%
 
 ### v3.7.0 - Novo Endereço
 - **🌐 https://bisolhador.assertlab.com**: o endereço antigo (`assertlab.com/bisolhador/`) redireciona automaticamente, inclusive permalinks
