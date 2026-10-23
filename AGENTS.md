@@ -106,7 +106,7 @@ Score = (items present / 7) × 100%. Colors (`HealthScoreCard.jsx`): Green (≥7
 - `useMemo` for chart data/options to avoid Chart.js canvas re-creation
 - `useChartTheme` returns memoized theme object
 - Skeleton screens for loading states (LCP optimization)
-- Vite manual chunks: vendor (react), charts-vendor (chart.js), pdf-vendor (html2pdf)
+- No `manualChunks` (Vite 8 / Rolldown): splitting follows the dynamic imports. Forcing packages into named chunks used to drag shared deps along and made the entry preload them — in Vite 7 the ~950 KB `pdf-vendor` was preloaded on every first visit. `html2pdf.js` is imported on click inside `exportToPDF()` (`src/utils/pdfExporter.js`), like chart.js via `ensureChartSetup()`. First load went from ~1.56 MB to ~592 KB of JS.
 
 ### Component Structure
 - Pages in `src/pages/`, UI components in `src/components/`
@@ -162,7 +162,7 @@ CI (rationale in each workflow's comments):
 - `ci.yml` → **`lint + build`** (required on `protect-main`; PRs and `main`): lint, unit tests (`npm test`), build. Builds without secrets, so `%VITE_SUPABASE_URL%` stays unresolved in the CSP — green CI proves the app compiles, not that the shipped CSP is valid.
 - `ci.yml` → **`dependency review`** (PRs): blocks a PR that *introduces* a runtime dependency with a high+ vulnerability.
 - `audit.yml` → **`npm audit (runtime)`** (weekly + lockfile changes on `main`, not on PRs): alarm for new advisories against what's already installed.
-- `ci.yml` → **`smoke (CSP + PDF)`** (PRs from this repo and `main`, **not required** yet — it depends on network and production Supabase reads): `npm run smoke:csp` in snapshot mode (`vars.SMOKE_SNAPSHOT_ID`, default `1047`). Gets `VITE_*` from Actions vars/secrets, and from **Dependabot secrets** on Dependabot PRs (Actions secrets aren't passed to those runs). Promote to required after a few stable weeks. Dependabot config: `.github/dependabot.yml`. Node: `.nvmrc` (CI/dev) and `engines` in `package.json` (minimum).
+- `ci.yml` → **`smoke (CSP + PDF)`** (PRs from this repo and `main`, **not required** yet — it depends on network and production Supabase reads): `npm run smoke:csp` in snapshot mode (`vars.SMOKE_SNAPSHOT_ID`, currently `893` — a real facebook/react snapshot; the previous default `1047` was one of the mocks deleted on 2026-10-23). Gets `VITE_*` from Actions vars/secrets, and from **Dependabot secrets** on Dependabot PRs (Actions secrets aren't passed to those runs). Promote to required after a few stable weeks. Dependabot config: `.github/dependabot.yml`. Node: `.nvmrc` (CI/dev) and `engines` in `package.json` (minimum).
 
 Unit tests: Vitest, colocated as `src/**/*.test.js` (pure functions in `src/utils/`: health score, maturity detectors, code review, lead time, divergence, both bus factor variants, code churn, `full_report` parsing). They run in CI on every PR.
 

@@ -1,8 +1,10 @@
-import html2pdf from 'html2pdf.js';
 import { PDF_MARGIN, PDF_IMAGE_QUALITY, PDF_CANVAS_SCALE } from '../constants.js';
 import { showToast } from '../hooks/useToast.js';
 
-export function exportToPDF() {
+// html2pdf.js (+ jsPDF + html2canvas, ~950 KB) is imported on click, not at
+// page load: statically imported, it landed in the Dashboard chunk (or, with
+// the old manualChunks, was preloaded on every first visit).
+export async function exportToPDF() {
   // Seleciona o elemento main que contém todo o dashboard
   const element = document.querySelector('main');
 
@@ -36,6 +38,15 @@ export function exportToPDF() {
       mode: ['avoid-all', 'css', 'legacy']
     }
   };
+
+  let html2pdf;
+  try {
+    ({ default: html2pdf } = await import('html2pdf.js'));
+  } catch (error) {
+    console.error('Erro ao carregar o módulo de PDF:', error);
+    showToast('Erro ao gerar o relatório PDF. Tente novamente.', 'error');
+    return;
+  }
 
   // Gera e baixa o PDF
   html2pdf()

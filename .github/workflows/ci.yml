@@ -62,9 +62,11 @@ jobs:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
       VITE_GA_ID: ${{ vars.VITE_GA_ID || secrets.VITE_GA_ID }}
-      # Linha existente em produção (facebook/react, 2026-07-30). Se for
-      # apagada, o job falha com "dashboard did not load": trocar a var.
-      SMOKE_SNAPSHOT_ID: ${{ vars.SMOKE_SNAPSHOT_ID || '1047' }}
+      # Snapshot real em produção (facebook/react, 2026-06-15, relatório completo).
+      # O 1047 usado antes era um dos mocks apagados na limpeza de 2026-10-23.
+      # Se este também sumir, o job falha com "dashboard did not load": trocar a
+      # variável SMOKE_SNAPSHOT_ID do repositório (Settings → Variables).
+      SMOKE_SNAPSHOT_ID: ${{ vars.SMOKE_SNAPSHOT_ID || '893' }}
       SMOKE_REQUIRE_GA: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
