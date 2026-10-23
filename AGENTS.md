@@ -127,7 +127,9 @@ Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.8.0)
 - Stored in `localStorage['github_token']` (via safe storage wrapper)
 - Increases rate limit from 60 to 5,000 requests/hour
 - Auto-added to requests in `githubService.getHeaders()`
-- Required for the **Code Review (self-merge rate)** and **Divergence** metrics: they come from one GraphQL call (`fetchPullRequestReviewStats`), because the REST `/pulls` list has no `merged_by`/comment counts. Without a token, both are shown as unavailable ("n/d" plus an explanation), never as 0% (`src/utils/prReviewStats.js`). Persisted snapshots go through `normalizeSnapshotReviewMetrics` on read: pre-fix reports (no `codeReview.available`) and reports saved as unavailable both show "not recorded in this snapshot".
+- Required for the **Code Review (merged without approval)** and **Divergence** metrics: they come from one GraphQL call (`fetchPullRequestReviewStats`) over the latest 50 **merged** PRs, because the REST `/pulls` list has no approvals/comment authors. Bots (PR authors, comments, approvals) are excluded. "Unapproved" = merged with no `APPROVED` review from someone other than the author; self-merge rate is only in the tooltip. Without a token, both are shown as unavailable ("n/d" plus an explanation), never as 0% (`src/utils/prReviewStats.js`).
+- **Lead time** is the **median** (plus p90 and n) creation → merge over those same merged PRs; without a token, over the merged ones among the 100 most recently updated closed PRs (REST, smaller sample). A failed fetch blocks persistence; PRs disabled (404, torvalds/linux) = "no merged PRs".
+- Persisted snapshots go through `normalizeSnapshotProcessMetrics` on read: values without the current `method` (measured over recently *created* PRs, mean lead time, self-merge rate, bots included) and reports saved as unavailable both show "not recorded in this snapshot". Benchmark/Timeline don't apply it yet (audit wave 2).
 
 ### Backend / Supabase
 - **Write**: All writes via validated RPCs (`registrar_busca`), no direct INSERT

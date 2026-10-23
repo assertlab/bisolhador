@@ -105,6 +105,21 @@ describe('githubService: failures are errors, not zeros', () => {
     });
   });
 
+  describe('fetchPullRequestStats (lead time sample)', () => {
+    it('asks for recently updated closed PRs, not the latest created', async () => {
+      fetchMock.mockReturnValue(json([{ number: 1 }]));
+      await expect(githubService.fetchPullRequestStats('o', 'r')).resolves.toEqual([{ number: 1 }]);
+      expect(fetchMock.mock.calls[0][0]).toContain('state=closed&sort=updated&direction=desc&per_page=100');
+    });
+
+    it('404 (pull requests disabled, e.g. torvalds/linux) → no PRs; other failures throw', async () => {
+      fetchMock.mockReturnValue(json({}, { status: 404 }));
+      await expect(githubService.fetchPullRequestStats('o', 'r')).resolves.toEqual([]);
+      fetchMock.mockReturnValue(json({}, { status: 500 }));
+      await expect(githubService.fetchPullRequestStats('o', 'r')).rejects.toThrow('500');
+    });
+  });
+
   describe('fetchRepositoryTree', () => {
     it('returns the tree and the truncated flag', async () => {
       fetchMock.mockReturnValue(json({ tree: [{ path: 'a' }], truncated: true }));

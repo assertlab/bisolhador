@@ -47,10 +47,10 @@
     "ageYears": "{{count}} years",
     "divergenceNeedsToken": "Requires a GitHub token",
     "divergenceUnavailable": "Unavailable",
-    "divergenceNone": "No data (0 PRs)",
-    "divergenceLow": "Low (Quiet)",
-    "divergenceMedium": "Healthy",
-    "divergenceHigh": "High (Intense Debate)"
+    "divergenceNone": "No merged PRs",
+    "divergenceLow": "Little discussion",
+    "divergenceMedium": "Moderate discussion",
+    "divergenceHigh": "Lots of discussion"
   },
   "app": {
     "loadingPage": "Loading...",
@@ -75,15 +75,24 @@
     "openIssuesTooltip": "Number of issues (problems or requests) that are still open in the repository.",
     "closedIssuesTooltip": "Total resolved issues, with resolution rate showing efficiency.",
     "codeChurnTooltip": "Ratio between new code added and code removed/refactored. Indicates change quality.",
-    "leadTimeTooltip": "Average time between Pull Request creation and approval/merge. Indicates review process speed.",
-    "divergenceTooltip": "Average comments (general and code review) per PR, over the {{n}} most recent PRs. Requires a GitHub token."
+    "leadTimeTooltip": "Median time between a Pull Request's creation and its merge, over up to {{n}} most recent merged PRs (bots excluded). The median isn't skewed by a few very slow PRs; p90 shows the tail (90% were merged within that time).",
+    "divergenceTooltip": "Average comments by people (general and code review) per PR, over up to {{n}} most recent merged PRs. Bot comments and bot PRs don't count. Requires a GitHub token.",
+    "leadTimeSample": "median of {{n}} PRs · p90 {{p90}}",
+    "leadTimeUnavailable": {
+      "noMerged": "No recently merged PRs",
+      "error": "Couldn't load the PRs",
+      "snapshot": "Not recorded in this snapshot"
+    },
+    "prSample": "{{n}} PRs"
   },
   "language": {
     "pt": "PT",
     "en": "EN"
   },
   "units": {
+    "hours_one": "hour",
     "hours": "hours",
+    "days_one": "day",
     "days": "days"
   },
   "button": {
@@ -120,7 +129,7 @@
       "tests": "🧪 Tests",
       "ciCd": "⚡ CI/CD",
       "docker": "🐳 Docker",
-      "codeReview": "🛡️ Code Review ({{percentage}}%)",
+      "codeReview": "🛡️ Unapproved ({{percentage}}%)",
       "codeReviewUnavailable": "🛡️ Code Review (N/A)",
       "zombiesUnavailable": "🧟 Zombie Branches (N/A)",
       "noZombies": "✅ No Zombie Branches",
@@ -128,15 +137,16 @@
       "linter": "🧹 Linter"
     },
     "alert": {
-      "title": "Warning: Self-Merges Detected",
-      "message": "{{percentage}}% of PRs were merged by their own author. Consider implementing mandatory reviews to improve quality."
+      "title": "Warning: PRs merged without approval",
+      "message": "{{percentage}}% of the {{n}} most recent merged PRs had no approval from someone else before merging. Consider requiring reviews (branch protection) to improve quality."
     },
     "zombieCriteria": "Branches with no commits for over {{days}} days, excluding the default, protected and release/maintenance ones (e.g. 1.x, 0.3-stable, release/2.0). {{checked}} branches checked.",
     "zombieCapped": "Scan limited to the first {{max}} branches: the number is a minimum.",
     "unavailable": {
-      "noToken": "Code Review, Divergence and Zombie Branches need a GitHub token (settings icon at the top): without one, the GitHub API doesn't say who merged each PR, how many comments it got, or each branch's last commit date.",
+      "noToken": "Code Review, Divergence and Zombie Branches need a GitHub token (settings icon at the top): without one, the GitHub API doesn't provide each PR's approvals and comments, or each branch's last commit date.",
       "error": "Couldn't load PR review data (GitHub GraphQL API failure or rate limit). Try again in a moment.",
-      "snapshot": "This historical snapshot didn't record PR review data."
+      "snapshot": "This historical snapshot didn't record PR review data.",
+      "noMerged": "No recently merged PRs (bots excluded): there's no review or discussion to measure."
     },
     "detectors": {
       "tests": "Looks for test/, tests/, __tests__/ folders and *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/ files.",
@@ -148,7 +158,8 @@
       "truncated": "Not verified: GitHub returned a truncated file list (very large repository), so \"not found\" wouldn't be reliable.",
       "unavailable": "Not verified: couldn't load the file list from GitHub (API failure or rate limit).",
       "legacy": "Old snapshot: checked with narrower criteria, so \"not found\" isn't reliable."
-    }
+    },
+    "codeReviewDetail": "Of the {{n}} most recent merged PRs (bots excluded), {{unapproved}}% were merged without an approval (Approve) from someone else; {{selfMerge}}% were merged by their own author. Only GitHub's formal approval counts: projects that approve by command or bot (e.g. /lgtm) show as unapproved."
   },
   "contributors": {
     "title": "Contributors",

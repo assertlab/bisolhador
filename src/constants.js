@@ -2,7 +2,8 @@
 export const GITHUB_PER_PAGE_COMMITS = 15;
 export const BRANCH_SCAN_MAX = 1000; // branches checked for zombies via GraphQL (100 per request)
 export const GITHUB_PER_PAGE_RECENT_PRS = 10;
-export const GITHUB_PER_PAGE_PR_STATS = 20;
+export const CLOSED_PR_SCAN = 100; // recently updated closed PRs fetched to find the merged sample
+export const MERGED_PR_SAMPLE = 50; // lead time / review / divergence: latest merged PRs by humans
 export const GITHUB_PER_PAGE_CONTRIBUTORS = 100; // fallback list (max page size)
 export const GITHUB_PER_PAGE_RELEASES = 1;
 

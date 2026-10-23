@@ -1,20 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { analyzers } from './analyzers.js';
 
-
-// analyzeCodeReview/calculateDivergence receive GraphQL-backed data mapped by
-// toPullRequestStats (see prReviewStats.test.js), not the REST /pulls list,
-// which has no merged_by/comments.
-const HOUR = 60 * 60 * 1000;
-const pr = ({ author = 'a', mergedBy, createdAt = 0, mergedAfterMs, comments = 0, reviewComments = 0 } = {}) => ({
-  user: { login: author },
-  merged_by: mergedBy ? { login: mergedBy } : null,
-  created_at: new Date(createdAt).toISOString(),
-  merged_at: mergedAfterMs == null ? null : new Date(createdAt + mergedAfterMs).toISOString(),
-  comments,
-  review_comments: reviewComments,
-});
-
 describe('calculateHealthScore (7 criteria)', () => {
   const allFiles = {
     readme: {}, license: {}, contributing: {}, code_of_conduct: {}, issue_template: {}, pull_request_template: {},
@@ -44,72 +30,6 @@ describe('calculateHealthScore (7 criteria)', () => {
     const { files } = analyzers.calculateHealthScore({ files: { readme: null, license: {} } }, '');
     expect(files.hasReadme).toBe(false);
     expect(files.hasLicense).toBe(true);
-  });
-});
-
-describe('analyzeCodeReview (self-merge rate)', () => {
-  it('is gray with no merged PRs', () => {
-    expect(analyzers.analyzeCodeReview([])).toEqual({ selfMergePercentage: 0, color: 'gray' });
-    expect(analyzers.analyzeCodeReview([pr()])).toEqual({ selfMergePercentage: 0, color: 'gray' });
-    expect(analyzers.analyzeCodeReview(null)).toEqual({ selfMergePercentage: 0, color: 'gray' });
-  });
-
-  it.each([
-    // [self-merged, merged by someone else, percentage, color]
-    [1, 9, 10, 'green'],
-    [1, 4, 20, 'yellow'],
-    [4, 6, 40, 'yellow'],
-    [1, 1, 50, 'red'],
-    [3, 0, 100, 'red'],
-  ])('%i self + %i reviewed → %i%% %s', (self, reviewed, percentage, color) => {
-    const prs = [
-      ...Array.from({ length: self }, () => pr({ author: 'a', mergedBy: 'a', mergedAfterMs: HOUR })),
-      ...Array.from({ length: reviewed }, () => pr({ author: 'a', mergedBy: 'b', mergedAfterMs: HOUR })),
-    ];
-    expect(analyzers.analyzeCodeReview(prs)).toEqual({ selfMergePercentage: percentage, color });
-  });
-});
-
-describe('calculateLeadTime', () => {
-  it.each([[null], [undefined], [{}]])('is N/A for non-array input (%j)', (input) => {
-    expect(analyzers.calculateLeadTime(input)).toEqual({ value: 'N/A', unit: '' });
-  });
-
-  it('is N/A with no merged PRs', () => {
-    expect(analyzers.calculateLeadTime([pr()])).toEqual({ value: 'N/A', unit: '' });
-  });
-
-  it('reports hours below 24h, rounded to one decimal', () => {
-    const prs = [pr({ mergedAfterMs: 2 * HOUR }), pr({ mergedAfterMs: 3 * HOUR })];
-    expect(analyzers.calculateLeadTime(prs)).toEqual({ value: 2.5, unit: 'hours', count: 2.5 });
-  });
-
-  it('switches to days at exactly 24h', () => {
-    expect(analyzers.calculateLeadTime([pr({ mergedAfterMs: 24 * HOUR })])).toEqual({ value: 1, unit: 'days', count: 1 });
-    expect(analyzers.calculateLeadTime([pr({ mergedAfterMs: 36 * HOUR })])).toEqual({ value: 1.5, unit: 'days', count: 1.5 });
-  });
-
-  it('ignores unmerged PRs in the average', () => {
-    expect(analyzers.calculateLeadTime([pr({ mergedAfterMs: HOUR }), pr()]).value).toBe(1);
-  });
-});
-
-describe('calculateDivergence (comments per PR)', () => {
-  it('is "none" with no PRs', () => {
-    expect(analyzers.calculateDivergence([])).toEqual({ avg: 0, categoryKey: 'repo.divergenceNone' });
-  });
-
-  it.each([
-    [0, 'repo.divergenceLow'],
-    [1, 'repo.divergenceMedium'],
-    [5, 'repo.divergenceMedium'],
-    [6, 'repo.divergenceHigh'],
-  ])('average %i → %s', (avg, categoryKey) => {
-    expect(analyzers.calculateDivergence([pr({ comments: avg })])).toEqual({ avg, categoryKey });
-  });
-
-  it('sums issue and review comments', () => {
-    expect(analyzers.calculateDivergence([pr({ comments: 1, reviewComments: 2 })]).avg).toBe(3);
   });
 });
 
