@@ -143,7 +143,7 @@ Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.8.0)
 Production is published only by pushing a version tag — never from a local machine.
 1. Bump `package.json` + `docs/CHANGELOG.md` in a PR, merge it.
 2. `git tag vX.Y.Z <merge-commit> && git push origin vX.Y.Z`.
-3. `deploy.yml` builds that tag and publishes to Pages. Its in-workflow checks (build config present, tag = `package.json` version, commit on `main`) catch **mistakes**, not malice: on a tag push the workflow file comes from the tagged commit itself, which could drop them.
+3. `deploy.yml` builds that tag, publishes to Pages, then (job `release`) creates the **GitHub release** with the tag's `docs/CHANGELOG.md` section as notes and the README `### vX.Y.Z - Title` as title (`scripts/release-notes.mjs`, run in the build job **before** deploying, so a missing CHANGELOG section fails closed; the release job skips if the release exists and marks "Latest" only on tag push, never on dispatch). Before 2026-10-23 this step didn't exist and releases v3.6.2–v3.8.0 were backfilled by hand. Its in-workflow checks (build config present, tag = `package.json` version, commit on `main`) catch **mistakes**, not malice: on a tag push the workflow file comes from the tagged commit itself, which could drop them.
 
 **Security boundary** (repo settings, not the workflow): a tag ruleset limiting who can create/update/delete `v*` tags, plus the `github-pages` environment allowing only `v*` tags and `main`. Without the tag ruleset, anyone with write access can publish an unreviewed commit by tagging it.
 
