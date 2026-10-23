@@ -110,7 +110,8 @@
       "issueTemplate": "Issue Template",
       "prTemplate": "PR Template"
     },
-    "fromTree": "O Health Score foi calculado a partir dos arquivos do repositório, porque o GitHub não fornece o perfil de comunidade para forks."
+    "fromTree": "O Health Score foi calculado a partir dos arquivos do repositório, porque o GitHub não fornece o perfil de comunidade para forks.",
+    "uncertain": "Pode estar subestimado: não foi possível confirmar a ausência de Issue Template (lista de arquivos do GitHub incompleta ou indisponível). Este resultado não é salvo no histórico."
   },
   "maturity": {
     "title": "Maturidade de Engenharia",
@@ -138,14 +139,15 @@
       "snapshot": "Este snapshot histórico não registrou os dados de revisão dos PRs."
     },
     "detectors": {
-      "tests": "Procura pastas test/, tests/, spec/, __tests__/ e arquivos *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/.",
+      "tests": "Procura pastas test/, tests/, __tests__/ e arquivos *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/.",
       "ciCd": "Procura configuração de CI: GitHub Actions, GitLab CI, CircleCI, Jenkinsfile, Azure Pipelines, Travis, Buildkite, Bitbucket, Drone, AppVeyor.",
       "docker": "Procura Dockerfile (inclusive Dockerfile.* e em subpastas), Containerfile e docker-compose/compose.yml.",
-      "linter": "Procura configuração de linter na raiz ou um nível abaixo: ESLint (incl. eslint.config.js), Biome, golangci-lint, Ruff, Flake8, Pylint, RuboCop, Clippy, Stylelint, SwiftLint, Checkstyle, Sonar. Ruff configurado só no pyproject.toml não é detectado."
+      "linter": "Procura configuração de linter na raiz, um nível abaixo ou em packages/, apps/, crates/…: ESLint (incl. eslint.config.js), Biome, golangci-lint, Ruff, Flake8, Pylint, RuboCop, Clippy, Stylelint, SwiftLint, Checkstyle, Sonar. Configuração dentro do pyproject.toml (Ruff) ou do package.json (eslintConfig) não é detectada."
     },
     "notVerified": {
       "truncated": "Não verificado: o GitHub devolveu a lista de arquivos truncada (repositório muito grande), então \"não encontrado\" não seria confiável.",
-      "unavailable": "Não verificado: não foi possível obter a lista de arquivos do GitHub (falha ou limite da API)."
+      "unavailable": "Não verificado: não foi possível obter a lista de arquivos do GitHub (falha ou limite da API).",
+      "legacy": "Snapshot antigo: verificado com critérios mais limitados, então \"não encontrado\" não é confiável."
     }
   },
   "contributors": {

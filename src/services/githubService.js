@@ -312,7 +312,26 @@ export const githubService = {
   // GitHub truncates huge trees (linux), and a 422 (too large) falls back to
   // the root level only — both reported as truncated so detectors say "not
   // verified" instead of "absent". Throws on failure (was { tree: [] }).
+  // Targeted check for when the recursive tree came back truncated: does any of
+  // the directories GitHub reads issue templates from exist? 404 = absent;
+  // anything else throws (unknown, not "absent"). Contents paths are
+  // case-sensitive: a lowercase issue_template/ stays uncertain (not saved).
+  async hasIssueTemplateDirectory(owner, repo) {
+    const base = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents`;
+    const responses = await Promise.all(
+      ['.github/ISSUE_TEMPLATE', 'docs/ISSUE_TEMPLATE', 'ISSUE_TEMPLATE'].map((dir) => fetch(`${base}/${dir}`, { headers: getHeaders() }))
+    );
+    const failed = responses.find((r) => !r.ok && r.status !== 404);
+    if (failed) throw new Error(`Issue template check failed: HTTP ${failed.status}`);
+    for (const r of responses.filter((res) => res.ok)) {
+      const entries = await r.json();
+      if (Array.isArray(entries) && entries.some((e) => !/^config\.ya?ml$/i.test(e.name))) return true;
+    }
+    return false;
+  },
+
   async fetchRepositoryTree(owner, repo, defaultBranch) {
+    if (!defaultBranch) return { tree: [], truncated: false }; // empty repository: nothing to find
     const base = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}`;
     const response = await fetch(`${base}?recursive=1`, { headers: getHeaders() });
     if (response.status === 422) {
@@ -322,6 +341,7 @@ export const githubService = {
       }
       return { tree: (await rootOnly.json()).tree ?? [], truncated: true };
     }
+    if (response.status === 409) return { tree: [], truncated: false }; // "Git Repository is empty": complete and empty, not a failure
     if (!response.ok) {
       throw new Error(`Repository tree failed: HTTP ${response.status}`);
     }

@@ -110,7 +110,8 @@
       "issueTemplate": "Issue Template",
       "prTemplate": "PR Template"
     },
-    "fromTree": "The Health Score was calculated from the repository files, because GitHub provides no community profile for forks."
+    "fromTree": "The Health Score was calculated from the repository files, because GitHub provides no community profile for forks.",
+    "uncertain": "May be underestimated: couldn't confirm the Issue Template is absent (GitHub file list incomplete or unavailable). This result isn't saved to history."
   },
   "maturity": {
     "title": "Engineering Maturity",
@@ -138,14 +139,15 @@
       "snapshot": "This historical snapshot didn't record PR review data."
     },
     "detectors": {
-      "tests": "Looks for test/, tests/, spec/, __tests__/ folders and *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/ files.",
+      "tests": "Looks for test/, tests/, __tests__/ folders and *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/ files.",
       "ciCd": "Looks for CI configuration: GitHub Actions, GitLab CI, CircleCI, Jenkinsfile, Azure Pipelines, Travis, Buildkite, Bitbucket, Drone, AppVeyor.",
       "docker": "Looks for a Dockerfile (including Dockerfile.* and in subfolders), Containerfile and docker-compose/compose.yml.",
-      "linter": "Looks for linter configuration at the root or one level down: ESLint (incl. eslint.config.js), Biome, golangci-lint, Ruff, Flake8, Pylint, RuboCop, Clippy, Stylelint, SwiftLint, Checkstyle, Sonar. Ruff configured only in pyproject.toml isn't detected."
+      "linter": "Looks for linter configuration at the root, one level down or in packages/, apps/, crates/…: ESLint (incl. eslint.config.js), Biome, golangci-lint, Ruff, Flake8, Pylint, RuboCop, Clippy, Stylelint, SwiftLint, Checkstyle, Sonar. Configuration inside pyproject.toml (Ruff) or package.json (eslintConfig) isn't detected."
     },
     "notVerified": {
       "truncated": "Not verified: GitHub returned a truncated file list (very large repository), so \"not found\" wouldn't be reliable.",
-      "unavailable": "Not verified: couldn't load the file list from GitHub (API failure or rate limit)."
+      "unavailable": "Not verified: couldn't load the file list from GitHub (API failure or rate limit).",
+      "legacy": "Old snapshot: checked with narrower criteria, so \"not found\" isn't reliable."
     }
   },
   "contributors": {

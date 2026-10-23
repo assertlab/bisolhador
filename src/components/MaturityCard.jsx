@@ -27,15 +27,16 @@ export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
     return tooltip ? <Tooltip text={tooltip}>{badge}</Tooltip> : badge;
   };
 
-  // true ✓ found · false ✗ not found · null ? not verified (truncated tree /
-  // API failure) — the state is in the text, not only in the color.
-  const DETECTOR_MARK = { true: '✓', false: '✗', null: '?' };
+  // ✓ found · ✗ not found · ? not verified (truncated tree / API failure /
+  // old snapshot) — the state is in the text, not only in the color.
+  const legacy = !maturity.treeStatus; // snapshot from before 2026-10: narrower patterns, failures read as false
   const renderDetector = (key, detected) => {
-    const state = detected === undefined ? null : detected;
+    const state = detected == null || (legacy && detected === false) ? null : detected;
+    const mark = state === true ? '✓' : state === false ? '✗' : '?';
     const tooltip = state === null
-      ? t(`maturity.notVerified.${maturity.treeStatus ?? 'unavailable'}`)
+      ? t(`maturity.notVerified.${legacy ? 'legacy' : maturity.treeStatus}`)
       : t(`maturity.detectors.${key}`);
-    return renderBadge(`${t(`maturity.badges.${key}`)} ${DETECTOR_MARK[state]}`, state === true, state === null ? 'gray' : undefined, tooltip);
+    return renderBadge(`${t(`maturity.badges.${key}`)} ${mark}`, state === true, state === null ? 'gray' : undefined, tooltip);
   };
 
   return (

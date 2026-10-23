@@ -116,6 +116,22 @@ describe('githubService: failures are errors, not zeros', () => {
       await expect(githubService.fetchRepositoryTree('o', 'r', 'main')).resolves.toEqual({ tree: [{ path: 'README.md' }], truncated: true });
     });
 
+    it('hasIssueTemplateDirectory: 404s → false; a template file → true; config.yml alone → false; other errors throw', async () => {
+      fetchMock.mockReturnValue(json({}, { status: 404 }));
+      await expect(githubService.hasIssueTemplateDirectory('o', 'r')).resolves.toBe(false);
+      fetchMock.mockReset().mockReturnValueOnce(json([{ name: 'bug.yml' }])).mockReturnValue(json({}, { status: 404 }));
+      await expect(githubService.hasIssueTemplateDirectory('o', 'r')).resolves.toBe(true);
+      fetchMock.mockReset().mockReturnValueOnce(json([{ name: 'config.yml' }])).mockReturnValue(json({}, { status: 404 }));
+      await expect(githubService.hasIssueTemplateDirectory('o', 'r')).resolves.toBe(false);
+      fetchMock.mockReset().mockReturnValueOnce(json({}, { status: 403 })).mockReturnValue(json({}, { status: 404 }));
+      await expect(githubService.hasIssueTemplateDirectory('o', 'r')).rejects.toThrow('403');
+    });
+
+    it('empty repository (409) is a complete, empty tree — not a failure', async () => {
+      fetchMock.mockReturnValue(json({ message: 'Git Repository is empty.' }, { status: 409 }));
+      await expect(githubService.fetchRepositoryTree('o', 'r', 'main')).resolves.toEqual({ tree: [], truncated: false });
+    });
+
     it('throws on failure instead of an empty tree (which read as "no tests, no CI")', async () => {
       fetchMock.mockReturnValue(json({ message: 'rate limited' }, { status: 403 }));
       await expect(githubService.fetchRepositoryTree('o', 'r', 'main')).rejects.toThrow(/403/);

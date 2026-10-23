@@ -45,6 +45,10 @@ export function HealthScoreCard({ health }) {
         <div className="text-sm text-gray-600 dark:text-slate-400 mt-1">{t('health.communityHealth')}</div>
       </div>
 
+      {health?.uncertain && (
+        <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">{t('health.uncertain')}</p>
+      )}
+
       {health?.source === 'tree' && (
         <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">{t('health.fromTree')}</p>
       )}
@@ -89,8 +93,8 @@ export function HealthScoreCard({ health }) {
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          {files.hasIssueTemplate ? '✅' : '❌'}
-          <span className={files.hasIssueTemplate ? 'text-green-600' : 'text-red-600'}>
+          {files.hasIssueTemplate ? '✅' : health.uncertain ? '❔' : '❌'}
+          <span className={files.hasIssueTemplate ? 'text-green-600' : health.uncertain ? 'text-gray-500 dark:text-slate-400' : 'text-red-600'}>
             {t('health.files.issueTemplate')}
           </span>
         </div>
