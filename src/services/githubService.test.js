@@ -58,28 +58,51 @@ describe('githubService: failures are errors, not zeros', () => {
     });
   });
 
-  it('fetchBranches throws when the branch list fails (no more "0 branches, no zombies" ✅)', async () => {
-    fetchMock.mockReturnValue(json({ message: 'rate limited' }, { status: 403 }));
-    await expect(githubService.fetchBranches('react', 'react')).rejects.toThrow(/403/);
+  describe('fetchBranchCount (no token)', () => {
+    it('reads the exact total from the Link header (per_page=1)', async () => {
+      fetchMock.mockReturnValue(json([{}], { headers: { link: '<https://api.github.com/repositories/1/branches?per_page=1&page=1011>; rel="last"' } }));
+      await expect(githubService.fetchBranchCount('react', 'react')).resolves.toBe(1011);
+      expect(fetchMock.mock.calls[0][0]).toContain('per_page=1');
+    });
+
+    it('single page → array length', async () => {
+      fetchMock.mockReturnValue(json([{ name: 'main' }]));
+      await expect(githubService.fetchBranchCount('o', 'r')).resolves.toBe(1);
+    });
+
+    it('throws on failure (no more "0 branches, no zombies ✅")', async () => {
+      fetchMock.mockReturnValue(json({ message: 'rate limited' }, { status: 403 }));
+      await expect(githubService.fetchBranchCount('o', 'r')).rejects.toThrow(/403/);
+    });
   });
 
-  it('fetchBranches: zombies unknown (null) when any branch commit could not be checked', async () => {
-    const old = new Date(Date.now() - 400 * 864e5).toISOString();
-    fetchMock
-      .mockReturnValueOnce(json([{ name: 'a', commit: { url: 'u/a' } }, { name: 'b', commit: { url: 'u/b' } }]))
-      .mockReturnValueOnce(json({ commit: { author: { date: old } } }))
-      .mockReturnValueOnce(json({ message: 'rate limited' }, { status: 403 }));
-    await expect(githubService.fetchBranches('o', 'r')).resolves.toEqual({ count: 2, zombies: null });
-  });
+  describe('fetchBranchActivity (token, GraphQL)', () => {
+    const page = (names, { hasNextPage = false, totalCount = names.length } = {}) => json({
+      data: { repository: { refs: {
+        totalCount,
+        pageInfo: { hasNextPage, endCursor: 'c' },
+        nodes: names.map((name) => ({ name, branchProtectionRule: name === 'locked' ? { id: 'x' } : null, target: { committedDate: '2020-01-01T00:00:00Z' } })),
+      } } },
+    });
 
-  it('fetchBranches: counts zombies when every branch was checked', async () => {
-    const old = new Date(Date.now() - 400 * 864e5).toISOString();
-    const fresh = new Date().toISOString();
-    fetchMock
-      .mockReturnValueOnce(json([{ name: 'a', commit: { url: 'u/a' } }, { name: 'b', commit: { url: 'u/b' } }]))
-      .mockReturnValueOnce(json({ commit: { author: { date: old } } }))
-      .mockReturnValueOnce(json({ commit: { author: { date: fresh } } }));
-    await expect(githubService.fetchBranches('o', 'r')).resolves.toEqual({ count: 2, zombies: 1 });
+    it('follows pagination and maps name / protected / committedDate', async () => {
+      fetchMock.mockReturnValueOnce(page(['a', 'locked'], { hasNextPage: true, totalCount: 3 })).mockReturnValueOnce(page(['b'], { totalCount: 3 }));
+      const result = await githubService.fetchBranchActivity('o', 'r');
+      expect(result.totalCount).toBe(3);
+      expect(result.capped).toBe(false);
+      expect(result.branches).toEqual([
+        { name: 'a', protected: false, committedDate: '2020-01-01T00:00:00Z' },
+        { name: 'locked', protected: true, committedDate: '2020-01-01T00:00:00Z' },
+        { name: 'b', protected: false, committedDate: '2020-01-01T00:00:00Z' },
+      ]);
+      const vars = JSON.parse(fetchMock.mock.calls[1][1].body).variables;
+      expect(vars).toEqual({ owner: 'o', name: 'r', after: 'c' });
+    });
+
+    it('throws when GraphQL returns no data', async () => {
+      fetchMock.mockReturnValue(json({ errors: [{ message: 'Could not resolve' }] }));
+      await expect(githubService.fetchBranchActivity('o', 'r')).rejects.toThrow(/Could not resolve/);
+    });
   });
 
   it('fetchReleasesCount: single page (no Link header) counts the first response, no second request', async () => {

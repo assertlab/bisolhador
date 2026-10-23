@@ -1,6 +1,6 @@
 // GitHub API pagination defaults
 export const GITHUB_PER_PAGE_COMMITS = 15;
-export const GITHUB_PER_PAGE_BRANCHES = 20;
+export const BRANCH_SCAN_MAX = 1000; // branches checked for zombies via GraphQL (100 per request)
 export const GITHUB_PER_PAGE_RECENT_PRS = 10;
 export const GITHUB_PER_PAGE_PR_STATS = 20;
 export const GITHUB_PER_PAGE_CONTRIBUTORS = 100; // fallback list (max page size)

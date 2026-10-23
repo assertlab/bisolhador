@@ -128,8 +128,10 @@
       "title": "Warning: Self-Merges Detected",
       "message": "{{percentage}}% of PRs were merged by their own author. Consider implementing mandatory reviews to improve quality."
     },
+    "zombieCriteria": "Branches with no commits for over 90 days, excluding the default, protected and release/maintenance ones (e.g. 1.x, 0.3-stable, release/2.0). {{checked}} branches checked.",
+    "zombieCapped": "Scan limited to the first 1,000 branches.",
     "unavailable": {
-      "noToken": "Code Review and Divergence need a GitHub token (settings icon at the top): without one, the GitHub API doesn't say who merged each PR or how many comments it got.",
+      "noToken": "Code Review, Divergence and Zombie Branches need a GitHub token (settings icon at the top): without one, the GitHub API doesn't say who merged each PR, how many comments it got, or each branch's last commit date.",
       "error": "Couldn't load PR review data (GitHub GraphQL API failure or rate limit). Try again in a moment.",
       "snapshot": "This historical snapshot didn't record PR review data."
     }

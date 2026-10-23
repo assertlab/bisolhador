@@ -3,16 +3,18 @@ import { Tooltip } from './Tooltip.jsx';
 
 const BADGE_COLORS = { green: 'bg-green-500', yellow: 'bg-yellow-500', red: 'bg-red-500', gray: 'bg-gray-500' };
 
-export function MaturityCard({ maturity, codeReview }) {
+export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
   const { t } = useTranslation();
+  const zombieCriteria = t('maturity.zombieCriteria', { checked: branchAnalysis?.checked ?? '?' })
+    + (branchAnalysis?.capped ? ` ${t('maturity.zombieCapped')}` : '');
   // Só mostra a taxa quando ela foi de fato medida (ver prReviewStats.js);
   // snapshots antigos chegam aqui já normalizados como indisponíveis.
   const reviewAvailable = codeReview?.available === true;
   // Função auxiliar para renderizar badge: cor explícita, senão verde/cinza por `detected`
-  const renderBadge = (text, detected, customColor) => {
+  const renderBadge = (text, detected, customColor, title) => {
     const bgColor = BADGE_COLORS[customColor] ?? (detected ? 'bg-green-500' : 'bg-gray-500');
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${bgColor}`}>
+      <span title={title} className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${bgColor}`}>
         {text}
       </span>
     );
@@ -43,8 +45,8 @@ export function MaturityCard({ maturity, codeReview }) {
         {maturity.zombies == null
           ? renderBadge(t('maturity.badges.zombiesUnavailable'), false, 'gray')
           : maturity.zombies === 0
-          ? renderBadge(t('maturity.badges.noZombies'), true, 'green')
-          : renderBadge(t('maturity.badges.zombies', { count: maturity.zombies }), true, 'red')
+          ? renderBadge(t('maturity.badges.noZombies'), true, 'green', zombieCriteria)
+          : renderBadge(t('maturity.badges.zombies', { count: maturity.zombies }), true, 'red', zombieCriteria)
         }
       </div>
 

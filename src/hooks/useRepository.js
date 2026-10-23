@@ -3,6 +3,7 @@ import { githubService, hasGithubToken } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
 import { analyzeReviewMetrics } from '../utils/prReviewStats.js';
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
+import { analyzeBranches } from '../utils/branches.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
@@ -14,6 +15,17 @@ import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE } from
 // "No community profile" (forks, 404) is not a failure: forks are saved, with
 // health unavailable.
 const PERSIST_BLOCKERS = ['communityProfile', 'openIssues', 'closedIssues', 'pullRequests', 'mergedPRs', 'contributors'];
+
+// Branches: with a token, every branch's last commit via GraphQL → exact count
+// and zombies (release/protected/default excluded). Without one, the exact
+// count from one REST request; zombies unavailable (it'd take a request per branch).
+async function fetchBranchAnalysis(owner, repo, defaultBranch, hasToken) {
+    if (!hasToken) {
+        return { count: await githubService.fetchBranchCount(owner, repo), zombies: null, zombiesReason: 'noToken' };
+    }
+    const { totalCount, branches, capped } = await githubService.fetchBranchActivity(owner, repo);
+    return { count: totalCount, capped, ...analyzeBranches(branches, { defaultBranch }) };
+}
 
 // Contributor analysis: /stats/contributors (weekly data → recent window, bots
 // flagged); if GitHub is still computing it (202) or it fails, the top-100
@@ -71,7 +83,7 @@ async function fetchRepositoryData(repoName) {
     // Fetch all other data in parallel
     const results = await Promise.allSettled([
         githubService.fetchCommits(owner, repo),
-        githubService.fetchBranches(owner, repo),
+        fetchBranchAnalysis(owner, repo, repoData.default_branch, hasToken),
         fetchContributorAnalysis(owner, repo),
         githubService.fetchPullRequests(owner, repo),
         githubService.fetchOpenIssuesCount(owner, repo),
@@ -190,6 +202,7 @@ async function fetchRepositoryData(repoName) {
       analysisDate: new Date().toISOString(),
       stats: {
           branches: branches?.count ?? null,
+          branchAnalysis: branches, // count, zombies, checked, exclusions, capped / zombiesReason
           prs: pulls,
           merges: mergedPRsCount,
           prsPerBranch,

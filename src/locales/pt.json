@@ -128,8 +128,10 @@
       "title": "Atenção: Self-Merges Detectados",
       "message": "{{percentage}}% dos PRs foram merged pelo próprio autor. Considere implementar revisões obrigatórias para melhorar a qualidade."
     },
+    "zombieCriteria": "Branches sem commits há mais de 90 dias, sem contar a principal, as protegidas e as de release/manutenção (ex.: 1.x, 0.3-stable, release/2.0). {{checked}} branches verificadas.",
+    "zombieCapped": "Varredura limitada às primeiras 1.000 branches.",
     "unavailable": {
-      "noToken": "Code Review e Divergência exigem um token do GitHub (ícone de configurações no topo): sem token, a API do GitHub não informa quem fez o merge de cada PR nem quantos comentários ele recebeu.",
+      "noToken": "Code Review, Divergência e Branches Zumbis exigem um token do GitHub (ícone de configurações no topo): sem token, a API do GitHub não informa quem fez o merge de cada PR, quantos comentários ele recebeu, nem a data do último commit de cada branch.",
       "error": "Não foi possível obter os dados de revisão dos PRs (falha ou limite da API GraphQL do GitHub). Tente novamente em instantes.",
       "snapshot": "Este snapshot histórico não registrou os dados de revisão dos PRs."
     }
