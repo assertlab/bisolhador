@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.7.0] - 2026-10-23
+
+### ✨ Changed
+
+- **URL nova: https://bisolhador.assertlab.com** (antes `assertlab.com/bisolhador/`). O endereço antigo redireciona (301, Cloudflare) preservando caminho e query, então permalinks já compartilhados (`?id=`, `?repo=&date=`, `?q=`) continuam funcionando. O app passa a ser servido na raiz (`base: '/'`).
+- **⚠️ Token do GitHub e tema precisam ser configurados de novo** no domínio novo: o navegador guarda o `localStorage` por origem, e `assertlab.com` e `bisolhador.assertlab.com` são origens diferentes.
+
+### 🐛 Fixed
+
+- **FIX**: Abrir ou recarregar uma rota interna direto no navegador (`/ranking`, `/benchmark`, `/timeline/owner/repo`) dava 404 do GitHub Pages, que não tem rewrite para SPA. O build agora publica o `index.html` também como `404.html` (`scripts/spa-fallback.mjs`).
+
+---
+
 ## [3.6.4] - 2026-10-22
 
 ### 🐛 Fixed
