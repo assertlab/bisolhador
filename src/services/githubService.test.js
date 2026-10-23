@@ -105,6 +105,23 @@ describe('githubService: failures are errors, not zeros', () => {
     });
   });
 
+  describe('fetchRepositoryTree', () => {
+    it('returns the tree and the truncated flag', async () => {
+      fetchMock.mockReturnValue(json({ tree: [{ path: 'a' }], truncated: true }));
+      await expect(githubService.fetchRepositoryTree('o', 'r', 'main')).resolves.toEqual({ tree: [{ path: 'a' }], truncated: true });
+    });
+
+    it('422 (too large) → root level only, reported as truncated', async () => {
+      fetchMock.mockReturnValueOnce(json({ message: 'too large' }, { status: 422 })).mockReturnValueOnce(json({ tree: [{ path: 'README.md' }] }));
+      await expect(githubService.fetchRepositoryTree('o', 'r', 'main')).resolves.toEqual({ tree: [{ path: 'README.md' }], truncated: true });
+    });
+
+    it('throws on failure instead of an empty tree (which read as "no tests, no CI")', async () => {
+      fetchMock.mockReturnValue(json({ message: 'rate limited' }, { status: 403 }));
+      await expect(githubService.fetchRepositoryTree('o', 'r', 'main')).rejects.toThrow(/403/);
+    });
+  });
+
   it('fetchReleasesCount: single page (no Link header) counts the first response, no second request', async () => {
     fetchMock.mockReturnValue(json([{ id: 1 }]));
     await expect(githubService.fetchReleasesCount('o', 'r')).resolves.toBe(1);

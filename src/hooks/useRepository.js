@@ -4,6 +4,7 @@ import { analyzers } from '../utils/analyzers.js';
 import { analyzeReviewMetrics } from '../utils/prReviewStats.js';
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
 import { analyzeBranches } from '../utils/branches.js';
+import { analyzeMaturity, hasIssueTemplate, profileFilesFromTree } from '../utils/repoTree.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
@@ -135,7 +136,8 @@ async function fetchRepositoryData(repoName) {
     const pullRequests = results[6]?.status === 'fulfilled' ? results[6].value : [];
     const languages = results[7]?.status === 'fulfilled' ? results[7].value : {};
     const communityProfile = results[8]?.status === 'fulfilled' ? results[8].value : null;
-    const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : { tree: [] };
+    const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : null;
+    const treePaths = (repositoryTree?.tree ?? []).map((f) => f.path).filter(Boolean);
     const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value : null;
     const commitActivity = results[11]?.status === 'fulfilled' ? results[11].value : { all: [] };
     const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : [];
@@ -158,12 +160,21 @@ async function fetchRepositoryData(repoName) {
 
     // Health score: unavailable (not 14%) when the community profile is missing
     // (404 — GitHub has none for forks) or the request failed.
-    const health = communityProfile
-        ? { ...analyzers.calculateHealthScore(communityProfile, repoData.description), available: true }
-        : { score: null, files: null, available: false, reason: results[8]?.status === 'fulfilled' ? 'noProfile' : 'error' };
+    // GitHub's profile misses the ISSUE_TEMPLATE/ directory (issue forms): fill it
+    // from the tree. No profile at all (forks → 404): files from the tree, flagged.
+    let health;
+    if (communityProfile) {
+        const files = { ...communityProfile.files };
+        if (!files.issue_template && hasIssueTemplate(treePaths)) files.issue_template = { path: 'ISSUE_TEMPLATE/' };
+        health = { ...analyzers.calculateHealthScore({ ...communityProfile, files }, repoData.description), available: true };
+    } else if (results[8]?.status === 'fulfilled' && repositoryTree && !repositoryTree.truncated) {
+        health = { ...analyzers.calculateHealthScore({ files: profileFilesFromTree(treePaths) }, repoData.description), available: true, source: 'tree' };
+    } else {
+        health = { score: null, files: null, available: false, reason: results[8]?.status === 'fulfilled' ? 'noProfile' : 'error' };
+    }
 
     // Analyze maturity (zombies null = branch data unavailable)
-    const maturity = analyzers.analyzeEngineeringMaturity(repositoryTree.tree, branches?.zombies ?? null);
+    const maturity = analyzeMaturity(repositoryTree, branches?.zombies ?? null);
 
     // Self-merge rate and divergence: GraphQL-backed, unavailable without a token
     const { codeReview, divergence } = analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken');

@@ -45,6 +45,10 @@ export function HealthScoreCard({ health }) {
         <div className="text-sm text-gray-600 dark:text-slate-400 mt-1">{t('health.communityHealth')}</div>
       </div>
 
+      {health?.source === 'tree' && (
+        <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">{t('health.fromTree')}</p>
+      )}
+
       {unavailable && (
         <p className="text-sm text-gray-600 dark:text-slate-400">
           {t(`health.unavailable.${reason}`, { defaultValue: t('health.unavailable.error') })}

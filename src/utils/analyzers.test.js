@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { analyzers } from './analyzers.js';
 
-const tree = (...paths) => paths.map((path) => ({ path }));
 
 // analyzeCodeReview/calculateDivergence receive GraphQL-backed data mapped by
 // toPullRequestStats (see prReviewStats.test.js), not the REST /pulls list,
@@ -45,43 +44,6 @@ describe('calculateHealthScore (7 criteria)', () => {
     const { files } = analyzers.calculateHealthScore({ files: { readme: null, license: {} } }, '');
     expect(files.hasReadme).toBe(false);
     expect(files.hasLicense).toBe(true);
-  });
-});
-
-describe('engineering maturity detectors', () => {
-  it.each([
-    'src/test/java/AppTest.java',
-    'src/__tests__/app.js',
-    'src/app.test.js',
-    'src/app.spec.ts',
-    'tests/test_app.py',
-    'test_app.py',
-    'pkg/app_test.go',
-  ])('detectTests finds %s', (path) => {
-    expect(analyzers.detectTests(tree(path))).toBe(true);
-  });
-
-  it('detectTests ignores trees without tests and invalid input', () => {
-    expect(analyzers.detectTests(tree('src/app.js', 'README.md'))).toBe(false);
-    expect(analyzers.detectTests(null)).toBe(false);
-    expect(analyzers.detectTests(tree(undefined))).toBe(false);
-  });
-
-  it('detectCiCd looks for .github/workflows', () => {
-    expect(analyzers.detectCiCd(tree('.github/workflows/ci.yml'))).toBe(true);
-    expect(analyzers.detectCiCd(tree('.gitlab-ci.yml'))).toBe(false);
-  });
-
-  it('detectDocker only matches root Dockerfile or docker-compose.yml', () => {
-    expect(analyzers.detectDocker(tree('Dockerfile'))).toBe(true);
-    expect(analyzers.detectDocker(tree('docker-compose.yml'))).toBe(true);
-    expect(analyzers.detectDocker(tree('docker/Dockerfile'))).toBe(false);
-  });
-
-  it('detectLinter matches known config file names', () => {
-    expect(analyzers.detectLinter(tree('.eslintrc.json'))).toBe(true);
-    expect(analyzers.detectLinter(tree('backend/.pylintrc'))).toBe(true);
-    expect(analyzers.detectLinter(tree('src/app.js'))).toBe(false);
   });
 });
 

@@ -308,39 +308,27 @@ export const githubService = {
     }
   },
 
+  // Recursive file tree of the default branch. Returns { tree, truncated }:
+  // GitHub truncates huge trees (linux), and a 422 (too large) falls back to
+  // the root level only — both reported as truncated so detectors say "not
+  // verified" instead of "absent". Throws on failure (was { tree: [] }).
   async fetchRepositoryTree(owner, repo, defaultBranch) {
-    if (!owner || !repo || !defaultBranch) {
-      return { tree: [] };
-    }
-
-    try {
-      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}?recursive=1`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        if (response.status === 422) {
-          // Repository too large, try without recursive
-          const urlNoRecursive = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}`;
-          const responseNoRecursive = await fetch(urlNoRecursive, {
-            headers: getHeaders(),
-          });
-          if (!responseNoRecursive.ok) {
-            return { tree: [] };
-          }
-          const dataNoRecursive = await responseNoRecursive.json();
-          return dataNoRecursive;
-        }
-        console.warn(`Failed to fetch repository tree: ${response.status}`);
-        return { tree: [] };
+    const base = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}`;
+    const response = await fetch(`${base}?recursive=1`, { headers: getHeaders() });
+    if (response.status === 422) {
+      const rootOnly = await fetch(base, { headers: getHeaders() });
+      if (!rootOnly.ok) {
+        throw new Error(`Repository tree failed: HTTP ${rootOnly.status}`);
       }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.warn("Error fetching repository tree:", error);
-      return { tree: [] };
+      return { tree: (await rootOnly.json()).tree ?? [], truncated: true };
     }
+    if (!response.ok) {
+      throw new Error(`Repository tree failed: HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    return { tree: data.tree ?? [], truncated: Boolean(data.truncated) };
   },
+
 
   async fetchPullRequestStats(owner, repo) {
     if (!owner || !repo) {
