@@ -52,6 +52,7 @@ src/
 │   └── skeletons/              # Skeleton loading screens
 ├── hooks/
 │   ├── useRepository.js        # Main data hook (15+ GitHub endpoints, Promise.allSettled)
+│   ├── useClassroomAnalysis.js # Classroom queue: privacy gate (fail-closed) + period fetches, 3 repos at a time
 │   ├── useSnapshot.js          # Supabase snapshot by URL (?id= / ?repo=&date=), TanStack Query
 │   ├── useBenchmarkRepos.js    # Parallel fetch via TanStack useQueries
 │   ├── useTimeFilter.js        # Unified time range filtering logic
@@ -66,6 +67,7 @@ src/
 │   ├── analyzers.js            # Pure functions: health score, process metrics
 │   ├── repoTree.js             # Maturity detectors (tests/CI/Docker/linter: ✓/✗/? not verified), issue-template dir, fork profile from tree
 │   ├── branches.js             # Zombie branches: excludes default, protected and release/maintenance lines
+│   ├── classroom.js            # Repo list parsing, period, per-repo row from settled fetches
 │   ├── indicatorGuide.js       # Guide structure and CHAOSS mapping (relation equivalent/related/none); texts in locales guide.*
 │   ├── repoName.js             # SAFE_GITHUB_NAME_PATTERN / parseSafeRepoName for app-built routes
 │   ├── projectPractices.js     # CI health (push runs on the default branch), Conventional Commits, release cadence (12 months, min(created_at, published_at)); snapshot normalizer
@@ -193,6 +195,9 @@ This pattern isn't specific to `csp-smoke-test.mjs`: any ad-hoc/throwaway Playwr
 
 ### Private Repositories
 The app never processes or persists data from private GitHub repositories, even when the user's PAT has private-repo scope. `useRepository.js` checks `repoData.private` immediately after the initial repo fetch and aborts (`PRIVATE_REPO_UNSUPPORTED`) before any of the 15+ parallel calls or the Supabase save-on-load. `Benchmark.jsx` has its own entry path — it reads history from Supabase, not live GitHub calls — so it performs its own live visibility check via `githubService.fetchRepository`, retried with `withExponentialBackoff` and fail-closed if visibility can't be confirmed.
+
+### Classroom Mode
+`/turma` analyzes up to 50 repositories over a course period. It never writes to Supabase (no `saveSearch`), and each repository goes through the same fail-closed visibility gate as Benchmark (`fetchRepository`; private or unverifiable → not analyzed). Repository names come from the URL or pasted text and are validated with `parseSafeRepoName` before use: they are interpolated into a GitHub **search** string (`repo:o/r is:pr is:merged merged:…`), passed as a GraphQL variable, so validation is what prevents qualifier injection. Concentration is shown without naming the top author (CHAOSS data ethics).
 
 ### Input Sanitization
 `githubService.js` applies `encodeURIComponent` to every interpolated value (`owner`, `repo`, `defaultBranch`) in request URLs and GitHub search query strings — including inside search qualifiers (e.g. `` repo:${owner}/${repo}+type:pr ``), where only the interpolated values are encoded, never the literal `+`/`:` separators, so query semantics aren't broken. The one GraphQL query (`fetchPullRequestReviewStats`) passes `owner`/`repo` as GraphQL **variables**, never interpolated into the query string.

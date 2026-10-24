@@ -457,6 +457,71 @@ export const githubService = {
     })));
   },
 
+  // --- Classroom mode (period-bounded; token required) ---------------------
+  // Owner/repo arrive validated (utils/repoName.parseSafeRepoName) and go only
+  // as GraphQL variables or encoded URL parts; the search string interpolates
+  // them, so validation is what keeps qualifiers from being injected.
+
+  // Default-branch commits between since/until (ISO), up to maxPages × 100.
+  async fetchCommitHistoryInPeriod(owner, repo, since, until, maxPages = 3) {
+    const query = `query($owner: String!, $name: String!, $since: GitTimestamp!, $until: GitTimestamp!, $after: String) {
+      repository(owner: $owner, name: $name) {
+        defaultBranchRef { target { ... on Commit {
+          history(since: $since, until: $until, first: 100, after: $after) {
+            totalCount
+            pageInfo { hasNextPage endCursor }
+            nodes { message parents { totalCount } author { name user { login } } }
+          }
+        } } }
+      }
+    }`;
+    const nodes = [];
+    let after = null;
+    let totalCount = 0;
+    for (let page = 0; page < maxPages; page++) {
+      const data = await graphql(query, { owner, name: repo, since, until, after }, "commit history");
+      const history = data.repository?.defaultBranchRef?.target?.history;
+      if (!history) return { totalCount: 0, nodes: [], capped: false }; // empty repository
+      totalCount = history.totalCount;
+      nodes.push(...history.nodes.filter(Boolean));
+      if (!history.pageInfo.hasNextPage) return { totalCount, nodes, capped: false };
+      after = history.pageInfo.endCursor;
+    }
+    return { totalCount, nodes, capped: true };
+  },
+
+  // PRs merged in the period (search), with the fields of the three review
+  // queries in one: class repositories are small, so one query stays fast.
+  async searchMergedPullRequests(owner, repo, fromDate, toDate) {
+    const query = `query($q: String!) {
+      search(query: $q, type: ISSUE, first: 100) {
+        issueCount
+        nodes { ... on PullRequest {
+          number createdAt mergedAt additions deletions
+          author { login __typename }
+          mergedBy { login }
+          comments(first: 100) { totalCount nodes { author { login __typename } } }
+          reviews(last: 50) { nodes { state submittedAt author { login __typename } comments { totalCount } } }
+          firstReviews: reviews(first: 10) { nodes { submittedAt author { login __typename } } }
+          readyForReview: timelineItems(itemTypes: [READY_FOR_REVIEW_EVENT], first: 1) { nodes { ... on ReadyForReviewEvent { createdAt } } }
+        } }
+      }
+    }`;
+    const q = `repo:${owner}/${repo} is:pr is:merged merged:${fromDate}..${toDate}`;
+    const data = await graphql(query, { q }, "merged PRs in period");
+    const nodes = (data.search?.nodes ?? []).filter((n) => n && n.number);
+    return { issueCount: data.search?.issueCount ?? nodes.length, stats: toPullRequestStats(nodes) };
+  },
+
+  // Push runs on the default branch created in the period (CI health).
+  async fetchActionRunsInPeriod(owner, repo, branch, fromDate, toDate) {
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/runs?branch=${encodeURIComponent(branch)}&event=push&status=completed&created=${encodeURIComponent(`${fromDate}..${toDate}`)}&exclude_pull_requests=true&per_page=100`;
+    const response = await fetch(url, { headers: getHeaders() });
+    if (response.status === 404) return { total_count: 0, workflow_runs: [] };
+    if (!response.ok) throw new Error(`Actions runs failed: HTTP ${response.status}`);
+    return response.json();
+  },
+
   // Weekly additions/deletions. 422 = repo with ≥ 10k commits (GitHub doesn't
   // compute it): code TOO_LARGE, shown differently from 202 / failures.
   async fetchCodeFrequency(owner, repo) {
