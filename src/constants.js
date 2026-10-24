@@ -10,7 +10,6 @@ export const GITHUB_PER_PAGE_RELEASES = 1;
 
 // Time thresholds
 export const ZOMBIE_BRANCH_DAYS = 90;
-export const WEEKS_IN_YEAR = 52;
 
 // Benchmark
 export const MAX_BENCHMARK_REPOS = 10;

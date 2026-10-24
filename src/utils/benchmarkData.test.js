@@ -11,7 +11,7 @@ const current = (over = {}) => ({
   },
   codeReview: { available: true, method: 'approval' },
   health: { score: 86 },
-  codeChurn: { ratio: '1.20', category: 'growth' },
+  codeChurn: { ratio: '1.20', categoryKey: 'balanced' },
   busFactor: { level: 'warning', topContributor: 'alice', percentage: 45 },
   busFactorAnalysis: { busFactor: 2, window: 'recent' },
   charts: { techStack: [{ language: 'JavaScript' }] },
@@ -39,9 +39,10 @@ describe('toBenchmarkRepo', () => {
     expect(toBenchmarkRepo(repo, [row('2026-06-01T12:00:00Z', old)])).toMatchObject({ leadTime: null, divergence: null, busFactorPercentage: null, busFactorTopContributor: '' });
   });
 
-  it('churn "Infinity" (old rows) → null', () => {
-    const r = toBenchmarkRepo(repo, [row('2026-10-01T12:00:00Z', current({ codeChurn: { ratio: 'Infinity', category: 'x' } }))]);
-    expect(r.codeChurnRatio).toBeNull();
+  it('old-method churn ("Infinity", judgment category, no categoryKey) → null', () => {
+    for (const codeChurn of [{ ratio: 'Infinity', category: 'x' }, { ratio: '0.50', category: 'Refatoração Agressiva' }]) {
+      expect(toBenchmarkRepo(repo, [row('2026-10-01T12:00:00Z', current({ codeChurn }))]).codeChurnRatio).toBeNull();
+    }
   });
 
   it('reads double-encoded reports (stored as JSON text until v3.8.0)', () => {

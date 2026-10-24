@@ -11,7 +11,6 @@ import {
   MERGED_PR_SCAN,
   GITHUB_PER_PAGE_CONTRIBUTORS,
   GITHUB_PER_PAGE_RELEASES,
-  WEEKS_IN_YEAR,
 } from "../constants.js";
 
 const GITHUB_BASE_URL = "https://api.github.com";
@@ -58,6 +57,24 @@ async function graphql(query, variables, label) {
     console.warn(`[githubService] GraphQL ${label} returned partial data:`, body.errors[0].message);
   }
   return body.data;
+}
+
+function statsError(code, path, status) {
+  const error = new Error(`GitHub stats ${path} ${code}${status ? `: HTTP ${status}` : ''}`);
+  error.code = code;
+  return error;
+}
+
+// /stats/* endpoints: 202 while GitHub computes them, 204 for empty repos, 422
+// when the repo is too large. Codes match utils/activityStats.js.
+async function fetchStats(owner, repo, path) {
+  const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/${path}`;
+  const response = await fetch(url, { headers: getHeaders() });
+  if (response.status === 202) throw statsError('COMPUTING', path);
+  if (response.status === 204) return [];
+  if (response.status === 422) throw statsError('TOO_LARGE', path);
+  if (!response.ok) throw statsError('FAILED', path, response.status);
+  return response.json();
 }
 
 async function fetchSearchCount(owner, repo, qualifiers) {
@@ -283,30 +300,18 @@ export const githubService = {
     return data.length;
   },
 
+  // Weekly commits of the last 52 weeks. Throws (code COMPUTING on 202) instead
+  // of 52 zeros, which read and were persisted as "no activity".
   async fetchCommitActivity(owner, repo) {
-    if (!owner || !repo) {
-      return { all: Array(WEEKS_IN_YEAR).fill(0) }; // Return 52 weeks of zeros
-    }
+    const data = await fetchStats(owner, repo, 'participation');
+    if (Array.isArray(data) && data.length === 0) return { all: [] }; // 204: empty repository
+    if (!Array.isArray(data?.all)) throw statsError('FAILED', 'participation');
+    return data;
+  },
 
-    try {
-      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/participation`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch commit activity: ${response.status}`);
-        return { all: Array(WEEKS_IN_YEAR).fill(0) };
-      }
-
-      const data = await response.json();
-      // Ensure we have valid data
-      if (!data || !data.all || !Array.isArray(data.all)) {
-        return { all: Array(WEEKS_IN_YEAR).fill(0) };
-      }
-      return data;
-    } catch (error) {
-      console.warn("Error fetching commit activity:", error);
-      return { all: Array(WEEKS_IN_YEAR).fill(0) };
-    }
+  // Commits per weekday/hour, whole history (see utils/activityStats.js).
+  async fetchPunchCard(owner, repo) {
+    return fetchStats(owner, repo, 'punch_card');
   },
 
   // Recursive file tree of the default branch. Returns { tree, truncated }:
@@ -349,7 +354,6 @@ export const githubService = {
     const data = await response.json();
     return { tree: data.tree ?? [], truncated: Boolean(data.truncated) };
   },
-
 
   // Lead time sample: recently updated CLOSED PRs (merging updates a PR), from
   // which analyzeLeadTime keeps the latest merged ones. Was the 20 most recently
@@ -402,26 +406,10 @@ export const githubService = {
     return toPullRequestStats(nodes);
   },
 
+  // Weekly additions/deletions. 422 = repo with ≥ 10k commits (GitHub doesn't
+  // compute it): code TOO_LARGE, shown differently from 202 / failures.
   async fetchCodeFrequency(owner, repo) {
-    if (!owner || !repo) {
-      return [];
-    }
-
-    try {
-      const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/code_frequency`;
-      const response = await fetch(url, { headers: getHeaders() });
-
-      // Silently handle 202 (calculating) and 422 (repo too large)
-      if (response.status === 202 || response.status === 422 || !response.ok) {
-        return [];
-      }
-
-      const data = await response.json();
-      return data || [];
-    } catch {
-      // Silently handle all errors for this endpoint (including 422 on large repos)
-      return [];
-    }
+    return fetchStats(owner, repo, 'code_frequency');
   },
 
   async fetchMergedPRsCount(owner, repo) {

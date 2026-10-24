@@ -3,28 +3,23 @@ import { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 import useChartTheme from '../../hooks/useChartTheme.js';
+import { PUNCH_CARD_MAX_COMMITS } from '../../utils/activityStats.js';
+import { formatters } from '../../utils/formatters.js';
+import { intlLocale } from '../../i18n.js';
 
-function WeekDaysChart({ commits }) {
-  const { t } = useTranslation();
+const WEEKDAYS_MIN_SAMPLE = 50; // fewer commits: shown, with a small-sample note
+
+// weekdays: { counts[7], total } from /stats/punch_card (whole history, each
+// commit's own time zone) — see utils/activityStats.js. null with a status when
+// not measured; status undefined = snapshot from before 2026-10 (10 commits).
+function WeekDaysChart({ weekdays, status }) {
+  const { t, i18n } = useTranslation();
   const { textColor, gridColor } = useChartTheme();
 
   // Memoização dos dados calculados para evitar re-processamento desnecessário
-  const { dayNames, dayCounts } = useMemo(() => {
-    const dayNames = t('charts.weekdays.days', { returnObjects: true });
-    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
-
-    commits.forEach(commit => {
-      try {
-        const commitDate = new Date(commit.commit.author.date);
-        const dayOfWeek = commitDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-        dayCounts[dayOfWeek]++;
-      } catch {
-        // Skip invalid dates
-      }
-    });
-
-    return { dayNames, dayCounts };
-  }, [commits, t]);
+  const dayNames = useMemo(() => t('charts.weekdays.days', { returnObjects: true }), [t]);
+  const dayCounts = weekdays?.counts;
+  const total = weekdays?.total ?? 0;
 
   // Chart data - Memoizada para evitar re-renders
   const chartData = useMemo(() => ({
@@ -70,16 +65,28 @@ function WeekDaysChart({ commits }) {
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 flex flex-col h-80 hover:shadow-md transition-shadow relative overflow-visible hover:z-50">
       <h3 className="text-sm font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-        {t('charts.weekdays.title', { count: commits.length })}
+        {t('charts.weekdays.title')}
         <Tooltip text={t('charts.weekdays.tooltip')}>
           <svg className="w-4 h-4 text-gray-300 dark:text-slate-500 hover:text-gray-500 dark:hover:text-slate-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
         </Tooltip>
       </h3>
-      <div className="flex-grow relative">
-        <Bar data={chartData} options={options} />
-      </div>
+      {dayCounts ? (
+        <>
+          <p className="text-xs text-gray-500 dark:text-slate-400 -mt-2 mb-2">
+            {t(total >= PUNCH_CARD_MAX_COMMITS ? 'charts.weekdays.scopeCapped' : 'charts.weekdays.scope', { count: total, n: formatters.formatNumber(total, intlLocale(i18n.language)) })}
+            {total < WEEKDAYS_MIN_SAMPLE && ` ${t('charts.weekdays.smallSample')}`}
+          </p>
+          <div className="flex-grow relative">
+            <Bar data={chartData} options={options} />
+          </div>
+        </>
+      ) : (
+        <div className="flex-grow flex items-center justify-center text-center text-sm text-gray-500 dark:text-slate-400 px-4">
+          {t(`charts.statsUnavailable.${status ?? 'notRecordedWeekdays'}`, { defaultValue: t('charts.statsUnavailable.error') })}
+        </div>
+      )}
     </div>
   );
 }

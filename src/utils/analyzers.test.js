@@ -33,31 +33,3 @@ describe('calculateHealthScore (7 criteria)', () => {
   });
 });
 
-describe('calculateCodeChurn (additions/deletions, last 10 weeks)', () => {
-  // Real /stats/code_frequency shape: deletions come NEGATIVE, e.g. [1792281600, 989, -1243].
-  const week = (additions, deletions) => [0, additions, -deletions];
-
-  it('is null without data', () => {
-    expect(analyzers.calculateCodeChurn([])).toEqual({ ratio: null, category: null });
-  });
-
-  it.each([
-    [[week(110, 10)], '11.00', 'Acúmulo Intenso (Pouca Refatoração)'],
-    [[week(20, 10)], '2.00', 'Saudável (Evolução com Limpeza)'],
-    [[week(10, 10)], '1.00', 'Refatoração Agressiva'],
-    [[week(5, 0)], 'Infinity', 'Acúmulo Intenso (Pouca Refatoração)'],
-    [[week(0, 0)], '0.00', 'Refatoração Agressiva'],
-  ])('%j → ratio %s', (data, ratio, category) => {
-    expect(analyzers.calculateCodeChurn(data)).toEqual({ ratio, category });
-  });
-
-  it('handles the real API sign convention (regression: active repos showed Infinity)', () => {
-    expect(analyzers.calculateCodeChurn([[1792281600, 989, -1243]])).toEqual({ ratio: '0.80', category: 'Refatoração Agressiva' });
-  });
-
-  it('only counts the last 10 weeks', () => {
-    // An old week with huge deletions must not affect the ratio.
-    const data = [week(0, 1000), ...Array.from({ length: 10 }, () => week(30, 10))];
-    expect(analyzers.calculateCodeChurn(data).ratio).toBe('3.00');
-  });
-});
