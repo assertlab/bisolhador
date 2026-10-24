@@ -239,8 +239,8 @@
     }
   },
   "ranking": {
-    "title": "Bisolhômetro - Hall of Fame",
-    "subtitle": "Ranking of most analyzed repositories",
+    "title": "Bisolhômetro — Most Analyzed",
+    "subtitle": "Repositories analyzed on the most different days in Bisolhador. It measures the interest of the tool's users, not the project's quality. Health and stars come from the latest analysis.",
     "loading": "Loading ranking...",
     "error": "Error loading ranking",
     "columns": {
@@ -249,7 +249,8 @@
       "language": "Language",
       "health": "Health",
       "stars": "Stars",
-      "searches": "Searches"
+      "searches": "Searches",
+      "days": "Days analyzed"
     },
     "ariaLabels": {
       "position": "Position",

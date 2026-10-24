@@ -247,8 +247,8 @@
     }
   },
   "ranking": {
-    "title": "Bisolhômetro - Hall of Fame",
-    "subtitle": "Ranking dos repositórios mais bisolhados",
+    "title": "Bisolhômetro — Mais Analisados",
+    "subtitle": "Repositórios analisados em mais dias diferentes no Bisolhador. Mede o interesse de quem usa a ferramenta, não a qualidade do projeto. Saúde e estrelas são da análise mais recente.",
     "loading": "Carregando ranking...",
     "error": "Erro ao carregar ranking",
     "columns": {
@@ -257,7 +257,8 @@
       "language": "Linguagem",
       "health": "Saúde",
       "stars": "Estrelas",
-      "searches": "Bisolhadas"
+      "searches": "Bisolhadas",
+      "days": "Dias com análise"
     },
     "ariaLabels": {
       "position": "Posição",
