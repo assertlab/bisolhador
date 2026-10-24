@@ -8,6 +8,7 @@ import { exportToCsv } from '../utils/csvExporter.js';
 import { showToast } from '../hooks/useToast.js';
 import { intlLocale } from '../i18n.js';
 import { parseSafeRepoName } from '../utils/repoName.js';
+import { GuideLink } from './GuideLink.jsx';
 
 export function RepoInfoCard({ data, onShareSuccess }) {
   const { t, i18n } = useTranslation();
@@ -250,6 +251,9 @@ export function RepoInfoCard({ data, onShareSuccess }) {
             <li className="flex justify-between text-sm">
               <span className="text-gray-600 dark:text-slate-400">{t('repo.totalMerges')}</span>
               <span className="font-medium text-gray-900 dark:text-white">{formatters.formatNumber(data.stats.merges, locale)}</span>
+            </li>
+            <li className="text-right">
+              <GuideLink id="prs-merges" />
             </li>
             <li className="flex justify-between text-sm border-t border-gray-100 dark:border-slate-700 pt-1 mt-1">
               <span className="text-gray-600 dark:text-slate-400">{t('repo.prsPerBranch')}</span>

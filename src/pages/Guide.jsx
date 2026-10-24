@@ -17,12 +17,19 @@ export function Guide({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
   const { hash } = useLocation();
 
-  // react-router doesn't scroll to #anchors on navigation
+  const target = decodeURIComponent(hash.slice(1));
+
+  // react-router doesn't scroll to #anchors, nor reset scroll on navigation;
+  // focus moves to the entry for keyboard and screen-reader users.
   useEffect(() => {
-    if (!hash) return;
-    const el = document.getElementById(decodeURIComponent(hash.slice(1)));
-    el?.scrollIntoView({ block: 'start' });
-  }, [hash]);
+    const el = target && document.getElementById(target);
+    if (!el) {
+      window.scrollTo(0, 0);
+      return;
+    }
+    el.scrollIntoView({ block: 'start' });
+    el.focus({ preventScroll: true });
+  }, [target]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
@@ -48,7 +55,9 @@ export function Guide({ isSettingsOpen, setIsSettingsOpen }) {
                 <article
                   key={item.id}
                   id={item.id}
-                  className="scroll-mt-24 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 space-y-3 target:ring-2 target:ring-ocean"
+                  tabIndex={-1}
+                  // :target doesn't update on pushState navigation (cards use <Link>)
+                  className={`scroll-mt-24 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 space-y-3 outline-none ${item.id === target ? 'ring-2 ring-ocean' : ''}`}
                 >
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t(`guide.items.${item.id}.name`)}</h3>
                   <dl className="space-y-2 text-sm text-gray-700 dark:text-slate-300">

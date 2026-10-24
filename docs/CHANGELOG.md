@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **NEW**: Página **Como interpretar** (`/guia`), com uma entrada por indicador: o que mede, como ler, limitações e a métrica correspondente da **CHAOSS**, o projeto da Linux Foundation de métricas de saúde de comunidades open source, com link para a definição oficial. Cada referência foi conferida na definição da CHAOSS. Quando o Bisolhador mede de outro jeito, a diferença está escrita: por exemplo, o bus factor usa 70% e o *Contributor Absence Factor* usa 50%, e o tempo até a 1ª revisão conta a partir de "pronto para revisão". Indicadores sem métrica CHAOSS (saúde do CI, Conventional Commits, divergência) dizem isso. Cada card do Dashboard tem um link "Como interpretar" para a sua entrada, e o guia lembra as orientações de ética de dados da CHAOSS.
 
+### 🐛 Fixed
+
+- **FIX**: O tooltip da **Saúde do CI** (v3.12.0) dizia que execuções de bots ficam de fora. Só ficam de fora as execuções que não são de push; pushes feitos por bots no branch principal entram na conta.
+
 ---
 
 ## [3.12.0] - 2026-10-24

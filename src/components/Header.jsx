@@ -32,26 +32,26 @@ export function Header({ onSettingsClick }) {
           </Link>
 
           {/* Toolbar (Botões) */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 md:gap-3">
 
-            <Link to="/" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
+            <Link to="/" className="flex items-center gap-2 px-2 md:px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
               <span>🔍</span>
-              <span>{t('header.nav.search')}</span>
+              <span className="hidden md:inline">{t('header.nav.search')}</span>
             </Link>
 
-            <Link to="/ranking" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
+            <Link to="/ranking" className="flex items-center gap-2 px-2 md:px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
               <span>🏆</span>
-              <span>{t('header.nav.ranking')}</span>
+              <span className="hidden md:inline">{t('header.nav.ranking')}</span>
             </Link>
 
-            <Link to="/benchmark" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
+            <Link to="/benchmark" className="flex items-center gap-2 px-2 md:px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
               <span>📊</span>
-              <span>{t('header.nav.benchmark', 'Benchmark')}</span>
+              <span className="hidden md:inline">{t('header.nav.benchmark', 'Benchmark')}</span>
             </Link>
 
-            <Link to="/guia" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
+            <Link to="/guia" className="flex items-center gap-2 px-2 md:px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
               <span>📖</span>
-              <span>{t('header.nav.guide')}</span>
+              <span className="hidden md:inline">{t('header.nav.guide')}</span>
             </Link>
 
             <ThemeToggle />

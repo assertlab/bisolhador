@@ -121,7 +121,7 @@
       "noMerged": "No merged PRs"
     },
     "ciHealth": "CI Health",
-    "ciHealthTooltip": "Success rate of the latest GitHub Actions runs triggered by pushes to the default branch (up to 50). Success counts against failure, timeout and startup failure; cancelled and skipped runs are left out. Scheduled, bot, Dependabot and pull request runs aren't counted. CI outside GitHub Actions (Travis, CircleCI…) isn't shown here.",
+    "ciHealthTooltip": "Success rate of the latest GitHub Actions runs triggered by pushes to the default branch (up to 50). Success counts against failure, timeout and startup failure; cancelled and skipped runs are left out. Scheduled, Dependabot and pull request runs aren't counted; pushes made by bots are. CI outside GitHub Actions (Travis, CircleCI…) isn't shown here.",
     "conventionalCommits": "Conventional Commits",
     "conventionalCommitsTooltip": "Share of recent default-branch commits (up to 100, no merges, no bots) whose first line follows Conventional Commits: type(scope)!: description, with the types feat, fix, docs, style, refactor, perf, test, build, ci, chore and revert.",
     "releaseCadence": "Release Cadence",
@@ -507,8 +507,7 @@
     "title": "How to read the indicators",
     "intro": "For each indicator: what it measures, how to read it, what it doesn't say, and the matching metric from CHAOSS, the Linux Foundation project that defines open source community health metrics. When Bisolhador measures differently from CHAOSS, the difference is written down. No single indicator measures quality: use them to ask questions about a project, not to grade it.",
     "ethics": "CHAOSS warns that health metrics can expose people. When using per-person or per-team indicators (for example, in a classroom), read the CHAOSS data ethics guidance.",
-    "ethicsLink": "Metrics and data ethics at CHAOSS",
-    "back": "Back",
+    "ethicsLink": "CHAOSS privacy and data ethics recommendations",
     "what": "What it measures",
     "read": "How to read it",
     "limits": "Limitations",
@@ -538,7 +537,7 @@
         "name": "Languages",
         "what": "Each language's share of the repository's code, according to GitHub.",
         "read": "Shows the tech stack and who could contribute.",
-        "limits": "Generated or vendored files can inflate a language.",
+        "limits": "Detected by GitHub's Linguist, which already ignores generated, vendored and documentation files; files it doesn't recognise as such can still inflate a language. Languages under 1% are grouped as \"Others\".",
         "chaossNote": "CHAOSS measures by number of files or lines per language; GitHub reports bytes."
       },
       "issues": {
@@ -560,7 +559,7 @@
         "what": "Median time from opening a PR to merging it, over the up to 50 most recent merged PRs, bots excluded. p90 shows the tail: 90% were merged within that time.",
         "read": "A low lead time means a fast integration cycle. Compare with p90: a big gap means some PRs get forgotten.",
         "limits": "Merged PRs only (closed without merge aren't counted). Small maintenance PRs pull the median down.",
-        "chaossNote": ""
+        "chaossNote": "Same question and aggregation (median, accepted PRs only). The sample differs: CHAOSS selects PRs created in a period; here it is the up to 50 most recently merged, bots excluded."
       },
       "review-coverage": {
         "name": "Review coverage",
@@ -574,7 +573,7 @@
         "what": "Median (and p90) time from the PR being ready for review to the first review by someone else before merging.",
         "read": "How long contributors wait for feedback. Long waits discourage contributions.",
         "limits": "Merged PRs that got a review only. A review made while still a draft counts as zero wait. Plain comments don't count. Requires a token.",
-        "chaossNote": "CHAOSS (Change Request Review Duration) starts at submission and suggests the mean; here the clock starts when the PR is ready for review (a draft isn't waiting) and the median is used, less sensitive to a few forgotten PRs."
+        "chaossNote": "CHAOSS (Change Request Review Duration) starts at submission and suggests the mean; here the clock starts when the PR is ready for review (a draft isn't waiting) and the median is used, less sensitive to a few forgotten PRs. Time to First Response counts any response, comments included; here only formal reviews count."
       },
       "pr-size": {
         "name": "PR size",
@@ -594,19 +593,19 @@
         "name": "CI health",
         "what": "Success rate and median duration of the latest 50 GitHub Actions runs triggered by pushes to the default branch.",
         "read": "High success and short duration mean CI is taken seriously. Frequent failures on the default branch mean broken code is being merged.",
-        "limits": "GitHub Actions only (Travis, CircleCI etc. aren't shown). Cancelled, skipped, scheduled, bot and pull request runs are left out.",
+        "limits": "GitHub Actions only (Travis, CircleCI etc. aren't shown). The latest 50 completed runs triggered by pushes; cancelled and skipped ones are left out, so n can be under 50. Scheduled, Dependabot and pull request runs aren't counted; pushes made by bots to the default branch are.",
         "chaossNote": "There's no CHAOSS metric for CI health."
       },
       "conventional-commits": {
         "name": "Conventional Commits",
         "what": "Share of recent default-branch commits (no merges, no bots) whose first line follows type(scope)!: description.",
         "read": "Shows commit message discipline, which enables a readable history, automatic changelogs and versioning.",
-        "limits": "Only the common types (feat, fix, docs…) count. Projects with their own convention (e.g. \"subsystem: message\", like the Linux kernel) show 0%.",
+        "limits": "Only the common types (feat, fix, docs…) count. Projects with their own convention (e.g. \"subsystem: message\", like the Linux kernel) show a low share, close to 0%.",
         "chaossNote": "There's no CHAOSS metric for message conventions; Code Changes Commits mentions consistently structured messages as a prerequisite for filtering commits by type."
       },
       "release-cadence": {
         "name": "Release cadence",
-        "what": "Releases published on GitHub in the last 12 months, median interval between release days, days since the latest and share of SemVer tags.",
+        "what": "Releases published on GitHub in the last 12 months (dated by the tag, or by publication if the tag is later), median interval between release days, days since the latest and share of SemVer tags among the latest 100.",
         "read": "Regular releases suggest a live, predictable project; SemVer tells users the impact of each version.",
         "limits": "Projects that only push tags, without GitHub releases, aren't shown. The right frequency depends on the kind of project.",
         "chaossNote": "CHAOSS (Release Frequency) counts releases per period (week, month, year); here it is 12 months, with the median interval between release days."
@@ -622,21 +621,21 @@
         "name": "Engineering maturity",
         "what": "Whether the repository has tests, CI, Docker and a linter configured (from its file list), and whether PRs are merged without approval.",
         "read": "Shows engineering practices in place. \"?\" means it couldn't be checked, not that it doesn't exist.",
-        "limits": "Detects presence, not quality: a repository with an empty tests folder shows tests.",
+        "limits": "Detects presence, not quality: a single placeholder test file is enough to show \"tests\".",
         "chaossNote": "CHAOSS (Test Coverage) measures the share of code exercised by tests; here it only detects whether tests exist."
       },
       "zombie-branches": {
         "name": "Zombie branches",
-        "what": "Branches with no commits for more than 90 days, excluding the default, protected and release/maintenance branches.",
+        "what": "Branches with no commits for more than 90 days, excluding the default, protected and long-lived branches (release, maintenance, develop, stable, gh-pages, lines like 5.x or v4).",
         "read": "Many zombie branches suggest abandoned work or no repository cleanup.",
-        "limits": "Requires a token to check each branch's last commit date.",
+        "limits": "Requires a token to check each branch's last commit date. The scan stops at 1,000 branches, and then the number is a minimum.",
         "chaossNote": "CHAOSS (Branch Lifecycle) looks at how branches are created, merged, kept and deleted; here only stale ones are counted."
       },
       "bus-factor": {
         "name": "Bus factor and concentration",
         "what": "Smallest number of people responsible for 70% of the commits of the last 12 months, or of the whole history when recent activity is low (bots excluded), and the top contributor's share.",
-        "read": "A bus factor of 1 or 2 means the project depends on very few people. Over 60% from the top contributor is high risk.",
-        "limits": "Counts commits, not reviews, issues or other contributions.",
+        "read": "A bus factor of 1 or 2 means the project depends on very few people. Over 60% from the top contributor is critical.",
+        "limits": "Counts commits, not reviews, issues or other contributions. Uses the whole history when GitHub's 12-month statistic is unavailable, and considers at most the top 100 contributors.",
         "chaossNote": "CHAOSS calls this metric Contributor Absence Factor (formerly \"Bus Factor\") and uses a 50% threshold; here it is 70%, so the number tends to be higher than CHAOSS's."
       },
       "contributors": {
@@ -650,7 +649,7 @@
         "name": "Commits per week",
         "what": "Commits per week over the last 52 weeks, from GitHub's statistic.",
         "read": "Shows pace and regularity: spikes, pauses, holidays.",
-        "limits": "Commit volume doesn't measure effort or how significant the changes are.",
+        "limits": "Commit volume doesn't measure effort or how significant the changes are. GitHub's statistic includes merge and bot commits.",
         "chaossNote": "CHAOSS (Code Changes Commits) counts commits per period, optionally excluding merge and empty commits."
       },
       "weekdays": {

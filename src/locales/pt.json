@@ -121,7 +121,7 @@
       "noMerged": "Sem PRs mergeados"
     },
     "ciHealth": "Saúde do CI",
-    "ciHealthTooltip": "Percentual de sucesso das últimas execuções do GitHub Actions disparadas por push no branch principal (até 50). Contam sucesso contra falha, timeout e falha de inicialização; canceladas e puladas ficam de fora. Execuções agendadas, de bots, do Dependabot e de pull requests não entram. CI fora do GitHub Actions (Travis, CircleCI…) não aparece aqui.",
+    "ciHealthTooltip": "Percentual de sucesso das últimas execuções do GitHub Actions disparadas por push no branch principal (até 50). Contam sucesso contra falha, timeout e falha de inicialização; canceladas e puladas ficam de fora. Execuções agendadas, do Dependabot e de pull requests não entram; pushes feitos por bots entram. CI fora do GitHub Actions (Travis, CircleCI…) não aparece aqui.",
     "conventionalCommits": "Conventional Commits",
     "conventionalCommitsTooltip": "Percentual dos commits recentes do branch principal (até 100, sem merges e sem bots) cuja primeira linha segue o padrão Conventional Commits: tipo(escopo)!: descrição, com os tipos feat, fix, docs, style, refactor, perf, test, build, ci, chore e revert.",
     "releaseCadence": "Cadência de Releases",
@@ -515,8 +515,7 @@
     "title": "Como interpretar os indicadores",
     "intro": "Para cada indicador: o que ele mede, como ler, o que ele não diz e a métrica correspondente da CHAOSS, o projeto da Linux Foundation que define métricas de saúde de comunidades open source. Quando o Bisolhador mede de um jeito diferente da CHAOSS, a diferença está escrita. Nenhum indicador isolado mede qualidade: use-os para fazer perguntas sobre o projeto, não para dar notas.",
     "ethics": "A CHAOSS alerta que métricas de saúde podem expor pessoas. Ao usar indicadores por pessoa ou por equipe (por exemplo, em sala de aula), leia as orientações de ética de dados da CHAOSS.",
-    "ethicsLink": "Métricas e ética de dados na CHAOSS",
-    "back": "Voltar",
+    "ethicsLink": "Recomendações de privacidade e ética de dados da CHAOSS",
     "what": "O que mede",
     "read": "Como ler",
     "limits": "Limitações",
@@ -546,7 +545,7 @@
         "name": "Linguagens",
         "what": "A participação de cada linguagem no código do repositório, segundo o GitHub.",
         "read": "Mostra a pilha tecnológica e ajuda a escolher quem pode contribuir.",
-        "limits": "Arquivos gerados ou de terceiros (vendored) podem inflar uma linguagem.",
+        "limits": "Detecção pelo Linguist do GitHub, que já ignora arquivos gerados, de terceiros e de documentação; arquivos que ele não reconhece como tal ainda podem inflar uma linguagem. Linguagens abaixo de 1% aparecem agrupadas como \"Outras\".",
         "chaossNote": "A CHAOSS mede por número de arquivos ou linhas por linguagem; o GitHub informa bytes."
       },
       "issues": {
@@ -568,7 +567,7 @@
         "what": "Tempo mediano entre abrir um PR e mergeá-lo, nos até 50 PRs mergeados mais recentes, sem bots. O p90 mostra a cauda: 90% foram mergeados até esse tempo.",
         "read": "Lead time baixo indica ciclo de integração rápido. Compare com o p90: uma diferença grande significa que alguns PRs ficam esquecidos.",
         "limits": "Só PRs mergeados (os fechados sem merge não entram). PRs pequenos de manutenção puxam a mediana para baixo.",
-        "chaossNote": ""
+        "chaossNote": "Mesma pergunta e mesma agregação (mediana, só PRs aceitos). A amostra difere: a CHAOSS seleciona os PRs criados num período; aqui são os até 50 mergeados mais recentes, sem bots."
       },
       "review-coverage": {
         "name": "Cobertura de revisão",
@@ -582,7 +581,7 @@
         "what": "Tempo mediano (e p90) entre o PR ficar pronto para revisão e a primeira revisão de outra pessoa antes do merge.",
         "read": "Mede quanto tempo quem contribui espera por um retorno. Esperas longas desestimulam contribuições.",
         "limits": "Só PRs mergeados que tiveram revisão. Uma revisão feita ainda no rascunho conta como espera zero. Comentários comuns não contam. Exige token.",
-        "chaossNote": "A CHAOSS (Change Request Review Duration) conta a partir do envio do PR e sugere a média; aqui o relógio começa quando o PR fica pronto para revisão (rascunho não é espera) e usa-se a mediana, menos sensível a poucos PRs esquecidos."
+        "chaossNote": "A CHAOSS (Change Request Review Duration) conta a partir do envio do PR e sugere a média; aqui o relógio começa quando o PR fica pronto para revisão (rascunho não é espera) e usa-se a mediana, menos sensível a poucos PRs esquecidos. Time to First Response conta qualquer resposta, inclusive comentários; aqui só revisões formais contam."
       },
       "pr-size": {
         "name": "Tamanho dos PRs",
@@ -602,19 +601,19 @@
         "name": "Saúde do CI",
         "what": "Percentual de sucesso e duração mediana das últimas 50 execuções do GitHub Actions disparadas por push no branch principal.",
         "read": "Sucesso alto e duração curta indicam um CI levado a sério. Falhas frequentes no branch principal significam que código quebrado está sendo integrado.",
-        "limits": "Só GitHub Actions (Travis, CircleCI etc. não aparecem). Canceladas, puladas, agendadas, de bots e de pull requests ficam de fora.",
+        "limits": "Só GitHub Actions (Travis, CircleCI etc. não aparecem). Entram as últimas 50 execuções concluídas disparadas por push; canceladas e puladas saem da conta, então n pode ser menor que 50. Execuções agendadas, do Dependabot e de pull requests não entram; pushes feitos por bots no branch principal entram.",
         "chaossNote": "Não há métrica CHAOSS para saúde do CI."
       },
       "conventional-commits": {
         "name": "Conventional Commits",
         "what": "Percentual dos commits recentes do branch principal (sem merges e sem bots) cuja primeira linha segue tipo(escopo)!: descrição.",
         "read": "Mostra disciplina nas mensagens de commit, que facilita histórico legível, changelog automático e versionamento.",
-        "limits": "Só os tipos mais comuns (feat, fix, docs…) contam. Projetos com convenção própria (ex.: \"subsistema: mensagem\", como o kernel Linux) aparecem com 0%.",
+        "limits": "Só os tipos mais comuns (feat, fix, docs…) contam. Projetos com convenção própria (ex.: \"subsistema: mensagem\", como o kernel Linux) aparecem com percentual baixo, perto de 0%.",
         "chaossNote": "Não há métrica CHAOSS para convenção de mensagens; Code Changes Commits cita mensagens com estrutura consistente como pré-requisito para filtrar commits por tipo."
       },
       "release-cadence": {
         "name": "Cadência de releases",
-        "what": "Releases publicadas no GitHub nos últimos 12 meses, intervalo mediano entre os dias com release, dias desde a última e percentual de tags em SemVer.",
+        "what": "Releases publicadas no GitHub nos últimos 12 meses (datadas pela tag, ou pela publicação se a tag for posterior), intervalo mediano entre os dias com release, dias desde a última e percentual de tags em SemVer entre as até 100 mais recentes.",
         "read": "Releases regulares indicam um projeto vivo e previsível; SemVer ajuda quem usa a entender o impacto de cada versão.",
         "limits": "Projetos que só criam tags, sem releases no GitHub, não aparecem. Frequência ideal depende do tipo de projeto.",
         "chaossNote": "A CHAOSS (Release Frequency) conta releases por período (semana, mês, ano); aqui são 12 meses, com o intervalo mediano entre dias com release."
@@ -630,21 +629,21 @@
         "name": "Maturidade de engenharia",
         "what": "Se o repositório tem testes, CI, Docker e linter configurados (pela lista de arquivos), e se PRs são mergeados sem aprovação.",
         "read": "Mostra práticas de engenharia adotadas. \"?\" significa que não foi possível verificar, não que não existe.",
-        "limits": "Detecta presença, não qualidade: um repositório com uma pasta de testes vazia aparece com testes.",
+        "limits": "Detecta presença, não qualidade: um único arquivo de teste de exemplo basta para aparecer \"testes\".",
         "chaossNote": "A CHAOSS (Test Coverage) mede a fração do código exercitada pelos testes; aqui só se detecta se existem testes."
       },
       "zombie-branches": {
         "name": "Branches zumbis",
-        "what": "Branches sem commits há mais de 90 dias, sem contar a principal, as protegidas e as de release ou manutenção.",
+        "what": "Branches sem commits há mais de 90 dias, sem contar a principal, as protegidas e as de longa duração (release, manutenção, develop, stable, gh-pages, linhas como 5.x ou v4).",
         "read": "Muitas branches zumbis indicam trabalho abandonado ou falta de limpeza do repositório.",
-        "limits": "Exige token para verificar a data do último commit de cada branch.",
+        "limits": "Exige token para verificar a data do último commit de cada branch. A busca para em 1.000 branches, e aí o número é um mínimo.",
         "chaossNote": "A CHAOSS (Branch Lifecycle) olha como branches são criadas, mergeadas, mantidas e removidas; aqui só se contam as paradas."
       },
       "bus-factor": {
         "name": "Bus factor e concentração",
         "what": "Menor número de pessoas que respondem por 70% dos commits dos últimos 12 meses, ou de todo o histórico quando há pouca atividade recente (bots fora), e a participação do principal contribuidor.",
-        "read": "Bus factor 1 ou 2 significa que o projeto depende de pouquíssimas pessoas. Concentração acima de 60% no principal contribuidor é risco alto.",
-        "limits": "Conta commits, não revisões, issues ou outras contribuições.",
+        "read": "Bus factor 1 ou 2 significa que o projeto depende de pouquíssimas pessoas. Concentração acima de 60% no principal contribuidor é crítica.",
+        "limits": "Conta commits, não revisões, issues ou outras contribuições. Usa o histórico inteiro quando a estatística de 12 meses do GitHub está indisponível, e considera no máximo os 100 maiores contribuidores.",
         "chaossNote": "A CHAOSS chama essa métrica de Contributor Absence Factor (antes \"Bus Factor\") e usa o limiar de 50% das contribuições; aqui o limiar é 70%, então o número tende a ser maior que o da CHAOSS."
       },
       "contributors": {
@@ -658,7 +657,7 @@
         "name": "Commits por semana",
         "what": "Commits por semana nas últimas 52 semanas, segundo a estatística do GitHub.",
         "read": "Mostra ritmo e regularidade: picos, pausas, período de férias.",
-        "limits": "Volume de commits não mede esforço nem relevância das mudanças.",
+        "limits": "Volume de commits não mede esforço nem relevância das mudanças. A estatística do GitHub inclui commits de merge e de bots.",
         "chaossNote": "A CHAOSS (Code Changes Commits) conta commits por período, permitindo excluir merges e commits vazios."
       },
       "weekdays": {

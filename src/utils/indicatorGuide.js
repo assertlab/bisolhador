@@ -33,7 +33,8 @@ export const CHAOSS = {
   changeRequestsAccepted: { name: 'Change Requests Accepted', url: kb('metric-change-requests-accepted') },
 };
 
-export const DATA_ETHICS_URL = 'https://chaoss.community/kb-metrics-and-metrics-models/';
+// Linked as "CHAOSS Data Ethics document" from every CHAOSS metric page
+export const DATA_ETHICS_URL = 'https://github.com/chaoss/community/blob/main/data-use-statement.md';
 
 /** Sections in display order; each item: id (anchor), chaoss refs, relation. */
 export const GUIDE_SECTIONS = [
