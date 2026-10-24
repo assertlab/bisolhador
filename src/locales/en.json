@@ -250,7 +250,7 @@
       "health": "Health",
       "stars": "Stars",
       "searches": "Searches",
-        "days": "Days analyzed"
+      "days": "Days analyzed"
     },
     "ariaLabels": {
       "position": "Position",

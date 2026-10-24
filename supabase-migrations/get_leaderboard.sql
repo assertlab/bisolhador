@@ -2,13 +2,15 @@
 --
 -- 2026-10: ordena por DIAS DISTINTOS com análise (fuso America/Recife, o mesmo
 -- do permalink por data), não por linhas. Antes cada recarregamento contava 1:
--- assertlab/bisolhador liderava com 140 "análises", quase todas testes da
--- própria equipe numa mesma tarde. Agrupa sem diferenciar maiúsculas (como
+-- assertlab/bisolhador tinha 140 "análises" em 57 dias (até 16 no mesmo dia);
+-- claw-code, 61 em 19. Agrupa sem diferenciar maiúsculas (como
 -- get_repo_history) e mostra a grafia do registro mais recente.
 --
 -- Compatibilidade: as colunas antigas continuam, com o mesmo significado
--- (total_buscas = linhas); dias_analisados é nova, no fim. Clientes até a
--- v3.9.1 seguem funcionando e só passam a ver a nova ordem.
+-- (total_buscas = linhas); dias_analisados é nova, no fim. ORDEM DE IMPLANTAÇÃO:
+-- publicar o app primeiro (ele cai para total_buscas enquanto a coluna não
+-- existe) e só depois rodar este SQL — com o app até a v3.9.1, a coluna
+-- "Bisolhadas" (linhas) apareceria ordenada por dias, parecendo fora de ordem.
 --
 -- limit_count tem teto de 100 independente do que o client envie (e nunca
 -- quebra em NULL). Rodar no SQL Editor do Supabase. Idempotente.
@@ -57,6 +59,11 @@ AS $function$
   -- (sobrescrevendo o DEFAULT 50) não pode resultar em LIMIT NULL (= sem limite).
   LIMIT LEAST(GREATEST(COALESCE(limit_count, 50), 1), 100);
 $function$;
+
+-- Seguro para execução manual: o padrão do Supabase já concede EXECUTE e
+-- recarrega o cache do PostgREST, mas não custa garantir.
+GRANT EXECUTE ON FUNCTION public.get_leaderboard(integer) TO anon, authenticated;
+NOTIFY pgrst, 'reload schema';
 
 COMMENT ON FUNCTION public.get_leaderboard(integer) IS
   'Repositórios mais analisados: dias distintos com análise (America/Recife), não linhas. Teto de 100.';

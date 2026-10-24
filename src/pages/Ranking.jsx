@@ -17,7 +17,8 @@ export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
 
   const locale = intlLocale(i18n.language);
   // Same bands as the Dashboard's Health Score card (was > 80 here). null =
-  // not measured (forks have no community profile): N/A, not a red "C".
+  // not measured (forks have no community profile; legacy rows without a
+  // report): N/A, not a red "C".
   const getHealthBadge = (score) => {
     if (score == null) return { emoji: '⚪', grade: 'N/A' };
     if (score >= HEALTH_GOOD_PERCENT) return { emoji: '🟢', grade: 'A' };
@@ -116,7 +117,7 @@ export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          <span aria-label={`${item.stars} ${t('ranking.ariaLabels.stars')}`}>
+                          <span aria-label={`${formatters.formatNumber(item.stars, locale)} ${t('ranking.ariaLabels.stars')}`}>
                             ⭐ {formatters.formatNumber(item.stars, locale)}
                           </span>
                         </td>
