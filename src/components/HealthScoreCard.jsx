@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
+import { HEALTH_GOOD_PERCENT, HEALTH_FAIR_PERCENT } from '../constants.js';
 
 export function HealthScoreCard({ health }) {
   const { t } = useTranslation();
@@ -13,10 +14,10 @@ export function HealthScoreCard({ health }) {
   if (unavailable) {
     scoreColor = 'text-gray-500 dark:text-slate-400';
     bgColor = 'bg-gray-50 dark:bg-slate-700/40';
-  } else if (score >= 75) {
+  } else if (score >= HEALTH_GOOD_PERCENT) {
     scoreColor = 'text-green-600';
     bgColor = 'bg-green-50 dark:bg-green-900/20';
-  } else if (score >= 50) {
+  } else if (score >= HEALTH_FAIR_PERCENT) {
     scoreColor = 'text-yellow-600';
     bgColor = 'bg-yellow-50 dark:bg-yellow-900/20';
   } else {

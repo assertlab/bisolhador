@@ -5,6 +5,8 @@ import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
 import { PageLoadingState } from '../components/skeletons/PageLoadingState.jsx';
 import { intlLocale } from '../i18n.js';
+import { formatters } from '../utils/formatters.js';
+import { HEALTH_GOOD_PERCENT, HEALTH_FAIR_PERCENT } from '../constants.js';
 
 export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
@@ -13,18 +15,18 @@ export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
     queryFn: () => fetchLeaderboard(50),
   });
 
+  const locale = intlLocale(i18n.language);
+  // Same bands as the Dashboard's Health Score card (was > 80 here). null =
+  // not measured (forks have no community profile): N/A, not a red "C".
   const getHealthBadge = (score) => {
-    if (score > 80) return { emoji: '🟢', grade: 'A' };
-    if (score >= 50) return { emoji: '🟡', grade: 'B' };
+    if (score == null) return { emoji: '⚪', grade: 'N/A' };
+    if (score >= HEALTH_GOOD_PERCENT) return { emoji: '🟢', grade: 'A' };
+    if (score >= HEALTH_FAIR_PERCENT) return { emoji: '🟡', grade: 'B' };
     return { emoji: '🔴', grade: 'C' };
   };
-
-  const getPositionDisplay = (position) => {
-    if (position === 1) return '🥇 1º';
-    if (position === 2) return '🥈 2º';
-    if (position === 3) return '🥉 3º';
-    return `${position}º`;
-  };
+  // dias_analisados comes from get_leaderboard since 2026-10; before the
+  // migration runs, fall back to the row count (searches).
+  const countsDays = data?.[0]?.dias_analisados != null;
 
   if (isLoading) {
     return <PageLoadingState message={t('ranking.loading')} />;
@@ -49,7 +51,7 @@ export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-shark dark:text-white mb-2">
-              <span aria-hidden="true">🏆</span> {t('ranking.title')}
+              <span aria-hidden="true">📊</span> {t('ranking.title')}
             </h1>
             <p className="text-gray-600 dark:text-slate-400">
               {t('ranking.subtitle')}
@@ -78,7 +80,7 @@ export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
                       {t('ranking.columns.stars')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">
-                      {t('ranking.columns.searches')}
+                      {countsDays ? t('ranking.columns.days') : t('ranking.columns.searches')}
                     </th>
                   </tr>
                 </thead>
@@ -90,7 +92,7 @@ export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
                       <tr key={item.repo_name} className="hover:bg-gray-50 dark:hover:bg-slate-700">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                           <span aria-label={`${t('ranking.ariaLabels.position')} ${position}`}>
-                            {getPositionDisplay(position)}
+                            {position}º
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -115,11 +117,11 @@ export function Ranking({ isSettingsOpen, setIsSettingsOpen }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                           <span aria-label={`${item.stars} ${t('ranking.ariaLabels.stars')}`}>
-                            ⭐ {item.stars?.toLocaleString(intlLocale(i18n.language)) || 0}
+                            ⭐ {formatters.formatNumber(item.stars, locale)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                          {item.total_buscas}
+                          {countsDays ? item.dias_analisados : item.total_buscas}
                         </td>
                       </tr>
                     );

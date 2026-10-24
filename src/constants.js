@@ -41,3 +41,7 @@ export const SNAPSHOT_TIMEZONE = 'America/Recife';
 
 // Benchmark warns when the compared repos' latest data are further apart than this
 export const BENCHMARK_DATE_GAP_DAYS = 7;
+
+// Health Score bands (Dashboard card, Ranking badge): green ≥ GOOD, yellow ≥ FAIR
+export const HEALTH_GOOD_PERCENT = 75;
+export const HEALTH_FAIR_PERCENT = 50;

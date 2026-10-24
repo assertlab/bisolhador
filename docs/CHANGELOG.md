@@ -47,6 +47,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   No Benchmark, a dica da linha de evolução mostra o ponto mais próximo de cada repositório, não o N-ésimo registro de cada um (que tinham datas diferentes).
 - **FIX**: Ao abrir um **snapshot antigo** no Dashboard, os contribuidores e o bus factor anteriores à v3.8.0 (só os 30 primeiros, todo o histórico, com bots) aparecem como "não registrado neste snapshot", como no Benchmark.
 
+- **FIX**: **Ranking (Bisolhômetro)** contava cada recarregamento como uma análise e se apresentava como "Hall of Fame" com medalhas: o assertlab/bisolhador liderava com 140 "análises", quase todas testes da própria equipe numa mesma tarde.
+
+  Agora:
+  - ordena por **dias distintos com análise**, no horário de Recife (`get_leaderboard`, SQL versionado em `supabase-migrations/`);
+  - agrupa grafias que só diferem por maiúsculas;
+  - o título passa a ser "Mais Analisados", com o aviso de que mede o interesse de quem usa a ferramenta, não a qualidade do projeto;
+  - as medalhas saem;
+  - a faixa de saúde segue a do Dashboard (≥ 75% / ≥ 50%; era > 80%), e fork sem perfil de comunidade aparece como N/A, não como "C" vermelho.
+
 ---
 
 ## [3.9.1] - 2026-10-23
