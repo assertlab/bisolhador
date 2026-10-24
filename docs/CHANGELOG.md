@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [3.13.0] - 2026-10-24
+
 ### ✨ Added
 
 - **NEW**: **Modo Turma** (`/turma`): compara os repositórios das equipes de uma turma no período da disciplina.
