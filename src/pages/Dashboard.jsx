@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect, useRef } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '../components/Header';
@@ -16,7 +16,6 @@ import { SkeletonChart } from '../components/skeletons/SkeletonChart.jsx';
 import { PartialDataAlert } from '../components/PartialDataAlert.jsx';
 import { useRepository } from '../hooks/useRepository.js';
 import { useSnapshot, getSnapshotParams } from '../hooks/useSnapshot.js';
-import analytics from '../services/analytics.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 import { MERGED_PR_SAMPLE, SNAPSHOT_TIMEZONE } from '../constants.js';
 import { formatDuration, SMALL_PR_LINES } from '../utils/prReviewStats.js';
@@ -90,13 +89,6 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
     }
   }
 
-  // Efeito externo de verdade (GA4): só o pageview fica em effect.
-  const lastTrackedSearch = useRef(null);
-  useEffect(() => {
-    if (lastTrackedSearch.current === location.search) return;
-    lastTrackedSearch.current = location.search;
-    analytics.trackPageView(location.pathname);
-  }, [location.search, location.pathname]);
 
   const handleSearch = (repositoryName) => {
     setDismissedError(false); // reenviar a mesma busca não muda a URL

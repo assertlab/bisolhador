@@ -1,6 +1,7 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import analytics from './services/analytics.js';
 import { ToastContainer } from './components/Toast.jsx';
 
 // Lazy-loaded pages (Code Splitting) — same pattern already used for chart
@@ -28,11 +29,22 @@ function PageFallback() {
   );
 }
 
+// One pageview per route or query change (each search/class counts, as the
+// Dashboard did); only the path is sent (analytics.pathOnlyLocation).
+function RouteTracker() {
+  const { pathname, search } = useLocation();
+  useEffect(() => {
+    analytics.trackPageView(pathname);
+  }, [pathname, search]);
+  return null;
+}
+
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
     <Router basename={import.meta.env.BASE_URL}>
+      <RouteTracker />
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<Dashboard isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />

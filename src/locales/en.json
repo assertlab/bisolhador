@@ -672,16 +672,16 @@
         "name": "Classroom mode",
         "what": "The Dashboard's process indicators computed for each repository of a class within the course period: commits, active authors, concentration on the top author, merged PRs, approval by someone else, time to first review, lead time, PR size, CI health, Conventional Commits and releases.",
         "read": "Compare teams by process, not volume: a team with few commits and small, reviewed PRs may be working better than one with many direct commits to the default branch. High concentration means one person does almost everything; worth a conversation with the team.",
-        "limits": "Public repositories only. Authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, and PRs are examined up to a limit (marked * and +). Teams working directly on the default branch show 0 PRs and no review data. Commits and PRs don't measure effort, learning or quality, and shouldn't become automatic grades.",
+        "limits": "Private repositories are analyzed only here, with the user's own token and nothing saved; the link and the CSV contain their names and numbers. Authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, and PRs are examined up to a limit (marked * and +). Teams working directly on the default branch show 0 PRs and no review data. Commits and PRs don't measure effort, learning or quality, and shouldn't become automatic grades.",
         "chaossNote": "Each column follows the CHAOSS reference of the matching entry in this guide, computed over the chosen period. CHAOSS advises care with privacy when using per-person or per-team metrics; that's why concentration doesn't name the top author."
       }
     }
   },
   "classroom": {
     "title": "Classroom Mode",
-    "subtitle": "Compare a class's team repositories over the course period: up to {{max}} public repositories, analyzed now, with the same process indicators as the Dashboard. Nothing is saved; the class lives in this page's link.",
+    "subtitle": "Compare a class's team repositories over the course period: up to {{max}} repositories, public or private ones your token can access, analyzed now, with the same process indicators as the Dashboard. Nothing is saved; the class lives in this page's link.",
     "ethics": "Use it as a starting point for conversations with teams, not as an automatic grade: commits and PRs don't measure effort or learning.",
-    "needsToken": "Classroom mode needs a GitHub token: each repository makes 5 to 7 requests, and without a token the limit is 60 per hour.",
+    "needsToken": "Classroom mode needs a GitHub token: each repository makes 5 to 7 requests, and without a token the limit is 60 per hour. For private repositories (e.g. GitHub Classroom), the token must have access to them.",
     "openSettings": "Set up token",
     "reposLabel": "Team repositories",
     "reposPlaceholder": "owner/repository or https://github.com/owner/repository — one per line",
@@ -696,7 +696,7 @@
     "resultsTitle": "Results from {{from}} to {{to}}",
     "progress": "Analyzing {{done}} of {{total}}…",
     "finished": "{{total}} analyzed",
-    "notes": "Dates in UTC. \"Commits\" is the default-branch total in the period; authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, without merges and bots. PRs: merged in the period into any branch, bots excluded. CI: up to 100 push runs on the default branch. Releases: among the latest 100. Concentration = share of the author with most commits, without naming them. Private repositories are not analyzed.",
+    "notes": "Dates in UTC. \"Commits\" is the default-branch total in the period; authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, without merges and bots. PRs: merged in the period into any branch, bots excluded. CI: up to 100 push runs on the default branch. Releases: among the latest 100. Concentration = share of the author with most commits, without naming them.",
     "columns": {
       "repo": "Repository",
       "status": "Status",
@@ -715,8 +715,7 @@
     "status": {
       "pending": "Queued…",
       "ok": "Analyzed",
-      "private": "Private repository: not analyzed.",
-      "notFound": "Repository not found.",
+      "notFound": "Repository not found (or private without access with your token).",
       "error": "Couldn't analyze it (API failure or rate limit).",
       "duplicate": "Same repository as {{name}} (renamed)."
     },
@@ -735,7 +734,24 @@
       "conventional": "Conventional Commits (%)",
       "releases": "Releases",
       "partial": "Partial sample",
-      "yes": "yes"
+      "yes": "yes",
+      "visibility": "Visibility",
+      "private": "private",
+      "public": "public"
+    },
+    "privateNote": "This class includes private repositories. The data was read with your token and stays in this browser: nothing is saved by Bisolhador. The link and the CSV contain these repositories' names and numbers; share them only with people who already have access.",
+    "privateBadge": "Private repository",
+    "importTitle": "Import from an organization (optional)",
+    "orgLabel": "Organization or user",
+    "prefixLabel": "Repository prefix",
+    "importButton": "List repositories",
+    "importing": "Listing…",
+    "import": {
+      "result": "{{matched}} of the organization's {{found}} repositories (archived ones left out). The list below was filled in.",
+      "capped": "Only the first 1,000 repositories were read.",
+      "invalidOrg": "Invalid organization name.",
+      "orgNotFound": "Organization or user not found (or no access with your token).",
+      "orgFailed": "Couldn't list the repositories (API failure or rate limit)."
     }
   }
 }

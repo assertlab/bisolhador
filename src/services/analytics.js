@@ -2,13 +2,24 @@ import ReactGA from "react-ga4";
 import { supabase } from "./supabase.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 
+/** origin + path, never the query string or hash (see initialize). */
+export const pathOnlyLocation = (path) => `${window.location.origin}${String(path).split(/[?#]/)[0]}`;
+
 const analytics = {
+  // GA4 attaches the current URL (page_location) to every hit. With the
+  // default config that included the query string — ?q=owner/repo,
+  // ?repos=… (Classroom, which may list private repositories) — so GA only
+  // gets origin + path: no automatic page_view, page_location set per route.
   initialize() {
-    ReactGA.initialize(import.meta.env.VITE_GA_ID);
+    ReactGA.initialize(import.meta.env.VITE_GA_ID, {
+      gtagOptions: { send_page_view: false, page_location: pathOnlyLocation(window.location.pathname) },
+    });
   },
 
   trackPageView(path) {
-    ReactGA.send({ hitType: "pageview", page: path });
+    const location = pathOnlyLocation(path);
+    ReactGA.gtag("set", { page_location: location });
+    ReactGA.send({ hitType: "pageview", page: path, location });
   },
 
   async saveSearch(data, fullData = null) {

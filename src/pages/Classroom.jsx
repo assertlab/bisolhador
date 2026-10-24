@@ -5,7 +5,8 @@ import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
 import { GuideLink } from '../components/GuideLink.jsx';
 import { useClassroomAnalysis } from '../hooks/useClassroomAnalysis.js';
-import { hasGithubToken } from '../services/githubService.js';
+import { hasGithubToken, githubService } from '../services/githubService.js';
+import { parseSafeRepoName, SAFE_GITHUB_NAME_PATTERN } from '../utils/repoName.js';
 import { parseRepoList, parsePeriod, CLASSROOM_MAX_REPOS } from '../utils/classroom.js';
 import { formatDuration } from '../utils/prReviewStats.js';
 import { formatters } from '../utils/formatters.js';
@@ -62,6 +63,30 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
   }
   const [runId, setRunId] = useState(0);
 
+  // Import from an organization (GitHub Classroom puts every team repo in one)
+  const [org, setOrg] = useState('');
+  const [prefix, setPrefix] = useState('');
+  const [importState, setImportState] = useState(null); // { loading } | { found, matched, capped } | { error }
+  const importOrg = async () => {
+    if (!SAFE_GITHUB_NAME_PATTERN.test(org)) {
+      setImportState({ error: 'invalidOrg' });
+      return;
+    }
+    setImportState({ loading: true });
+    try {
+      const { repos, capped } = await githubService.fetchOwnerRepositories(org);
+      const wanted = prefix.trim().toLowerCase();
+      const matched = repos
+        .filter((r) => !r.archived && r.fullName.split('/')[1].toLowerCase().startsWith(wanted))
+        .map((r) => r.fullName)
+        .filter((name) => parseSafeRepoName(name));
+      setText(matched.join('\n'));
+      setImportState({ found: repos.length, matched: matched.length, capped });
+    } catch (error) {
+      setImportState({ error: /\b404\b/.test(error.message) ? 'orgNotFound' : 'orgFailed' });
+    }
+  };
+
   const requested = useMemo(() => parseRepoList(searchParams.get('repos') ?? ''), [searchParams]);
   const period = useMemo(() => parsePeriod(searchParams.get('from'), searchParams.get('to')), [searchParams]);
   const hasToken = hasGithubToken();
@@ -101,6 +126,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
     if (col.atLeast?.(row)) return `${text}+`;
     return col.sampled?.(row) ? `${text}*` : text;
   };
+  const anyPrivate = requested.repos.some((name) => rows[name]?.isPrivate);
   const anySampled = requested.repos.some((name) => rows[name]?.status === 'ok' && COLUMNS.some((c) => c.sampled?.(rows[name]) || c.atLeast?.(rows[name])));
 
   // CSV: raw numbers (hours, %, counts) with the unit in the header, so a
@@ -110,7 +136,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
       const row = rows[name];
       const dup = duplicateOf(name);
       const status = dup ? 'duplicate' : row?.status ?? 'pending';
-      const base = { [t('classroom.columns.repo')]: row?.fullName ?? name, [t('classroom.columns.status')]: t(`classroom.status.${status}`, { name: dup }) };
+      const base = { [t('classroom.columns.repo')]: row?.fullName ?? name, [t('classroom.csv.visibility')]: row?.status === 'ok' ? t(row.isPrivate ? 'classroom.csv.private' : 'classroom.csv.public') : '', [t('classroom.columns.status')]: t(`classroom.status.${status}`, { name: dup }) };
       for (const col of COLUMNS) {
         const header = t(`classroom.csv.${col.key}`);
         base[header] = status === 'ok' ? col.get(row) ?? '' : '';
@@ -146,6 +172,27 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
         )}
 
         <form onSubmit={submit} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 space-y-4">
+          <fieldset className="flex flex-wrap items-end gap-3 pb-3 border-b border-gray-100 dark:border-slate-700">
+            <legend className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">{t('classroom.importTitle')}</legend>
+            <label className="text-sm text-gray-700 dark:text-slate-200">
+              {t('classroom.orgLabel')}
+              <input value={org} onChange={(e) => setOrg(e.target.value.trim())} placeholder="ufpe-es-2026" className="block mt-1 p-2 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-white" />
+            </label>
+            <label className="text-sm text-gray-700 dark:text-slate-200">
+              {t('classroom.prefixLabel')}
+              <input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="projeto-1-" className="block mt-1 p-2 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-white" />
+            </label>
+            <button type="button" onClick={importOrg} disabled={!hasToken || !org || importState?.loading} className="px-4 py-2 text-sm font-medium rounded-lg border border-ocean text-ocean disabled:opacity-50">
+              {importState?.loading ? t('classroom.importing') : t('classroom.importButton')}
+            </button>
+            {importState && !importState.loading && (
+              <span role="status" className={`text-xs ${importState.error ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-slate-400'}`}>
+                {importState.error
+                  ? t(`classroom.import.${importState.error}`)
+                  : t('classroom.import.result', { found: importState.found, matched: importState.matched }) + (importState.capped ? ` ${t('classroom.import.capped')}` : '')}
+              </span>
+            )}
+          </fieldset>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200" htmlFor="classroom-repos">{t('classroom.reposLabel')}</label>
           <textarea
             id="classroom-repos"
@@ -218,6 +265,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                       <tr key={name}>
                         <td className="sticky left-0 bg-white dark:bg-slate-800 px-3 py-2 whitespace-nowrap font-medium text-gray-900 dark:text-white">
                           <a href={`https://github.com/${dup ? name : row?.fullName ?? name}`} target="_blank" rel="noopener noreferrer" className="hover:underline">{dup ? name : row?.fullName ?? name}</a>
+                          {row?.isPrivate && !dup && <span className="ml-1" title={t('classroom.privateBadge')} aria-label={t('classroom.privateBadge')}>🔒</span>}
                         </td>
                         {row?.status === 'ok' && !dup
                           ? COLUMNS.map((col) => (
@@ -234,6 +282,11 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                 </tbody>
               </table>
             </div>
+            {anyPrivate && (
+              <p role="note" className="text-xs bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 px-3 py-2 rounded">
+                🔒 {t('classroom.privateNote')}
+              </p>
+            )}
             {anySampled && <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.sampledNote')}</p>}
             <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.notes')}</p>
           </section>

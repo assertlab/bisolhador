@@ -7,9 +7,12 @@ import { analyzeTeamRepo } from '../utils/classroom.js';
 const CONCURRENCY = 3; // repositories analyzed at once (~5–7 requests each)
 
 /**
- * One repository: privacy gate first (fail-closed, like Benchmark — a private
- * or unverifiable repo is never analyzed), then the period fetches in parallel.
- * Nothing is persisted.
+ * One repository: visibility check first, then the period fetches in parallel.
+ * Private repositories ARE analyzed here — the one exception to "never process
+ * private repos" (AGENTS.md): it runs in the user's browser with the user's
+ * own token, shows only what they can already see on GitHub, and is never
+ * persisted (no Supabase; GA gets no query string). Unverifiable visibility
+ * still fails closed. Elsewhere (Dashboard, Benchmark) private stays refused.
  */
 async function analyzeRepository(name, period) {
   const [owner, repo] = name.split('/');
@@ -23,7 +26,7 @@ async function analyzeRepository(name, period) {
   } catch (error) {
     return { status: /\b404\b/.test(error.message) ? 'notFound' : 'error' };
   }
-  if (info?.private !== false) return { status: 'private' };
+  if (typeof info?.private !== 'boolean') return { status: 'error' }; // can't tell: don't analyze
   const canonical = parseSafeRepoName(info.full_name);
   if (!canonical) return { status: 'error' };
   const [o, r] = canonical;
@@ -37,7 +40,7 @@ async function analyzeRepository(name, period) {
   for (const [part, result] of Object.entries({ history, prs, runs, releases })) {
     if (result.status === 'rejected') console.warn(`[classroom] ${info.full_name}: ${part} failed:`, result.reason?.message);
   }
-  return { status: 'ok', fullName: info.full_name, ...analyzeTeamRepo({ history, prs, runs, releases }, period) };
+  return { status: 'ok', fullName: info.full_name, isPrivate: info.private, ...analyzeTeamRepo({ history, prs, runs, releases }, period) };
 }
 
 /**
