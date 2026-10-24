@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Nossos próprios envios:** agora mandam só o caminho da página (página vista registrada por rota, com `page_location` sem parâmetros).
   - **Medição aprimorada do GA4:** lê a URL e os links reais, independentemente da configuração do código: página vista a cada mudança de URL, cliques em links externos, interações com formulários e busca no site. Por isso o GA fica **desligado no Modo Turma**, onde pode haver nomes de repositórios privados. Fora dele, esses quatro recursos precisam ser desligados no painel do GA4; sem isso, o termo de `?q=` do Dashboard ainda chega ao Google.
 
+### 🐛 Fixed
+
+- **FIX**: **Cabeçalho no celular**: a barra com todos os links e botões tinha ~930 px e fazia a página inteira rolar para o lado em telas de celular (e ainda passava 33 px em 1024 px). Abaixo de 1280 px, a barra mostra logo, configurações e um botão de menu; os links (com rótulo), tema, idioma e ajuda ficam no painel do menu. A página atual fica destacada (sublinhado e `aria-current`). O menu fecha com Esc, ao navegar, ao abrir as configurações e ao alargar a janela. Os links, antes cinza-escuro sobre a barra escura no tema claro, ficaram legíveis nos dois temas.
+
 ---
 
 ## [3.13.0] - 2026-10-24

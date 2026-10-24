@@ -19,7 +19,10 @@
       "benchmark": "Benchmark",
       "guide": "Como interpretar",
       "classroom": "Turma"
-    }
+    },
+    "navLabel": "Navegação principal",
+    "menuOpen": "Abrir menu",
+    "menuClose": "Fechar menu"
   },
   "search": {
     "label": "Buscar repositório",
