@@ -683,16 +683,16 @@
         "name": "Modo turma",
         "what": "Os mesmos indicadores de processo do Dashboard, calculados para cada repositório de uma turma dentro do período da disciplina: commits, autores ativos, concentração no autor principal, PRs mergeados, aprovação por outra pessoa, tempo até a 1ª revisão, lead time, tamanho dos PRs, saúde do CI, Conventional Commits e releases.",
         "read": "Compare equipes pelo processo, não pelo volume: uma equipe com poucos commits e PRs pequenos e revisados pode estar trabalhando melhor que uma com muitos commits diretos no branch principal. Concentração alta indica que uma pessoa faz quase tudo; vale conversar com a equipe.",
-        "limits": "Só repositórios públicos. Autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, e os PRs são examinados até um limite (marcados com * e +). Equipes que trabalham direto no branch principal aparecem com 0 PRs e sem dados de revisão. Commits e PRs não medem esforço, aprendizado nem qualidade, e não devem virar nota automática.",
+        "limits": "Repositórios privados são analisados só aqui, com o token de quem usa e sem salvar nada; o link e o CSV contêm seus nomes e números. Autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, e os PRs são examinados até um limite (marcados com * e +). Equipes que trabalham direto no branch principal aparecem com 0 PRs e sem dados de revisão. Commits e PRs não medem esforço, aprendizado nem qualidade, e não devem virar nota automática.",
         "chaossNote": "Cada coluna segue a referência CHAOSS da entrada correspondente neste guia, calculada no período escolhido. A CHAOSS recomenda cuidado com privacidade ao usar métricas por pessoa ou por equipe; por isso a concentração não identifica quem é o autor principal."
       }
     }
   },
   "classroom": {
     "title": "Modo Turma",
-    "subtitle": "Compare os repositórios das equipes de uma turma no período da disciplina: até {{max}} repositórios públicos, analisados agora, com os mesmos indicadores de processo do Dashboard. Nada é salvo; a turma fica no link desta página.",
+    "subtitle": "Compare os repositórios das equipes de uma turma no período da disciplina: até {{max}} repositórios, públicos ou privados aos quais o seu token tem acesso, analisados agora, com os mesmos indicadores de processo do Dashboard. Nada é salvo; a turma fica no link desta página.",
     "ethics": "Use como ponto de partida para conversar com as equipes, não como nota automática: commits e PRs não medem esforço nem aprendizado.",
-    "needsToken": "O modo turma exige um token do GitHub: cada repositório faz de 5 a 7 consultas, e sem token o limite é de 60 por hora.",
+    "needsToken": "O modo turma exige um token do GitHub: cada repositório faz de 5 a 7 consultas, e sem token o limite é de 60 por hora. Para repositórios privados (ex.: GitHub Classroom), o token precisa ter acesso a eles.",
     "openSettings": "Configurar token",
     "reposLabel": "Repositórios das equipes",
     "reposPlaceholder": "dono/repositorio ou https://github.com/dono/repositorio — um por linha",
@@ -707,7 +707,7 @@
     "resultsTitle": "Resultados de {{from}} a {{to}}",
     "progress": "Analisando {{done}} de {{total}}…",
     "finished": "{{total}} analisados",
-    "notes": "Datas em UTC. \"Commits\" é o total do branch principal no período; autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, sem merges e sem bots. PRs: os mergeados no período em qualquer branch, sem bots. CI: até 100 execuções de push no branch principal. Releases: entre as 100 mais recentes. Concentração = participação do autor que mais fez commits, sem identificá-lo. Repositórios privados não são analisados.",
+    "notes": "Datas em UTC. \"Commits\" é o total do branch principal no período; autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, sem merges e sem bots. PRs: os mergeados no período em qualquer branch, sem bots. CI: até 100 execuções de push no branch principal. Releases: entre as 100 mais recentes. Concentração = participação do autor que mais fez commits, sem identificá-lo.",
     "columns": {
       "repo": "Repositório",
       "status": "Situação",
@@ -726,8 +726,7 @@
     "status": {
       "pending": "Na fila…",
       "ok": "Analisado",
-      "private": "Repositório privado: não analisado.",
-      "notFound": "Repositório não encontrado.",
+      "notFound": "Repositório não encontrado (ou privado sem acesso com o seu token).",
       "error": "Não foi possível analisar (falha ou limite da API).",
       "duplicate": "Mesmo repositório que {{name}} (renomeado)."
     },
@@ -746,7 +745,24 @@
       "conventional": "Conventional Commits (%)",
       "releases": "Releases",
       "partial": "Amostra parcial",
-      "yes": "sim"
+      "yes": "sim",
+      "visibility": "Visibilidade",
+      "private": "privado",
+      "public": "público"
+    },
+    "privateNote": "Esta turma inclui repositórios privados. Os dados foram lidos com o seu token e ficam só neste navegador: nada é salvo no Bisolhador. O link e o CSV contêm nomes e números desses repositórios; compartilhe só com quem já tem acesso a eles.",
+    "privateBadge": "Repositório privado",
+    "importTitle": "Importar de uma organização (opcional)",
+    "orgLabel": "Organização (ou usuário: só públicos)",
+    "prefixLabel": "Prefixo do repositório",
+    "importButton": "Listar repositórios",
+    "importing": "Listando…",
+    "import": {
+      "result": "{{matched}} de {{found}} repositórios da organização (arquivados ficam de fora). A lista abaixo foi preenchida.",
+      "capped": "Só os primeiros 1.000 repositórios foram lidos.",
+      "invalidOrg": "Nome de organização inválido.",
+      "orgNotFound": "Organização ou usuário não encontrado (ou sem acesso com o seu token).",
+      "orgFailed": "Não foi possível listar os repositórios (falha ou limite da API)."
     }
   }
 }

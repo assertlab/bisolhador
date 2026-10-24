@@ -463,6 +463,28 @@ export const githubService = {
   // Owner/repo arrive validated (utils/repoName.parseSafeRepoName) and go only
   // as GraphQL variables or encoded URL parts.
 
+  // Repositories of an organization (or, if it isn't one, a user), for the
+  // classroom import. With the user's token, private repos they can see are
+  // included (GitHub Classroom creates them private).
+  async fetchOwnerRepositories(owner, maxPages = 10) {
+    const list = async (kind) => {
+      const repos = [];
+      for (let page = 1; page <= maxPages; page++) {
+        const url = `${GITHUB_BASE_URL}/${kind}/${encodeURIComponent(owner)}/repos?type=all&sort=full_name&per_page=100&page=${page}`;
+        const response = await fetch(url, { headers: getHeaders() });
+        if (response.status === 404) return null;
+        if (!response.ok) throw new Error(`Repositories of ${owner} failed: HTTP ${response.status}`);
+        const data = await response.json();
+        repos.push(...data.map((r) => ({ fullName: r.full_name, private: r.private, archived: r.archived })));
+        if (data.length < 100) return { repos, capped: false };
+      }
+      return { repos, capped: true };
+    };
+    const result = (await list('orgs')) ?? (await list('users'));
+    if (!result) throw new Error(`Repositories of ${owner} failed: HTTP 404`);
+    return result;
+  },
+
   // Default-branch commits between since/until (ISO), up to maxPages × 100.
   async fetchCommitHistoryInPeriod(owner, repo, since, until, maxPages = 3) {
     const query = `query($owner: String!, $name: String!, $since: GitTimestamp!, $until: GitTimestamp!, $after: String) {
