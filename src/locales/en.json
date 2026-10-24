@@ -742,7 +742,7 @@
     "privateNote": "This class includes private repositories. The data was read with your token and stays in this browser: nothing is saved by Bisolhador. The link and the CSV contain these repositories' names and numbers; share them only with people who already have access.",
     "privateBadge": "Private repository",
     "importTitle": "Import from an organization (optional)",
-    "orgLabel": "Organization or user",
+    "orgLabel": "Organization (or user: public only)",
     "prefixLabel": "Repository prefix",
     "importButton": "List repositories",
     "importing": "Listing…",

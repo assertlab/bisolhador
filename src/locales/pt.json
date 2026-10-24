@@ -750,7 +750,7 @@
     "privateNote": "Esta turma inclui repositórios privados. Os dados foram lidos com o seu token e ficam só neste navegador: nada é salvo no Bisolhador. O link e o CSV contêm nomes e números desses repositórios; compartilhe só com quem já tem acesso a eles.",
     "privateBadge": "Repositório privado",
     "importTitle": "Importar de uma organização (opcional)",
-    "orgLabel": "Organização ou usuário",
+    "orgLabel": "Organização (ou usuário: só públicos)",
     "prefixLabel": "Prefixo do repositório",
     "importButton": "Listar repositórios",
     "importing": "Listando…",

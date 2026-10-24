@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Header } from '../components/Header';
@@ -67,7 +67,9 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
   const [org, setOrg] = useState('');
   const [prefix, setPrefix] = useState('');
   const [importState, setImportState] = useState(null); // { loading } | { found, matched, capped } | { error }
+  const importRequest = useRef(0);
   const importOrg = async () => {
+    const requestId = ++importRequest.current; // a newer import wins
     if (!SAFE_GITHUB_NAME_PATTERN.test(org)) {
       setImportState({ error: 'invalidOrg' });
       return;
@@ -80,9 +82,11 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
         .filter((r) => !r.archived && r.fullName.split('/')[1].toLowerCase().startsWith(wanted))
         .map((r) => r.fullName)
         .filter((name) => parseSafeRepoName(name));
+      if (requestId !== importRequest.current) return;
       setText(matched.join('\n'));
       setImportState({ found: repos.length, matched: matched.length, capped });
     } catch (error) {
+      if (requestId !== importRequest.current) return;
       setImportState({ error: /\b404\b/.test(error.message) ? 'orgNotFound' : 'orgFailed' });
     }
   };
@@ -171,7 +175,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
           </div>
         )}
 
-        <form onSubmit={submit} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 space-y-4">
+        <form onSubmit={submit} action="/turma" className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 space-y-4">
           <fieldset className="flex flex-wrap items-end gap-3 pb-3 border-b border-gray-100 dark:border-slate-700">
             <legend className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">{t('classroom.importTitle')}</legend>
             <label className="text-sm text-gray-700 dark:text-slate-200">

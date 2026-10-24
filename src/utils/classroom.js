@@ -4,7 +4,9 @@ import { analyzeReviewMetrics, analyzeLeadTime } from './prReviewStats.js';
 import { analyzeCiRuns, analyzeConventionalCommits, RELEASES_PAGE } from './projectPractices.js';
 
 // Classroom mode: the same indicators as the Dashboard, computed over a course
-// period for a list of (public) team repositories. Nothing is persisted.
+// period for a list of team repositories (public, or private ones the user's
+// token can see — the only place private repos are processed). Nothing is
+// persisted; GA is off on /turma (services/analytics.js).
 export const CLASSROOM_MAX_REPOS = 50;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 

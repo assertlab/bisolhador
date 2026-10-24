@@ -2,21 +2,38 @@ import ReactGA from "react-ga4";
 import { supabase } from "./supabase.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 
+/**
+ * Classroom mode may list private repositories (in the URL, the table links
+ * and the form). GA4 enhanced measurement sends those regardless of our
+ * config, so GA is switched off — gtag's documented opt-out flag — from the
+ * first visit to /turma until the page is closed (navigating away keeps it off:
+ * the next hit would still carry /turma?repos=… as referrer).
+ */
+function disableIfClassroom(path) {
+  const id = import.meta.env.VITE_GA_ID;
+  if (id && String(path).startsWith('/turma')) window[`ga-disable-${id}`] = true;
+  return Boolean(id && window[`ga-disable-${id}`]);
+}
+
 /** origin + path, never the query string or hash (see initialize). */
 export const pathOnlyLocation = (path) => `${window.location.origin}${String(path).split(/[?#]/)[0]}`;
 
 const analytics = {
   // GA4 attaches the current URL (page_location) to every hit. With the
   // default config that included the query string — ?q=owner/repo,
-  // ?repos=… (Classroom, which may list private repositories) — so GA only
-  // gets origin + path: no automatic page_view, page_location set per route.
+  // ?repos=… — so our own hits send origin + path: no automatic page_view,
+  // page_location set per route. That does NOT cover GA4 enhanced
+  // measurement (history page views, outbound clicks, form interactions,
+  // site search read the real URL/links), hence disableIfClassroom.
   initialize() {
+    disableIfClassroom(window.location.pathname);
     ReactGA.initialize(import.meta.env.VITE_GA_ID, {
       gtagOptions: { send_page_view: false, page_location: pathOnlyLocation(window.location.pathname) },
     });
   },
 
   trackPageView(path) {
+    if (disableIfClassroom(path)) return;
     const location = pathOnlyLocation(path);
     ReactGA.gtag("set", { page_location: location });
     ReactGA.send({ hitType: "pageview", page: path, location });

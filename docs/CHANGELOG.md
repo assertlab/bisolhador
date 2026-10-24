@@ -11,12 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ Added
 
-- **NEW**: **Modo Turma aceita repositórios privados**, a única exceção à regra de nunca processar privados. Turmas do GitHub Classroom são privadas por padrão. A análise roda no navegador de quem usa, com o token dessa pessoa (só vê o que ela já pode ver no GitHub), **nada é salvo** e o Google Analytics não recebe nomes de repositório. Repositórios privados aparecem com 🔒, com aviso na tela e uma coluna de visibilidade no CSV. Dashboard, Benchmark, Timeline e Ranking continuam recusando privados.
+- **NEW**: **Modo Turma aceita repositórios privados**, a única exceção à regra de nunca processar privados. Turmas do GitHub Classroom são privadas por padrão. A análise roda no navegador de quem usa, com o token dessa pessoa (só vê o que ela já pode ver no GitHub), **nada é salvo**, e o Google Analytics fica **desligado** a partir da abertura do Modo Turma, até a página ser fechada. Repositórios privados aparecem com 🔒, com aviso na tela e uma coluna de visibilidade no CSV. Dashboard, Benchmark, Timeline e Ranking continuam recusando privados.
 - **NEW**: **Importar a turma de uma organização** do GitHub (ou de um usuário): informe a organização e, opcionalmente, um prefixo (ex.: `projeto-1-`); a lista é preenchida com os repositórios correspondentes, sem os arquivados.
 
 ### 🔒 Security
 
-- **SEC**: O Google Analytics recebia a **URL completa**, com os parâmetros, a cada página vista e em todo evento (`?q=dono/repo` no Dashboard, `?repos=…` no Modo Turma). Agora recebe só o caminho da página. A página vista é registrada por rota, com `page_location` sem parâmetros. Fica de fora a detecção de busca interna da medição aprimorada do GA4, que lê o termo de `?q=` direto da URL: ela precisa ser desligada no painel do GA4.
+- **SEC**: O Google Analytics recebia a **URL completa**, com os parâmetros (`?q=dono/repo` no Dashboard, `?repos=…` no Modo Turma).
+  - **Nossos próprios envios:** agora mandam só o caminho da página (página vista registrada por rota, com `page_location` sem parâmetros).
+  - **Medição aprimorada do GA4:** lê a URL e os links reais, independentemente da configuração do código: página vista a cada mudança de URL, cliques em links externos, interações com formulários e busca no site. Por isso o GA fica **desligado no Modo Turma**, onde pode haver nomes de repositórios privados. Fora dele, esses quatro recursos precisam ser desligados no painel do GA4; sem isso, o termo de `?q=` do Dashboard ainda chega ao Google.
 
 ---
 
