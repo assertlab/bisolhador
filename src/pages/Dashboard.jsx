@@ -290,7 +290,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                 title={t('stats.ciHealth')}
                 value={practices.ci.available ? formatters.formatPercent(practices.ci.successPercentage, locale) : 'N/A'}
                 subValue={practices.ci.available
-                  ? t('stats.ciHealthSample', { minutes: practices.ci.medianMinutes == null ? 'N/A' : practices.ci.medianMinutes.toLocaleString(locale), n: practices.ci.n })
+                  ? t('stats.ciHealthSample', { minutes: practices.ci.medianMinutes == null ? 'N/A' : practices.ci.medianMinutes.toLocaleString(locale), count: practices.ci.n })
                   : practiceUnavailable(practices.ci)}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>}
                 tooltipText={t('stats.ciHealthTooltip')}
@@ -298,7 +298,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               <StatCard
                 title={t('stats.conventionalCommits')}
                 value={practices.commits.available ? formatters.formatPercent(practices.commits.percentage, locale) : 'N/A'}
-                subValue={practices.commits.available ? t('stats.conventionalCommitsSample', { n: practices.commits.n }) : practiceUnavailable(practices.commits)}
+                subValue={practices.commits.available ? t('stats.conventionalCommitsSample', { count: practices.commits.n }) : practiceUnavailable(practices.commits)}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>}
                 tooltipText={t('stats.conventionalCommitsTooltip')}
               />

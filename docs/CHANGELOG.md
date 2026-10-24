@@ -19,9 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Os dados vêm de três consultas GraphQL em paralelo: uma consulta única levava de 5 a 10 s e beirava o limite do GitHub. Se a parte de tempos ou a de tamanho falhar, só aquele indicador fica indisponível. Snapshots anteriores mostram "não registrado".
 
 - **NEW**: Seção **Práticas do Projeto**, com três indicadores de dados públicos (funcionam sem token):
-  - **Saúde do CI**: % de sucesso das últimas execuções concluídas do GitHub Actions no branch principal (até 100) e duração mediana. Canceladas, puladas e execuções de pull requests ficam de fora.
+  - **Saúde do CI**: % de sucesso e duração mediana das últimas execuções do GitHub Actions disparadas por push no branch principal (até 50). Execuções agendadas, de bots, do Dependabot e de pull requests ficam de fora, assim como canceladas e puladas.
   - **Conventional Commits**: % dos commits recentes do branch principal (até 100, sem merges e sem bots) no formato `tipo(escopo)!: descrição`.
-  - **Cadência de Releases**: releases nos últimos 12 meses, intervalo mediano entre os dias com release, dias desde a última e % de tags em SemVer. As datas vêm do commit da release, não da publicação da página, e releases de duas linhas no mesmo dia contam como um dia.
+  - **Cadência de Releases**: releases nos últimos 12 meses, intervalo mediano entre os dias com release, dias desde a última e % de tags em SemVer. Cada release é datada pela tag, ou pela publicação quando a tag é posterior (como numa tag recriada); releases de duas linhas no mesmo dia contam como um dia. A mesma lista fornece a contagem de releases do card do repositório, sem requisição extra quando há menos de 100.
 
   Snapshots anteriores mostram "não registrado".
 

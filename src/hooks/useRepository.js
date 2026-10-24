@@ -6,7 +6,7 @@ import { analyzeContributors, peopleFromStats, peopleFromContributors } from '..
 import { analyzeBranches } from '../utils/branches.js';
 import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf } from '../utils/repoTree.js';
 import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare } from '../utils/activityStats.js';
-import { analyzeCiRuns, analyzeConventionalCommits, analyzeReleases } from '../utils/projectPractices.js';
+import { analyzeCiRuns, analyzeConventionalCommits, analyzeReleases, RELEASES_PAGE } from '../utils/projectPractices.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
@@ -51,6 +51,14 @@ async function fetchContributorAnalysis(owner, repo) {
 }
 
 // Repository data fetching function for TanStack Query
+// One /releases request for both the count and the cadence: under 100
+// releases the list is complete; only a full page needs the per_page=1 count.
+async function fetchReleaseData(owner, repo) {
+    const list = await githubService.fetchReleases(owner, repo);
+    const count = list.length < RELEASES_PAGE ? list.length : await githubService.fetchReleasesCount(owner, repo);
+    return { list, count };
+}
+
 async function fetchRepositoryData(repoName) {
     if (!repoName || !repoName.includes('/')) {
         throw new Error('Formato inválido. Use owner/repo');
@@ -101,7 +109,7 @@ async function fetchRepositoryData(repoName) {
         githubService.fetchLanguages(owner, repo),
         githubService.fetchCommunityProfile(owner, repo),
         githubService.fetchRepositoryTree(owner, repo, repoData.default_branch),
-        githubService.fetchReleasesCount(owner, repo),
+        fetchReleaseData(owner, repo),
         githubService.fetchCommitActivity(owner, repo),
         githubService.fetchPullRequestStats(owner, repo),
         githubService.fetchCodeFrequency(owner, repo),
@@ -109,8 +117,7 @@ async function fetchRepositoryData(repoName) {
         // GraphQL requires a token; without one, skip it (metrics → unavailable).
         hasToken ? githubService.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null),
         githubService.fetchPunchCard(owner, repo),
-        repoData.default_branch ? githubService.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
-        githubService.fetchReleases(owner, repo)
+        repoData.default_branch ? githubService.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] })
     ]);
 
     // Map of result indices to human-readable endpoint names
@@ -119,14 +126,14 @@ async function fetchRepositoryData(repoName) {
         'openIssues', 'closedIssues', 'recentPRs', 'languages',
         'communityProfile', 'repositoryTree', 'releases',
         'commitActivity', 'prStats', 'codeFrequency', 'mergedPRs',
-        'prReviewStats', 'punchCard', 'actionRuns', 'releasesList'
+        'prReviewStats', 'punchCard', 'actionRuns'
     ];
 
     // Collect warnings from rejected promises. The REST PR list only feeds lead
     // time when the GraphQL sample is missing: its failure alone isn't partial
     // data. /stats/* (202 computing, 422 too large) are explained by their own
     // charts/cards; a 10k+ commit repo would otherwise always show the banner.
-    const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard', 'actionRuns', 'releasesList']);
+    const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard', 'actionRuns']);
     const warnings = results.reduce((acc, result, index) => {
         const unused = endpointNames[index] === 'prStats' && results[15]?.status === 'fulfilled' && results[15].value;
         if (result.status === 'rejected' && !unused && !SELF_EXPLAINED.has(endpointNames[index])) {
@@ -147,7 +154,7 @@ async function fetchRepositoryData(repoName) {
     const languages = results[7]?.status === 'fulfilled' ? results[7].value : {};
     const communityProfile = results[8]?.status === 'fulfilled' ? results[8].value : null;
     const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : null;
-    const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value : null;
+    const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value.count : null;
     // /stats/*: 'computing' (202) / 'tooLarge' (422) / 'error' are shown as such,
     // never as an all-zero chart (see utils/activityStats.js)
     const activityStats = statsStatus(results[11]);
@@ -227,7 +234,7 @@ async function fetchRepositoryData(repoName) {
     const practices = {
         ci: analyzeCiRuns(results[17]?.status === 'fulfilled' ? results[17].value : null),
         commits: analyzeConventionalCommits(results[0]?.status === 'fulfilled' ? results[0].value : null),
-        releases: analyzeReleases(results[18]?.status === 'fulfilled' ? results[18].value : null),
+        releases: analyzeReleases(results[10]?.status === 'fulfilled' ? results[10].value.list : null),
     };
 
 

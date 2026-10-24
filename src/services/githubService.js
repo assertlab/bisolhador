@@ -113,6 +113,7 @@ export const githubService = {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits?per_page=${perPage}`;
 
     const response = await fetch(url, { headers: getHeaders() });
+    if (response.status === 409) return []; // empty repository
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -282,10 +283,11 @@ export const githubService = {
     }
   },
 
-  // Completed GitHub Actions runs on the default branch (CI health). Throws on
-  // failure; 404 (Actions disabled) = no runs.
+  // Completed GitHub Actions runs triggered by pushes to the default branch
+  // (CI health). Throws on failure; 404 (Actions disabled) = no runs.
+  // exclude_pull_requests only empties each run's pull_requests array (smaller payload).
   async fetchActionRuns(owner, repo, branch) {
-    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/runs?branch=${encodeURIComponent(branch)}&status=completed&exclude_pull_requests=true&per_page=100`;
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/runs?branch=${encodeURIComponent(branch)}&event=push&status=completed&exclude_pull_requests=true&per_page=50`;
     const response = await fetch(url, { headers: getHeaders() });
     if (response.status === 404) return { total_count: 0, workflow_runs: [] };
     if (!response.ok) throw new Error(`Actions runs failed: HTTP ${response.status}`);

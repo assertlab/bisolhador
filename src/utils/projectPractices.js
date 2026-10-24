@@ -1,4 +1,5 @@
-import { isBot } from './contributors.js';
+import { isBot, round1 } from './contributors.js';
+import { DAY_MS } from '../constants.js';
 import { percentile } from './prReviewStats.js';
 
 // Project practices from public REST data (no token needed): CI health,
@@ -7,8 +8,6 @@ import { percentile } from './prReviewStats.js';
 // so persisted reports can be told apart from future changes.
 export const PRACTICES_METHOD = 'v1';
 
-const round1 = (x) => Math.round(x * 10) / 10;
-const DAY_MS = 86_400_000;
 
 // --- CI health -----------------------------------------------------------
 
@@ -18,16 +17,17 @@ const CI_PASS = new Set(['success']);
 const CI_FAIL = new Set(['failure', 'timed_out', 'startup_failure']);
 
 /**
- * GitHub Actions runs on the default branch (GET /actions/runs?branch=…&
- * status=completed): success rate and median duration. Runs triggered by
- * pull requests are left out even when the API returns them for the branch
- * filter: this measures the main line, not proposals.
+ * GitHub Actions runs triggered by pushes to the default branch (GET
+ * /actions/runs?branch=…&event=push&status=completed): success rate and
+ * median duration. Only push runs: the branch filter alone also returned
+ * CodeQL/Scorecard schedules, Dependabot "dynamic" runs, issue bots and PR
+ * runs from forks whose branch has the same name (vite: 88% → 83%).
  *
  * @param {{total_count: number, workflow_runs: Array}|null} response - null = request failed
  */
 export function analyzeCiRuns(response) {
   if (!response) return { available: false, reason: 'error' };
-  const runs = (response.workflow_runs ?? []).filter((r) => !String(r.event).startsWith('pull_request'));
+  const runs = (response.workflow_runs ?? []).filter((r) => r.event === 'push'); // server filters too
   const counted = runs.filter((r) => CI_PASS.has(r.conclusion) || CI_FAIL.has(r.conclusion));
   if (counted.length === 0) {
     return { available: false, reason: (response.total_count ?? 0) === 0 ? 'noRuns' : 'noConclusive', method: PRACTICES_METHOD };
@@ -36,13 +36,11 @@ export function analyzeCiRuns(response) {
     .map((r) => (Date.parse(r.updated_at) - Date.parse(r.run_started_at)) / 60000)
     .filter((m) => Number.isFinite(m) && m >= 0)
     .sort((a, b) => a - b);
-  const dates = counted.map((r) => Date.parse(r.run_started_at)).filter(Number.isFinite);
   return {
     available: true,
     successPercentage: Math.round((counted.filter((r) => CI_PASS.has(r.conclusion)).length / counted.length) * 100),
     medianMinutes: durations.length ? round1(percentile(durations, 0.5)) : null,
     n: counted.length,
-    since: dates.length ? new Date(Math.min(...dates)).toISOString() : null,
     method: PRACTICES_METHOD,
   };
 }
@@ -62,7 +60,8 @@ export const isConventionalCommit = (message) => CONVENTIONAL.test(String(messag
  */
 export function analyzeConventionalCommits(commits) {
   if (!Array.isArray(commits)) return { available: false, reason: 'error' };
-  const human = commits.filter((c) => (c.parents?.length ?? 1) <= 1 && !isBot(c.author) && !/\[bot\]/i.test(c.commit?.author?.name ?? ''));
+  // Unlinked authors (author null): fall back to the name ("renovate[bot]", "Renovate Bot")
+  const human = commits.filter((c) => (c.parents?.length ?? 1) <= 1 && !isBot(c.author) && !/(\[bot\]|\bbot\b)/i.test(c.commit?.author?.name ?? ''));
   if (human.length === 0) return { available: false, reason: 'noCommits', method: PRACTICES_METHOD };
   const conventional = human.filter((c) => isConventionalCommit(c.commit?.message)).length;
   return { available: true, percentage: Math.round((conventional / human.length) * 100), n: human.length, method: PRACTICES_METHOD };
@@ -70,7 +69,8 @@ export function analyzeConventionalCommits(commits) {
 
 // --- Release cadence -------------------------------------------------------
 
-const SEMVER = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/;
+// Optional monorepo package prefix: create-vite@7.0.0, @scope/pkg@1.2.3
+const SEMVER = /^(?:(?:@[\w.-]+\/)?[\w.-]+@)?v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/;
 export const isSemverTag = (tag) => SEMVER.test(String(tag ?? ''));
 
 const RELEASE_WINDOW_DAYS = 365;
@@ -78,10 +78,12 @@ export const RELEASES_PAGE = 100; // githubService.fetchReleases per_page
 const dayOf = (ms) => Math.floor(ms / DAY_MS);
 
 /**
- * Published releases (GET /releases, drafts excluded), dated by `created_at`
- * — GitHub: "the date of the commit used for the release", not when the
- * release page was published (bisolhador backfilled 7 releases in one day;
- * by published_at that read "every 0.2 days").
+ * Published releases (GET /releases, drafts excluded), dated by the earlier
+ * of created_at (the tag's date: tagger date for annotated tags, else the
+ * commit's) and published_at. published_at alone reads backfilled releases as
+ * the backfill day (bisolhador: 7 in one day → "every 0.2 days"); created_at
+ * alone reads a re-created tag as its new date (express v5.0.1: 6 months after
+ * it was published).
  * - releases in the last 12 months, and the median interval between the
  *   distinct days with a release in that window (express ships 4.x and 5.x
  *   the same day: per-release gaps read "every 0.2 days"; over its latest 100
@@ -95,7 +97,7 @@ export function analyzeReleases(releases, nowMs = Date.now()) {
   if (!Array.isArray(releases)) return { available: false, reason: 'error' };
   const published = releases
     .filter((r) => !r.draft)
-    .map((r) => ({ tag: r.tag_name, at: Date.parse(r.created_at ?? r.published_at) }))
+    .map((r) => ({ tag: r.tag_name, at: Math.min(...[r.created_at, r.published_at].map(Date.parse).filter(Number.isFinite)) }))
     .filter((r) => Number.isFinite(r.at))
     .sort((a, b) => a.at - b.at);
   if (published.length === 0) return { available: false, reason: 'noReleases', method: PRACTICES_METHOD };

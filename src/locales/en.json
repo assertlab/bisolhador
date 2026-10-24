@@ -120,15 +120,13 @@
       "noMerged": "No merged PRs"
     },
     "ciHealth": "CI Health",
-    "ciHealthSample": "successful runs · median {{minutes}} min · {{n}} runs",
-    "ciHealthTooltip": "Success rate of the latest completed GitHub Actions runs on the default branch (up to 100). Success counts against failure, timeout and startup failure; cancelled and skipped runs are left out, as are runs triggered by pull requests. CI outside GitHub Actions (Travis, CircleCI…) isn't shown here.",
+    "ciHealthTooltip": "Success rate of the latest GitHub Actions runs triggered by pushes to the default branch (up to 50). Success counts against failure, timeout and startup failure; cancelled and skipped runs are left out. Scheduled, bot, Dependabot and pull request runs aren't counted. CI outside GitHub Actions (Travis, CircleCI…) isn't shown here.",
     "conventionalCommits": "Conventional Commits",
-    "conventionalCommitsSample": "of messages · {{n}} recent commits",
     "conventionalCommitsTooltip": "Share of recent default-branch commits (up to 100, no merges, no bots) whose first line follows Conventional Commits: type(scope)!: description, with the types feat, fix, docs, style, refactor, perf, test, build, ci, chore and revert.",
     "releaseCadence": "Release Cadence",
     "releaseEvery_one": "every {{days}} day",
     "releaseEvery_other": "every {{days}} days",
-    "releaseCadenceTooltip": "Releases published on GitHub in the last 12 months (dated by the release's commit), median interval between days with a release in that period (two lines released the same day count as one day), days since the latest, and share of SemVer tags (e.g. v1.2.3) among the latest 100. Projects that only push tags, without releases, aren't shown here.",
+    "releaseCadenceTooltip": "Releases published on GitHub in the last 12 months (dated by the tag, or by publication if the tag is later), median interval between days with a release in that period (two lines released the same day count as one day), days since the latest, and share of SemVer tags (e.g. v1.2.3, package@1.2.3) among the latest 100. Projects that only push tags, without releases, aren't shown here.",
     "practiceUnavailable": {
       "noRuns": "No GitHub Actions runs on the default branch",
       "noConclusive": "No run completed with success or failure",
@@ -143,7 +141,12 @@
     "releaseLast_other": "latest {{count}} days ago",
     "releaseSemver": "{{semver}}% SemVer",
     "releasesLast12Capped": "{{count}}+ releases in 12 months",
-    "releaseLast_zero": "latest today"
+    "releaseLast_zero": "latest today",
+    "ciHealthSample_one": "successful runs · median {{minutes}} min · {{count}} run",
+    "ciHealthSample_other": "successful runs · median {{minutes}} min · {{count}} runs",
+    "conventionalCommitsSample_one": "of messages · {{count}} recent commit",
+    "conventionalCommitsSample_other": "of messages · {{count}} recent commits",
+    "releasesLast12_zero": "no releases in 12 months"
   },
   "language": {
     "pt": "PT",

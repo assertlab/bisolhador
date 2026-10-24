@@ -13,8 +13,8 @@ describe('analyzeCiRuns', () => {
     expect(r).toMatchObject({ available: true, successPercentage: 50, medianMinutes: 4, n: 4 });
   });
 
-  it('pull_request runs are left out (main line only)', () => {
-    const r = analyzeCiRuns({ total_count: 2, workflow_runs: [run('success'), run('failure', 1, { event: 'pull_request' })] });
+  it('only push runs count (schedules, bots, PR runs are not the main-line build)', () => {
+    const r = analyzeCiRuns({ total_count: 4, workflow_runs: [run('success'), run('failure', 1, { event: 'pull_request' }), run('success', 1, { event: 'schedule' }), run('success', 1, { event: 'dynamic' })] });
     expect(r).toMatchObject({ successPercentage: 100, n: 1 });
   });
 
@@ -38,6 +38,11 @@ describe('Conventional Commits', () => {
   });
 
   const commit = (message, { parents = 1, login = 'a', type = 'User' } = {}) => ({ commit: { message, author: { name: login } }, author: { login, type }, parents: Array(parents).fill({}) });
+  it('unlinked bot authors are caught by name', () => {
+    const unlinked = { commit: { message: 'chore: x', author: { name: 'Renovate Bot' } }, author: null, parents: [{}] };
+    expect(analyzeConventionalCommits([unlinked, commit('feat: a')])).toMatchObject({ n: 1 });
+  });
+
   it('share over non-merge human commits', () => {
     const r = analyzeConventionalCommits([
       commit('feat: a'), commit('fix: b'), commit('wip'), commit('Merge branch x', { parents: 2 }),
@@ -55,7 +60,12 @@ describe('Conventional Commits', () => {
 describe('analyzeReleases', () => {
   const rel = (tag, daysAgo, extra = {}) => ({ tag_name: tag, created_at: iso(T0 - daysAgo * 86400000), published_at: iso(T0), draft: false, ...extra });
 
-  it('dated by created_at (commit), not published_at (backfilled releases)', () => {
+  it('re-created tag (created_at after publication) is dated by published_at', () => {
+    const r = analyzeReleases([rel('v1.0.0', 60), { tag_name: 'v1.1.0', created_at: iso(T0), published_at: iso(T0 - 20 * 86400000), draft: false }], T0);
+    expect(r).toMatchObject({ daysSinceLast: 20, medianIntervalDays: 40 });
+  });
+
+  it('dated by the tag (created_at), not by a later published_at (backfilled releases)', () => {
     const r = analyzeReleases([rel('v1.0.0', 100), rel('v1.1.0', 60), rel('v1.2.0', 20)], T0);
     expect(r).toMatchObject({ available: true, last12Months: 3, medianIntervalDays: 40, daysSinceLast: 20, semverPercentage: 100, n: 3 });
   });
@@ -82,7 +92,7 @@ describe('analyzeReleases', () => {
     expect(analyzeReleases(null)).toEqual({ available: false, reason: 'error' });
   });
 
-  it.each([['v1.2.3', true], ['1.0.0-rc.1+build.5', true], ['v1.2', false], ['release-1.2.3', false], ['01.2.3', false]])('SemVer %s → %s', (tag, ok) => {
+  it.each([['v1.2.3', true], ['1.0.0-rc.1+build.5', true], ['create-vite@7.0.0', true], ['@vitejs/plugin-legacy@5.1.0', true], ['v1.2', false], ['release-1.2.3', false], ['01.2.3', false], ['pkg@1.2', false]])('SemVer %s → %s', (tag, ok) => {
     expect(isSemverTag(tag)).toBe(ok);
   });
 });
