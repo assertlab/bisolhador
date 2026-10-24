@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 Fixed
+
+- **FIX**: **Cabeçalho no celular**: a barra com todos os links e botões tinha ~930 px e fazia a página inteira rolar para o lado em telas de celular (e ainda passava 33 px em 1024 px). Abaixo de 1280 px, a barra mostra logo, configurações e um botão de menu; os links (com rótulo), tema, idioma e ajuda ficam no painel do menu. A página atual fica destacada (`aria-current`).
+
 ---
 
 ## [3.13.0] - 2026-10-24
