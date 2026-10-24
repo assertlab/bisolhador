@@ -6,6 +6,7 @@ import { analyzeContributors, peopleFromStats, peopleFromContributors } from '..
 import { analyzeBranches } from '../utils/branches.js';
 import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf } from '../utils/repoTree.js';
 import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare } from '../utils/activityStats.js';
+import { analyzeCiRuns, analyzeConventionalCommits, analyzeReleases } from '../utils/projectPractices.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
@@ -107,7 +108,9 @@ async function fetchRepositoryData(repoName) {
         githubService.fetchMergedPRsCount(owner, repo),
         // GraphQL requires a token; without one, skip it (metrics → unavailable).
         hasToken ? githubService.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null),
-        githubService.fetchPunchCard(owner, repo)
+        githubService.fetchPunchCard(owner, repo),
+        repoData.default_branch ? githubService.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
+        githubService.fetchReleases(owner, repo)
     ]);
 
     // Map of result indices to human-readable endpoint names
@@ -116,14 +119,14 @@ async function fetchRepositoryData(repoName) {
         'openIssues', 'closedIssues', 'recentPRs', 'languages',
         'communityProfile', 'repositoryTree', 'releases',
         'commitActivity', 'prStats', 'codeFrequency', 'mergedPRs',
-        'prReviewStats', 'punchCard'
+        'prReviewStats', 'punchCard', 'actionRuns', 'releasesList'
     ];
 
     // Collect warnings from rejected promises. The REST PR list only feeds lead
     // time when the GraphQL sample is missing: its failure alone isn't partial
     // data. /stats/* (202 computing, 422 too large) are explained by their own
     // charts/cards; a 10k+ commit repo would otherwise always show the banner.
-    const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard']);
+    const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard', 'actionRuns', 'releasesList']);
     const warnings = results.reduce((acc, result, index) => {
         const unused = endpointNames[index] === 'prStats' && results[15]?.status === 'fulfilled' && results[15].value;
         if (result.status === 'rejected' && !unused && !SELF_EXPLAINED.has(endpointNames[index])) {
@@ -219,6 +222,14 @@ async function fetchRepositoryData(repoName) {
     // "not planned"/duplicates: a closing rate, not a resolution rate.
     const resolutionRate = closedShare(issuesOpenCount, issuesClosedCount);
 
+    // Project practices (public REST, no token): CI health on the default
+    // branch, Conventional Commits in recent commits, release cadence.
+    const practices = {
+        ci: analyzeCiRuns(results[17]?.status === 'fulfilled' ? results[17].value : null),
+        commits: analyzeConventionalCommits(results[0]?.status === 'fulfilled' ? results[0].value : null),
+        releases: analyzeReleases(results[18]?.status === 'fulfilled' ? results[18].value : null),
+    };
+
 
     // One report object: shown on screen and persisted as the snapshot's full_report.
     const report = {
@@ -268,7 +279,8 @@ async function fetchRepositoryData(repoName) {
           weekdays: punchCardStats.status === 'ok' ? weekdaysFromPunchCard(punchCardStats.data) : null,
           weekdaysStatus: punchCardStats.status
       },
-      codeChurn
+      codeChurn,
+      practices
     };
 
     // Don't persist a snapshot built on failed critical data: it would become

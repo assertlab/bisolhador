@@ -66,6 +66,7 @@ src/
 │   ├── repoTree.js             # Maturity detectors (tests/CI/Docker/linter: ✓/✗/? not verified), issue-template dir, fork profile from tree
 │   ├── branches.js             # Zombie branches: excludes default, protected and release/maintenance lines
 │   ├── repoName.js             # SAFE_GITHUB_NAME_PATTERN / parseSafeRepoName for app-built routes
+│   ├── projectPractices.js     # CI health (Actions runs), Conventional Commits, release cadence (12 months, created_at); snapshot normalizer
 │   ├── activityStats.js        # /stats/* status (computing/tooLarge/error), weekdays from punch_card, additions/deletions ratio, closed share
 │   ├── timelineData.js         # Timeline points: rows with a report, one per day, null = gap; signed growth
 │   ├── benchmarkData.js        # Benchmark rows from history: latest row with a report, null = N/A, old-method values not recorded, one point per day

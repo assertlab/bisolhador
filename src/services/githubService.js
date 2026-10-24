@@ -282,6 +282,24 @@ export const githubService = {
     }
   },
 
+  // Completed GitHub Actions runs on the default branch (CI health). Throws on
+  // failure; 404 (Actions disabled) = no runs.
+  async fetchActionRuns(owner, repo, branch) {
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/runs?branch=${encodeURIComponent(branch)}&status=completed&exclude_pull_requests=true&per_page=100`;
+    const response = await fetch(url, { headers: getHeaders() });
+    if (response.status === 404) return { total_count: 0, workflow_runs: [] };
+    if (!response.ok) throw new Error(`Actions runs failed: HTTP ${response.status}`);
+    return response.json();
+  },
+
+  // Latest 100 releases (release cadence). Throws on failure.
+  async fetchReleases(owner, repo) {
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases?per_page=100`;
+    const response = await fetch(url, { headers: getHeaders() });
+    if (!response.ok) throw new Error(`Releases failed: HTTP ${response.status}`);
+    return response.json();
+  },
+
   async fetchReleasesCount(owner, repo) {
     // Throws on failure (the caller shows n/d) instead of returning 0.
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases?per_page=${GITHUB_PER_PAGE_RELEASES}`;

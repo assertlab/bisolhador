@@ -60,7 +60,8 @@
     "reviewDynamics": "Review Dynamics",
     "governanceMaturity": "Governance and Maturity",
     "footerCopyright": "© 2025 Vinicius Cardoso Garcia. Licensed under MIT.",
-    "footerPowered": "Powered by ASSERT Lab. Proudly made in Recife 🦈"
+    "footerPowered": "Powered by ASSERT Lab. Proudly made in Recife 🦈",
+    "projectPractices": "Project Practices"
   },
   "stats": {
     "stars": "Stars",
@@ -117,7 +118,32 @@
       "error": "Unavailable",
       "snapshot": "Not recorded in this snapshot",
       "noMerged": "No merged PRs"
-    }
+    },
+    "ciHealth": "CI Health",
+    "ciHealthSample": "successful runs · median {{minutes}} min · {{n}} runs",
+    "ciHealthTooltip": "Success rate of the latest completed GitHub Actions runs on the default branch (up to 100). Success counts against failure, timeout and startup failure; cancelled and skipped runs are left out, as are runs triggered by pull requests. CI outside GitHub Actions (Travis, CircleCI…) isn't shown here.",
+    "conventionalCommits": "Conventional Commits",
+    "conventionalCommitsSample": "of messages · {{n}} recent commits",
+    "conventionalCommitsTooltip": "Share of recent default-branch commits (up to 100, no merges, no bots) whose first line follows Conventional Commits: type(scope)!: description, with the types feat, fix, docs, style, refactor, perf, test, build, ci, chore and revert.",
+    "releaseCadence": "Release Cadence",
+    "releaseEvery_one": "every {{days}} day",
+    "releaseEvery_other": "every {{days}} days",
+    "releaseCadenceTooltip": "Releases published on GitHub in the last 12 months (dated by the release's commit), median interval between days with a release in that period (two lines released the same day count as one day), days since the latest, and share of SemVer tags (e.g. v1.2.3) among the latest 100. Projects that only push tags, without releases, aren't shown here.",
+    "practiceUnavailable": {
+      "noRuns": "No GitHub Actions runs on the default branch",
+      "noConclusive": "No run completed with success or failure",
+      "noCommits": "No commits by people in the period",
+      "noReleases": "No releases published on GitHub",
+      "error": "Couldn't load the data",
+      "snapshot": "Not recorded in this snapshot"
+    },
+    "releasesLast12_one": "{{count}} release in 12 months",
+    "releasesLast12_other": "{{count}} releases in 12 months",
+    "releaseLast_one": "latest {{count}} day ago",
+    "releaseLast_other": "latest {{count}} days ago",
+    "releaseSemver": "{{semver}}% SemVer",
+    "releasesLast12Capped": "{{count}}+ releases in 12 months",
+    "releaseLast_zero": "latest today"
   },
   "language": {
     "pt": "PT",

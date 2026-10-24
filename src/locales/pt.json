@@ -60,7 +60,8 @@
     "reviewDynamics": "Dinâmica de Revisão",
     "governanceMaturity": "Governança e Maturidade",
     "footerCopyright": "© 2025 Vinicius Cardoso Garcia. Licenciado sob MIT.",
-    "footerPowered": "Powered by ASSERT Lab. Orgulhosamente feito em Recife 🦈"
+    "footerPowered": "Powered by ASSERT Lab. Orgulhosamente feito em Recife 🦈",
+    "projectPractices": "Práticas do Projeto"
   },
   "stats": {
     "stars": "Stars",
@@ -117,7 +118,32 @@
       "error": "Indisponível",
       "snapshot": "Não registrado neste snapshot",
       "noMerged": "Sem PRs mergeados"
-    }
+    },
+    "ciHealth": "Saúde do CI",
+    "ciHealthSample": "execuções com sucesso · mediana {{minutes}} min · {{n}} execuções",
+    "ciHealthTooltip": "Percentual de sucesso das últimas execuções concluídas do GitHub Actions no branch principal (até 100). Contam sucesso contra falha, timeout e falha de inicialização; canceladas e puladas ficam de fora, assim como execuções disparadas por pull requests. CI fora do GitHub Actions (Travis, CircleCI…) não aparece aqui.",
+    "conventionalCommits": "Conventional Commits",
+    "conventionalCommitsSample": "das mensagens · {{n}} commits recentes",
+    "conventionalCommitsTooltip": "Percentual dos commits recentes do branch principal (até 100, sem merges e sem bots) cuja primeira linha segue o padrão Conventional Commits: tipo(escopo)!: descrição, com os tipos feat, fix, docs, style, refactor, perf, test, build, ci, chore e revert.",
+    "releaseCadence": "Cadência de Releases",
+    "releaseEvery_one": "a cada {{days}} dia",
+    "releaseEvery_other": "a cada {{days}} dias",
+    "releaseCadenceTooltip": "Releases publicadas no GitHub nos últimos 12 meses (datadas pelo commit da release), intervalo mediano entre os dias com release nesse período (releases de duas linhas no mesmo dia contam como um dia), dias desde a última e percentual de tags no formato SemVer (ex: v1.2.3) entre as até 100 mais recentes. Projetos que só criam tags, sem releases, não aparecem aqui.",
+    "practiceUnavailable": {
+      "noRuns": "Sem execuções do GitHub Actions no branch principal",
+      "noConclusive": "Nenhuma execução concluída com sucesso ou falha",
+      "noCommits": "Sem commits de pessoas no período",
+      "noReleases": "Nenhuma release publicada no GitHub",
+      "error": "Não foi possível obter os dados",
+      "snapshot": "Não registrado neste snapshot"
+    },
+    "releasesLast12_one": "{{count}} release em 12 meses",
+    "releasesLast12_other": "{{count}} releases em 12 meses",
+    "releaseLast_one": "última há {{count}} dia",
+    "releaseLast_other": "última há {{count}} dias",
+    "releaseSemver": "{{semver}}% em SemVer",
+    "releasesLast12Capped": "{{count}}+ releases em 12 meses",
+    "releaseLast_zero": "última hoje"
   },
   "language": {
     "pt": "PT",
