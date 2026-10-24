@@ -304,6 +304,7 @@ export const githubService = {
   // of 52 zeros, which read and were persisted as "no activity".
   async fetchCommitActivity(owner, repo) {
     const data = await fetchStats(owner, repo, 'participation');
+    if (Array.isArray(data) && data.length === 0) return { all: [] }; // 204: empty repository
     if (!Array.isArray(data?.all)) throw statsError('FAILED', 'participation');
     return data;
   },
@@ -312,7 +313,6 @@ export const githubService = {
   async fetchPunchCard(owner, repo) {
     return fetchStats(owner, repo, 'punch_card');
   },
-
 
   // Recursive file tree of the default branch. Returns { tree, truncated }:
   // GitHub truncates huge trees (linux), and a 422 (too large) falls back to
@@ -354,7 +354,6 @@ export const githubService = {
     const data = await response.json();
     return { tree: data.tree ?? [], truncated: Boolean(data.truncated) };
   },
-
 
   // Lead time sample: recently updated CLOSED PRs (merging updates a PR), from
   // which analyzeLeadTime keeps the latest merged ones. Was the 20 most recently
@@ -412,7 +411,6 @@ export const githubService = {
   async fetchCodeFrequency(owner, repo) {
     return fetchStats(owner, repo, 'code_frequency');
   },
-
 
   async fetchMergedPRsCount(owner, repo) {
     return fetchSearchCount(owner, repo, 'is:pr+is:merged');

@@ -60,7 +60,12 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const isSnapshotMode = isSnapshotUrl && !snapshotAlertDismissed;
   const leadTime = displayData?.metrics?.leadTime ?? {};
   const leadTimeP90 = leadTime.p90Hours != null ? formatDuration(leadTime.p90Hours) : null;
-  const duration = ({ value, unit }) => `${value} ${t('units.' + unit, { count: value })}`;
+  const duration = ({ value, unit }) => `${value.toLocaleString(intlLocale(i18n.language))} ${t('units.' + unit, { count: value })}`;
+  const closedPct = closedShareOf(displayData?.metrics);
+  const churn = displayData?.codeChurn;
+  const churnNote = churn?.categoryKey
+    ? t(`stats.addDelete.${churn.categoryKey}`)
+    : churn?.reason && t(`stats.addDeleteUnavailable.${churn.reason}`, { defaultValue: t('stats.addDeleteUnavailable.error') });
 
   // Sincroniza URL → estado durante o render, quando a query string muda (padrão
   // "ajustar estado quando um valor muda" da doc do React), em vez de setState
@@ -207,17 +212,13 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               <StatCard
                 title={t('stats.closedIssues')}
                 value={displayData.metrics.closedIssues}
-                subValue={closedShareOf(displayData.metrics) == null ? undefined : t('stats.closedShare', { pct: closedShareOf(displayData.metrics) })}
+                subValue={closedPct == null ? undefined : t('stats.closedShare', { pct: closedPct })}
                 tooltipText={t('stats.closedIssuesTooltip')}
               />
               <StatCard
                 title={t('stats.codeChurn')}
-                value={formatters.formatDecimal(parseFloat(displayData.codeChurn?.ratio), intlLocale(i18n.language), 2)}
-                subValue={displayData.codeChurn?.categoryKey
-                  ? t(`stats.addDelete.${displayData.codeChurn.categoryKey}`)
-                  : displayData.codeChurn?.reason
-                    ? t(`stats.addDeleteUnavailable.${displayData.codeChurn.reason}`, { defaultValue: t('stats.addDeleteUnavailable.error') })
-                    : undefined}
+                value={formatters.formatDecimal(parseFloat(churn?.ratio), intlLocale(i18n.language), 2)}
+                subValue={churnNote || undefined}
                 tooltipText={t('stats.codeChurnTooltip', { weeks: ADD_DELETE_WEEKS, min: ADD_DELETE_MIN_ACTIVE_WEEKS })}
               />
             </div>

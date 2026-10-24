@@ -246,18 +246,19 @@
     },
     "weekdays": {
       "title": "Commits by Weekday",
-      "tooltip": "Distribution of all commits in the history (no merges) across weekdays, in each committer's time zone (GitHub punch card statistic). Includes bot commits: the API can't separate them.",
+      "tooltip": "Distribution of all commits in the history (no merges) across weekdays, in each commit author's time zone (GitHub punch card statistic). Includes bot commits: the API can't separate them.",
       "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
       "tooltipLabel": "{{day}}: {{count}} commits",
-      "scope": "Whole history · {{n}} commits (no merges) · in each committer's own time zone.",
-    "scopeCapped": "The {{n}} commits GitHub takes into account (the statistic's cap; not the full history) · no merges · in each committer's own time zone.",
+      "scope": "Whole history · {{n}} commits (no merges) · in each commit author's own time zone.",
+      "scopeCapped": "The {{n}} commits GitHub takes into account (the statistic's cap; not the full history) · no merges · in each commit author's own time zone.",
       "smallSample": "Small sample: interpret with care."
     },
     "statsUnavailable": {
       "computing": "GitHub is still computing this statistic. Try again in a moment.",
       "tooLarge": "GitHub doesn't compute this statistic for very large repositories.",
       "error": "Couldn't load this statistic from GitHub.",
-      "notRecordedWeekdays": "Not recorded in this snapshot (earlier versions used only the 10 most recent commits)."
+      "notRecordedWeekdays": "Not recorded in this snapshot (earlier versions used only the 10 most recent commits).",
+      "snapshot": "Not recorded in this snapshot."
     }
   },
   "ranking": {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare, closedShareOf } from './activityStats.js';
+import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare, closedShareOf, normalizeSnapshotActivity, addDeleteRatioOf } from './activityStats.js';
 
 describe('statsStatus (202 / 422 / failure are not "no activity")', () => {
   const rejected = (code) => ({ status: 'rejected', reason: Object.assign(new Error('x'), { code }) });
@@ -65,5 +65,40 @@ describe('closedShare', () => {
     expect(closedShareOf({ resolutionRate: 82 })).toBe(82);
     expect(closedShareOf({ resolutionRate: 'N/A' })).toBeNull();
     expect(closedShareOf(undefined)).toBeNull();
+  });
+});
+
+describe('normalizeSnapshotActivity (reading persisted full_report)', () => {
+  const series = (data) => ({ datasets: [{ data }] });
+
+  it('transient statuses become "not recorded" (a snapshot is never refetched)', () => {
+    const r = normalizeSnapshotActivity({ charts: { activity: null, activityStatus: 'computing', weekdays: null, weekdaysStatus: 'error' }, codeChurn: { ratio: null, reason: 'computing' } });
+    expect(r.charts).toMatchObject({ activityStatus: 'snapshot', weekdaysStatus: 'snapshot' });
+    expect(r.codeChurn.reason).toBe('snapshot');
+  });
+
+  it('keeps meaningful statuses and measured data', () => {
+    const report = { charts: { activity: series([1, 2]), activityStatus: 'ok', weekdaysStatus: 'ok' }, codeChurn: { ratio: null, reason: 'tooLarge' } };
+    const r = normalizeSnapshotActivity(report);
+    expect(r.charts.activity).toBe(report.charts.activity);
+    expect(r.codeChurn.reason).toBe('tooLarge');
+  });
+
+  it('old report: all-zero series without status (a saved 202) → not recorded; real series kept', () => {
+    expect(normalizeSnapshotActivity({ charts: { activity: series([0, 0, 0]) }, codeChurn: {} }).charts).toEqual({ activity: null, activityStatus: 'snapshot' });
+    expect(normalizeSnapshotActivity({ charts: { activity: series([0, 3]) }, codeChurn: {} }).charts.activity.datasets[0].data).toEqual([0, 3]);
+  });
+
+  it('old-method churn (judgment category, no categoryKey) → not recorded; input untouched', () => {
+    const old = { charts: {}, codeChurn: { ratio: '0.50', category: 'Refatoração Agressiva' } };
+    const copy = structuredClone(old);
+    expect(normalizeSnapshotActivity(old).codeChurn).toEqual({ ratio: null, reason: 'snapshot' });
+    expect(old).toEqual(copy);
+  });
+
+  it('addDeleteRatioOf: number only for the current method', () => {
+    expect(addDeleteRatioOf({ codeChurn: { ratio: '1.95', categoryKey: 'balanced' } })).toBe(1.95);
+    expect(addDeleteRatioOf({ codeChurn: { ratio: '1.95', category: 'x' } })).toBeNull();
+    expect(addDeleteRatioOf({ codeChurn: { ratio: null, reason: 'tooLarge' } })).toBeNull();
   });
 });

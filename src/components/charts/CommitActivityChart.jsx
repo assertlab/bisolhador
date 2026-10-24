@@ -76,7 +76,7 @@ export default function CommitActivityChart({ data, createdAt, status }) {
   }, [data, weeksOld]);
 
   // Check if we have any data at all (accepts arrays with zeros)
-  const hasData = processedData?.datasets?.[0]?.data !== undefined;
+  const hasData = (processedData?.datasets?.[0]?.data?.length ?? 0) > 0;
   // Weeks actually plotted (was the repo's age: "904 semanas" for express, with 52 plotted)
   const weeksShown = processedData?.labels?.length || 0;
 

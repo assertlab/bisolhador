@@ -95,16 +95,8 @@ export function createMockRepoData(snapshotData) {
     // Gráficos (dados vazios)
     charts: {
       techStack: [],
-      activity: {
-        labels: [],
-        datasets: [{
-          label: 'Commits',
-          data: [],
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.4
-        }]
-      }
+      activity: null, // not in the table columns: "not recorded", not an empty chart
+      activityStatus: 'snapshot',
     },
 
     // Code churn (valor padrão)

@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Commits por semana**: o título mostrava a idade do repositório ("904 semanas" no express) em vez das semanas exibidas. Quando o GitHub ainda está calculando (HTTP 202), aparece "calculando", e não uma linha zerada que também era gravada no histórico.
   - **Code Churn** vira **Adições/Remoções**: o tooltip deixa de prometer "qualidade das mudanças", os rótulos ficam descritivos ("mais adições que remoções" em vez de "Refatoração Agressiva"), a razão exige pelo menos 4 semanas com atividade, e "calculando", "repositório grande demais" (mais de 10 mil commits) e falha aparecem com mensagens diferentes.
   - **Taxa de resolução** vira **"% fechadas"**, traduzida (antes "% resolvidas" aparecia em português também na interface em inglês), e o tooltip avisa que inclui issues fechadas como "não planejadas" ou duplicadas.
+  - Esses gráficos e cards explicam a própria indisponibilidade, então não acionam mais o aviso de "dados parciais". Em snapshots, "calculando" vira "não registrado neste snapshot", em vez de pedir para tentar de novo. Snapshots antigos com a série de atividade zerada (um 202 gravado como zeros) ou com a razão calculada pelo método anterior também aparecem como "não registrado", inclusive no Benchmark.
+  - O lead time em inglês voltou a mostrar a unidade ("7.7 hours"), e em português usa vírgula ("7,7 horas").
 
 ---
 

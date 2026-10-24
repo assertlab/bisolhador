@@ -258,14 +258,15 @@
       ],
       "tooltipLabel": "{{day}}: {{count}} commits",
       "scope": "Todo o histórico · {{n}} commits (sem merges) · no horário de quem fez cada commit.",
-    "scopeCapped": "Os {{n}} commits que o GitHub considera (limite da estatística; não é o histórico completo) · sem merges · no horário de quem fez cada commit.",
+      "scopeCapped": "Os {{n}} commits que o GitHub considera (limite da estatística; não é o histórico completo) · sem merges · no horário de quem fez cada commit.",
       "smallSample": "Amostra pequena: interprete com cautela."
     },
     "statsUnavailable": {
       "computing": "O GitHub ainda está calculando essa estatística. Tente de novo em instantes.",
       "tooLarge": "O GitHub não calcula essa estatística para repositórios muito grandes.",
       "error": "Não foi possível obter essa estatística do GitHub.",
-      "notRecordedWeekdays": "Não registrado neste snapshot (versões anteriores usavam só os 10 commits mais recentes)."
+      "notRecordedWeekdays": "Não registrado neste snapshot (versões anteriores usavam só os 10 commits mais recentes).",
+      "snapshot": "Não registrado neste snapshot."
     }
   },
   "ranking": {

@@ -31,5 +31,4 @@ export const analyzers = {
 
         return { score, files };
     }
-
 };

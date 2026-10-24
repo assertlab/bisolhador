@@ -7,11 +7,12 @@
 export const STATS_COMPUTING = 'COMPUTING';
 export const STATS_TOO_LARGE = 'TOO_LARGE';
 
+const STATUS_BY_CODE = { [STATS_COMPUTING]: 'computing', [STATS_TOO_LARGE]: 'tooLarge' };
+
 /** @returns {{status: 'ok'|'computing'|'tooLarge'|'error', data: any}} */
 export function statsStatus(settled) {
   if (settled?.status === 'fulfilled') return { status: 'ok', data: settled.value };
-  const code = settled?.reason?.code;
-  return { status: code === STATS_COMPUTING ? 'computing' : code === STATS_TOO_LARGE ? 'tooLarge' : 'error', data: null };
+  return { status: STATUS_BY_CODE[settled?.reason?.code] ?? 'error', data: null };
 }
 
 export const PUNCH_CARD_MAX_COMMITS = 20000; // GitHub caps the statistic (linux, vscode: exactly 20,000)
@@ -74,5 +75,45 @@ export function closedShareOf(metrics) {
   const v = metrics?.resolutionRate;
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
   const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Statuses that only make sense live: a snapshot is never fetched again, so
+// "try again in a moment" becomes "not recorded when this was analyzed".
+const TRANSIENT = new Set(['computing', 'error']);
+const settle = (status) => (TRANSIENT.has(status) ? 'snapshot' : status);
+
+/**
+ * Applied when a persisted full_report is shown (useSnapshot).
+ * - transient statuses (computing/error) → 'snapshot';
+ * - activity saved before 2026-10 without a status and all zeros: a 202 was
+ *   saved as 52 zeros then, indistinguishable from an idle repo → not recorded;
+ * - additions/deletions without categoryKey/reason: old method (no 4-week
+ *   minimum, judgment labels) → not recorded.
+ * Returns a new object; the input is untouched.
+ */
+export function normalizeSnapshotActivity(report) {
+  if (!report) return report;
+  const charts = { ...report.charts };
+  const series = charts.activity?.datasets?.[0]?.data;
+  if (charts.activityStatus) {
+    charts.activityStatus = settle(charts.activityStatus);
+  } else if (!Array.isArray(series) || series.every((v) => !v)) {
+    charts.activity = null;
+    charts.activityStatus = 'snapshot';
+  }
+  if (charts.weekdaysStatus) charts.weekdaysStatus = settle(charts.weekdaysStatus);
+  const churn = report.codeChurn;
+  const codeChurn = churn?.categoryKey || churn?.reason
+    ? { ...churn, ...(churn.reason && { reason: settle(churn.reason) }) }
+    : { ratio: null, reason: 'snapshot' };
+  return { ...report, charts, codeChurn };
+}
+
+/** Same old-method rule for history readers (Benchmark): ratio or null. */
+export function addDeleteRatioOf(report) {
+  const churn = report?.codeChurn;
+  if (!churn?.categoryKey) return null;
+  const n = parseFloat(churn.ratio);
   return Number.isFinite(n) ? n : null;
 }

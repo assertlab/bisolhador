@@ -120,10 +120,13 @@ async function fetchRepositoryData(repoName) {
     ];
 
     // Collect warnings from rejected promises. The REST PR list only feeds lead
-    // time when the GraphQL sample is missing: its failure alone isn't partial data.
+    // time when the GraphQL sample is missing: its failure alone isn't partial
+    // data. /stats/* (202 computing, 422 too large) are explained by their own
+    // charts/cards; a 10k+ commit repo would otherwise always show the banner.
+    const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard']);
     const warnings = results.reduce((acc, result, index) => {
         const unused = endpointNames[index] === 'prStats' && results[15]?.status === 'fulfilled' && results[15].value;
-        if (result.status === 'rejected' && !unused) {
+        if (result.status === 'rejected' && !unused && !SELF_EXPLAINED.has(endpointNames[index])) {
             acc.push(endpointNames[index]);
         }
         return acc;

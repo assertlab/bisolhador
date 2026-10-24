@@ -34,8 +34,9 @@ export function StatCard({ title, value, subValue, icon, type = 'default', toolt
 
       {/* Valor Principal */}
       <div className={`text-3xl font-bold ${valueColor} tracking-tight`}>
-        {/* Strings arrive formatted by the caller ("7,7 horas", "1,95", "N/A");
-            formatNumber would parse "1,95" as 1. Numbers are formatted here. */}
+        {/* Strings are rendered as given (lead time "7,7 horas", ratio "1,95",
+            "N/A"): formatNumber parsed "1,95" as 1 and dropped the unit of
+            "7.7 hours". Numbers are formatted here. */}
         {typeof value === 'string' ? value : formatters.formatNumber(value, intlLocale(i18n.language))}
       </div>
 

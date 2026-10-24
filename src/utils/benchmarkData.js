@@ -1,6 +1,7 @@
 import { parseFullReport } from './snapshotAdapter.js';
 import { normalizeSnapshotProcessMetrics, leadTimeDays, formatDuration } from './prReviewStats.js';
 import { SNAPSHOT_TIMEZONE } from '../constants.js';
+import { addDeleteRatioOf } from './activityStats.js';
 
 // Benchmark data from a repo's Supabase history (get_repo_history: id,
 // created_at, full_report — no flat columns). Until 2026-10 the Benchmark read
@@ -9,11 +10,6 @@ import { SNAPSHOT_TIMEZONE } from '../constants.js';
 // (mean lead time, self-merge, all-time bus factor with bots) next to new ones.
 // Now: the most recent row WITH a report, null = not measured (shown as N/A),
 // and the same "not recorded" rules as the Dashboard.
-
-const finiteOrNull = (x) => {
-  const n = typeof x === 'string' ? parseFloat(x) : x;
-  return Number.isFinite(n) ? n : null; // churn "Infinity" in old bisolhador rows
-};
 
 const DAY_FORMAT = new Intl.DateTimeFormat('en-CA', { timeZone: SNAPSHOT_TIMEZONE });
 const dayKey = (date) => DAY_FORMAT.format(date);
@@ -40,7 +36,7 @@ function metricsOf(report) {
     leadTime: leadTimeDays(r.metrics?.leadTime), // days, for the chart
     leadTimeHours: leadTimeDays(r.metrics?.leadTime) == null ? null : r.metrics.leadTime.medianHours, // for text
     divergence: r.metrics?.divergence?.avg ?? null,
-    codeChurnRatio: finiteOrNull(r.codeChurn?.ratio),
+    codeChurnRatio: addDeleteRatioOf(r), // old-method ratios (no categoryKey) → null
     busFactorPercentage: busFactorMeasured ? r.busFactor.percentage : null,
     busFactorTopContributor: busFactorMeasured ? r.busFactor.topContributor || '' : '',
     language: r.language || r.primaryLanguage || r.charts?.techStack?.[0]?.language || null,
