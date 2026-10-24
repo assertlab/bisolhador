@@ -66,6 +66,8 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   // Coverage, time to first review, PR size (GraphQL, token required)
   const review = displayData?.reviewProcess ?? { available: false, reason: 'snapshot' };
   const reviewUnavailable = review.available ? undefined : t(`stats.reviewProcessUnavailable.${review.reason}`, { defaultValue: t('stats.reviewProcessUnavailable.error') });
+  const practices = displayData?.practices ?? { ci: {}, commits: {}, releases: {} };
+  const practiceUnavailable = (p) => t(`stats.practiceUnavailable.${p.reason ?? 'snapshot'}`, { defaultValue: t('stats.practiceUnavailable.error') });
   const churn = displayData?.codeChurn;
   const churnNote = churn?.categoryKey
     ? t(`stats.addDelete.${churn.categoryKey}`)
@@ -278,6 +280,42 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                   : reviewUnavailable}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h10M4 18h6"></path></svg>}
                 tooltipText={t('stats.prSizeTooltip', { max: SMALL_PR_LINES })}
+              />
+            </div>
+
+            {/* 3.5. Práticas do Projeto (REST público, sem token) */}
+            <h3 className="text-lg font-semibold text-shark dark:text-white pt-4">{t('app.projectPractices')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <StatCard
+                title={t('stats.ciHealth')}
+                value={practices.ci.available ? formatters.formatPercent(practices.ci.successPercentage, locale) : 'N/A'}
+                subValue={practices.ci.available
+                  ? t('stats.ciHealthSample', { minutes: practices.ci.medianMinutes == null ? 'N/A' : practices.ci.medianMinutes.toLocaleString(locale), count: practices.ci.n })
+                  : practiceUnavailable(practices.ci)}
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>}
+                tooltipText={t('stats.ciHealthTooltip')}
+              />
+              <StatCard
+                title={t('stats.conventionalCommits')}
+                value={practices.commits.available ? formatters.formatPercent(practices.commits.percentage, locale) : 'N/A'}
+                subValue={practices.commits.available ? t('stats.conventionalCommitsSample', { count: practices.commits.n }) : practiceUnavailable(practices.commits)}
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>}
+                tooltipText={t('stats.conventionalCommitsTooltip')}
+              />
+              <StatCard
+                title={t('stats.releaseCadence')}
+                value={practices.releases.available
+                  ? t(practices.releases.capped ? 'stats.releasesLast12Capped' : 'stats.releasesLast12', { count: practices.releases.last12Months })
+                  : 'N/A'}
+                subValue={practices.releases.available
+                  ? [
+                      practices.releases.medianIntervalDays != null && t('stats.releaseEvery', { days: practices.releases.medianIntervalDays.toLocaleString(locale), count: practices.releases.medianIntervalDays }),
+                      t('stats.releaseLast', { count: practices.releases.daysSinceLast }),
+                      t('stats.releaseSemver', { semver: practices.releases.semverPercentage }),
+                    ].filter(Boolean).join(' · ')
+                  : practiceUnavailable(practices.releases)}
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>}
+                tooltipText={t('stats.releaseCadenceTooltip')}
               />
             </div>
 

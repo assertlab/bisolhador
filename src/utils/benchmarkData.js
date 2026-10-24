@@ -1,6 +1,6 @@
 import { parseFullReport } from './snapshotAdapter.js';
 import { normalizeSnapshotProcessMetrics, leadTimeDays, formatDuration } from './prReviewStats.js';
-import { SNAPSHOT_TIMEZONE } from '../constants.js';
+import { SNAPSHOT_TIMEZONE, DAY_MS } from '../constants.js';
 import { addDeleteRatioOf } from './activityStats.js';
 
 // Benchmark data from a repo's Supabase history (get_repo_history: id,
@@ -77,5 +77,5 @@ export function leadTimeText(hours, t, locale) {
 export function dataAgeSpreadDays(repos) {
   const dates = (repos ?? []).map((r) => r.lastUpdate?.getTime()).filter(Number.isFinite);
   if (dates.length < 2) return null;
-  return Math.floor((Math.max(...dates) - Math.min(...dates)) / 86_400_000);
+  return Math.floor((Math.max(...dates) - Math.min(...dates)) / DAY_MS);
 }

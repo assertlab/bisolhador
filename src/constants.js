@@ -1,5 +1,5 @@
 // GitHub API pagination defaults
-export const GITHUB_PER_PAGE_COMMITS = 15;
+export const GITHUB_PER_PAGE_COMMITS = 100; // recent list shows 10; Conventional Commits measures all
 export const BRANCH_SCAN_MAX = 1000; // branches checked for zombies via GraphQL (100 per request)
 export const GITHUB_PER_PAGE_RECENT_PRS = 10;
 export const CLOSED_PR_SCAN = 100; // recently updated closed PRs fetched to find the merged sample
@@ -44,3 +44,5 @@ export const BENCHMARK_DATE_GAP_DAYS = 7;
 // Health Score bands (Dashboard card, Ranking badge): green ≥ GOOD, yellow ≥ FAIR
 export const HEALTH_GOOD_PERCENT = 75;
 export const HEALTH_FAIR_PERCENT = 50;
+
+export const DAY_MS = 86_400_000;
