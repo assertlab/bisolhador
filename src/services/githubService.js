@@ -381,29 +381,60 @@ export const githubService = {
       throw new Error("fetchPullRequestReviewStats needs owner, repo and a GitHub token");
     }
 
-    const query = `query($owner: String!, $name: String!, $n: Int!) {
+    // Three queries over the same PR list, in parallel: one query with every
+    // field took 5–10 s on react/express (GitHub cuts GraphQL at ~10 s → 502).
+    // Split, each takes ~1.5–5 s (timing/timelineItems is usually the slowest)
+    // and the total is about the slowest one; cost ~5 points per search. The
+    // core one feeds coverage/divergence/lead time and must succeed; timing
+    // (first reviews, ready-for-review) and size fail on their own: their PRs
+    // are then marked unknown and only those indicators become unavailable.
+    const prList = (fields) => `query($owner: String!, $name: String!, $n: Int!) {
       repository(owner: $owner, name: $name) {
         pullRequests(states: MERGED, first: $n, orderBy: { field: UPDATED_AT, direction: DESC }) {
-          nodes {
+          nodes { number ${fields} }
+        }
+      }
+    }`;
+    const core = prList(`
             createdAt
             mergedAt
             author { login __typename }
             mergedBy { login }
             comments(first: 100) { totalCount nodes { author { login __typename } } }
-            reviews(last: 50) { nodes { state submittedAt author { login __typename } comments { totalCount } } }
-          }
-        }
-      }
-    }`;
+            reviews(last: 50) { nodes { state submittedAt author { login __typename } comments { totalCount } } }`);
+    const timing = prList(`
+            firstReviews: reviews(first: 10) { nodes { submittedAt author { login __typename } } }
+            readyForReview: timelineItems(itemTypes: [READY_FOR_REVIEW_EVENT], first: 1) { nodes { ... on ReadyForReviewEvent { createdAt } } }`);
+    const size = prList('additions deletions');
 
     // Sent as GraphQL variables, never interpolated into the query string.
-    const data = await graphql(query, { owner, name: repo, n: MERGED_PR_SCAN }, "PR review stats");
-    const nodes = data.repository?.pullRequests?.nodes;
+    const variables = { owner, name: repo, n: MERGED_PR_SCAN };
+    const [coreRes, timingRes, sizeRes] = await Promise.allSettled([
+      graphql(core, variables, "PR review stats"),
+      graphql(timing, variables, "PR review timing"),
+      graphql(size, variables, "PR sizes"),
+    ]);
+    if (coreRes.status === 'rejected') throw coreRes.reason;
+    const nodes = coreRes.value.repository?.pullRequests?.nodes;
     if (!Array.isArray(nodes)) {
       throw new Error("GraphQL PR review stats failed: no pull requests");
     }
+    const byNumber = (res) => (res.status === 'fulfilled'
+      ? new Map((res.value.repository?.pullRequests?.nodes ?? []).filter(Boolean).map((n) => [n.number, n]))
+      : null);
+    const timingBy = byNumber(timingRes);
+    const sizeBy = byNumber(sizeRes);
+    if (!timingBy) console.warn('[githubService] PR review timing failed:', timingRes.reason?.message);
+    if (!sizeBy) console.warn('[githubService] PR sizes failed:', sizeRes.reason?.message);
 
-    return toPullRequestStats(nodes);
+    // Query failed → *Failed on every PR (indicator unavailable). A PR missing
+    // from a list that did load (updated between the queries) → *Unknown on
+    // that PR only (left out of that indicator's n).
+    return toPullRequestStats(nodes.filter(Boolean).map((n) => ({
+      ...n,
+      ...(timingBy ? timingBy.get(n.number) ?? { timingUnknown: true } : { timingFailed: true }),
+      ...(sizeBy ? sizeBy.get(n.number) ?? { sizeUnknown: true } : { sizeFailed: true }),
+    })));
   },
 
   // Weekly additions/deletions. 422 = repo with ≥ 10k commits (GitHub doesn't

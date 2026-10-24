@@ -13,6 +13,7 @@ import { MERGED_PR_SAMPLE } from '../constants.js';
 // way and are shown as "not recorded" (normalizeSnapshotProcessMetrics).
 const LEAD_TIME_METHOD = 'median';
 const REVIEW_METHOD = 'approval';
+const REVIEW_PROCESS_METHOD = 'ready-first-review';
 
 const HOUR_MS = 60 * 60 * 1000;
 const toAuthor = (a) => (a ? { login: a.login, type: a.__typename } : null);
@@ -99,8 +100,76 @@ export function toPullRequestStats(nodes) {
       comments: (pr.comments?.totalCount ?? comments.length) - botComments,
       review_comments: humanReviews.reduce((sum, r) => sum + (r.comments?.totalCount ?? 0), 0),
       approvedByOther: humanReviews.some(approvedBeforeMerge),
+      // Earliest review by another person: first page (the "last 50" above
+      // can miss it on long reviews) plus the last page.
+      // undefined = timing unknown for this PR (query failed or PR missing), not "never"
+      firstReviewAt: pr.timingUnknown || pr.timingFailed ? undefined : firstReviewAt(pr),
+      timingFailed: Boolean(pr.timingFailed),
+      sizeFailed: Boolean(pr.sizeFailed),
+      // Review clock starts when the PR is ready: a draft isn't waiting yet.
+      readyAt: pr.readyForReview?.nodes?.[0]?.createdAt ?? pr.createdAt,
+      changedLines: Number.isFinite(pr.additions) && Number.isFinite(pr.deletions) ? pr.additions + pr.deletions : null,
     };
   });
+}
+
+// Earliest review by another person before the merge (same rule as
+// approvals: a review after the merge didn't review anything). PENDING reviews
+// have no submittedAt. Could miss it only with > 60 reviews whose first 10 are
+// all by the author or bots.
+function firstReviewAt(pr) {
+  const authorLogin = pr.author?.login;
+  const mergedAt = Date.parse(pr.mergedAt);
+  const times = [...(pr.firstReviews?.nodes ?? []), ...(pr.reviews?.nodes ?? [])]
+    .filter((r) => r.author && r.submittedAt && r.author.login !== authorLogin && !isBot(toAuthor(r.author)))
+    .filter((r) => !(Date.parse(r.submittedAt) > mergedAt))
+    .map((r) => Date.parse(r.submittedAt))
+    .filter(Number.isFinite);
+  return times.length ? new Date(Math.min(...times)).toISOString() : null;
+}
+
+export const SMALL_PR_LINES = 400; // a common "reviewable PR" threshold
+
+/**
+ * Review timing, coverage and PR size over the same merged sample:
+ * - firstReview: median/p90 hours from "ready for review" to the first review
+ *   by someone else, over the PRs that got one (n);
+ * - coverage: % approved by someone else (the badge shows the complement) and
+ *   % with any review by someone else;
+ * - prSize: median changed lines and % of PRs under SMALL_PR_LINES.
+ */
+function analyzeReviewProcess(sample, unapprovedPercentage) {
+  const n = sample.length;
+  // Timing query failed (see githubService): no first-review numbers, rather
+  // than "0% reviewed". PRs missing from a loaded list are just left out.
+  const timingFailed = sample.some((pr) => pr.timingFailed);
+  const timed = sample.filter((pr) => pr.firstReviewAt !== undefined);
+  // A review while still a draft counts as no wait (0 h): the author already had feedback.
+  const waits = timed
+    .filter((pr) => pr.firstReviewAt)
+    .map((pr) => Math.max(0, (Date.parse(pr.firstReviewAt) - Date.parse(pr.readyAt)) / HOUR_MS))
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
+  const sizes = sample.map((pr) => pr.changedLines).filter((x) => x != null).sort((a, b) => a - b);
+  return {
+    firstReview: timingFailed || timed.length === 0
+      ? { medianHours: null, p90Hours: null, n: 0, unavailable: true }
+      : waits.length
+        ? { medianHours: round1(percentile(waits, 0.5)), p90Hours: round1(percentile(waits, 0.9)), n: waits.length }
+        : { medianHours: null, p90Hours: null, n: 0 },
+    coverage: {
+      // Exact complement of the "unapproved" badge (separate rounding could sum to 101)
+      approvedPercentage: 100 - unapprovedPercentage,
+      reviewedPercentage: timingFailed || timed.length === 0 ? null : Math.round((waits.length / timed.length) * 100),
+      n,
+    },
+    prSize: sample.some((pr) => pr.sizeFailed)
+      ? { medianLines: null, smallPercentage: null, n: 0, unavailable: true }
+      : sizes.length
+      ? { medianLines: Math.round(percentile(sizes, 0.5)), smallPercentage: Math.round((sizes.filter((x) => x < SMALL_PR_LINES).length / sizes.length) * 100), n: sizes.length }
+      : { medianLines: null, smallPercentage: null, n: 0 },
+    method: REVIEW_PROCESS_METHOD,
+  };
 }
 
 const levelColor = (pct) => (pct < 20 ? 'green' : pct < 50 ? 'yellow' : 'red');
@@ -115,6 +184,7 @@ function unavailable(reason) {
   return {
     codeReview: { unapprovedPercentage: null, selfMergePercentage: null, color: 'gray', available: false, reason },
     divergence: { avg: null, categoryKey: DIVERGENCE_UNAVAILABLE_KEY[reason] },
+    reviewProcess: { available: false, reason },
   };
 }
 
@@ -143,6 +213,7 @@ export function analyzeReviewMetrics(prStats, reason) {
     return {
       codeReview: { unapprovedPercentage: null, selfMergePercentage: null, color: 'gray', available: false, reason: 'noMerged', n, botsExcluded, method: REVIEW_METHOD },
       divergence: { avg: null, categoryKey: 'repo.divergenceNone', n, method: REVIEW_METHOD },
+      reviewProcess: { available: false, reason: 'noMerged', method: REVIEW_PROCESS_METHOD },
     };
   }
   const unapproved = Math.round((sample.filter((pr) => !pr.approvedByOther).length / n) * 100);
@@ -151,6 +222,7 @@ export function analyzeReviewMetrics(prStats, reason) {
   return {
     codeReview: { unapprovedPercentage: unapproved, selfMergePercentage: selfMerged, color: levelColor(unapproved), available: true, n, botsExcluded, method: REVIEW_METHOD },
     divergence: { avg: round1(avg), categoryKey: divergenceCategory(avg), n, method: REVIEW_METHOD },
+    reviewProcess: { available: true, ...analyzeReviewProcess(sample, unapproved) },
   };
 }
 
@@ -171,5 +243,7 @@ export function normalizeSnapshotProcessMetrics(report) {
     metrics.divergence = fallback.divergence;
   }
   if (metrics.leadTime?.method !== LEAD_TIME_METHOD) metrics.leadTime = leadTimeUnavailable('snapshot');
-  return { ...report, codeReview, metrics };
+  // Saved before v3.12.0 (no reviewProcess) or as noToken/error: not recorded
+  const reviewProcess = report?.reviewProcess?.method === REVIEW_PROCESS_METHOD ? report.reviewProcess : { available: false, reason: 'snapshot' };
+  return { ...report, codeReview, metrics, reviewProcess };
 }
