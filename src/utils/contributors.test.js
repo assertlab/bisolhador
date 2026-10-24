@@ -106,6 +106,11 @@ describe('normalizeSnapshotContributors (reading persisted full_report)', () => 
     expect(old).toEqual(copy);
   });
 
+  it('a fetch that failed when saved stays "unavailable", not "not recorded"', () => {
+    const failed = { busFactor: { level: 'unavailable' }, busFactorAnalysis: {}, contributors: null };
+    expect(normalizeSnapshotContributors(failed)).toBe(failed);
+  });
+
   it('current-method data is kept', () => {
     const current = { busFactor: { level: 'healthy', percentage: 20 }, busFactorAnalysis: { window: 'recent' }, contributors: [] };
     expect(normalizeSnapshotContributors(current)).toBe(current);

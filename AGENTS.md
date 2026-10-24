@@ -65,6 +65,7 @@ src/
 │   ├── analyzers.js            # Pure functions: health score, process metrics
 │   ├── repoTree.js             # Maturity detectors (tests/CI/Docker/linter: ✓/✗/? not verified), issue-template dir, fork profile from tree
 │   ├── branches.js             # Zombie branches: excludes default, protected and release/maintenance lines
+│   ├── repoName.js             # SAFE_GITHUB_NAME_PATTERN / parseSafeRepoName for app-built routes
 │   ├── timelineData.js         # Timeline points: rows with a report, one per day, null = gap; signed growth
 │   ├── benchmarkData.js        # Benchmark rows from history: latest row with a report, null = N/A, old-method values not recorded, one point per day
 │   ├── contributors.js         # Contributor analysis: bots excluded, 12-month window, top concentration (feeds busFactor.js)
@@ -131,7 +132,7 @@ Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.9.1)
 - Auto-added to requests in `githubService.getHeaders()`
 - Required for the **Code Review (merged without approval)** and **Divergence** metrics: they come from one GraphQL call (`fetchPullRequestReviewStats`) over the latest 50 **merged** PRs by humans (by merge date, among the 100 most recently updated merged PRs — GitHub can't order by merge date), because the REST `/pulls` list has no approvals/comment authors. Bots (PR authors, comments, approvals) are excluded. "Unapproved" = merged with no `APPROVED` review, submitted before the merge, from someone other than the author; self-merge rate is only in the tooltip. Without a token, both are shown as unavailable ("n/d" plus an explanation), never as 0% (`src/utils/prReviewStats.js`).
 - **Lead time** is the **median** (plus p90 and n) creation → merge over those same merged PRs; without a token, over the merged ones among the 100 most recently updated closed PRs (REST, smaller sample). A failed fetch blocks persistence; PRs disabled (404, torvalds/linux) = "no merged PRs". `leadTime.source` (`graphql`/`rest`) records which sample was used. Benchmark plots `leadTimeDays()` (median in days; old mean-based snapshots → N/A).
-- Persisted snapshots go through `normalizeSnapshotProcessMetrics` on read: values without the current `method` (measured over recently *created* PRs, mean lead time, self-merge rate, bots included) and reports saved as unavailable both show "not recorded in this snapshot". Benchmark/Timeline don't apply it yet for review/divergence (audit wave 2).
+- Persisted snapshots go through `normalizeSnapshotProcessMetrics` and `normalizeSnapshotContributors` (contributors/bus factor without `busFactorAnalysis.window`, i.e. before v3.8.0 → "not recorded"; a fetch that failed stays "unavailable") on read: values without the current `method` (measured over recently *created* PRs, mean lead time, self-merge rate, bots included) and reports saved as unavailable both show "not recorded in this snapshot". Benchmark/Timeline don't apply it yet for review/divergence (audit wave 2).
 
 ### Backend / Supabase
 - **Write**: All writes via validated RPCs (`registrar_busca`), no direct INSERT
@@ -198,7 +199,7 @@ The app never processes or persists data from private GitHub repositories, even 
 `index.html` ships a CSP scoped to the domains the app actually calls: `api.github.com`, Supabase (via the build-time `%VITE_SUPABASE_URL%` substitution, not a wildcard), GA4's script/collection domains (also in `img-src`, for gtag.js image hits), and `avatars.githubusercontent.com` for contributor images. `style-src` includes `'unsafe-inline'` because `html2canvas` (used by the PDF export) applies inline styles via `setAttribute`/`cssText` while cloning the DOM for rendering — confirmed with a real headless-browser test (`npm run smoke:csp`), not assumed. `frame-ancestors`/`report-uri` don't work via `<meta>` (HTTP-header-only directives), so GitHub Pages static hosting has no clickjacking protection through this CSP.
 
 ### Route Safety
-`RepoInfoCard.jsx` validates `owner`/`repo` against `SAFE_GITHUB_NAME_PATTERN` before calling `navigate()` for the `/timeline/:owner/:repo` route — defense in depth, since that data can come from a Supabase snapshot rather than a live search, and a react-router version fix shouldn't be the only safety net for app-constructed routes.
+`RepoInfoCard.jsx` validates `owner`/`repo` (and the `?alias=` pre-rename name) with `parseSafeRepoName`/`SAFE_GITHUB_NAME_PATTERN` (`src/utils/repoName.js`) before calling `navigate()` for the `/timeline/:owner/:repo` route; `Timeline.jsx` validates `?alias=` again on read — defense in depth, since that data can come from a Supabase snapshot rather than a live search, and a react-router version fix shouldn't be the only safety net for app-constructed routes.
 
 ## Documentation Maintenance Policy
 

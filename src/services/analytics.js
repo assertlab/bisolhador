@@ -192,6 +192,21 @@ const analytics = {
       return null;
     }
   },
+
+  /**
+   * History rows of several names of the same repo (renames: old + canonical),
+   * case-insensitively deduplicated like get_repo_history's LOWER(). Throws
+   * when every lookup failed, so "Supabase unavailable" doesn't read as
+   * "no history".
+   */
+  async getMergedHistory(names) {
+    const unique = [...new Set(names.filter(Boolean).map((n) => n.toLowerCase()))];
+    const results = await Promise.all(unique.map((name) => this.getRepoHistory(name)));
+    if (unique.length > 0 && results.every((r) => r === null)) {
+      throw new Error("HISTORY_UNAVAILABLE");
+    }
+    return results.flat().filter(Boolean);
+  },
 };
 
 export default analytics;

@@ -18,9 +18,8 @@ export function useBenchmarkRepos(selectedRepos) {
       queryKey: ['benchmark', repo.fullName, ...(repo.aliases ?? [])],
       queryFn: async () => {
         // Renamed repos: rows saved under the typed (old) name are merged in.
-        const names = [repo.fullName, ...(repo.aliases ?? [])];
-        const histories = await Promise.all(names.map((name) => analytics.getRepoHistory(name)));
-        const data = toBenchmarkRepo(repo, histories.flat().filter(Boolean));
+        const rows = await analytics.getMergedHistory([repo.fullName, ...(repo.aliases ?? [])]);
+        const data = toBenchmarkRepo(repo, rows);
         if (!data) {
           throw new Error(`Nenhum histórico encontrado para ${repo.fullName}`);
         }

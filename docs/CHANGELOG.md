@@ -41,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - um ponto por dia;
   - registros sem relatório são ignorados e valores não medidos viram lacunas na linha;
   - o crescimento tem o sinal certo (vermelho em queda);
-  - o histórico sob o nome antigo é incluído (facebook/react + react/react).
+  - o histórico sob o nome antigo é incluído (facebook/react + react/react): o Dashboard passa à Timeline o nome digitado na busca, e uma Timeline aberta pelo nome antigo descobre o atual no GitHub;
+  - uma falha do banco de dados aparece como "não foi possível carregar", não como "nenhum histórico".
 
   No Benchmark, a dica da linha de evolução mostra o ponto mais próximo de cada repositório, não o N-ésimo registro de cada um (que tinham datas diferentes).
 - **FIX**: Ao abrir um **snapshot antigo** no Dashboard, os contribuidores e o bus factor anteriores à v3.8.0 (só os 30 primeiros, todo o histórico, com bots) aparecem como "não registrado neste snapshot", como no Benchmark.

@@ -7,14 +7,7 @@ import { exportJson } from '../utils/exportJson.js';
 import { exportToCsv } from '../utils/csvExporter.js';
 import { showToast } from '../hooks/useToast.js';
 import { intlLocale } from '../i18n.js';
-
-// GitHub owner/repo segments: alphanumeric, dots, hyphens, underscores only —
-// no slashes, backslashes or control characters. Defense in depth for the
-// /timeline/:owner/:repo route: fullName can originate from a Supabase
-// snapshot (analytics_searches), which was reachable by open INSERT for
-// anon users in the past, so it isn't trusted just because react-router is
-// patched.
-const SAFE_GITHUB_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+import { parseSafeRepoName } from '../utils/repoName.js';
 
 export function RepoInfoCard({ data, onShareSuccess }) {
   const { t, i18n } = useTranslation();
@@ -23,12 +16,8 @@ export function RepoInfoCard({ data, onShareSuccess }) {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   if (!data) return null;
 
-  const [timelineOwner, timelineRepo] = (data.fullName || '').split('/');
-  const isTimelineRouteSafe =
-    Boolean(timelineOwner) &&
-    Boolean(timelineRepo) &&
-    SAFE_GITHUB_NAME_PATTERN.test(timelineOwner) &&
-    SAFE_GITHUB_NAME_PATTERN.test(timelineRepo);
+  const timelineRoute = parseSafeRepoName(data.fullName);
+  const isTimelineRouteSafe = timelineRoute !== null;
 
   const calculateAgeText = (createdAt) => {
     if (!createdAt) return 'N/A';
@@ -135,7 +124,10 @@ export function RepoInfoCard({ data, onShareSuccess }) {
       showToast(t('errors.invalidRepoName'), 'error');
       return;
     }
-    navigate(`/timeline/${timelineOwner}/${timelineRepo}`);
+    // The name typed in the search (facebook/react) carries the history saved
+    // before the rename; the Timeline route uses the canonical name.
+    const alias = parseSafeRepoName(data.searchedName);
+    navigate(`/timeline/${timelineRoute[0]}/${timelineRoute[1]}${alias ? `?alias=${alias.join('/')}` : ''}`);
   };
 
   return (

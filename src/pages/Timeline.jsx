@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Line } from "react-chartjs-2";
 import { Header } from "../components/Header";
 import { SettingsModal } from "../components/SettingsModal";
@@ -18,7 +18,11 @@ import { formatters } from "../utils/formatters.js";
 import { toTimelinePoints, growth } from "../utils/timelineData.js";
 import { githubService } from "../services/githubService.js";
 import { SNAPSHOT_TIMEZONE } from "../constants.js";
+import { parseSafeRepoName } from "../utils/repoName.js";
+import { localizedDayTicks } from "../lib/chartDefaults";
 import { intlLocale } from '../i18n.js';
+
+const REPO_LOOKUP_TIMEOUT_MS = 5000;
 
 export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
@@ -27,6 +31,10 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const navigate = useNavigate();
   const chartTheme = useChartTheme();
   const repoFullName = `${owner}/${repo}`;
+  // Pre-rename name passed by the Dashboard (?alias=facebook/react): GitHub maps
+  // old names to the canonical one, never back, so it can't be looked up.
+  const [searchParams] = useSearchParams();
+  const alias = parseSafeRepoName(searchParams.get("alias"))?.join("/") ?? null;
   const [timeRange, setTimeRange] = useState("all");
 
   // Unlike Dashboard/Benchmark, this page's <Line> isn't behind its own
@@ -48,16 +56,29 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   }, []);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["timeline", repoFullName],
+    queryKey: ["timeline", repoFullName, alias],
     queryFn: async () => {
       // Renamed repos: rows before the rename are under the old name
       // (facebook/react), newer ones under the canonical one (react/react).
-      // GitHub resolves either to the canonical name; if that lookup fails,
-      // the route name alone still works.
-      const canonical = await githubService.fetchRepository(owner, repo).then((r) => r?.full_name).catch(() => null);
-      const names = [...new Set([repoFullName, canonical].filter(Boolean).map((n) => n.toLowerCase()))];
-      const histories = await Promise.all(names.map((name) => analytics.getRepoHistory(name)));
-      const points = toTimelinePoints(histories.flat().filter(Boolean));
+      // Route + alias are read right away; in parallel GitHub resolves the
+      // route (an old name opened from an old snapshot) to the canonical name
+      // — bounded, public repos only, and its failure just skips that step.
+      const known = [repoFullName, alias];
+      const canonicalLookup = Promise.race([
+        githubService.fetchRepository(owner, repo).then((r) => (r && !r.private ? r.full_name : null)),
+        new Promise((resolve) => setTimeout(() => resolve(null), REPO_LOOKUP_TIMEOUT_MS)),
+      ]).catch(() => null);
+      let rows;
+      let canonical;
+      try {
+        [rows, canonical] = await Promise.all([analytics.getMergedHistory(known), canonicalLookup]);
+        if (canonical && !known.some((n) => n?.toLowerCase() === canonical.toLowerCase())) {
+          rows = rows.concat(await analytics.getMergedHistory([canonical]).catch(() => []));
+        }
+      } catch {
+        throw new Error(t("timeline.error.unavailable"));
+      }
+      const points = toTimelinePoints(rows);
 
       if (points.length === 0) {
         throw new Error(t("timeline.error.noData"));
@@ -129,9 +150,9 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
           x: {
             type: "time",
             time: { unit: "day" },
+            offset: true, // a single point (young repo, 7d filter) isn't pinned to the edge
             grid: { drawBorder: false },
-            // date-fns would print English month names ("MMM dd")
-            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 0, callback: (value) => formatters.formatDateShort(value, locale, SNAPSHOT_TIMEZONE) },
+            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 0, ...localizedDayTicks(locale) },
           },
           y: {
             grid: { drawBorder: false },

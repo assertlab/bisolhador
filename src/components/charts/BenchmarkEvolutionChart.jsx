@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import useChartTheme from '../../hooks/useChartTheme';
-import { createBaseChartOptions } from '../../lib/chartDefaults';
+import { createBaseChartOptions, localizedDayTicks } from '../../lib/chartDefaults';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
 import { withAlpha } from '../../utils/colors.js';
@@ -73,8 +73,8 @@ export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
           x: {
             type: 'time',
             time: { unit: 'day' },
-            // date-fns would print English month names ("MMM dd")
-            ticks: { maxRotation: 45, minRotation: 0, callback: (value) => formatters.formatDateShort(value, intlLocale(i18n.language), SNAPSHOT_TIMEZONE) },
+            offset: true,
+            ticks: { maxRotation: 45, minRotation: 0, ...localizedDayTicks(intlLocale(i18n.language)) },
             grid: { display: true },
           },
           y: {

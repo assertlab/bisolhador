@@ -22,7 +22,10 @@ function getCutoffDate(timeRange) {
  * @param {string} timeRange - One of '7d', '30d', '60d', '90d', 'all'
  * @param {(item: any) => Date} dateAccessor - Function to extract the date from each item
  */
-export function useTimeFilter(data, timeRange, dateAccessor = (d) => d.date) {
+// Module-level so the default accessor is stable and the memo below holds.
+const byDate = (d) => d.date;
+
+export function useTimeFilter(data, timeRange, dateAccessor = byDate) {
   return useMemo(() => {
     if (!data || timeRange === "all") return data;
     const cutoff = getCutoffDate(timeRange);

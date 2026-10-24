@@ -350,7 +350,8 @@
     },
     "error": {
       "title": "Erro ao Carregar Histórico",
-      "noData": "Nenhum histórico encontrado para este repositório. Faça uma análise primeiro!"
+      "noData": "Nenhum histórico encontrado para este repositório. Faça uma análise primeiro!",
+      "unavailable": "Não foi possível carregar o histórico agora (falha temporária no banco de dados). Tente novamente em instantes."
     }
   },
   "benchmark": {

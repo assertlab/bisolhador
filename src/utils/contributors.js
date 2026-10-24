@@ -111,6 +111,7 @@ export function analyzeContributors(people, { source }) {
  * next to current-method snapshots. Returns a new object.
  */
 export function normalizeSnapshotContributors(report) {
-  if (!report || report.busFactorAnalysis?.window) return report;
+  // 'unavailable' = the fetch failed when it was saved: keep saying that
+  if (!report || report.busFactorAnalysis?.window || report.busFactor?.level === 'unavailable') return report;
   return { ...report, contributors: null, busFactor: { level: 'notRecorded' }, busFactorAnalysis: null };
 }

@@ -342,7 +342,8 @@
     },
     "error": {
       "title": "Error Loading History",
-      "noData": "No history found for this repository. Perform an analysis first!"
+      "noData": "No history found for this repository. Perform an analysis first!",
+      "unavailable": "Couldn't load the history right now (temporary database failure). Try again in a moment."
     }
   },
   "benchmark": {
