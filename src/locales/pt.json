@@ -329,7 +329,7 @@
     "backButton": "Voltar ao Dashboard",
     "loading": "Carregando histórico...",
     "chartTitle": "Evolução de Métricas ao Longo do Tempo",
-    "dataPoints": "{{count}} análises registradas",
+    "dataPointsDays": "{{count}} dias com análise registrada",
     "filters": {
       "label": "Período:",
       "7d": "7 dias",
@@ -350,7 +350,8 @@
     },
     "error": {
       "title": "Erro ao Carregar Histórico",
-      "noData": "Nenhum histórico encontrado para este repositório. Faça uma análise primeiro!"
+      "noData": "Nenhum histórico encontrado para este repositório. Faça uma análise primeiro!",
+      "unavailable": "Não foi possível carregar o histórico agora (falha temporária no banco de dados). Tente novamente em instantes."
     }
   },
   "benchmark": {

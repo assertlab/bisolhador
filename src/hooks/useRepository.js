@@ -216,6 +216,8 @@ async function fetchRepositoryData(repoName) {
     // One report object: shown on screen and persisted as the snapshot's full_report.
     const report = {
       fullName,
+      // Typed name when it differs (renamed repo): Timeline merges its history
+      ...(repoName.toLowerCase() !== fullName.toLowerCase() && { searchedName: repoName }),
       url: `https://github.com/${fullName}`,
       description: repoData.description,
       language: repoData.language,

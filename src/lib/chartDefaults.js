@@ -1,3 +1,6 @@
+import { formatters } from '../utils/formatters.js';
+import { SNAPSHOT_TIMEZONE } from '../constants.js';
+
 /**
  * Factory function that returns common Chart.js options based on the current theme.
  * Individual charts should spread this base and override only what they need.
@@ -66,4 +69,10 @@ function deepMerge(target, source) {
     }
   }
   return result;
+}
+
+// Tick labels for a time axis in the UI language and the snapshot timezone:
+// date-fns' default "MMM dd" prints English month names.
+export function localizedDayTicks(locale) {
+  return { callback: (value) => formatters.formatDateShort(value, locale, SNAPSHOT_TIMEZONE) };
 }

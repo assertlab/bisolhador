@@ -103,3 +103,15 @@ export function analyzeContributors(people, { source }) {
     table,
   };
 }
+
+/**
+ * Applied when a persisted full_report is shown. Contributor data saved before
+ * v3.8.0 (first 30 contributors, all-time, bots included — no
+ * `busFactorAnalysis.window`) becomes "not recorded" instead of being shown
+ * next to current-method snapshots. Returns a new object.
+ */
+export function normalizeSnapshotContributors(report) {
+  // 'unavailable' = the fetch failed when it was saved: keep saying that
+  if (!report || report.busFactorAnalysis?.window || report.busFactor?.level === 'unavailable') return report;
+  return { ...report, contributors: null, busFactor: { level: 'notRecorded' }, busFactorAnalysis: null };
+}
