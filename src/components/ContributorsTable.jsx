@@ -1,6 +1,7 @@
 import { useTranslation, Trans } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 import { ContributorsScope } from './ContributorsScope.jsx';
+import { GuideLink } from './GuideLink.jsx';
 
 export function ContributorsTable({ contributors, busFactor, analysis }) {
   const { t } = useTranslation();
@@ -114,6 +115,7 @@ export function ContributorsTable({ contributors, busFactor, analysis }) {
         </table>
       </div>
       )}
+      <GuideLink id="contributors" className="mt-3 inline-block" />
     </div>
   );
 }

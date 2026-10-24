@@ -49,6 +49,11 @@ export function Header({ onSettingsClick }) {
               <span>{t('header.nav.benchmark', 'Benchmark')}</span>
             </Link>
 
+            <Link to="/guia" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors">
+              <span>📖</span>
+              <span>{t('header.nav.guide')}</span>
+            </Link>
+
             <ThemeToggle />
 
             <LanguageSwitcher />

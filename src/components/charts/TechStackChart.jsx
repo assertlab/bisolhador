@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 import useChartTheme from '../../hooks/useChartTheme.js';
+import { GuideLink } from '../GuideLink.jsx';
 
 function TechStackChart({ data }) {
   const { t } = useTranslation();
@@ -57,6 +58,7 @@ function TechStackChart({ data }) {
       <div className="flex-grow relative">
         <Doughnut data={chartData} options={options} />
       </div>
+      <GuideLink id="languages" className="mt-3 inline-block" />
     </div>
   );
 }

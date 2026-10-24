@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { formatters } from '../utils/formatters.js';
 import { Tooltip } from './Tooltip.jsx';
+import { GuideLink } from './GuideLink.jsx';
 import { intlLocale } from '../i18n.js';
 
-export function StatCard({ title, value, subValue, icon, type = 'default', tooltipText }) {
+export function StatCard({ title, value, subValue, icon, type = 'default', tooltipText, guideId }) {
   const { i18n } = useTranslation();
   // Cores dinâmicas baseadas no tipo de alerta (para o futuro)
   const valueColor = type === 'alert' ? 'text-coral' : 'text-gray-900 dark:text-white';
@@ -46,6 +47,7 @@ export function StatCard({ title, value, subValue, icon, type = 'default', toolt
           {subValue}
         </div>
       )}
+      {guideId && <GuideLink id={guideId} className="mt-3 self-start" />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 import { ZOMBIE_BRANCH_DAYS, BRANCH_SCAN_MAX } from '../constants.js';
+import { GuideLink } from './GuideLink.jsx';
 
 const BADGE_COLORS = { green: 'bg-green-500', yellow: 'bg-yellow-500', red: 'bg-red-500', gray: 'bg-gray-500' };
 
@@ -100,6 +101,7 @@ export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
           </div>
         </div>
       )}
+      <GuideLink id="maturity" className="mt-3 inline-block" />
     </div>
   );
 }

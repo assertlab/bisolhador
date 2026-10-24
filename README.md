@@ -12,6 +12,7 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **☢️ Análise de Risco de Equipe (Bus Factor)**: Card dedicado com número do Bus Factor, avatares dos key developers, classificação de risco (Crítico/Alto/Moderado/Saudável) e barra horizontal empilhada
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
 - **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução
+- **📖 Como interpretar**: definição, limitações e referência às métricas CHAOSS de cada indicador
 - **📊 Benchmark Multi-Repo**: Compare a evolução de até 10 repositórios lado a lado com gráficos comparativos, filtros temporais (7d, 30d, 60d, 90d, todo histórico) e tabela de métricas detalhada
 - **📈 Time Machine (Histórico de Evolução)**: Visualize a evolução temporal de qualquer repositório através de gráficos interativos com filtros de período (7d, 30d, 60d, 90d, todo histórico). Acompanhe o crescimento de Stars, Forks e Watchers ao longo do tempo com dados baseados em snapshots históricos
 - **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca, com data/hora da coleta sempre visível

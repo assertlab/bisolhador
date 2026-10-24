@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 import { ContributorsScope } from './ContributorsScope.jsx';
+import { GuideLink } from './GuideLink.jsx';
 
 const DEVELOPER_COLORS = [
   '#3b82f6', '#ef4444', '#f97316', '#eab308',
@@ -114,6 +115,7 @@ export function BusFactorCard({ busFactorAnalysis }) {
           </div>
         )}
       </div>
+      <GuideLink id="bus-factor" className="mt-3 inline-block" />
     </div>
   );
 }

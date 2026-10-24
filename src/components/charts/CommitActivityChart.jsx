@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 import useChartTheme from '../../hooks/useChartTheme.js';
+import { GuideLink } from '../GuideLink.jsx';
 
 // status: 'computing' (HTTP 202) / 'error' when GitHub didn't return the
 // series (data null); undefined for snapshots from before 2026-10.
@@ -114,6 +115,7 @@ export default function CommitActivityChart({ data, createdAt, status }) {
             <p className="text-sm">{t(`charts.statsUnavailable.${status ?? 'error'}`, { defaultValue: t('charts.statsUnavailable.error') })}</p>
           </div>
         </div>
+        <GuideLink id="commit-activity" className="mt-3 inline-block" />
       </div>
     );
   }
@@ -131,6 +133,7 @@ export default function CommitActivityChart({ data, createdAt, status }) {
       <div className="flex-grow relative" style={{ height: '100%', minHeight: '200px' }}>
         <Line data={chartData} options={options} />
       </div>
+      <GuideLink id="commit-activity" className="mt-3 inline-block" />
     </div>
   );
 }

@@ -33,7 +33,8 @@ src/
 │   ├── Dashboard.jsx           # Main analysis dashboard
 │   ├── Ranking.jsx             # Leaderboard (Bisolhômetro)
 │   ├── Timeline.jsx            # Time Machine — repo evolution over time
-│   └── Benchmark.jsx           # Multi-repo comparison (up to 10 repos)
+│   ├── Benchmark.jsx           # Multi-repo comparison (up to 10 repos)
+│   └── Guide.jsx               # /guia "Como interpretar": one entry per indicator + CHAOSS reference
 ├── components/
 │   ├── Header.jsx, SearchBar.jsx, StatCard.jsx, ...
 │   ├── BusFactorCard.jsx       # Advanced Bus Factor risk card (stacked bar, avatars)
@@ -65,6 +66,7 @@ src/
 │   ├── analyzers.js            # Pure functions: health score, process metrics
 │   ├── repoTree.js             # Maturity detectors (tests/CI/Docker/linter: ✓/✗/? not verified), issue-template dir, fork profile from tree
 │   ├── branches.js             # Zombie branches: excludes default, protected and release/maintenance lines
+│   ├── indicatorGuide.js       # Guide structure and CHAOSS mapping (relation equivalent/related/none); texts in locales guide.*
 │   ├── repoName.js             # SAFE_GITHUB_NAME_PATTERN / parseSafeRepoName for app-built routes
 │   ├── projectPractices.js     # CI health (push runs on the default branch), Conventional Commits, release cadence (12 months, min(created_at, published_at)); snapshot normalizer
 │   ├── activityStats.js        # /stats/* status (computing/tooLarge/error), weekdays from punch_card, additions/deletions ratio, closed share
@@ -207,6 +209,8 @@ The app never processes or persists data from private GitHub repositories, even 
 ## Documentation Maintenance Policy
 
 Whenever a code change has the potential to change behavior documented in this file, in `README.md`, or in `docs/DESIGN_SYSTEM.md`, explicitly evaluate — before considering the task done — whether any of those documents need updating, and whether the change justifies a new `docs/CHANGELOG.md` entry and a `package.json` version bump (following SemVer: patch for fixes with no visible behavior change, minor for new behavior/hardening that doesn't break existing usage, major for changes that break existing usage).
+
+Changing how an indicator is measured also means updating its entry in the "Como interpretar" guide (`guide.items.<id>` in both locales, and `relation`/CHAOSS refs in `src/utils/indicatorGuide.js`): the guide states definitions and differences from CHAOSS, so it goes stale exactly like this file. `indicatorGuide.test.js` only checks structure, not that the text still matches the code.
 
 Stale documentation isn't a cosmetic problem in this project. It has already, concretely, caused a false sense of security about RLS protections that didn't actually exist — this file and the project's other docs asserted for months that anonymous INSERT into `analytics_searches` was blocked, when in fact two public RLS policies made it (and anonymous SELECT) fully open. Treat every doc claim about security posture as something that needs re-verifying against the actual code/config, not something to copy forward from the previous version.
 
