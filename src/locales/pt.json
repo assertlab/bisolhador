@@ -107,7 +107,7 @@
     "firstReview": "Tempo até a 1ª Revisão",
     "firstReviewSample": "mediana de {{n}} PRs revisados · p90 {{p90}}",
     "firstReviewNone": "Nenhum PR revisado por outra pessoa",
-    "firstReviewTooltip": "Mediana do tempo entre o PR ficar pronto para revisão (ou ser criado, se não foi rascunho) e a primeira revisão de outra pessoa, nos PRs mergeados recentes que tiveram revisão. Comentários comuns, que não são revisão, não contam.",
+    "firstReviewTooltip": "Mediana (e p90) do tempo entre o PR ficar pronto para revisão (ou ser criado, se não foi rascunho; vale o primeiro \"pronto\") e a primeira revisão de outra pessoa antes do merge, nos PRs mergeados recentes que tiveram revisão. Uma revisão feita ainda no rascunho conta como espera zero. Comentários comuns, que não são revisão, não contam.",
     "prSize": "Tamanho dos PRs",
     "prSizeValue": "{{lines}} linhas",
     "prSizeSample": "mediana · {{small}}% com menos de {{max}} linhas · {{n}} PRs",

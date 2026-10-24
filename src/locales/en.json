@@ -107,7 +107,7 @@
     "firstReview": "Time to First Review",
     "firstReviewSample": "median of {{n}} reviewed PRs · p90 {{p90}}",
     "firstReviewNone": "No PR reviewed by someone else",
-    "firstReviewTooltip": "Median time from the PR being ready for review (or created, if it was never a draft) to the first review by someone else, over recent merged PRs that got a review. Plain comments, which aren't reviews, don't count.",
+    "firstReviewTooltip": "Median (and p90) time from the PR being ready for review (or created, if it was never a draft; the first \"ready\" counts) to the first review by someone else before the merge, over recent merged PRs that got a review. A review made while still a draft counts as zero wait. Plain comments, which aren't reviews, don't count.",
     "prSize": "PR Size",
     "prSizeValue": "{{lines}} lines",
     "prSizeSample": "median · {{small}}% under {{max}} lines · {{n}} PRs",

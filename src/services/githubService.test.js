@@ -91,8 +91,7 @@ describe('githubService: failures are errors, not zeros', () => {
       vi.stubGlobal('localStorage', { getItem: () => 'token' });
       fetchMock.mockImplementation(route({ core, timing: () => json({ message: 'Bad Gateway' }, { status: 502 }), size: () => reply([pr(1, { additions: 30, deletions: 10 })]) }));
       const [stats] = await githubService.fetchPullRequestReviewStats('o', 'r');
-      expect(stats.firstReviewAt).toBeUndefined();
-      expect(stats.changedLines).toBe(40);
+      expect(stats).toMatchObject({ firstReviewAt: undefined, timingFailed: true, changedLines: 40, sizeFailed: false });
     });
 
     it('a failed core query fails the whole call (coverage, divergence, lead time depend on it)', async () => {

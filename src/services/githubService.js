@@ -382,8 +382,9 @@ export const githubService = {
     }
 
     // Three queries over the same PR list, in parallel: one query with every
-    // field took 5–10 s on react/express (GitHub cuts GraphQL at ~10 s → 502)
-    // — additions/deletions alone cost ~5 s (diffs computed on demand). The
+    // field took 5–10 s on react/express (GitHub cuts GraphQL at ~10 s → 502).
+    // Split, each takes ~1.5–5 s (timing/timelineItems is usually the slowest)
+    // and the total is about the slowest one; cost ~5 points per search. The
     // core one feeds coverage/divergence/lead time and must succeed; timing
     // (first reviews, ready-for-review) and size fail on their own: their PRs
     // are then marked unknown and only those indicators become unavailable.
@@ -426,10 +427,13 @@ export const githubService = {
     if (!timingBy) console.warn('[githubService] PR review timing failed:', timingRes.reason?.message);
     if (!sizeBy) console.warn('[githubService] PR sizes failed:', sizeRes.reason?.message);
 
+    // Query failed → *Failed on every PR (indicator unavailable). A PR missing
+    // from a list that did load (updated between the queries) → *Unknown on
+    // that PR only (left out of that indicator's n).
     return toPullRequestStats(nodes.filter(Boolean).map((n) => ({
       ...n,
-      ...(timingBy?.get(n.number) ?? { timingUnknown: true }),
-      ...(sizeBy?.get(n.number) ?? { sizeUnknown: true }),
+      ...(timingBy ? timingBy.get(n.number) ?? { timingUnknown: true } : { timingFailed: true }),
+      ...(sizeBy ? sizeBy.get(n.number) ?? { sizeUnknown: true } : { sizeFailed: true }),
     })));
   },
 

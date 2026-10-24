@@ -235,13 +235,30 @@ describe('reviewProcess: coverage, time to first review, PR size', () => {
     expect(analyzeReviewMetrics(stats).reviewProcess.prSize).toEqual({ medianLines: 350, smallPercentage: 67, n: 3 });
   });
 
-  it('timing query failed → first review unavailable, not "0% reviewed"; size missing → no size', () => {
-    const nodes = [node({ firstReviews: [['b', T0]] }), node()].map((n) => ({ ...n, timingUnknown: true }));
-    delete nodes[0].additions;
+  it('timing/size query failed → those indicators unavailable, not "0% reviewed"', () => {
+    const nodes = [node({ firstReviews: [['b', T0 - 0.5 * HOUR]] }), node()].map((n) => ({ ...n, timingFailed: true, sizeFailed: true }));
     const { reviewProcess } = analyzeReviewMetrics(toPullRequestStats(nodes));
     expect(reviewProcess.firstReview).toMatchObject({ unavailable: true, n: 0 });
     expect(reviewProcess.coverage.reviewedPercentage).toBeNull();
-    expect(reviewProcess.prSize.n).toBe(1);
+    expect(reviewProcess.prSize).toMatchObject({ unavailable: true, n: 0 });
+  });
+
+  it('a PR missing from a loaded timing list is left out, the rest still counts', () => {
+    const nodes = [node({ firstReviews: [['b', T0 - 0.5 * HOUR]] }), { ...node(), timingUnknown: true }];
+    const { reviewProcess } = analyzeReviewMetrics(toPullRequestStats(nodes));
+    expect(reviewProcess.firstReview).toMatchObject({ medianHours: 0.5, n: 1 });
+    expect(reviewProcess.coverage.reviewedPercentage).toBe(100);
+  });
+
+  it('a review after the merge is not a first review (same rule as approvals)', () => {
+    const [pr] = toPullRequestStats([node({ firstReviews: [['b', T0 + HOUR]] })]);
+    expect(pr.firstReviewAt).toBeNull();
+  });
+
+  it('approved % is the exact complement of the badge (no 101%)', () => {
+    const prs = Array.from({ length: 8 }, (_, i) => node({ approvedBy: i < 1 ? ['b'] : [] }));
+    const { codeReview, reviewProcess } = analyzeReviewMetrics(toPullRequestStats(prs));
+    expect(codeReview.unapprovedPercentage + reviewProcess.coverage.approvedPercentage).toBe(100);
   });
 
   it('old snapshots (no reviewProcess) → not recorded', () => {

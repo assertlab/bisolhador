@@ -102,8 +102,10 @@ export function toPullRequestStats(nodes) {
       approvedByOther: humanReviews.some(approvedBeforeMerge),
       // Earliest review by another person: first page (the "last 50" above
       // can miss it on long reviews) plus the last page.
-      // (undefined = the timing query failed for this PR: unknown, not "never")
-      firstReviewAt: pr.timingUnknown ? undefined : firstReviewAt(pr),
+      // undefined = timing unknown for this PR (query failed or PR missing), not "never"
+      firstReviewAt: pr.timingUnknown || pr.timingFailed ? undefined : firstReviewAt(pr),
+      timingFailed: Boolean(pr.timingFailed),
+      sizeFailed: Boolean(pr.sizeFailed),
       // Review clock starts when the PR is ready: a draft isn't waiting yet.
       readyAt: pr.readyForReview?.nodes?.[0]?.createdAt ?? pr.createdAt,
       changedLines: Number.isFinite(pr.additions) && Number.isFinite(pr.deletions) ? pr.additions + pr.deletions : null,
@@ -111,10 +113,16 @@ export function toPullRequestStats(nodes) {
   });
 }
 
+// Earliest review by another person before the merge (same rule as
+// approvals: a review after the merge didn't review anything). PENDING reviews
+// have no submittedAt. Could miss it only with > 60 reviews whose first 10 are
+// all by the author or bots.
 function firstReviewAt(pr) {
   const authorLogin = pr.author?.login;
+  const mergedAt = Date.parse(pr.mergedAt);
   const times = [...(pr.firstReviews?.nodes ?? []), ...(pr.reviews?.nodes ?? [])]
     .filter((r) => r.author && r.submittedAt && r.author.login !== authorLogin && !isBot(toAuthor(r.author)))
+    .filter((r) => !(Date.parse(r.submittedAt) > mergedAt))
     .map((r) => Date.parse(r.submittedAt))
     .filter(Number.isFinite);
   return times.length ? new Date(Math.min(...times)).toISOString() : null;
@@ -130,29 +138,34 @@ export const SMALL_PR_LINES = 400; // a common "reviewable PR" threshold
  *   % with any review by someone else;
  * - prSize: median changed lines and % of PRs under SMALL_PR_LINES.
  */
-function analyzeReviewProcess(sample) {
+function analyzeReviewProcess(sample, unapprovedPercentage) {
   const n = sample.length;
   // Timing query failed (see githubService): no first-review numbers, rather
-  // than "0% reviewed".
-  const timingKnown = sample.every((pr) => pr.firstReviewAt !== undefined);
-  const waits = sample
+  // than "0% reviewed". PRs missing from a loaded list are just left out.
+  const timingFailed = sample.some((pr) => pr.timingFailed);
+  const timed = sample.filter((pr) => pr.firstReviewAt !== undefined);
+  // A review while still a draft counts as no wait (0 h): the author already had feedback.
+  const waits = timed
     .filter((pr) => pr.firstReviewAt)
     .map((pr) => Math.max(0, (Date.parse(pr.firstReviewAt) - Date.parse(pr.readyAt)) / HOUR_MS))
     .filter(Number.isFinite)
     .sort((a, b) => a - b);
   const sizes = sample.map((pr) => pr.changedLines).filter((x) => x != null).sort((a, b) => a - b);
   return {
-    firstReview: !timingKnown
+    firstReview: timingFailed || timed.length === 0
       ? { medianHours: null, p90Hours: null, n: 0, unavailable: true }
       : waits.length
         ? { medianHours: round1(percentile(waits, 0.5)), p90Hours: round1(percentile(waits, 0.9)), n: waits.length }
         : { medianHours: null, p90Hours: null, n: 0 },
     coverage: {
-      approvedPercentage: Math.round((sample.filter((pr) => pr.approvedByOther).length / n) * 100),
-      reviewedPercentage: timingKnown ? Math.round((waits.length / n) * 100) : null,
+      // Exact complement of the "unapproved" badge (separate rounding could sum to 101)
+      approvedPercentage: 100 - unapprovedPercentage,
+      reviewedPercentage: timingFailed || timed.length === 0 ? null : Math.round((waits.length / timed.length) * 100),
       n,
     },
-    prSize: sizes.length
+    prSize: sample.some((pr) => pr.sizeFailed)
+      ? { medianLines: null, smallPercentage: null, n: 0, unavailable: true }
+      : sizes.length
       ? { medianLines: Math.round(percentile(sizes, 0.5)), smallPercentage: Math.round((sizes.filter((x) => x < SMALL_PR_LINES).length / sizes.length) * 100), n: sizes.length }
       : { medianLines: null, smallPercentage: null, n: 0 },
     method: REVIEW_PROCESS_METHOD,
@@ -209,7 +222,7 @@ export function analyzeReviewMetrics(prStats, reason) {
   return {
     codeReview: { unapprovedPercentage: unapproved, selfMergePercentage: selfMerged, color: levelColor(unapproved), available: true, n, botsExcluded, method: REVIEW_METHOD },
     divergence: { avg: round1(avg), categoryKey: divergenceCategory(avg), n, method: REVIEW_METHOD },
-    reviewProcess: { available: true, ...analyzeReviewProcess(sample) },
+    reviewProcess: { available: true, ...analyzeReviewProcess(sample, unapproved) },
   };
 }
 

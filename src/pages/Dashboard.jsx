@@ -274,7 +274,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                 title={t('stats.prSize')}
                 value={review.available && review.prSize.n > 0 ? t('stats.prSizeValue', { lines: formatters.formatNumber(review.prSize.medianLines, locale) }) : 'N/A'}
                 subValue={review.available
-                  ? review.prSize.n > 0 ? t('stats.prSizeSample', { small: review.prSize.smallPercentage, max: SMALL_PR_LINES, n: review.prSize.n }) : undefined
+                  ? review.prSize.n > 0 ? t('stats.prSizeSample', { small: review.prSize.smallPercentage, max: SMALL_PR_LINES, n: review.prSize.n }) : t('stats.reviewProcessUnavailable.error')
                   : reviewUnavailable}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h10M4 18h6"></path></svg>}
                 tooltipText={t('stats.prSizeTooltip', { max: SMALL_PR_LINES })}
