@@ -105,6 +105,29 @@ describe('githubService: failures are errors, not zeros', () => {
     });
   });
 
+  describe('stats endpoints (202 / 422 are not zeros)', () => {
+    it.each([
+      [202, 'COMPUTING'],
+      [422, 'TOO_LARGE'],
+      [500, 'FAILED'],
+    ])('HTTP %s → throws with code %s', async (status, code) => {
+      fetchMock.mockReturnValue(json({}, { status }));
+      await expect(githubService.fetchCodeFrequency('o', 'r')).rejects.toMatchObject({ code });
+    });
+
+    it('participation without `all` is a failure, not 52 zeros', async () => {
+      fetchMock.mockReturnValue(json({}));
+      await expect(githubService.fetchCommitActivity('o', 'r')).rejects.toMatchObject({ code: 'FAILED' });
+    });
+
+    it('punch card: data passes through; 204 (empty repo) → []', async () => {
+      fetchMock.mockReturnValue(json([[0, 9, 2]]));
+      await expect(githubService.fetchPunchCard('o', 'r')).resolves.toEqual([[0, 9, 2]]);
+      fetchMock.mockReturnValue(Promise.resolve(new Response(null, { status: 204 })));
+      await expect(githubService.fetchPunchCard('o', 'r')).resolves.toEqual([]);
+    });
+  });
+
   describe('fetchPullRequestStats (lead time sample)', () => {
     it('asks for recently updated closed PRs, not the latest created', async () => {
       fetchMock.mockReturnValue(json([{ number: 1 }]));

@@ -67,14 +67,14 @@
     "forks": "Forks",
     "openIssues": "Open Issues",
     "closedIssues": "Closed Issues",
-    "codeChurn": "Code Churn",
+    "codeChurn": "Adições/Remoções",
     "leadTime": "Lead Time",
     "divergence": "Divergência",
     "starsTooltip": "Número total de estrelas (favoritos) que o repositório recebeu no GitHub.",
     "forksTooltip": "Número de cópias (forks) do repositório criadas por outros usuários.",
     "openIssuesTooltip": "Número de issues (problemas ou solicitações) que ainda estão abertas no repositório.",
-    "closedIssuesTooltip": "Total de issues já resolvidas, com taxa de resolução mostrando eficiência.",
-    "codeChurnTooltip": "Razão entre código novo adicionado e código removido/refatorado. Indica qualidade das mudanças.",
+    "closedIssuesTooltip": "Total de issues fechadas. O percentual é a fatia fechada do total (abertas + fechadas) e inclui issues fechadas como \"não planejadas\" ou duplicadas.",
+    "codeChurnTooltip": "Linhas adicionadas divididas pelas removidas nas últimas {{weeks}} semanas. Descreve o tipo de mudança (mais código novo ou mais limpeza); não mede qualidade. Exige pelo menos {{min}} semanas com atividade.",
     "leadTimeTooltip": "Mediana do tempo entre a criação e o merge de um Pull Request, nos até {{n}} PRs mergeados mais recentes (sem contar bots). A mediana não é distorcida por poucos PRs muito lentos; o p90 mostra a cauda (90% foram mergeados até esse tempo).",
     "divergenceTooltip": "Média de comentários de pessoas (gerais e de revisão de código) por PR, nos até {{n}} PRs mergeados mais recentes. Comentários e PRs de bots não contam. Requer token do GitHub.",
     "leadTimeSample": "mediana de {{n}} PRs · p90 {{p90}}",
@@ -83,7 +83,23 @@
       "error": "Não foi possível obter os PRs",
       "snapshot": "Não registrado neste snapshot"
     },
-    "prSample": "{{n}} PRs"
+    "prSample": "{{n}} PRs",
+    "addDelete": {
+      "mostlyAdditions": "Quase só adições",
+      "moreAdditions": "Mais adições que remoções",
+      "balanced": "Adições e remoções equilibradas",
+      "moreDeletions": "Mais remoções que adições"
+    },
+    "addDeleteUnavailable": {
+      "lowActivity": "Pouca atividade recente para calcular",
+      "noDeletions": "Sem remoções no período",
+      "noActivity": "Sem atividade no período",
+      "computing": "O GitHub ainda está calculando; tente de novo em instantes",
+      "tooLarge": "O GitHub não calcula para repositórios com mais de 10 mil commits",
+      "error": "Não foi possível obter os dados",
+      "snapshot": "Não registrado neste snapshot"
+    },
+    "closedShare": "{{pct}}% fechadas"
   },
   "language": {
     "pt": "PT",
@@ -220,20 +236,17 @@
   },
   "charts": {
     "commitActivity": {
-      "title": "Fluxo de Trabalho (Amostra: {{weeks}} Semanas)",
-      "tooltip": "Frequência de commits ao longo do tempo",
-      "noData": {
-        "title": "Dados de fluxo indisponíveis no momento",
-        "subtitle": "GitHub está calculando as estatísticas"
-      }
+      "title": "Commits por Semana (últimas {{count}} semanas)",
+      "tooltip": "Commits por semana nas últimas 52 semanas (estatística do GitHub). Projetos jovens mostram só o período desde o primeiro commit.",
+      "titleNoData": "Commits por Semana"
     },
     "techStack": {
       "title": "Stack Tecnológica",
       "tooltip": "Linguagens de programação utilizadas no repositório"
     },
     "weekdays": {
-      "title": "Commits por Dia da Semana (Amostra: {{count}} commits)",
-      "tooltip": "Distribuição de commits ao longo dos dias da semana. Ajuda a identificar padrões de trabalho da equipe.",
+      "title": "Commits por Dia da Semana",
+      "tooltip": "Distribuição de todos os commits do histórico (sem merges) pelos dias da semana, no fuso de quem fez cada commit (estatística punch card do GitHub). Inclui commits de bots: a API não permite separá-los.",
       "days": [
         "Domingo",
         "Segunda",
@@ -243,7 +256,16 @@
         "Sexta",
         "Sábado"
       ],
-      "tooltipLabel": "{{day}}: {{count}} commits"
+      "tooltipLabel": "{{day}}: {{count}} commits",
+      "scope": "Todo o histórico · {{n}} commits (sem merges) · no horário de quem fez cada commit.",
+    "scopeCapped": "Os {{n}} commits que o GitHub considera (limite da estatística; não é o histórico completo) · sem merges · no horário de quem fez cada commit.",
+      "smallSample": "Amostra pequena: interprete com cautela."
+    },
+    "statsUnavailable": {
+      "computing": "O GitHub ainda está calculando essa estatística. Tente de novo em instantes.",
+      "tooLarge": "O GitHub não calcula essa estatística para repositórios muito grandes.",
+      "error": "Não foi possível obter essa estatística do GitHub.",
+      "notRecordedWeekdays": "Não registrado neste snapshot (versões anteriores usavam só os 10 commits mais recentes)."
     }
   },
   "ranking": {

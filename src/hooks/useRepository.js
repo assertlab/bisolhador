@@ -5,6 +5,7 @@ import { analyzeReviewMetrics, analyzeLeadTime } from '../utils/prReviewStats.js
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
 import { analyzeBranches } from '../utils/branches.js';
 import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf } from '../utils/repoTree.js';
+import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare } from '../utils/activityStats.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
@@ -105,7 +106,8 @@ async function fetchRepositoryData(repoName) {
         githubService.fetchCodeFrequency(owner, repo),
         githubService.fetchMergedPRsCount(owner, repo),
         // GraphQL requires a token; without one, skip it (metrics → unavailable).
-        hasToken ? githubService.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null)
+        hasToken ? githubService.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null),
+        githubService.fetchPunchCard(owner, repo)
     ]);
 
     // Map of result indices to human-readable endpoint names
@@ -114,7 +116,7 @@ async function fetchRepositoryData(repoName) {
         'openIssues', 'closedIssues', 'recentPRs', 'languages',
         'communityProfile', 'repositoryTree', 'releases',
         'commitActivity', 'prStats', 'codeFrequency', 'mergedPRs',
-        'prReviewStats'
+        'prReviewStats', 'punchCard'
     ];
 
     // Collect warnings from rejected promises. The REST PR list only feeds lead
@@ -140,9 +142,12 @@ async function fetchRepositoryData(repoName) {
     const communityProfile = results[8]?.status === 'fulfilled' ? results[8].value : null;
     const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : null;
     const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value : null;
-    const commitActivity = results[11]?.status === 'fulfilled' ? results[11].value : { all: [] };
+    // /stats/*: 'computing' (202) / 'tooLarge' (422) / 'error' are shown as such,
+    // never as an all-zero chart (see utils/activityStats.js)
+    const activityStats = statsStatus(results[11]);
+    const codeFrequencyStats = statsStatus(results[13]);
+    const punchCardStats = statsStatus(results[16]);
     const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : null;
-    const codeFrequency = results[13]?.status === 'fulfilled' ? results[13].value : null;
     const mergedPRsCount = results[14]?.status === 'fulfilled' ? results[14].value : null;
     const prReviewStats = results[15]?.status === 'fulfilled' ? results[15].value : null;
 
@@ -201,16 +206,15 @@ async function fetchRepositoryData(repoName) {
     const { table: _table, top: _top, ...busFactorAnalysis } = contributorAnalysis ?? {};
 
     // Analyze code churn
-    const codeChurn = analyzers.calculateCodeChurn(codeFrequency);
+    // Additions/deletions ratio ("Code Churn"): null + reason when not measured
+    const codeChurn = codeFrequencyStats.status === 'ok'
+        ? addDeleteRatio(codeFrequencyStats.data)
+        : { ratio: null, reason: codeFrequencyStats.status };
 
-    // Calculate resolution rate
-    let resolutionRate = 'N/A';
-    if (issuesOpenCount !== null && issuesClosedCount !== null) {
-        const total = issuesOpenCount + issuesClosedCount;
-        if (total > 0) {
-            resolutionRate = `${Math.round((issuesClosedCount / total) * 100)}% resolvidas`;
-        }
-    }
+    // Share of closed issues, 0–100 or null (was the string "NN% resolvidas",
+    // Portuguese even in the English UI). It counts every closed issue, also
+    // "not planned"/duplicates: a closing rate, not a resolution rate.
+    const resolutionRate = closedShare(issuesOpenCount, issuesClosedCount);
 
 
     // One report object: shown on screen and persisted as the snapshot's full_report.
@@ -255,7 +259,10 @@ async function fetchRepositoryData(repoName) {
       recentPRs,
       charts: {
           techStack: formatLanguages(languages),
-          activity: formatCommitActivity(commitActivity)
+          activity: activityStats.status === 'ok' ? formatCommitActivity(activityStats.data) : null,
+          activityStatus: activityStats.status,
+          weekdays: punchCardStats.status === 'ok' ? weekdaysFromPunchCard(punchCardStats.data) : null,
+          weekdaysStatus: punchCardStats.status
       },
       codeChurn
     };

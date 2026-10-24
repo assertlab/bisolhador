@@ -67,14 +67,14 @@
     "forks": "Forks",
     "openIssues": "Open Issues",
     "closedIssues": "Closed Issues",
-    "codeChurn": "Code Churn",
+    "codeChurn": "Additions/Deletions",
     "leadTime": "Lead Time",
     "divergence": "Divergence",
     "starsTooltip": "Total number of stars (favorites) the repository received on GitHub.",
     "forksTooltip": "Number of repository copies (forks) created by other users.",
     "openIssuesTooltip": "Number of issues (problems or requests) that are still open in the repository.",
-    "closedIssuesTooltip": "Total resolved issues, with resolution rate showing efficiency.",
-    "codeChurnTooltip": "Ratio between new code added and code removed/refactored. Indicates change quality.",
+    "closedIssuesTooltip": "Total closed issues. The percentage is the closed share of all issues (open + closed) and includes issues closed as \"not planned\" or duplicates.",
+    "codeChurnTooltip": "Lines added divided by lines removed over the last {{weeks}} weeks. It describes the kind of change (more new code or more cleanup); it doesn't measure quality. Requires at least {{min}} weeks with activity.",
     "leadTimeTooltip": "Median time between a Pull Request's creation and its merge, over up to {{n}} most recent merged PRs (bots excluded). The median isn't skewed by a few very slow PRs; p90 shows the tail (90% were merged within that time).",
     "divergenceTooltip": "Average comments by people (general and code review) per PR, over up to {{n}} most recent merged PRs. Bot comments and bot PRs don't count. Requires a GitHub token.",
     "leadTimeSample": "median of {{n}} PRs · p90 {{p90}}",
@@ -83,7 +83,23 @@
       "error": "Couldn't load the PRs",
       "snapshot": "Not recorded in this snapshot"
     },
-    "prSample": "{{n}} PRs"
+    "prSample": "{{n}} PRs",
+    "addDelete": {
+      "mostlyAdditions": "Almost only additions",
+      "moreAdditions": "More additions than deletions",
+      "balanced": "Balanced additions and deletions",
+      "moreDeletions": "More deletions than additions"
+    },
+    "addDeleteUnavailable": {
+      "lowActivity": "Too little recent activity to calculate",
+      "noDeletions": "No deletions in the period",
+      "noActivity": "No activity in the period",
+      "computing": "GitHub is still computing it; try again in a moment",
+      "tooLarge": "GitHub doesn't compute it for repositories with more than 10k commits",
+      "error": "Couldn't load the data",
+      "snapshot": "Not recorded in this snapshot"
+    },
+    "closedShare": "{{pct}}% closed"
   },
   "language": {
     "pt": "PT",
@@ -220,22 +236,28 @@
   },
   "charts": {
     "commitActivity": {
-      "title": "Workflow Flow (Sample: {{weeks}} Weeks)",
-      "tooltip": "Commit frequency over time",
-      "noData": {
-        "title": "Flow data unavailable at the moment",
-        "subtitle": "GitHub is calculating statistics"
-      }
+      "title": "Commits per Week (last {{count}} weeks)",
+      "tooltip": "Commits per week over the last 52 weeks (GitHub statistic). Young projects show only the period since the first commit.",
+      "titleNoData": "Commits per Week"
     },
     "techStack": {
       "title": "Technology Stack",
       "tooltip": "Programming languages used in the repository"
     },
     "weekdays": {
-      "title": "Commits by Weekday (Sample: {{count}} commits)",
-      "tooltip": "Distribution of commits throughout the week. Helps identify team work patterns.",
+      "title": "Commits by Weekday",
+      "tooltip": "Distribution of all commits in the history (no merges) across weekdays, in each committer's time zone (GitHub punch card statistic). Includes bot commits: the API can't separate them.",
       "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-      "tooltipLabel": "{{day}}: {{count}} commits"
+      "tooltipLabel": "{{day}}: {{count}} commits",
+      "scope": "Whole history · {{n}} commits (no merges) · in each committer's own time zone.",
+    "scopeCapped": "The {{n}} commits GitHub takes into account (the statistic's cap; not the full history) · no merges · in each committer's own time zone.",
+      "smallSample": "Small sample: interpret with care."
+    },
+    "statsUnavailable": {
+      "computing": "GitHub is still computing this statistic. Try again in a moment.",
+      "tooLarge": "GitHub doesn't compute this statistic for very large repositories.",
+      "error": "Couldn't load this statistic from GitHub.",
+      "notRecordedWeekdays": "Not recorded in this snapshot (earlier versions used only the 10 most recent commits)."
     }
   },
   "ranking": {

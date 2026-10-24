@@ -34,9 +34,9 @@ export function StatCard({ title, value, subValue, icon, type = 'default', toolt
 
       {/* Valor Principal */}
       <div className={`text-3xl font-bold ${valueColor} tracking-tight`}>
-        {typeof value === 'string' && (value.includes('hora') || value.includes('dia'))
-          ? value
-          : formatters.formatNumber(value, intlLocale(i18n.language))}
+        {/* Strings arrive formatted by the caller ("7,7 horas", "1,95", "N/A");
+            formatNumber would parse "1,95" as 1. Numbers are formatted here. */}
+        {typeof value === 'string' ? value : formatters.formatNumber(value, intlLocale(i18n.language))}
       </div>
 
       {/* Valor Secundário (Ex: Taxa de Resolução) */}

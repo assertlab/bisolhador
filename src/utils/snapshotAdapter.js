@@ -108,9 +108,7 @@ export function createMockRepoData(snapshotData) {
     },
 
     // Code churn (valor padrão)
-    codeChurn: {
-      ratio: 'N/A'
-    },
+    codeChurn: { ratio: null, reason: 'snapshot' },
 
     // Flag para identificar que é um snapshot
     isSnapshot: true

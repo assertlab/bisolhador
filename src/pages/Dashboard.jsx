@@ -21,6 +21,7 @@ import { ensureChartSetup } from '../lib/chartSetup.js';
 import { MERGED_PR_SAMPLE, SNAPSHOT_TIMEZONE } from '../constants.js';
 import { formatDuration } from '../utils/prReviewStats.js';
 import { formatters } from '../utils/formatters.js';
+import { closedShareOf, ADD_DELETE_WEEKS, ADD_DELETE_MIN_ACTIVE_WEEKS } from '../utils/activityStats.js';
 import { intlLocale } from '../i18n.js';
 
 // Lazy-loaded chart components (Code Splitting). Each also waits on
@@ -206,13 +207,18 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               <StatCard
                 title={t('stats.closedIssues')}
                 value={displayData.metrics.closedIssues}
-                subValue={displayData.metrics.resolutionRate}
+                subValue={closedShareOf(displayData.metrics) == null ? undefined : t('stats.closedShare', { pct: closedShareOf(displayData.metrics) })}
                 tooltipText={t('stats.closedIssuesTooltip')}
               />
               <StatCard
                 title={t('stats.codeChurn')}
-                value={displayData.codeChurn?.ratio || 'N/A'}
-                tooltipText={t('stats.codeChurnTooltip')}
+                value={formatters.formatDecimal(parseFloat(displayData.codeChurn?.ratio), intlLocale(i18n.language), 2)}
+                subValue={displayData.codeChurn?.categoryKey
+                  ? t(`stats.addDelete.${displayData.codeChurn.categoryKey}`)
+                  : displayData.codeChurn?.reason
+                    ? t(`stats.addDeleteUnavailable.${displayData.codeChurn.reason}`, { defaultValue: t('stats.addDeleteUnavailable.error') })
+                    : undefined}
+                tooltipText={t('stats.codeChurnTooltip', { weeks: ADD_DELETE_WEEKS, min: ADD_DELETE_MIN_ACTIVE_WEEKS })}
               />
             </div>
 
@@ -259,6 +265,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               <Suspense fallback={<SkeletonChart />}>
                 <CommitActivityChart
                   data={displayData.charts.activity}
+                  status={displayData.charts.activityStatus}
                   createdAt={displayData.createdAt}
                   key={`chart-${displayData.fullName}`}
                 />
@@ -270,7 +277,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
 
             {/* 6. Padrões de Trabalho */}
             <Suspense fallback={<SkeletonChart />}>
-              <WeekDaysChart commits={displayData.recentCommits} />
+              <WeekDaysChart weekdays={displayData.charts.weekdays} status={displayData.charts.weekdaysStatus} />
             </Suspense>
 
             {/* 7. Contribuições */}
