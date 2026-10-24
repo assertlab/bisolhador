@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isBot, peopleFromStats, peopleFromContributors, analyzeContributors, topShareLevel } from './contributors.js';
+import { isBot, peopleFromStats, peopleFromContributors, analyzeContributors, topShareLevel, normalizeSnapshotContributors } from './contributors.js';
 
 const WEEK = 7 * 24 * 3600;
 const NOW = Date.UTC(2026, 9, 23) / 1000; // 2026-10-23, in seconds like the API
@@ -95,5 +95,19 @@ describe('analyzeContributors', () => {
 describe('topShareLevel (single threshold set for Dashboard and Benchmark)', () => {
   it.each([[61, 'critical'], [60, 'warning'], [41, 'warning'], [40, 'healthy'], [null, 'none']])('%s%% → %s', (pct, level) => {
     expect(topShareLevel(pct)).toBe(level);
+  });
+});
+
+describe('normalizeSnapshotContributors (reading persisted full_report)', () => {
+  it('pre-v3.8.0 data (no window) → not recorded, input untouched', () => {
+    const old = { fullName: 'o/r', contributors: [{ login: 'a' }], busFactor: { level: 'critical', percentage: 90 }, busFactorAnalysis: { busFactor: 1, keyDevelopers: [] } };
+    const copy = structuredClone(old);
+    expect(normalizeSnapshotContributors(old)).toEqual({ fullName: 'o/r', contributors: null, busFactor: { level: 'notRecorded' }, busFactorAnalysis: null });
+    expect(old).toEqual(copy);
+  });
+
+  it('current-method data is kept', () => {
+    const current = { busFactor: { level: 'healthy', percentage: 20 }, busFactorAnalysis: { window: 'recent' }, contributors: [] };
+    expect(normalizeSnapshotContributors(current)).toBe(current);
   });
 });

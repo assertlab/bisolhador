@@ -329,7 +329,7 @@
     "backButton": "Voltar ao Dashboard",
     "loading": "Carregando histórico...",
     "chartTitle": "Evolução de Métricas ao Longo do Tempo",
-    "dataPoints": "{{count}} análises registradas",
+    "dataPointsDays": "{{count}} dias com análise registrada",
     "filters": {
       "label": "Período:",
       "7d": "7 dias",

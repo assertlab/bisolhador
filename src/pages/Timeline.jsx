@@ -15,7 +15,9 @@ import { TimeRangeFilter } from "../components/TimeRangeFilter";
 import { useState, useMemo, useEffect } from "react";
 import { ensureChartSetup } from "../lib/chartSetup.js";
 import { formatters } from "../utils/formatters.js";
-import { parseFullReport } from "../utils/snapshotAdapter.js";
+import { toTimelinePoints, growth } from "../utils/timelineData.js";
+import { githubService } from "../services/githubService.js";
+import { SNAPSHOT_TIMEZONE } from "../constants.js";
 import { intlLocale } from '../i18n.js';
 
 export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
@@ -48,41 +50,37 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["timeline", repoFullName],
     queryFn: async () => {
-      const history = await analytics.getRepoHistory(repoFullName);
+      // Renamed repos: rows before the rename are under the old name
+      // (facebook/react), newer ones under the canonical one (react/react).
+      // GitHub resolves either to the canonical name; if that lookup fails,
+      // the route name alone still works.
+      const canonical = await githubService.fetchRepository(owner, repo).then((r) => r?.full_name).catch(() => null);
+      const names = [...new Set([repoFullName, canonical].filter(Boolean).map((n) => n.toLowerCase()))];
+      const histories = await Promise.all(names.map((name) => analytics.getRepoHistory(name)));
+      const points = toTimelinePoints(histories.flat().filter(Boolean));
 
-      if (!history || history.length === 0) {
+      if (points.length === 0) {
         throw new Error(t("timeline.error.noData"));
       }
-
-      // Processar dados do histórico
-      const processedData = history.map((snapshot) => {
-        const reportData = parseFullReport(snapshot.full_report, "Timeline");
-
-        return {
-          date: new Date(snapshot.created_at),
-          stars: reportData?.metrics?.stars || 0,
-          forks: reportData?.metrics?.forks || 0,
-          subscribers: reportData?.subscribers || 0,
-          healthScore: reportData?.health?.score || 0,
-          openIssues: reportData?.metrics?.openIssues || 0,
-        };
-      });
-
-      return processedData;
+      return points;
     },
     retry: 1,
   });
 
   const filteredData = useTimeFilter(data, timeRange);
 
+  const starsGrowth = useMemo(() => growth(filteredData, "stars"), [filteredData]);
+
   const chartData = useMemo(() => {
     if (!filteredData) return null;
+    // {x: date, y} on a time axis: spacing follows real time; null = gap.
+    const series = (key) => filteredData.map((point) => ({ x: point.date, y: point[key] }));
     return {
-      labels: filteredData.map((point) => formatters.formatDateShort(point.date, locale)),
       datasets: [
         {
           label: t("timeline.metrics.stars"),
-          data: filteredData.map((point) => point.stars),
+          data: series("stars"),
+          spanGaps: true,
           borderColor: "#FFD700",
           backgroundColor: "rgba(255, 215, 0, 0.1)",
           tension: 0.4,
@@ -90,7 +88,8 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
         },
         {
           label: t("timeline.metrics.forks"),
-          data: filteredData.map((point) => point.forks),
+          data: series("forks"),
+          spanGaps: true,
           borderColor: "#3B82F6",
           backgroundColor: "rgba(59, 130, 246, 0.1)",
           tension: 0.4,
@@ -98,7 +97,8 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
         },
         {
           label: t("timeline.metrics.subscribers"),
-          data: filteredData.map((point) => point.subscribers),
+          data: series("subscribers"),
+          spanGaps: true,
           borderColor: "#10B981",
           backgroundColor: "rgba(16, 185, 129, 0.1)",
           tension: 0.4,
@@ -106,7 +106,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
         },
       ],
     };
-  }, [filteredData, locale, t]);
+  }, [filteredData, t]);
 
   const chartOptions = useMemo(
     () =>
@@ -120,12 +120,18 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
             intersect: false,
             titleFont: { size: 13, weight: "bold" },
             bodyFont: { size: 12 },
+            callbacks: {
+              title: (items) => (items[0] ? formatters.formatDateShort(items[0].parsed.x, locale, SNAPSHOT_TIMEZONE) : ""),
+            },
           },
         },
         scales: {
           x: {
+            type: "time",
+            time: { unit: "day" },
             grid: { drawBorder: false },
-            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 45 },
+            // date-fns would print English month names ("MMM dd")
+            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 0, callback: (value) => formatters.formatDateShort(value, locale, SNAPSHOT_TIMEZONE) },
           },
           y: {
             grid: { drawBorder: false },
@@ -134,7 +140,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
         },
         interaction: { mode: "nearest", axis: "x", intersect: false },
       }),
-    [chartTheme],
+    [chartTheme, locale],
   );
 
   const handleBack = () => {
@@ -212,7 +218,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                   />
                 </svg>
                 <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  {t("timeline.dataPoints", { count: data.length })}
+                  {t("timeline.dataPointsDays", { count: data.length })}
                 </span>
               </div>
             )}
@@ -256,7 +262,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                       {t("timeline.summary.firstAnalysis")}
                     </p>
                     <p className="text-lg font-semibold text-shark dark:text-white mt-1">
-                      {formatters.formatDateShort(filteredData[0].date, locale)}
+                      {formatters.formatDateShort(filteredData[0].date, locale, SNAPSHOT_TIMEZONE)}
                     </p>
                   </div>
                   <svg
@@ -282,7 +288,7 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                       {t("timeline.summary.latestAnalysis")}
                     </p>
                     <p className="text-lg font-semibold text-shark dark:text-white mt-1">
-                      {formatters.formatDateShort(filteredData[filteredData.length - 1].date, locale)}
+                      {formatters.formatDateShort(filteredData[filteredData.length - 1].date, locale, SNAPSHOT_TIMEZONE)}
                     </p>
                   </div>
                   <svg
@@ -307,11 +313,10 @@ export function Timeline({ isSettingsOpen, setIsSettingsOpen }) {
                     <p className="text-sm text-gray-600 dark:text-slate-400">
                       {t("timeline.summary.totalGrowth")}
                     </p>
-                    <p className="text-lg font-semibold text-green-600 dark:text-green-400 mt-1">
-                      +
-                      {filteredData[filteredData.length - 1].stars -
-                        filteredData[0].stars}{" "}
-                      ⭐
+                    <p className={`text-lg font-semibold mt-1 ${starsGrowth?.delta < 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+                      {starsGrowth == null
+                        ? "N/A"
+                        : `${starsGrowth.delta > 0 ? "+" : ""}${formatters.formatNumber(starsGrowth.delta, locale)} ⭐`}
                     </p>
                   </div>
                   <svg

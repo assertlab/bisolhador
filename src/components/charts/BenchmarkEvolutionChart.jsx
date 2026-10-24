@@ -6,6 +6,7 @@ import { createBaseChartOptions } from '../../lib/chartDefaults';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
 import { withAlpha } from '../../utils/colors.js';
+import { SNAPSHOT_TIMEZONE } from '../../constants.js';
 
 /**
  * Gráfico de evolução temporal comparativa
@@ -47,7 +48,8 @@ export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
   const chartOptions = useMemo(
     () =>
       createBaseChartOptions(chartTheme, {
-        interaction: { mode: 'index', intersect: false },
+        // 'index' paired the Nth point of every repo even with different dates
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
         plugins: {
           legend: { display: true },
           tooltip: {
@@ -55,7 +57,7 @@ export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
             callbacks: {
               title: (context) => {
                 if (context[0]?.parsed?.x) {
-                  return formatters.formatDateShort(context[0].parsed.x, intlLocale(i18n.language));
+                  return formatters.formatDateShort(context[0].parsed.x, intlLocale(i18n.language), SNAPSHOT_TIMEZONE);
                 }
                 return '';
               },
@@ -70,8 +72,9 @@ export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
         scales: {
           x: {
             type: 'time',
-            time: { unit: 'day', displayFormats: { day: 'MMM dd' } },
-            ticks: { maxRotation: 45, minRotation: 0 },
+            time: { unit: 'day' },
+            // date-fns would print English month names ("MMM dd")
+            ticks: { maxRotation: 45, minRotation: 0, callback: (value) => formatters.formatDateShort(value, intlLocale(i18n.language), SNAPSHOT_TIMEZONE) },
             grid: { display: true },
           },
           y: {

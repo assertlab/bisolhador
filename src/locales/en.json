@@ -321,7 +321,7 @@
     "backButton": "Back to Dashboard",
     "loading": "Loading history...",
     "chartTitle": "Metrics Evolution Over Time",
-    "dataPoints": "{{count}} recorded analyses",
+    "dataPointsDays": "{{count}} days with a recorded analysis",
     "filters": {
       "label": "Period:",
       "7d": "7 days",
