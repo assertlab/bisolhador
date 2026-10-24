@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ Added
+
+- **NEW**: Três indicadores na seção **Dinâmica de Revisão**. Exigem token do GitHub e usam os mesmos até 50 PRs mergeados mais recentes, sem bots:
+  - **Cobertura de Revisão**: % aprovados por outra pessoa antes do merge, mais o % com qualquer revisão de outra pessoa;
+  - **Tempo até a 1ª Revisão**: mediana e p90, contados a partir do momento em que o PR fica **pronto para revisão** (rascunhos não contam como espera) até a primeira revisão de outra pessoa;
+  - **Tamanho dos PRs**: mediana de linhas alteradas e % de PRs com menos de 400 linhas.
+
+  Os dados vêm de três consultas GraphQL em paralelo: uma consulta única levava de 5 a 10 s e beirava o limite do GitHub. Se a parte de tempos ou a de tamanho falhar, só aquele indicador fica indisponível. Snapshots anteriores mostram "não registrado".
+
 ---
 
 ## [3.11.0] - 2026-10-24

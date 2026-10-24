@@ -16,7 +16,11 @@ const restPr = ({ login = 'a', type = 'User', hours, mergedAtMs = T0 } = {}) => 
 
 // GraphQL merged-PR node (githubService.fetchPullRequestReviewStats)
 const user = (login) => ({ login, __typename: /\[bot\]$/.test(login) ? 'Bot' : 'User' });
-const node = ({ author = 'a', mergedBy = 'a', approvedBy = [], comments = [], reviewComments = 0, mergedAtMs = T0 } = {}) => ({
+const node = ({ author = 'a', mergedBy = 'a', approvedBy = [], comments = [], reviewComments = 0, mergedAtMs = T0, additions = 10, deletions = 5, readyAtMs, firstReviews = [] } = {}) => ({
+  additions,
+  deletions,
+  readyForReview: { nodes: readyAtMs == null ? [] : [{ createdAt: iso(readyAtMs) }] },
+  firstReviews: { nodes: firstReviews.map(([login, ms]) => ({ submittedAt: iso(ms), author: user(login) })) },
   author: author === null ? null : user(author),
   mergedBy: mergedBy ? { login: mergedBy } : null,
   createdAt: iso(mergedAtMs - HOUR),
@@ -149,12 +153,14 @@ describe('analyzeReviewMetrics', () => {
     expect(analyzeReviewMetrics(null, reason)).toEqual({
       codeReview: { unapprovedPercentage: null, selfMergePercentage: null, color: 'gray', available: false, reason },
       divergence: { avg: null, categoryKey },
+      reviewProcess: { available: false, reason },
     });
   });
 });
 
 describe('normalizeSnapshotProcessMetrics (reading persisted full_report)', () => {
   const current = {
+    reviewProcess: { available: true, firstReview: { medianHours: 5, p90Hours: 30, n: 40 }, method: 'ready-first-review' },
     codeReview: { unapprovedPercentage: 40, selfMergePercentage: 70, color: 'yellow', available: true, n: 50, method: 'approval' },
     metrics: {
       stars: 3,
@@ -197,5 +203,48 @@ describe('normalizeSnapshotProcessMetrics (reading persisted full_report)', () =
     expect(old).toEqual(copy);
     expect(normalized.fullName).toBe('o/r');
     expect(normalized.metrics.stars).toBe(3);
+  });
+});
+
+describe('reviewProcess: coverage, time to first review, PR size', () => {
+  const H = HOUR;
+  it('first review by someone else, from "ready for review" (drafts are not waiting yet)', () => {
+    const stats = toPullRequestStats([
+      // created T0-10h, ready T0-4h, reviewed T0-2h → 2h
+      node({ readyAtMs: T0 - 4 * H, firstReviews: [['b', T0 - 2 * H]] }),
+      // not a draft: created T0-1h (helper), reviewed T0-0.5h → 0.5h
+      node({ firstReviews: [['c', T0 - 0.5 * H]] }),
+      // only the author and a bot "reviewed" → no review
+      node({ firstReviews: [['a', T0 - 0.9 * H], ['ci[bot]', T0 - 0.8 * H]] }),
+    ]);
+    stats[0].created_at = iso(T0 - 10 * H);
+    const { reviewProcess } = analyzeReviewMetrics(stats);
+    expect(reviewProcess.firstReview).toEqual({ medianHours: 1.3, p90Hours: 1.9, n: 2 });
+    expect(reviewProcess.coverage).toMatchObject({ reviewedPercentage: 67, n: 3 });
+  });
+
+  it('coverage: approved by someone else is the complement of the "unapproved" badge', () => {
+    const stats = toPullRequestStats([node({ approvedBy: ['b'] }), node({ approvedBy: ['c'] }), node(), node()]);
+    const { codeReview, reviewProcess } = analyzeReviewMetrics(stats);
+    expect(reviewProcess.coverage.approvedPercentage).toBe(50);
+    expect(codeReview.unapprovedPercentage).toBe(50);
+  });
+
+  it('PR size: median changed lines and share under 400', () => {
+    const stats = toPullRequestStats([node({ additions: 10, deletions: 0 }), node({ additions: 300, deletions: 50 }), node({ additions: 900, deletions: 100 })]);
+    expect(analyzeReviewMetrics(stats).reviewProcess.prSize).toEqual({ medianLines: 350, smallPercentage: 67, n: 3 });
+  });
+
+  it('timing query failed → first review unavailable, not "0% reviewed"; size missing → no size', () => {
+    const nodes = [node({ firstReviews: [['b', T0]] }), node()].map((n) => ({ ...n, timingUnknown: true }));
+    delete nodes[0].additions;
+    const { reviewProcess } = analyzeReviewMetrics(toPullRequestStats(nodes));
+    expect(reviewProcess.firstReview).toMatchObject({ unavailable: true, n: 0 });
+    expect(reviewProcess.coverage.reviewedPercentage).toBeNull();
+    expect(reviewProcess.prSize.n).toBe(1);
+  });
+
+  it('old snapshots (no reviewProcess) → not recorded', () => {
+    expect(normalizeSnapshotProcessMetrics({ metrics: {} }).reviewProcess).toEqual({ available: false, reason: 'snapshot' });
   });
 });

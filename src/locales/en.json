@@ -99,7 +99,25 @@
       "error": "Couldn't load the data",
       "snapshot": "Not recorded in this snapshot"
     },
-    "closedShare": "{{pct}}% closed"
+    "closedShare": "{{pct}}% closed",
+    "reviewCoverage": "Review Coverage",
+    "reviewCoverageSample": "approved by someone else · {{reviewed}}% with any review · {{n}} PRs",
+    "reviewCoverageSampleShort": "approved by someone else · {{n}} PRs",
+    "reviewCoverageTooltip": "Share of the up to {{n}} most recent merged PRs (bots excluded) approved (Approve) by someone else before merging. The second number counts any review by someone else (approval, change request or review comment). Projects that approve by command or bot (e.g. /lgtm) show low coverage.",
+    "firstReview": "Time to First Review",
+    "firstReviewSample": "median of {{n}} reviewed PRs · p90 {{p90}}",
+    "firstReviewNone": "No PR reviewed by someone else",
+    "firstReviewTooltip": "Median time from the PR being ready for review (or created, if it was never a draft) to the first review by someone else, over recent merged PRs that got a review. Plain comments, which aren't reviews, don't count.",
+    "prSize": "PR Size",
+    "prSizeValue": "{{lines}} lines",
+    "prSizeSample": "median · {{small}}% under {{max}} lines · {{n}} PRs",
+    "prSizeTooltip": "Changed lines (added + removed) per PR, over recent merged PRs. Small PRs (under {{max}} lines) are easier to review well. Generated files (e.g. lockfiles) are counted.",
+    "reviewProcessUnavailable": {
+      "noToken": "Requires a GitHub token",
+      "error": "Unavailable",
+      "snapshot": "Not recorded in this snapshot",
+      "noMerged": "No merged PRs"
+    }
   },
   "language": {
     "pt": "PT",

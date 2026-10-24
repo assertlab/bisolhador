@@ -192,7 +192,7 @@ async function fetchRepositoryData(repoName) {
     const maturity = analyzeMaturity(repositoryTree, branches?.zombies ?? null);
 
     // Merged-without-approval rate and divergence: GraphQL-backed, unavailable without a token
-    const { codeReview, divergence } = analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken');
+    const { codeReview, divergence, reviewProcess } = analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken');
 
     // Lead time: median over the latest merged PRs. With a token, the same
     // merged sample as review/divergence (GraphQL); otherwise REST closed PRs,
@@ -255,6 +255,7 @@ async function fetchRepositoryData(repoName) {
       health,
       maturity,
       codeReview,
+      reviewProcess,
       contributors: contributorAnalysis?.table ?? null,
       busFactor,
       busFactorAnalysis,

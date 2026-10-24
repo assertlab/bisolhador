@@ -76,6 +76,32 @@ describe('githubService: failures are errors, not zeros', () => {
     });
   });
 
+  describe('fetchPullRequestReviewStats (three parallel queries)', () => {
+    const pr = (number, extra) => ({ number, ...extra });
+    const reply = (nodes) => json({ data: { repository: { pullRequests: { nodes } } } });
+    const route = (handlers) => (url, init) => {
+      const query = JSON.parse(init.body).query;
+      if (query.includes('firstReviews')) return handlers.timing();
+      if (query.includes('additions')) return handlers.size();
+      return handlers.core();
+    };
+    const core = () => reply([pr(1, { createdAt: '2026-10-01T00:00:00Z', mergedAt: '2026-10-02T00:00:00Z', author: { login: 'a', __typename: 'User' }, reviews: { nodes: [] }, comments: { totalCount: 0, nodes: [] } })]);
+
+    it('a failed timing query marks timing unknown; size still merged by PR number', async () => {
+      vi.stubGlobal('localStorage', { getItem: () => 'token' });
+      fetchMock.mockImplementation(route({ core, timing: () => json({ message: 'Bad Gateway' }, { status: 502 }), size: () => reply([pr(1, { additions: 30, deletions: 10 })]) }));
+      const [stats] = await githubService.fetchPullRequestReviewStats('o', 'r');
+      expect(stats.firstReviewAt).toBeUndefined();
+      expect(stats.changedLines).toBe(40);
+    });
+
+    it('a failed core query fails the whole call (coverage, divergence, lead time depend on it)', async () => {
+      vi.stubGlobal('localStorage', { getItem: () => 'token' });
+      fetchMock.mockImplementation(route({ core: () => json({ message: 'Bad Gateway' }, { status: 502 }), timing: () => reply([]), size: () => reply([]) }));
+      await expect(githubService.fetchPullRequestReviewStats('o', 'r')).rejects.toThrow();
+    });
+  });
+
   describe('fetchBranchActivity (token, GraphQL)', () => {
     const page = (names, { hasNextPage = false, totalCount = names.length } = {}) => json({
       data: { repository: { refs: {

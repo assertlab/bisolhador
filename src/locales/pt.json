@@ -99,7 +99,25 @@
       "error": "Não foi possível obter os dados",
       "snapshot": "Não registrado neste snapshot"
     },
-    "closedShare": "{{pct}}% fechadas"
+    "closedShare": "{{pct}}% fechadas",
+    "reviewCoverage": "Cobertura de Revisão",
+    "reviewCoverageSample": "aprovados por outra pessoa · {{reviewed}}% com alguma revisão · {{n}} PRs",
+    "reviewCoverageSampleShort": "aprovados por outra pessoa · {{n}} PRs",
+    "reviewCoverageTooltip": "Percentual dos até {{n}} PRs mergeados mais recentes (sem bots) que tiveram aprovação (Approve) de outra pessoa antes do merge. O segundo número inclui qualquer revisão de outra pessoa (aprovação, pedido de mudança ou comentário de revisão). Projetos que aprovam por comando ou bot (ex: /lgtm) aparecem com cobertura baixa.",
+    "firstReview": "Tempo até a 1ª Revisão",
+    "firstReviewSample": "mediana de {{n}} PRs revisados · p90 {{p90}}",
+    "firstReviewNone": "Nenhum PR revisado por outra pessoa",
+    "firstReviewTooltip": "Mediana do tempo entre o PR ficar pronto para revisão (ou ser criado, se não foi rascunho) e a primeira revisão de outra pessoa, nos PRs mergeados recentes que tiveram revisão. Comentários comuns, que não são revisão, não contam.",
+    "prSize": "Tamanho dos PRs",
+    "prSizeValue": "{{lines}} linhas",
+    "prSizeSample": "mediana · {{small}}% com menos de {{max}} linhas · {{n}} PRs",
+    "prSizeTooltip": "Linhas alteradas (adicionadas + removidas) por PR, nos PRs mergeados recentes. PRs pequenos (menos de {{max}} linhas) são mais fáceis de revisar bem. Arquivos gerados (ex: lockfiles) entram na conta.",
+    "reviewProcessUnavailable": {
+      "noToken": "Requer token do GitHub",
+      "error": "Indisponível",
+      "snapshot": "Não registrado neste snapshot",
+      "noMerged": "Sem PRs mergeados"
+    }
   },
   "language": {
     "pt": "PT",

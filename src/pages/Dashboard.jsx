@@ -19,7 +19,7 @@ import { useSnapshot, getSnapshotParams } from '../hooks/useSnapshot.js';
 import analytics from '../services/analytics.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
 import { MERGED_PR_SAMPLE, SNAPSHOT_TIMEZONE } from '../constants.js';
-import { formatDuration } from '../utils/prReviewStats.js';
+import { formatDuration, SMALL_PR_LINES } from '../utils/prReviewStats.js';
 import { formatters } from '../utils/formatters.js';
 import { closedShareOf, ADD_DELETE_WEEKS, ADD_DELETE_MIN_ACTIVE_WEEKS } from '../utils/activityStats.js';
 import { intlLocale } from '../i18n.js';
@@ -62,6 +62,10 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const leadTimeP90 = leadTime.p90Hours != null ? formatDuration(leadTime.p90Hours) : null;
   const duration = ({ value, unit }) => `${value.toLocaleString(intlLocale(i18n.language))} ${t('units.' + unit, { count: value })}`;
   const closedPct = closedShareOf(displayData?.metrics);
+  const locale = intlLocale(i18n.language);
+  // Coverage, time to first review, PR size (GraphQL, token required)
+  const review = displayData?.reviewProcess ?? { available: false, reason: 'snapshot' };
+  const reviewUnavailable = review.available ? undefined : t(`stats.reviewProcessUnavailable.${review.reason}`, { defaultValue: t('stats.reviewProcessUnavailable.error') });
   const churn = displayData?.codeChurn;
   const churnNote = churn?.categoryKey
     ? t(`stats.addDelete.${churn.categoryKey}`)
@@ -225,7 +229,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
 
             {/* 3. Grid de Dinâmica de Revisão */}
             <h3 className="text-lg font-semibold text-shark dark:text-white pt-4">{t('app.reviewDynamics')}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <StatCard
                 title={t('stats.leadTime')}
                 value={leadTime.n > 0 ? duration(leadTime) : 'N/A'}
@@ -243,6 +247,37 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                   : t(displayData.metrics.divergence.categoryKey)}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>}
                 tooltipText={t('stats.divergenceTooltip', { n: MERGED_PR_SAMPLE })}
+              />
+              <StatCard
+                title={t('stats.reviewCoverage')}
+                value={review.available ? formatters.formatPercent(review.coverage.approvedPercentage, locale) : 'N/A'}
+                subValue={review.available
+                  ? review.coverage.reviewedPercentage == null
+                    ? t('stats.reviewCoverageSampleShort', { n: review.coverage.n })
+                    : t('stats.reviewCoverageSample', { reviewed: review.coverage.reviewedPercentage, n: review.coverage.n })
+                  : reviewUnavailable}
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>}
+                tooltipText={t('stats.reviewCoverageTooltip', { n: MERGED_PR_SAMPLE })}
+              />
+              <StatCard
+                title={t('stats.firstReview')}
+                value={review.available && review.firstReview.n > 0 ? duration(formatDuration(review.firstReview.medianHours)) : 'N/A'}
+                subValue={review.available
+                  ? review.firstReview.n > 0
+                    ? t('stats.firstReviewSample', { n: review.firstReview.n, p90: duration(formatDuration(review.firstReview.p90Hours)) })
+                    : review.firstReview.unavailable ? t('stats.reviewProcessUnavailable.error') : t('stats.firstReviewNone')
+                  : reviewUnavailable}
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>}
+                tooltipText={t('stats.firstReviewTooltip')}
+              />
+              <StatCard
+                title={t('stats.prSize')}
+                value={review.available && review.prSize.n > 0 ? t('stats.prSizeValue', { lines: formatters.formatNumber(review.prSize.medianLines, locale) }) : 'N/A'}
+                subValue={review.available
+                  ? review.prSize.n > 0 ? t('stats.prSizeSample', { small: review.prSize.smallPercentage, max: SMALL_PR_LINES, n: review.prSize.n }) : undefined
+                  : reviewUnavailable}
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h10M4 18h6"></path></svg>}
+                tooltipText={t('stats.prSizeTooltip', { max: SMALL_PR_LINES })}
               />
             </div>
 
