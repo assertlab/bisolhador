@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 import { HEALTH_GOOD_PERCENT, HEALTH_FAIR_PERCENT } from '../constants.js';
+import { GuideLink } from './GuideLink.jsx';
 
 export function HealthScoreCard({ health }) {
   const { t } = useTranslation();
@@ -107,6 +108,7 @@ export function HealthScoreCard({ health }) {
         </div>
       </div>
       )}
+      <GuideLink id="health-score" className="mt-3 inline-block" />
     </div>
   );
 }

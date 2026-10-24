@@ -6,6 +6,7 @@ import useChartTheme from '../../hooks/useChartTheme.js';
 import { PUNCH_CARD_MAX_COMMITS } from '../../utils/activityStats.js';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
+import { GuideLink } from '../GuideLink.jsx';
 
 const WEEKDAYS_MIN_SAMPLE = 50; // fewer commits: shown, with a small-sample note
 
@@ -87,6 +88,7 @@ function WeekDaysChart({ weekdays, status }) {
           {t(`charts.statsUnavailable.${status ?? 'notRecordedWeekdays'}`, { defaultValue: t('charts.statsUnavailable.error') })}
         </div>
       )}
+      <GuideLink id="weekdays" className="mt-3 inline-block" />
     </div>
   );
 }

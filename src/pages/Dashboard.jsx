@@ -202,27 +202,32 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard
                 title={t('stats.stars')}
+                guideId="stars-forks"
                 value={displayData.metrics.stars}
                 tooltipText={t('stats.starsTooltip')}
               />
               <StatCard
                 title={t('stats.forks')}
+                guideId="stars-forks"
                 value={displayData.metrics.forks}
                 tooltipText={t('stats.forksTooltip')}
               />
               <StatCard
                 title={t('stats.openIssues')}
+                guideId="issues"
                 value={displayData.metrics.openIssues}
                 tooltipText={t('stats.openIssuesTooltip')}
               />
               <StatCard
                 title={t('stats.closedIssues')}
+                guideId="issues"
                 value={displayData.metrics.closedIssues}
                 subValue={closedPct == null ? undefined : t('stats.closedShare', { pct: closedPct })}
                 tooltipText={t('stats.closedIssuesTooltip')}
               />
               <StatCard
                 title={t('stats.codeChurn')}
+                guideId="add-delete"
                 value={formatters.formatDecimal(parseFloat(churn?.ratio), intlLocale(i18n.language), 2)}
                 subValue={churnNote || undefined}
                 tooltipText={t('stats.codeChurnTooltip', { weeks: ADD_DELETE_WEEKS, min: ADD_DELETE_MIN_ACTIVE_WEEKS })}
@@ -234,6 +239,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <StatCard
                 title={t('stats.leadTime')}
+                guideId="lead-time"
                 value={leadTime.n > 0 ? duration(leadTime) : 'N/A'}
                 subValue={leadTime.n > 0 && leadTimeP90
                   ? t('stats.leadTimeSample', { n: leadTime.n, p90: duration(leadTimeP90) })
@@ -243,6 +249,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               />
               <StatCard
                 title={t('stats.divergence')}
+                guideId="divergence"
                 value={displayData.metrics.divergence.avg ?? 'N/A'}
                 subValue={displayData.metrics.divergence.n > 0
                   ? `${t(displayData.metrics.divergence.categoryKey)} · ${t('stats.prSample', { n: displayData.metrics.divergence.n })}`
@@ -252,6 +259,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               />
               <StatCard
                 title={t('stats.reviewCoverage')}
+                guideId="review-coverage"
                 value={review.available ? formatters.formatPercent(review.coverage.approvedPercentage, locale) : 'N/A'}
                 subValue={review.available
                   ? review.coverage.reviewedPercentage == null
@@ -263,6 +271,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               />
               <StatCard
                 title={t('stats.firstReview')}
+                guideId="first-review"
                 value={review.available && review.firstReview.n > 0 ? duration(formatDuration(review.firstReview.medianHours)) : 'N/A'}
                 subValue={review.available
                   ? review.firstReview.n > 0
@@ -274,6 +283,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               />
               <StatCard
                 title={t('stats.prSize')}
+                guideId="pr-size"
                 value={review.available && review.prSize.n > 0 ? t('stats.prSizeValue', { lines: formatters.formatNumber(review.prSize.medianLines, locale) }) : 'N/A'}
                 subValue={review.available
                   ? review.prSize.n > 0 ? t('stats.prSizeSample', { small: review.prSize.smallPercentage, max: SMALL_PR_LINES, n: review.prSize.n }) : t('stats.reviewProcessUnavailable.error')
@@ -288,6 +298,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <StatCard
                 title={t('stats.ciHealth')}
+                guideId="ci-health"
                 value={practices.ci.available ? formatters.formatPercent(practices.ci.successPercentage, locale) : 'N/A'}
                 subValue={practices.ci.available
                   ? t('stats.ciHealthSample', { minutes: practices.ci.medianMinutes == null ? 'N/A' : practices.ci.medianMinutes.toLocaleString(locale), count: practices.ci.n })
@@ -297,6 +308,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               />
               <StatCard
                 title={t('stats.conventionalCommits')}
+                guideId="conventional-commits"
                 value={practices.commits.available ? formatters.formatPercent(practices.commits.percentage, locale) : 'N/A'}
                 subValue={practices.commits.available ? t('stats.conventionalCommitsSample', { count: practices.commits.n }) : practiceUnavailable(practices.commits)}
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>}
@@ -304,6 +316,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
               />
               <StatCard
                 title={t('stats.releaseCadence')}
+                guideId="release-cadence"
                 value={practices.releases.available
                   ? t(practices.releases.capped ? 'stats.releasesLast12Capped' : 'stats.releasesLast12', { count: practices.releases.last12Months })
                   : 'N/A'}
