@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [3.12.0] - 2026-10-24
+
 ### ✨ Added
 
 - **NEW**: Três indicadores na seção **Dinâmica de Revisão**. Exigem token do GitHub e usam os mesmos até 50 PRs mergeados mais recentes, sem bots:
