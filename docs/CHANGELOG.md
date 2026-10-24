@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [3.14.0] - 2026-10-24
+
 ### ✨ Added
 
 - **NEW**: **Modo Turma aceita repositórios privados**, a única exceção à regra de nunca processar privados. Turmas do GitHub Classroom são privadas por padrão. A análise roda no navegador de quem usa, com o token dessa pessoa (só vê o que ela já pode ver no GitHub), **nada é salvo**, e o Google Analytics fica **desligado** a partir da abertura do Modo Turma, até a página ser fechada. Repositórios privados aparecem com 🔒, com aviso na tela e uma coluna de visibilidade no CSV. Dashboard, Benchmark, Timeline e Ranking continuam recusando privados.
@@ -22,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Fixed
 
-- **FIX**: **Cabeçalho no celular**: a barra com todos os links e botões tinha ~930 px e fazia a página inteira rolar para o lado em telas de celular (e ainda passava 33 px em 1024 px). Abaixo de 1280 px, a barra mostra logo, configurações e um botão de menu; os links (com rótulo), tema, idioma e ajuda ficam no painel do menu. A página atual fica destacada (sublinhado e `aria-current`). O menu fecha com Esc, ao navegar, ao abrir as configurações e ao alargar a janela. Os links, antes cinza-escuro sobre a barra escura no tema claro, ficaram legíveis nos dois temas.
+- **FIX**: **Cabeçalho no celular**: a barra com todos os links e botões tinha ~930 px e fazia a página inteira rolar para o lado em telas de celular (e ainda passava 33 px em 1024 px). Abaixo de 1280 px, a barra mostra logo, tema, configurações e um botão de menu; os links (com rótulo), o idioma e a ajuda ficam no painel do menu. A página atual fica destacada (sublinhado e `aria-current`). O menu fecha com Esc, ao navegar, ao abrir as configurações e ao alargar a janela. Os links, antes cinza-escuro sobre a barra escura no tema claro, ficaram legíveis nos dois temas.
 
 ---
 

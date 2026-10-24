@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.13.0
+# 🦈 Bisolhador Dashboard v3.14.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -30,6 +30,12 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.14.0 - Turmas do GitHub Classroom
+- **🔒 Repositórios privados no Modo Turma**: turmas do GitHub Classroom (privadas por padrão) podem ser analisadas com o token de quem usa — nada é salvo, e o Google Analytics fica desligado no Modo Turma. O resto do app continua recusando privados
+- **🏫 Importar de uma organização**: informe a organização e um prefixo para preencher a lista da turma
+- **📱 Cabeçalho no celular**: menu compacto, sem a página rolar para o lado
+- **🔒 Privacidade no Google Analytics**: os envios do app passam a conter só o caminho da página, sem os parâmetros da URL
 
 ### v3.13.0 - Modo Turma e Como Interpretar
 - **🎓 Modo Turma** (`/turma`): compare os repositórios públicos das equipes de uma turma no período da disciplina — commits, autores, concentração (sem identificar pessoas), revisão de PRs, CI, Conventional Commits e releases — com exportação CSV; nada é salvo
