@@ -2,6 +2,7 @@
 // Migrated from v1-legacy/src/modules/githubAPI.js
 
 import { getItem } from "../utils/storage.js";
+import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
 import {
   GITHUB_PER_PAGE_COMMITS,
@@ -14,6 +15,7 @@ import {
 } from "../constants.js";
 
 const GITHUB_BASE_URL = "https://api.github.com";
+const MIN_PR_PAGE = 6; // classroom PR scan: smallest page before giving up
 
 export function hasGithubToken() {
   return Boolean(getItem("github_token"));
@@ -459,8 +461,7 @@ export const githubService = {
 
   // --- Classroom mode (period-bounded; token required) ---------------------
   // Owner/repo arrive validated (utils/repoName.parseSafeRepoName) and go only
-  // as GraphQL variables or encoded URL parts; the search string interpolates
-  // them, so validation is what keeps qualifiers from being injected.
+  // as GraphQL variables or encoded URL parts.
 
   // Default-branch commits between since/until (ISO), up to maxPages × 100.
   async fetchCommitHistoryInPeriod(owner, repo, since, until, maxPages = 3) {
@@ -479,9 +480,10 @@ export const githubService = {
     let after = null;
     let totalCount = 0;
     for (let page = 0; page < maxPages; page++) {
-      const data = await graphql(query, { owner, name: repo, since, until, after }, "commit history");
-      const history = data.repository?.defaultBranchRef?.target?.history;
-      if (!history) return { totalCount: 0, nodes: [], capped: false }; // empty repository
+      const data = await withExponentialBackoff(() => graphql(query, { owner, name: repo, since, until, after }, "commit history"), 2, 1000);
+      if (!data.repository) throw new Error("GraphQL commit history failed: repository not found");
+      const history = data.repository.defaultBranchRef?.target?.history;
+      if (!history) return { totalCount: 0, nodes: [], capped: false }; // empty repository (no default branch)
       totalCount = history.totalCount;
       nodes.push(...history.nodes.filter(Boolean));
       if (!history.pageInfo.hasNextPage) return { totalCount, nodes, capped: false };
@@ -490,27 +492,61 @@ export const githubService = {
     return { totalCount, nodes, capped: true };
   },
 
-  // PRs merged in the period (search), with the fields of the three review
-  // queries in one: class repositories are small, so one query stays fast.
-  async searchMergedPullRequests(owner, repo, fromDate, toDate) {
-    const query = `query($q: String!) {
-      search(query: $q, type: ISSUE, first: 100) {
-        issueCount
-        nodes { ... on PullRequest {
-          number createdAt mergedAt additions deletions
-          author { login __typename }
-          mergedBy { login }
-          comments(first: 100) { totalCount nodes { author { login __typename } } }
-          reviews(last: 50) { nodes { state submittedAt author { login __typename } comments { totalCount } } }
-          firstReviews: reviews(first: 10) { nodes { submittedAt author { login __typename } } }
-          readyForReview: timelineItems(itemTypes: [READY_FOR_REVIEW_EVENT], first: 1) { nodes { ... on ReadyForReviewEvent { createdAt } } }
-        } }
+  // PRs merged in the period: the repository's merged PRs by last update,
+  // filtered by mergedAt. Not the search API: it returned 0 with no error
+  // for orgs/tokens where search is restricted (a class would read "0 PRs"),
+  // and its single big query timed out (502) on vscode/next.js. Pages of 25
+  // with every review field stay well under GitHub's ~10 s limit. A PR's
+  // updatedAt is ≥ its mergedAt, so the scan stops at the first page older
+  // than the period; maxScanned bounds very active repos (capped).
+  // Lighter than the Dashboard query: no comments (divergence isn't shown
+  // here) and the last 20 reviews — heavy pages on next.js-sized repos tripped
+  // GitHub's secondary rate limit and blocked the rest of the class.
+  async fetchMergedPullRequestsInPeriod(owner, repo, since, until, { pageSize = 25, maxScanned = 200 } = {}) {
+    const query = `query($owner: String!, $name: String!, $n: Int!, $after: String) {
+      repository(owner: $owner, name: $name) {
+        pullRequests(states: MERGED, first: $n, after: $after, orderBy: { field: UPDATED_AT, direction: DESC }) {
+          pageInfo { hasNextPage endCursor }
+          nodes {
+            number createdAt mergedAt updatedAt additions deletions
+            author { login __typename }
+            mergedBy { login }
+            reviews(last: 20) { nodes { state submittedAt author { login __typename } } }
+            firstReviews: reviews(first: 10) { nodes { submittedAt author { login __typename } } }
+            readyForReview: timelineItems(itemTypes: [READY_FOR_REVIEW_EVENT], first: 1) { nodes { ... on ReadyForReviewEvent { createdAt } } }
+          }
+        }
       }
     }`;
-    const q = `repo:${owner}/${repo} is:pr is:merged merged:${fromDate}..${toDate}`;
-    const data = await graphql(query, { q }, "merged PRs in period");
-    const nodes = (data.search?.nodes ?? []).filter((n) => n && n.number);
-    return { issueCount: data.search?.issueCount ?? nodes.length, stats: toPullRequestStats(nodes) };
+    const from = Date.parse(since);
+    const to = Date.parse(until);
+    const inPeriod = [];
+    let after = null;
+    let scanned = 0;
+    let n = pageSize;
+    for (;;) {
+      // Some pages take 20 s+ (a few huge PRs: react, next.js) and fail with a
+      // 502/504 — in the browser just "Failed to fetch", and again on retry.
+      // Shrink that page (25 → 12 → 6) from the same cursor instead of losing
+      // every PR of the repository; give up below MIN_PR_PAGE.
+      let data;
+      try {
+        data = await withExponentialBackoff(() => graphql(query, { owner, name: repo, n, after }, "merged PRs in period"), 1, 1000);
+      } catch (error) {
+        if (n <= MIN_PR_PAGE) throw error;
+        n = Math.max(MIN_PR_PAGE, Math.floor(n / 2));
+        continue;
+      }
+      if (!data.repository) throw new Error("GraphQL merged PRs in period failed: repository not found");
+      const { nodes, pageInfo } = data.repository.pullRequests;
+      const page = nodes.filter(Boolean);
+      scanned += page.length;
+      inPeriod.push(...page.filter((n) => { const m = Date.parse(n.mergedAt); return m >= from && m <= to; }));
+      const olderThanPeriod = page.length === 0 || Date.parse(page[page.length - 1].updatedAt) < from;
+      if (olderThanPeriod || !pageInfo.hasNextPage) return { stats: toPullRequestStats(inPeriod), capped: false };
+      if (scanned >= maxScanned) return { stats: toPullRequestStats(inPeriod), capped: true };
+      after = pageInfo.endCursor;
+    }
   },
 
   // Push runs on the default branch created in the period (CI health).

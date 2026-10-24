@@ -15,7 +15,11 @@ async function analyzeRepository(name, period) {
   const [owner, repo] = name.split('/');
   let info;
   try {
-    info = await withExponentialBackoff(() => githubService.fetchRepository(owner, repo), 2, 300);
+    // A 404 is final (retrying a missing repo only wastes calls); anything else gets 2 retries
+    info = await githubService.fetchRepository(owner, repo).catch((error) => {
+      if (/\b404\b/.test(error.message)) throw error;
+      return withExponentialBackoff(() => githubService.fetchRepository(owner, repo), 2, 300);
+    });
   } catch (error) {
     return { status: /\b404\b/.test(error.message) ? 'notFound' : 'error' };
   }
@@ -25,10 +29,14 @@ async function analyzeRepository(name, period) {
   const [o, r] = canonical;
   const [history, prs, runs, releases] = await Promise.allSettled([
     githubService.fetchCommitHistoryInPeriod(o, r, period.since, period.until),
-    githubService.searchMergedPullRequests(o, r, period.from, period.to),
+    githubService.fetchMergedPullRequestsInPeriod(o, r, period.since, period.until),
     info.default_branch ? githubService.fetchActionRunsInPeriod(o, r, info.default_branch, period.from, period.to) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
     githubService.fetchReleases(o, r),
   ]);
+  // Parts fail on their own (N/A in that column): say why in the console
+  for (const [part, result] of Object.entries({ history, prs, runs, releases })) {
+    if (result.status === 'rejected') console.warn(`[classroom] ${info.full_name}: ${part} failed:`, result.reason?.message);
+  }
   return { status: 'ok', fullName: info.full_name, ...analyzeTeamRepo({ history, prs, runs, releases }, period) };
 }
 
@@ -37,9 +45,10 @@ async function analyzeRepository(name, period) {
  * repository (rows keyed by the requested name); a new request cancels the
  * previous run's pending updates.
  */
-export function useClassroomAnalysis(repos, period, enabled) {
+export function useClassroomAnalysis(repos, period, enabled, runId = 0) {
   const [state, setState] = useState({ rows: {}, done: 0, key: null });
-  const key = enabled && period ? `${repos.join(',')}|${period.from}|${period.to}` : null;
+  // runId: resubmitting the same class re-runs it (e.g. to retry failed rows)
+  const key = enabled && period ? `${repos.join(',')}|${period.from}|${period.to}|${runId}` : null;
 
   useEffect(() => {
     if (!key) return undefined;

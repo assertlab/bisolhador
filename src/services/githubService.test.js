@@ -76,6 +76,52 @@ describe('githubService: failures are errors, not zeros', () => {
     });
   });
 
+  describe('fetchMergedPullRequestsInPeriod (classroom; repository list, not search)', () => {
+    const pr = (n, merged, updated) => ({ number: n, createdAt: merged, mergedAt: merged, updatedAt: updated, additions: 1, deletions: 1, author: { login: 'a', __typename: 'User' }, reviews: { nodes: [] }, comments: { totalCount: 0, nodes: [] } });
+    const page = (nodes, hasNextPage) => json({ data: { repository: { pullRequests: { pageInfo: { hasNextPage, endCursor: 'c' }, nodes } } } });
+    const since = '2026-08-01T00:00:00Z';
+    const until = '2026-10-31T23:59:59Z';
+
+    it('keeps PRs merged in the period and stops at the first page older than it', async () => {
+      vi.stubGlobal('localStorage', { getItem: () => 'token' });
+      fetchMock
+        .mockReturnValueOnce(page([pr(3, '2026-09-01T00:00:00Z', '2026-09-02T00:00:00Z'), pr(2, '2026-05-01T00:00:00Z', '2026-09-01T00:00:00Z')], true))
+        .mockReturnValueOnce(page([pr(1, '2026-07-01T00:00:00Z', '2026-07-02T00:00:00Z')], true));
+      const r = await githubService.fetchMergedPullRequestsInPeriod('o', 'r', since, until);
+      expect(r.stats.map((s) => s.merged_at)).toEqual(['2026-09-01T00:00:00Z']);
+      expect(r.capped).toBe(false);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('marks capped when the scan bound is reached inside the period', async () => {
+      vi.stubGlobal('localStorage', { getItem: () => 'token' });
+      fetchMock.mockImplementation(() => page([pr(9, '2026-09-01T00:00:00Z', '2026-09-02T00:00:00Z')], true));
+      const r = await githubService.fetchMergedPullRequestsInPeriod('o', 'r', since, until, { pageSize: 1, maxScanned: 3 });
+      expect(r).toMatchObject({ capped: true });
+      expect(r.stats).toHaveLength(3);
+    });
+
+    it('a page that keeps failing is fetched again in smaller pages from the same cursor', async () => {
+      vi.stubGlobal('localStorage', { getItem: () => 'token' });
+      const sizes = [];
+      fetchMock.mockImplementation((url, init) => {
+        const { n } = JSON.parse(init.body).variables;
+        sizes.push(n);
+        if (n > 12) return json({ message: 'Bad Gateway' }, { status: 502 });
+        return page([pr(1, '2026-09-01T00:00:00Z', '2026-09-02T00:00:00Z')], false);
+      });
+      const r = await githubService.fetchMergedPullRequestsInPeriod('o', 'r', since, until);
+      expect(r.stats).toHaveLength(1);
+      expect(sizes).toEqual([25, 25, 12]); // one retry at 25, then halved
+    }, 10000);
+
+  it('a missing repository is an error, not "0 PRs"', async () => {
+      vi.stubGlobal('localStorage', { getItem: () => 'token' });
+      fetchMock.mockReturnValue(json({ data: { repository: null } }));
+      await expect(githubService.fetchMergedPullRequestsInPeriod('o', 'r', since, until)).rejects.toThrow(/not found/);
+    });
+  });
+
   describe('fetchPullRequestReviewStats (three parallel queries)', () => {
     const pr = (number, extra) => ({ number, ...extra });
     const reply = (nodes) => json({ data: { repository: { pullRequests: { nodes } } } });

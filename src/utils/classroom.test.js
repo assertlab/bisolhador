@@ -3,8 +3,8 @@ import { parseRepoList, parsePeriod, analyzeCommitHistory, releasesInPeriod, ana
 
 describe('parseRepoList', () => {
   it('accepts owner/repo and GitHub URLs, any separator; dedupes case-insensitively', () => {
-    const r = parseRepoList('a/b\nhttps://github.com/c/d.git, https://github.com/E/F/tree/main  a/B;g/h?tab=x');
-    expect(r).toEqual({ repos: ['a/b', 'c/d', 'E/F', 'g/h'], invalid: [], truncated: false });
+    const r = parseRepoList('a/b\nhttps://github.com/c/d.git, https://github.com/E/F/tree/main  a/B;g/h?tab=x github.com/i/j');
+    expect(r).toEqual({ repos: ['a/b', 'c/d', 'E/F', 'g/h', 'i/j'], invalid: [], truncated: false });
   });
 
   it('rejects names that are not safe owner/repo (they go into a search query)', () => {
@@ -54,8 +54,13 @@ describe('releasesInPeriod', () => {
       { created_at: '2026-09-01T00:00:00Z', published_at: '2026-09-02T00:00:00Z' },
       { created_at: '2026-07-01T00:00:00Z', published_at: '2026-08-15T00:00:00Z' }, // tag before the period
       { created_at: '2026-10-01T00:00:00Z', published_at: '2026-10-01T00:00:00Z', draft: true },
-    ], p)).toBe(1);
+    ], p)).toEqual({ count: 1, capped: false });
     expect(releasesInPeriod(null, p)).toBeNull();
+  });
+
+  it('a full page (100) whose oldest release is inside the period is a minimum', () => {
+    const many = Array.from({ length: 100 }, (_, i) => ({ created_at: `2026-09-${String((i % 28) + 1).padStart(2, '0')}T00:00:00Z`, published_at: '2026-10-01T00:00:00Z' }));
+    expect(releasesInPeriod(many, p)).toEqual({ count: 100, capped: true });
   });
 });
 
@@ -67,7 +72,7 @@ describe('analyzeTeamRepo', () => {
 
   it('uses every PR merged in the period (not only 50) and each part fails on its own', () => {
     const stats = Array.from({ length: 60 }, (_, i) => pr(i % 2 === 0));
-    const row = analyzeTeamRepo({ history: fail, prs: ok({ issueCount: 60, stats }), runs: ok({ total_count: 0, workflow_runs: [] }), releases: fail }, p);
+    const row = analyzeTeamRepo({ history: fail, prs: ok({ capped: false, stats }), runs: ok({ total_count: 0, workflow_runs: [] }), releases: fail }, p);
     expect(row.prs).toMatchObject({ available: true, merged: 60, approvedPercentage: 50, firstReviewHours: 2, prSizeLines: 100, leadTimeHours: 10, capped: false });
     expect(row.commits).toEqual({ available: false, reason: 'error' });
     expect(row.ci).toMatchObject({ available: false, reason: 'noRuns' });
@@ -75,8 +80,8 @@ describe('analyzeTeamRepo', () => {
   });
 
   it('no merged PRs (teams pushing straight to main) → 0 merged, review columns N/A', () => {
-    const row = analyzeTeamRepo({ history: fail, prs: ok({ issueCount: 0, stats: [] }), runs: fail, releases: ok([]) }, p);
+    const row = analyzeTeamRepo({ history: fail, prs: ok({ capped: false, stats: [] }), runs: fail, releases: ok([]) }, p);
     expect(row.prs).toMatchObject({ merged: 0, approvedPercentage: null, firstReviewHours: null });
-    expect(row.releases).toBe(0);
+    expect(row.releases).toEqual({ count: 0, capped: false });
   });
 });

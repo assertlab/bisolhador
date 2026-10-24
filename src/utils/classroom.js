@@ -1,7 +1,7 @@
 import { parseSafeRepoName } from './repoName.js';
 import { isBot } from './contributors.js';
 import { analyzeReviewMetrics, analyzeLeadTime } from './prReviewStats.js';
-import { analyzeCiRuns, analyzeConventionalCommits } from './projectPractices.js';
+import { analyzeCiRuns, analyzeConventionalCommits, RELEASES_PAGE } from './projectPractices.js';
 
 // Classroom mode: the same indicators as the Dashboard, computed over a course
 // period for a list of (public) team repositories. Nothing is persisted.
@@ -19,7 +19,7 @@ export function parseRepoList(text) {
   const seen = new Set();
   for (const raw of String(text ?? '').split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean)) {
     const name = raw
-      .replace(/^https?:\/\/(www\.)?github\.com\//i, '')
+      .replace(/^(https?:\/\/)?(www\.)?github\.com\//i, '')
       .replace(/\.git$/i, '')
       .split(/[?#]/)[0]
       .split('/').slice(0, 2).join('/');
@@ -82,16 +82,24 @@ export function analyzeCommitHistory(history) {
   };
 }
 
-/** Releases whose date (min of tag date and publication) falls in the period. */
+const releaseDate = (r) => Math.min(...[r.created_at, r.published_at].map(Date.parse).filter(Number.isFinite));
+
+/**
+ * Releases whose date (min of tag date and publication) falls in the period.
+ * Only the latest RELEASES_PAGE are fetched: when that page is full and its
+ * oldest release is still after the period start, the count is a minimum.
+ */
 export function releasesInPeriod(releases, period) {
   if (!Array.isArray(releases)) return null;
   const since = Date.parse(period.since);
   const until = Date.parse(period.until);
-  return releases.filter((r) => {
+  const count = releases.filter((r) => {
     if (r.draft) return false;
-    const at = Math.min(...[r.created_at, r.published_at].map(Date.parse).filter(Number.isFinite));
+    const at = releaseDate(r);
     return at >= since && at <= until;
   }).length;
+  const oldest = Math.min(...releases.map(releaseDate).filter(Number.isFinite));
+  return { count, capped: releases.length >= RELEASES_PAGE && oldest >= since };
 }
 
 const settled = (r) => (r?.status === 'fulfilled' ? r.value : null);
@@ -111,8 +119,8 @@ export function analyzeTeamRepo(results, period) {
     prs: prs
       ? {
           available: true,
-          merged: review.codeReview.n ?? 0, // human-authored, merged in the period
-          capped: prs.issueCount > 100,
+          merged: review.codeReview.n ?? 0, // human-authored, merged in the period (any branch)
+          capped: prs.capped, // scan bound reached: merged and medians are a minimum / partial
           approvedPercentage: rp?.available ? rp.coverage.approvedPercentage : null,
           firstReviewHours: rp?.available && rp.firstReview.n > 0 ? rp.firstReview.medianHours : null,
           prSizeLines: rp?.available && rp.prSize.n > 0 ? rp.prSize.medianLines : null,
