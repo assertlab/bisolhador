@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { version } from '../../package.json';
 import { HelpModal } from './HelpModal.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
@@ -23,6 +23,35 @@ export function Header({ onSettingsClick }) {
   const { t } = useTranslation();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const toggleRef = useRef(null);
+  const { key: locationKey } = useLocation();
+
+  // Close the menu on any navigation (incl. back/forward within the same page)
+  const [menuLocation, setMenuLocation] = useState(locationKey);
+  if (menuLocation !== locationKey) {
+    setMenuLocation(locationKey);
+    setIsMenuOpen(false);
+  }
+
+  // Escape closes (focus back on the toggle); widening to desktop closes too
+  useEffect(() => {
+    if (!isMenuOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    const desktop = window.matchMedia('(min-width: 1280px)');
+    const onResize = (e) => { if (e.matches) setIsMenuOpen(false); };
+    document.addEventListener('keydown', onKey);
+    desktop.addEventListener('change', onResize);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      desktop.removeEventListener('change', onResize);
+    };
+  }, [isMenuOpen]);
+
   return (
     <header className="bg-shark border-b border-gray-800 sticky top-0 z-[100]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,7 +84,7 @@ export function Header({ onSettingsClick }) {
                   key={item.to}
                   to={item.to}
                   end={item.to === '/'}
-                  className={({ isActive }) => `flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isActive ? 'text-blue-400' : 'text-gray-200 hover:text-blue-400'}`}
+                  className={({ isActive }) => `flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isActive ? 'text-blue-400 underline underline-offset-4' : 'text-gray-200 hover:text-blue-400'}`}
                 >
                   <span aria-hidden="true">{item.icon}</span>
                   <span>{t(item.label)}</span>
@@ -63,9 +92,11 @@ export function Header({ onSettingsClick }) {
               ))}
             </nav>
 
-            <div className="hidden xl:flex items-center gap-3">
-              <ThemeToggle />
+            {/* One ThemeToggle for every width: useTheme keeps local state, and two
+                mounted instances (bar + menu) drifted apart */}
+            <ThemeToggle />
 
+            <div className="hidden xl:flex items-center gap-3">
               <LanguageSwitcher />
 
               <HelpButton onClick={() => setIsHelpOpen(true)} title={t('header.helpTitle')} />
@@ -74,7 +105,7 @@ export function Header({ onSettingsClick }) {
             {/* Botão Configurações (Token) */}
             <button
               type="button"
-              onClick={onSettingsClick}
+              onClick={() => { setIsMenuOpen(false); onSettingsClick(); }}
               className={ICON_BUTTON}
               title={t('header.settingsTitle')}
               aria-label={t('header.settingsTitle')}
@@ -87,6 +118,7 @@ export function Header({ onSettingsClick }) {
 
             {/* Mobile menu toggle */}
             <button
+              ref={toggleRef}
               type="button"
               onClick={() => setIsMenuOpen((open) => !open)}
               className={`xl:hidden ${ICON_BUTTON}`}
@@ -105,8 +137,8 @@ export function Header({ onSettingsClick }) {
       </div>
 
       {/* Mobile menu panel */}
-      {isMenuOpen && (
-        <div id="mobile-menu" className="xl:hidden border-t border-gray-800 bg-shark px-4 pb-4">
+      {/* Always rendered (aria-controls target), hidden when closed */}
+      <div id="mobile-menu" hidden={!isMenuOpen} className="xl:hidden border-t border-gray-800 bg-shark px-4 pb-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
           <nav aria-label={t('header.navLabel')} className="flex flex-col py-2">
             {NAV_ITEMS.map((item) => (
               <NavLink
@@ -114,7 +146,7 @@ export function Header({ onSettingsClick }) {
                 to={item.to}
                 end={item.to === '/'}
                 onClick={() => setIsMenuOpen(false)}
-                className={({ isActive }) => `flex items-center gap-3 px-2 py-3 text-base font-medium rounded ${isActive ? 'text-blue-400' : 'text-gray-200 hover:text-blue-400'}`}
+                className={({ isActive }) => `flex items-center gap-3 px-2 py-3 text-base font-medium rounded ${isActive ? 'text-blue-400 underline underline-offset-4' : 'text-gray-200 hover:text-blue-400'}`}
               >
                 <span aria-hidden="true">{item.icon}</span>
                 <span>{t(item.label)}</span>
@@ -122,12 +154,10 @@ export function Header({ onSettingsClick }) {
             ))}
           </nav>
           <div className="flex items-center gap-3 pt-2 border-t border-gray-800">
-            <ThemeToggle />
             <LanguageSwitcher />
-            <HelpButton onClick={() => { setIsMenuOpen(false); setIsHelpOpen(true); }} title={t('header.helpTitle')} />
+            <HelpButton onClick={() => { setIsMenuOpen(false); setIsHelpOpen(true); toggleRef.current?.focus(); }} title={t('header.helpTitle')} />
           </div>
-        </div>
-      )}
+      </div>
 
       {/* Help Modal */}
       <HelpModal
