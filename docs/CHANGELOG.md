@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [3.11.0] - 2026-10-24
+
 ### 🐛 Fixed
 
 - **FIX**: **Gráficos e indicadores do Dashboard** afirmavam mais do que os dados sustentavam:
