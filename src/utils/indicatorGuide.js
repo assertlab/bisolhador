@@ -74,6 +74,12 @@ export const GUIDE_SECTIONS = [
     ],
   },
   {
+    id: 'classroom',
+    items: [
+      { id: 'classroom', chaoss: [], relation: 'none' },
+    ],
+  },
+  {
     id: 'people',
     items: [
       { id: 'bus-factor', chaoss: ['contributorAbsenceFactor'], relation: 'related' },

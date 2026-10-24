@@ -27,7 +27,7 @@ npm run smoke:csp  # CSP + PDF-export smoke test (Playwright, build + dev modes)
 ```
 src/
 ├── main.jsx                    # React initialization
-├── App.jsx                     # Router setup (/, /ranking, /timeline, /benchmark)
+├── App.jsx                     # Router setup (/, /ranking, /timeline, /benchmark, /guia, /turma)
 ├── constants.js                # Shared constants (API limits, thresholds, etc.)
 ├── pages/
 │   ├── Dashboard.jsx           # Main analysis dashboard
@@ -52,6 +52,7 @@ src/
 │   └── skeletons/              # Skeleton loading screens
 ├── hooks/
 │   ├── useRepository.js        # Main data hook (15+ GitHub endpoints, Promise.allSettled)
+│   ├── useClassroomAnalysis.js # Classroom queue: privacy gate (fail-closed) + period fetches, 3 repos at a time
 │   ├── useSnapshot.js          # Supabase snapshot by URL (?id= / ?repo=&date=), TanStack Query
 │   ├── useBenchmarkRepos.js    # Parallel fetch via TanStack useQueries
 │   ├── useTimeFilter.js        # Unified time range filtering logic
@@ -66,6 +67,7 @@ src/
 │   ├── analyzers.js            # Pure functions: health score, process metrics
 │   ├── repoTree.js             # Maturity detectors (tests/CI/Docker/linter: ✓/✗/? not verified), issue-template dir, fork profile from tree
 │   ├── branches.js             # Zombie branches: excludes default, protected and release/maintenance lines
+│   ├── classroom.js            # Repo list parsing, period, per-repo row from settled fetches
 │   ├── indicatorGuide.js       # Guide structure and CHAOSS mapping (relation equivalent/related/none); texts in locales guide.*
 │   ├── repoName.js             # SAFE_GITHUB_NAME_PATTERN / parseSafeRepoName for app-built routes
 │   ├── projectPractices.js     # CI health (push runs on the default branch), Conventional Commits, release cadence (12 months, min(created_at, published_at)); snapshot normalizer
@@ -194,8 +196,11 @@ This pattern isn't specific to `csp-smoke-test.mjs`: any ad-hoc/throwaway Playwr
 ### Private Repositories
 The app never processes or persists data from private GitHub repositories, even when the user's PAT has private-repo scope. `useRepository.js` checks `repoData.private` immediately after the initial repo fetch and aborts (`PRIVATE_REPO_UNSUPPORTED`) before any of the 15+ parallel calls or the Supabase save-on-load. `Benchmark.jsx` has its own entry path — it reads history from Supabase, not live GitHub calls — so it performs its own live visibility check via `githubService.fetchRepository`, retried with `withExponentialBackoff` and fail-closed if visibility can't be confirmed.
 
+### Classroom Mode
+`/turma` analyzes up to 50 repositories over a course period. It never writes to Supabase (no `saveSearch`), and each repository goes through the same fail-closed visibility gate as Benchmark (`fetchRepository`; private or unverifiable → not analyzed). Repository names come from the URL or pasted text and are validated with `parseSafeRepoName` (and the canonical name returned by GitHub again) before use; they only go as GraphQL variables or encoded URL parts. Merged PRs come from `repository.pullRequests` filtered by `mergedAt`, not from the search API: search returned 0 with no error where an org or token restricts it, which would show a whole class as "0 PRs". Concentration is shown without naming the top author (CHAOSS data ethics).
+
 ### Input Sanitization
-`githubService.js` applies `encodeURIComponent` to every interpolated value (`owner`, `repo`, `defaultBranch`) in request URLs and GitHub search query strings — including inside search qualifiers (e.g. `` repo:${owner}/${repo}+type:pr ``), where only the interpolated values are encoded, never the literal `+`/`:` separators, so query semantics aren't broken. The one GraphQL query (`fetchPullRequestReviewStats`) passes `owner`/`repo` as GraphQL **variables**, never interpolated into the query string.
+`githubService.js` applies `encodeURIComponent` to every interpolated value (`owner`, `repo`, `defaultBranch`) in request URLs and GitHub search query strings — including inside search qualifiers (e.g. `` repo:${owner}/${repo}+type:pr ``), where only the interpolated values are encoded, never the literal `+`/`:` separators, so query semantics aren't broken. GraphQL queries (review stats, branches, classroom history/PRs) pass `owner`/`repo` as GraphQL **variables**, never interpolated into the query string.
 
 ### RPC Input Validation
 `get_leaderboard` ordena por dias distintos com análise (coluna `dias_analisados`, fuso America/Recife; `total_buscas` continua sendo o número de linhas, para compatibilidade) e tem teto de 100 no `limit_count` (`LEAST`/`GREATEST` com `COALESCE(limit_count, 50)` cobrindo o caso de `NULL` explícito, nunca confia no valor enviado pelo client); `registrar_busca` valida tamanho de `full_report` (500KB via `octet_length`, não `pg_column_size` — este último mede o tamanho comprimido/TOAST no disco, não o tamanho lógico, e podia ser contornado por payloads muito compressíveis) e `repo_name` (nulo ou > 300 chars) antes do INSERT, com `RAISE EXCEPTION` — ambos no nível do banco, não só no client. Ambas as funções também têm `DROP FUNCTION IF EXISTS` antes do `CREATE OR REPLACE`, seguindo o padrão de `get_repo_history.sql`, para garantir que um `CREATE OR REPLACE` com assinatura diferente da já implantada substitua a função antiga em vez de criar uma sobrecarga (overload) coexistente. Aplicado após revisão via Supabase Security Advisor.

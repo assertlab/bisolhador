@@ -17,7 +17,8 @@
       "search": "Buscar",
       "ranking": "Ranking",
       "benchmark": "Benchmark",
-      "guide": "Como interpretar"
+      "guide": "Como interpretar",
+      "classroom": "Turma"
     }
   },
   "search": {
@@ -531,7 +532,8 @@
       "review": "Dinâmica de revisão",
       "practices": "Práticas do projeto",
       "governance": "Governança e maturidade",
-      "people": "Pessoas e atividade"
+      "people": "Pessoas e atividade",
+      "classroom": "Modo turma"
     },
     "items": {
       "stars-forks": {
@@ -673,7 +675,75 @@
         "read": "Descreve o tipo de mudança: mais código novo ou mais limpeza e refatoração.",
         "limits": "Não mede qualidade. O GitHub não calcula para repositórios com 10 mil commits ou mais.",
         "chaossNote": "A CHAOSS (Code Changes Lines) soma as linhas tocadas por período; aqui é a razão entre adições e remoções."
+      },
+      "classroom": {
+        "name": "Modo turma",
+        "what": "Os mesmos indicadores de processo do Dashboard, calculados para cada repositório de uma turma dentro do período da disciplina: commits, autores ativos, concentração no autor principal, PRs mergeados, aprovação por outra pessoa, tempo até a 1ª revisão, lead time, tamanho dos PRs, saúde do CI, Conventional Commits e releases.",
+        "read": "Compare equipes pelo processo, não pelo volume: uma equipe com poucos commits e PRs pequenos e revisados pode estar trabalhando melhor que uma com muitos commits diretos no branch principal. Concentração alta indica que uma pessoa faz quase tudo; vale conversar com a equipe.",
+        "limits": "Só repositórios públicos. Autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, e os PRs são examinados até um limite (marcados com * e +). Equipes que trabalham direto no branch principal aparecem com 0 PRs e sem dados de revisão. Commits e PRs não medem esforço, aprendizado nem qualidade, e não devem virar nota automática.",
+        "chaossNote": "Cada coluna segue a referência CHAOSS da entrada correspondente neste guia, calculada no período escolhido. A CHAOSS recomenda cuidado com privacidade ao usar métricas por pessoa ou por equipe; por isso a concentração não identifica quem é o autor principal."
       }
+    }
+  },
+  "classroom": {
+    "title": "Modo Turma",
+    "subtitle": "Compare os repositórios das equipes de uma turma no período da disciplina: até {{max}} repositórios públicos, analisados agora, com os mesmos indicadores de processo do Dashboard. Nada é salvo; a turma fica no link desta página.",
+    "ethics": "Use como ponto de partida para conversar com as equipes, não como nota automática: commits e PRs não medem esforço nem aprendizado.",
+    "needsToken": "O modo turma exige um token do GitHub: cada repositório faz de 5 a 7 consultas, e sem token o limite é de 60 por hora.",
+    "openSettings": "Configurar token",
+    "reposLabel": "Repositórios das equipes",
+    "reposPlaceholder": "dono/repositorio ou https://github.com/dono/repositorio — um por linha",
+    "reposCount_one": "{{count}} repositório (máximo {{max}}).",
+    "reposCount_other": "{{count}} repositórios (máximo {{max}}).",
+    "reposTruncated": "Só os primeiros {{max}} serão analisados.",
+    "reposInvalid": "Ignorados por não serem dono/repositório: {{list}}.",
+    "from": "Início da disciplina",
+    "to": "Fim",
+    "analyze": "Analisar turma",
+    "invalidPeriod": "Período inválido.",
+    "resultsTitle": "Resultados de {{from}} a {{to}}",
+    "progress": "Analisando {{done}} de {{total}}…",
+    "finished": "{{total}} analisados",
+    "notes": "Datas em UTC. \"Commits\" é o total do branch principal no período; autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, sem merges e sem bots. PRs: os mergeados no período em qualquer branch, sem bots. CI: até 100 execuções de push no branch principal. Releases: entre as 100 mais recentes. Concentração = participação do autor que mais fez commits, sem identificá-lo. Repositórios privados não são analisados.",
+    "columns": {
+      "repo": "Repositório",
+      "status": "Situação",
+      "commits": "Commits",
+      "authors": "Autores",
+      "topShare": "Concentração",
+      "mergedPrs": "PRs mergeados",
+      "approved": "Aprovados por outra pessoa",
+      "firstReview": "1ª revisão",
+      "leadTime": "Lead time",
+      "prSize": "Tamanho PR (linhas)",
+      "ci": "CI ok",
+      "conventional": "Conventional",
+      "releases": "Releases"
+    },
+    "status": {
+      "pending": "Na fila…",
+      "ok": "Analisado",
+      "private": "Repositório privado: não analisado.",
+      "notFound": "Repositório não encontrado.",
+      "error": "Não foi possível analisar (falha ou limite da API).",
+      "duplicate": "Mesmo repositório que {{name}} (renomeado)."
+    },
+    "sampledNote": "* calculado sobre uma amostra (300 commits mais recentes ou PRs examinados até o limite); + indica que o número real é maior.",
+    "invalidUrlPeriod": "O período no link é inválido. Escolha as datas e analise de novo.",
+    "csv": {
+      "commits": "Commits",
+      "authors": "Autores",
+      "topShare": "Concentração (%)",
+      "mergedPrs": "PRs mergeados",
+      "approved": "Aprovados por outra pessoa (%)",
+      "firstReview": "1ª revisão (horas, mediana)",
+      "leadTime": "Lead time (horas, mediana)",
+      "prSize": "Tamanho PR (linhas, mediana)",
+      "ci": "CI ok (%)",
+      "conventional": "Conventional Commits (%)",
+      "releases": "Releases",
+      "partial": "Amostra parcial",
+      "yes": "sim"
     }
   }
 }

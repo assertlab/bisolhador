@@ -11,6 +11,7 @@ const Ranking = lazy(() => import('./pages/Ranking.jsx').then((m) => ({ default:
 const Timeline = lazy(() => import('./pages/Timeline.jsx').then((m) => ({ default: m.Timeline })));
 const Benchmark = lazy(() => import('./pages/Benchmark.jsx').then((m) => ({ default: m.Benchmark })));
 const Guide = lazy(() => import('./pages/Guide.jsx').then((m) => ({ default: m.Guide })));
+const Classroom = lazy(() => import('./pages/Classroom.jsx').then((m) => ({ default: m.Classroom })));
 
 // Same full-page spinner already used by Ranking.jsx/Timeline.jsx for their
 // own data-loading states — reused here, not a new pattern, for the brief
@@ -39,6 +40,7 @@ function App() {
           <Route path="/timeline/:owner/:repo" element={<Timeline isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
           <Route path="/benchmark" element={<Benchmark isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
           <Route path="/guia" element={<Guide isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+          <Route path="/turma" element={<Classroom isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
         </Routes>
       </Suspense>
       <ToastContainer />

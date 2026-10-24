@@ -17,7 +17,8 @@
       "search": "Search",
       "ranking": "Ranking",
       "benchmark": "Benchmark",
-      "guide": "How to read"
+      "guide": "How to read",
+      "classroom": "Classroom"
     }
   },
   "search": {
@@ -523,7 +524,8 @@
       "review": "Review dynamics",
       "practices": "Project practices",
       "governance": "Governance and maturity",
-      "people": "People and activity"
+      "people": "People and activity",
+      "classroom": "Classroom mode"
     },
     "items": {
       "stars-forks": {
@@ -665,7 +667,75 @@
         "read": "Describes the kind of change: more new code or more cleanup and refactoring.",
         "limits": "Doesn't measure quality. GitHub doesn't compute it for repositories with 10k+ commits.",
         "chaossNote": "CHAOSS (Code Changes Lines) sums the lines touched per period; here it is the ratio of additions to deletions."
+      },
+      "classroom": {
+        "name": "Classroom mode",
+        "what": "The Dashboard's process indicators computed for each repository of a class within the course period: commits, active authors, concentration on the top author, merged PRs, approval by someone else, time to first review, lead time, PR size, CI health, Conventional Commits and releases.",
+        "read": "Compare teams by process, not volume: a team with few commits and small, reviewed PRs may be working better than one with many direct commits to the default branch. High concentration means one person does almost everything; worth a conversation with the team.",
+        "limits": "Public repositories only. Authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, and PRs are examined up to a limit (marked * and +). Teams working directly on the default branch show 0 PRs and no review data. Commits and PRs don't measure effort, learning or quality, and shouldn't become automatic grades.",
+        "chaossNote": "Each column follows the CHAOSS reference of the matching entry in this guide, computed over the chosen period. CHAOSS advises care with privacy when using per-person or per-team metrics; that's why concentration doesn't name the top author."
       }
+    }
+  },
+  "classroom": {
+    "title": "Classroom Mode",
+    "subtitle": "Compare a class's team repositories over the course period: up to {{max}} public repositories, analyzed now, with the same process indicators as the Dashboard. Nothing is saved; the class lives in this page's link.",
+    "ethics": "Use it as a starting point for conversations with teams, not as an automatic grade: commits and PRs don't measure effort or learning.",
+    "needsToken": "Classroom mode needs a GitHub token: each repository makes 5 to 7 requests, and without a token the limit is 60 per hour.",
+    "openSettings": "Set up token",
+    "reposLabel": "Team repositories",
+    "reposPlaceholder": "owner/repository or https://github.com/owner/repository — one per line",
+    "reposCount_one": "{{count}} repository (max {{max}}).",
+    "reposCount_other": "{{count}} repositories (max {{max}}).",
+    "reposTruncated": "Only the first {{max}} will be analyzed.",
+    "reposInvalid": "Ignored, not owner/repository: {{list}}.",
+    "from": "Course start",
+    "to": "End",
+    "analyze": "Analyze class",
+    "invalidPeriod": "Invalid period.",
+    "resultsTitle": "Results from {{from}} to {{to}}",
+    "progress": "Analyzing {{done}} of {{total}}…",
+    "finished": "{{total}} analyzed",
+    "notes": "Dates in UTC. \"Commits\" is the default-branch total in the period; authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, without merges and bots. PRs: merged in the period into any branch, bots excluded. CI: up to 100 push runs on the default branch. Releases: among the latest 100. Concentration = share of the author with most commits, without naming them. Private repositories are not analyzed.",
+    "columns": {
+      "repo": "Repository",
+      "status": "Status",
+      "commits": "Commits",
+      "authors": "Authors",
+      "topShare": "Concentration",
+      "mergedPrs": "Merged PRs",
+      "approved": "Approved by someone else",
+      "firstReview": "First review",
+      "leadTime": "Lead time",
+      "prSize": "PR size (lines)",
+      "ci": "CI ok",
+      "conventional": "Conventional",
+      "releases": "Releases"
+    },
+    "status": {
+      "pending": "Queued…",
+      "ok": "Analyzed",
+      "private": "Private repository: not analyzed.",
+      "notFound": "Repository not found.",
+      "error": "Couldn't analyze it (API failure or rate limit).",
+      "duplicate": "Same repository as {{name}} (renamed)."
+    },
+    "sampledNote": "* computed over a sample (the 300 most recent commits, or PRs examined up to the limit); + means the real number is higher.",
+    "invalidUrlPeriod": "The period in the link is invalid. Pick the dates and analyze again.",
+    "csv": {
+      "commits": "Commits",
+      "authors": "Authors",
+      "topShare": "Concentration (%)",
+      "mergedPrs": "Merged PRs",
+      "approved": "Approved by someone else (%)",
+      "firstReview": "First review (hours, median)",
+      "leadTime": "Lead time (hours, median)",
+      "prSize": "PR size (lines, median)",
+      "ci": "CI ok (%)",
+      "conventional": "Conventional Commits (%)",
+      "releases": "Releases",
+      "partial": "Partial sample",
+      "yes": "yes"
     }
   }
 }

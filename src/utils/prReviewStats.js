@@ -33,11 +33,15 @@ export function formatDuration(hours) {
   return hours < 24 ? { value: round1(hours), unit: 'hours' } : { value: round1(hours / 24), unit: 'days' };
 }
 
-/** The sample every metric uses: latest merged PRs by humans. */
-function mergedSample(prs) {
+/**
+ * The sample every metric uses: latest merged PRs by humans. `limit` defaults
+ * to MERGED_PR_SAMPLE; the classroom mode passes Infinity (every PR merged in
+ * the course period).
+ */
+function mergedSample(prs, limit = MERGED_PR_SAMPLE) {
   const merged = prs.filter((pr) => pr.merged_at && pr.created_at);
   const humans = merged.filter((pr) => !isBot(pr.user));
-  return { sample: humans.sort(byMergedDesc).slice(0, MERGED_PR_SAMPLE), botsExcluded: merged.length - humans.length };
+  return { sample: humans.sort(byMergedDesc).slice(0, limit), botsExcluded: merged.length - humans.length };
 }
 
 function leadTimeUnavailable(reason, extra = {}) {
@@ -54,9 +58,9 @@ function leadTimeUnavailable(reason, extra = {}) {
  * @param {Array|null} prs - null when the request failed
  * @param {'graphql'|'rest'} source
  */
-export function analyzeLeadTime(prs, source) {
+export function analyzeLeadTime(prs, source, { limit } = {}) {
   if (!Array.isArray(prs)) return leadTimeUnavailable('error');
-  const { sample, botsExcluded } = mergedSample(prs);
+  const { sample, botsExcluded } = mergedSample(prs, limit);
   if (sample.length === 0) return leadTimeUnavailable('noMerged', { botsExcluded, source, method: LEAD_TIME_METHOD });
   const hours = sample.map((pr) => (Date.parse(pr.merged_at) - Date.parse(pr.created_at)) / HOUR_MS).sort((a, b) => a - b);
   const median = percentile(hours, 0.5);
@@ -205,9 +209,9 @@ function divergenceCategory(avg) {
  * @param {Array|null} prStats - toPullRequestStats() output, or null
  * @param {'noToken'|'error'} [reason] - why prStats is null
  */
-export function analyzeReviewMetrics(prStats, reason) {
+export function analyzeReviewMetrics(prStats, reason, { limit } = {}) {
   if (!prStats) return unavailable(reason);
-  const { sample, botsExcluded } = mergedSample(prStats);
+  const { sample, botsExcluded } = mergedSample(prStats, limit);
   const n = sample.length;
   if (n === 0) {
     return {
