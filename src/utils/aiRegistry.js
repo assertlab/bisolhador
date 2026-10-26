@@ -19,6 +19,11 @@ export const REGISTRY_VERSION = '2026-10-25';
 // GitHub Classroom's bot creates the template-derived initial commit.
 export const CLASSROOM_BOT = 'github-classroom';
 
+// Also listed by fetchAiRepoContext (alias `workflows`, repository only, not the template): CI evidence for
+// Classroom, which has no tree. Kept out of CONTEXT_DIRS on purpose: it is not AI configuration, and a failed
+// listing here must not leave the AI configuration incomplete (its own unverified part, 'workflows').
+export const WORKFLOWS_DIR = '.github/workflows';
+
 // Directories listed by fetchAiRepoContext ('' = root).
 export const CONTEXT_DIRS = [
   '',

@@ -30,7 +30,7 @@ export function analyzeCiRuns(response) {
   const runs = (response.workflow_runs ?? []).filter((r) => r.event === 'push'); // server filters too
   const counted = runs.filter((r) => CI_PASS.has(r.conclusion) || CI_FAIL.has(r.conclusion));
   if (counted.length === 0) {
-    return { available: false, reason: (response.total_count ?? 0) === 0 ? 'noRuns' : 'noConclusive', method: PRACTICES_METHOD };
+    return { available: false, reason: (response.total_count ?? 0) === 0 ? 'noRuns' : 'noConclusive', n: 0, method: PRACTICES_METHOD };
   }
   const durations = counted
     .map((r) => (Date.parse(r.updated_at) - Date.parse(r.run_started_at)) / 60000)
@@ -62,7 +62,7 @@ export function analyzeConventionalCommits(commits) {
   if (!Array.isArray(commits)) return { available: false, reason: 'error' };
   // Unlinked authors (author null): fall back to the name ("renovate[bot]", "Renovate Bot")
   const human = commits.filter((c) => (c.parents?.length ?? 1) <= 1 && !isBot(c.author) && !/(\[bot\]|\bbot\b)/i.test(c.commit?.author?.name ?? ''));
-  if (human.length === 0) return { available: false, reason: 'noCommits', method: PRACTICES_METHOD };
+  if (human.length === 0) return { available: false, reason: 'noCommits', n: 0, method: PRACTICES_METHOD };
   const conventional = human.filter((c) => isConventionalCommit(c.commit?.message)).length;
   return { available: true, percentage: Math.round((conventional / human.length) * 100), n: human.length, method: PRACTICES_METHOD };
 }

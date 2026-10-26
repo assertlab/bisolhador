@@ -4,7 +4,7 @@
 import { getItem } from "../utils/storage.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
-import { CONTEXT_DIRS } from "../utils/aiRegistry.js";
+import { CONTEXT_DIRS, WORKFLOWS_DIR } from "../utils/aiRegistry.js";
 import {
   GITHUB_PER_PAGE_COMMITS,
   BRANCH_SCAN_MAX,
@@ -495,7 +495,8 @@ export const githubService = {
   },
 
   // One GraphQL call: .gitignore, .claude/settings.json and the listing of every
-  // AI-config directory, for the repo and its template. Expressions come only from
+  // AI-config directory, for the repo and its template, plus the repo's
+  // .github/workflows listing (CI evidence for Classroom, which has no tree). Expressions come only from
   // CONTEXT_DIRS (constants); owner/repo are variables. A missing file/dir is null
   // (the file does not exist); a failed request throws. Returns the data plus
   // `errors` (partial GraphQL errors): parseAiRepoContext turns a field with an
@@ -512,6 +513,7 @@ export const githubService = {
         gitignore: object(expression: "HEAD:.gitignore") { ... on Blob { text } }
         claudeSettings: object(expression: "HEAD:.claude/settings.json") { ... on Blob { text } }
         ${listings}
+        workflows: object(expression: "HEAD:${WORKFLOWS_DIR}") { ... on Tree { entries { name type } } }
         templateRepository { nameWithOwner isPrivate
           ${listings}
         }

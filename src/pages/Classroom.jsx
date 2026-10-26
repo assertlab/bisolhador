@@ -11,56 +11,21 @@ import { parseRepoList, parsePeriod, CLASSROOM_MAX_REPOS } from '../utils/classr
 import { formatDuration } from '../utils/prReviewStats.js';
 import { formatters } from '../utils/formatters.js';
 import { exportToCsv } from '../utils/csvExporter.js';
+import { CLASSROOM_COLUMNS, classroomCsvRows, isPartialRow } from '../utils/classroomColumns.js';
 import { intlLocale } from '../i18n.js';
 import { guidePath } from '../utils/indicatorGuide.js';
 import { AiProcessSection } from '../components/ai/AiProcessSection.jsx';
 import { AiStudentTable } from '../components/ai/AiStudentTable.jsx';
-import { toolLabel } from '../components/ai/toolLabel.js';
-import { configChecked } from '../utils/aiProcess.js';
 import { Tooltip } from '../components/Tooltip.jsx';
 
 const DEFAULT_PERIOD_DAYS = 120;
 const isoDay = (d) => d.toISOString().slice(0, 10);
 
-// Column definitions: header key, guide entry, raw value, and whether the
-// value comes from a capped sample (shown with "*" / "+"). Rows that failed
-// for a part show N/A in that column only.
-const commitsCapped = (r) => r.commits.available && r.commits.capped;
-const COLUMNS = [
-  { key: 'commits', guide: 'commit-activity', get: (r) => (r.commits.available ? r.commits.commits : null) },
-  { key: 'authors', guide: 'contributors', get: (r) => (r.commits.available ? r.commits.authors : null), sampled: commitsCapped },
-  { key: 'topShare', guide: 'bus-factor', get: (r) => r.commits.topSharePercentage, pct: true, sampled: commitsCapped },
-  { key: 'mergedPrs', guide: 'prs-merges', get: (r) => (r.prs.available ? r.prs.merged : null), atLeast: (r) => r.prs.capped },
-  { key: 'approved', guide: 'review-coverage', get: (r) => r.prs.approvedPercentage, pct: true, sampled: (r) => r.prs.capped },
-  { key: 'firstReview', guide: 'first-review', get: (r) => r.prs.firstReviewHours, hours: true, sampled: (r) => r.prs.capped },
-  { key: 'leadTime', guide: 'lead-time', get: (r) => r.prs.leadTimeHours, hours: true, sampled: (r) => r.prs.capped },
-  { key: 'prSize', guide: 'pr-size', get: (r) => r.prs.prSizeLines, sampled: (r) => r.prs.capped },
-  { key: 'ci', guide: 'ci-health', get: (r) => (r.ci.available ? r.ci.successPercentage : null), pct: true },
-  { key: 'conventional', guide: 'conventional-commits', get: (r) => (r.commits.available && r.commits.conventional.available ? r.commits.conventional.percentage : null), pct: true, sampled: commitsCapped },
-  { key: 'releases', guide: 'release-cadence', get: (r) => r.releases?.count ?? null, atLeast: (r) => r.releases?.capped },
-  // AI in the Process (repository level only; per student stays in the expanded row, never in the CSV).
-  // `show`/`csv` replace the default number formatting; `count` adds the n behind a percentage.
-  { key: 'aiTools', guide: 'ai-tools', get: aiToolIds, show: (ids, t) => (ids.length ? ids.map((id) => toolLabel(id, t)).join(', ') : '—'), csv: (ids, t) => ids.map((id) => toolLabel(id, t)).join(', ') },
-  { key: 'aiCommits', guide: 'ai-commits', get: (r) => r.ai.commits.percentage, pct: true, count: (r) => [r.ai.commits.withAi, r.ai.commits.n], sampled: commitsCapped },
-  { key: 'aiPrs', guide: 'ai-prs', get: (r) => r.ai.prs.percentage, pct: true, count: (r) => [r.ai.prs.byAgents, r.ai.prs.n], sampled: (r) => r.prs.capped },
-  { key: 'aiCoherence', guide: 'ai-coherence', get: coherenceFlags, show: (flags, t) => (flags.length ? <CoherenceMark flags={flags} t={t} /> : '—'), csv: (flags, t) => flags.map((f) => t(`aiProcess.coherence.${f}`)).join(' ') },
-  { key: 'aiBadge', guide: 'ai-badge', get: (r) => (r.ai.badge.applicable && r.ai.badge.total > 0 ? r.ai.badge : null), show: (b) => `${b.met}/${b.total}`, csv: (b, t) => t('aiProcess.badge.score', { met: b.met, total: b.total }), na: '—' },
-];
-
-// Tools with a trace of the repository's own use (template-only tools are listed in the expanded row).
-// null when no source could be read.
-function aiToolIds(r) {
-  if (!r.ai.available) return null;
-  const { config, commits, prs, tools } = r.ai;
-  if (!configChecked(config.status) && !commits.available && !prs.available) return null;
-  return tools.filter((tool) => tool.sources.length > 0).map((tool) => tool.id);
-}
-
-// "Sources disagree" needs measured commits (no rule fires otherwise): N/A, not "—", when they weren't.
-function coherenceFlags(r) {
-  if (!r.ai.available || r.ai.coherence.unverified.includes('commits')) return null;
-  return r.ai.coherence.flags;
-}
+// Columns and CSV rows live in utils/classroomColumns.js; the screen adds the JSX-only rendering.
+const SCREEN_SHOW = {
+  aiCoherence: (flags, t) => (flags.length ? <CoherenceMark flags={flags} t={t} /> : '—'),
+};
+const COLUMNS = CLASSROOM_COLUMNS.map((col) => (SCREEN_SHOW[col.key] ? { ...col, show: SCREEN_SHOW[col.key] } : col));
 
 // Neutral mark (no alert color): the sources disagree, at the repository level only.
 function CoherenceMark({ flags, t }) {
@@ -178,24 +143,11 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
   const isExpanded = (name) => expanded[name] ?? requested.repos.length === 1;
   const toggle = (name) => setExpanded((e) => ({ ...e, [name]: !isExpanded(name) }));
   const anyPrivate = requested.repos.some((name) => rows[name]?.isPrivate);
-  const anySampled = requested.repos.some((name) => rows[name]?.status === 'ok' && COLUMNS.some((c) => c.sampled?.(rows[name]) || c.atLeast?.(rows[name])));
+  const anySampled = requested.repos.some((name) => rows[name]?.status === 'ok' && isPartialRow(rows[name]));
 
-  // CSV: raw numbers (hours, %, counts) with the unit in the header, so a
-  // spreadsheet can sort/average them; the screen formats for reading.
+  // CSV: raw numbers with the unit in the header, plus the n behind each percentage (classroomCsvRows)
   const exportCsv = () => {
-    exportToCsv(`bisolhador-turma-${period.from}_${period.to}.csv`, requested.repos.map((name) => {
-      const row = rows[name];
-      const dup = duplicateOf(name);
-      const status = dup ? 'duplicate' : row?.status ?? 'pending';
-      const base = { [t('classroom.columns.repo')]: row?.fullName ?? name, [t('classroom.csv.visibility')]: row?.status === 'ok' ? t(row.isPrivate ? 'classroom.csv.private' : 'classroom.csv.public') : '', [t('classroom.columns.status')]: t(`classroom.status.${status}`, { name: dup }) };
-      for (const col of COLUMNS) {
-        const header = t(`classroom.csv.${col.key}`);
-        const v = status === 'ok' ? col.get(row) : null;
-        base[header] = v == null ? '' : col.csv ? col.csv(v, t) : v;
-      }
-      base[t('classroom.csv.partial')] = status === 'ok' && COLUMNS.some((c) => c.sampled?.(row) || c.atLeast?.(row)) ? t('classroom.csv.yes') : '';
-      return base;
-    }));
+    exportToCsv(`bisolhador-turma-${period.from}_${period.to}.csv`, classroomCsvRows(requested.repos, rows, duplicateOf, t));
   };
 
   return (

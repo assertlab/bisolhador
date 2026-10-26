@@ -19,8 +19,8 @@ describe('analyzeCiRuns', () => {
   });
 
   it('no runs at all vs only inconclusive runs vs failed request', () => {
-    expect(analyzeCiRuns({ total_count: 0, workflow_runs: [] })).toMatchObject({ available: false, reason: 'noRuns' });
-    expect(analyzeCiRuns({ total_count: 1, workflow_runs: [run('cancelled')] })).toMatchObject({ available: false, reason: 'noConclusive' });
+    expect(analyzeCiRuns({ total_count: 0, workflow_runs: [] })).toMatchObject({ available: false, reason: 'noRuns', n: 0 }); // empty sample: n = 0 (CSV)
+    expect(analyzeCiRuns({ total_count: 1, workflow_runs: [run('cancelled')] })).toMatchObject({ available: false, reason: 'noConclusive', n: 0 });
     expect(analyzeCiRuns(null)).toEqual({ available: false, reason: 'error' });
   });
 });
@@ -53,7 +53,7 @@ describe('Conventional Commits', () => {
 
   it('failed request vs no commits', () => {
     expect(analyzeConventionalCommits(null)).toEqual({ available: false, reason: 'error' });
-    expect(analyzeConventionalCommits([])).toMatchObject({ available: false, reason: 'noCommits' });
+    expect(analyzeConventionalCommits([])).toMatchObject({ available: false, reason: 'noCommits', n: 0 });
   });
 });
 

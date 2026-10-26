@@ -4,7 +4,7 @@ import {
   parseCoauthors, toolsFromCoauthors, agentToolOf, reviewerToolOf, isMaintenanceBot, authorAgentTool,
   detectConfig, gitignoreHidesAi, coauthorDisabled, normalizeLogin,
 } from './aiTraces.js';
-import { REGISTRY_VERSION, CONTEXT_DIRS, CLASSROOM_BOT } from './aiRegistry.js';
+import { REGISTRY_VERSION, CONTEXT_DIRS, WORKFLOWS_DIR, CLASSROOM_BOT } from './aiRegistry.js';
 import { isBot } from './contributors.js';
 
 const pct = (part, total) => Math.round((part / total) * 100);
@@ -171,7 +171,7 @@ export const AI_PROCESS_METHOD = 'ai-traces-v1';
 
 /**
  * @typedef {{ gitignore: string|null, claudeSettings: string|null, templatePaths: Set<string>|null,
- *   unverified?: Array<'gitignore'|'claudeSettings'|'listings'>, originChecked?: Set<string>, available: boolean }} AiRepoContext
+ *   unverified?: Array<'gitignore'|'claudeSettings'|'listings'|'workflows'>, originChecked?: Set<string>, available: boolean }} AiRepoContext
  * templatePaths: null = template not verified (no context); empty Set = no template, or no AI files in it.
  * originChecked (Classroom only): paths whose origin was verified by their history; others outside the template are unverified.
  */
@@ -184,7 +184,11 @@ const listedPaths = (node) => {
   return out;
 };
 
-const CONTEXT_PARTS = ['gitignore', 'claudeSettings', 'listings'];
+const workflowPaths = (node) => (node?.workflows?.entries ?? []).map((entry) => `${WORKFLOWS_DIR}/${entry.name}`);
+// Root listing (CONTEXT_DIRS[0] = '') with a trailing slash on directories, so tree patterns (tests/, .circleci/) match.
+const rootPaths = (node) => (node?.d0?.entries ?? []).map((entry) => (entry.type === 'tree' ? `${entry.name}/` : entry.name));
+
+const CONTEXT_PARTS = ['gitignore', 'claudeSettings', 'listings', 'workflows'];
 
 /**
  * Parts of the context that a partial GraphQL error left unread: 'gitignore', 'claudeSettings',
@@ -195,7 +199,7 @@ function unreadParts(errors) {
   const out = new Set();
   for (const e of errors ?? []) {
     const [root, field] = Array.isArray(e?.path) ? e.path : [];
-    if (root === 'repository' && (field === 'gitignore' || field === 'claudeSettings')) out.add(field);
+    if (root === 'repository' && (field === 'gitignore' || field === 'claudeSettings' || field === 'workflows')) out.add(field);
     else if (root === 'repository' && field === 'templateRepository') out.add('template');
     else if (root === 'repository' && /^d\d+$/.test(field ?? '')) out.add('listings');
     else [...CONTEXT_PARTS, 'template'].forEach((part) => out.add(part));
@@ -205,7 +209,8 @@ function unreadParts(errors) {
 
 /**
  * Turns the raw `fetchAiRepoContext` response ({ repository, errors }) into an AiRepoContext plus
- * `contextPaths` (every path listed in the repository itself, for Classroom, which has no tree).
+ * `contextPaths` (every path listed in the repository itself, for Classroom, which has no tree),
+ * `workflowPaths` (.github/workflows/<name>) and `rootPaths` (the root listing, directories as `name/`).
  * gitignore/claudeSettings are null when the file does not exist; a part with a partial error is
  * listed in `unverified` instead (and a template error leaves templatePaths null).
  * allowPrivateTemplate (Classroom only): read a private template's listings; elsewhere its origin is unverified.
@@ -227,6 +232,8 @@ export function parseAiRepoContext(data, { allowPrivateTemplate = false } = {}) 
     claudeSettings: repo?.claudeSettings?.text ?? null,
     templatePaths,
     contextPaths: listedPaths(repo),
+    workflowPaths: workflowPaths(repo),
+    rootPaths: rootPaths(repo),
     unverified: CONTEXT_PARTS.filter((part) => unread.has(part)),
     available: true,
   };

@@ -2,6 +2,7 @@ import { AUTHORSHIP_MAX_PATHS } from '../constants.js';
 import { AI_TOOLS, CLASSROOM_BOT } from './aiRegistry.js';
 import { normalizeLogin, authorAgentTool, isMaintenanceBot, detectConfig } from './aiTraces.js';
 import { commitAiTools } from './aiProcess.js';
+import { detectCi, detectTests } from './repoTree.js';
 
 // Classroom Mode only: "AI in the Process › Per student". Everything here stays in the
 // browser's memory — never in the CSV, Supabase or GA (spec §3 anti-goals, §7.3).
@@ -137,4 +138,27 @@ export function analyzeStudents(commits, authorship, period, templatePaths) {
       }))
       .sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || b.commits - a.commits || a.key.localeCompare(b.key)),
   };
+}
+
+/**
+ * Classroom stand-in for analyzeMaturity (badge criterion "tests and CI"), with no extra request:
+ * Classroom has no tree, only the context listings and the period's Actions runs.
+ * - CI: a CI config in the root listing or .github/workflows (repoTree's detectCi), or any completed push run
+ *   in the period (fetchActionRunsInPeriod only returns those). false only when the listings were read and the
+ *   runs loaded and both are negative; null otherwise.
+ * - Tests: a test directory at the root (test/, tests/, __tests__/…; spec/ excluded, as in repoTree). Never false:
+ *   co-located *.test.js and src/test are invisible without the tree, so "not found" = not verified (null).
+ * Only the two fields the badge reads (testsCiState); there is no tree, so no treeStatus.
+ * @param {object|null} ctx - parseAiRepoContext result (null = context query failed)
+ * @param {{total_count: number, workflow_runs: Array}|null} runs - null = request failed
+ */
+export function classroomMaturity(ctx, runs) {
+  const listing = ctx?.available ? ctx : null;
+  const root = listing?.rootPaths ?? [];
+  const hasRuns = runs ? (runs.total_count ?? 0) > 0 || (runs.workflow_runs?.length ?? 0) > 0 : null;
+  const listingsRead = Boolean(listing) && !listing.unverified?.some((part) => part === 'listings' || part === 'workflows');
+  let ciCdDetected = null;
+  if (detectCi([...root, ...(listing?.workflowPaths ?? [])]) || hasRuns === true) ciCdDetected = true;
+  else if (listingsRead && hasRuns === false) ciCdDetected = false;
+  return { testsDetected: detectTests(root) ? true : null, ciCdDetected };
 }
