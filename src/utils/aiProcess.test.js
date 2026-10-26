@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   fromRestCommit, fromGraphqlCommit, commitAiTools, analyzeAiCommits, analyzeAiPrs, analyzeAiSafeguards,
+  analyzeAiConfig, analyzeCoherence, analyzeResponsibleBadge, buildAiProcess, normalizeSnapshotAiProcess,
 } from './aiProcess.js';
 
 const commit = (o = {}) => ({
@@ -103,5 +104,171 @@ describe('analyzeAiSafeguards', () => {
   });
   it('null prs with a token → error', () => {
     expect(analyzeAiSafeguards(null, { reviewsAvailable: true })).toMatchObject({ available: false, reason: 'error' });
+  });
+});
+
+const emptyCtx = { gitignore: '', claudeSettings: null, templatePaths: new Set(), available: true };
+const noAiCommits = { available: true, n: 3, withAi: 0, percentage: 0, firstTraceAt: null, tools: [] };
+const noAiPrs = { available: true, n: 2, byAgents: 0, percentage: 0, agentTools: [], aiReviewed: { available: true, count: 0, percentage: 0, tools: [] } };
+const CLAUDE_TRAILER = 'feat\n\nCo-Authored-By: Claude <noreply@anthropic.com>';
+
+const badgeInput = (config, commits, prs, extra = {}) => ({
+  config, commits, prs, coherence: analyzeCoherence(config, commits, prs),
+  safeguards: { available: false, reason: 'noToken', agentPrs: 0, agentUnapproved: null }, maturity: null, ...extra,
+});
+const noTraces = badgeInput(analyzeAiConfig([], 'complete', emptyCtx), noAiCommits, noAiPrs);
+const declaredWithConfig = badgeInput(analyzeAiConfig(['CLAUDE.md'], 'complete', emptyCtx), { ...noAiCommits, withAi: 2, tools: ['claude'] }, noAiPrs);
+const stateOf = (b, id) => b.criteria.find((c) => c.id === id).state;
+
+const fullFixture = {
+  treePaths: ['CLAUDE.md', '.claude/skills/x/SKILL.md', 'src/a.js'],
+  treeStatus: 'complete',
+  ctx: emptyCtx,
+  commits: [commit({ message: CLAUDE_TRAILER }), commit()],
+  prs: [
+    pr({ approvedByOther: true, changedLines: 20, aiParticipants: ['coderabbitai'] }),
+    pr({ user: { login: 'Copilot', type: 'Bot' }, approvedByOther: true, changedLines: 30, aiParticipants: [] }),
+  ],
+  reviewsAvailable: true,
+  maturity: { testsDetected: true, ciCdDetected: true, treeStatus: 'complete' },
+};
+
+describe('analyzeAiConfig', () => {
+  it('entries with kind and template origin; gitignore and settings from the context', () => {
+    const cfg = analyzeAiConfig(['CLAUDE.md', '.mcp.json', 'src/a.js'], 'complete',
+      { gitignore: '.claude/\nnode_modules\n', claudeSettings: '{"attribution": false}', templatePaths: new Set(['.mcp.json']), available: true });
+    expect(cfg).toEqual({
+      status: 'complete',
+      entries: [
+        { toolId: 'claude', path: 'CLAUDE.md', kind: 'instructions', fromTemplate: false },
+        { toolId: 'generic', path: '.mcp.json', kind: 'extensions', fromTemplate: true },
+      ],
+      hiddenLocal: ['.claude/'],
+      coauthorDisabled: true,
+    });
+  });
+  it('no context (no token) or unavailable context → template, gitignore and settings unverified', () => {
+    for (const ctx of [null, { ...emptyCtx, available: false }]) {
+      expect(analyzeAiConfig(['AGENTS.md'], 'complete', ctx)).toMatchObject({
+        entries: [{ toolId: 'generic', fromTemplate: null }], hiddenLocal: null, coauthorDisabled: null,
+      });
+    }
+    expect(analyzeAiConfig(null, 'unavailable', null)).toMatchObject({ status: 'unavailable', entries: [] });
+  });
+});
+
+describe('analyzeCoherence', () => {
+  it('config from template does not count; unknown template still flags but says unverified', () => {
+    const ctx = { gitignore: '', claudeSettings: null, templatePaths: new Set(['AGENTS.md']), available: true };
+    const cfg = analyzeAiConfig(['AGENTS.md'], 'complete', ctx);
+    expect(cfg.entries[0].fromTemplate).toBe(true);
+    expect(analyzeCoherence(cfg, noAiCommits, noAiPrs).flags).toEqual([]);
+    const unknown = analyzeAiConfig(['CLAUDE.md'], 'complete', { ...ctx, templatePaths: null });
+    expect(analyzeCoherence(unknown, noAiCommits, noAiPrs)).toMatchObject({ flags: ['configWithoutDeclaration'], unverified: ['template'] });
+  });
+  it('hidden local use without declaration; coauthorDisabled is reported as explanation', () => {
+    const cfg = analyzeAiConfig([], 'complete', { gitignore: '.claude/\n', claudeSettings: '{"includeCoAuthoredBy": false}', templatePaths: new Set(), available: true });
+    expect(analyzeCoherence(cfg, noAiCommits, noAiPrs)).toMatchObject({ flags: ['hiddenWithoutDeclaration'], coauthorDisabled: true });
+  });
+  it('truncated tree with nothing found: no flag, config unverified', () => {
+    const cfg = analyzeAiConfig(['src/a.js'], 'truncated', null);
+    expect(cfg.status).toBe('truncated');
+    expect(analyzeCoherence(cfg, noAiCommits, noAiPrs)).toMatchObject({ flags: [], unverified: expect.arrayContaining(['config']) });
+  });
+  it('declared commits silence rule 1; different tool is informative only', () => {
+    const cfg = analyzeAiConfig(['.cursorrules'], 'complete', emptyCtx);
+    const r = analyzeCoherence(cfg, { ...noAiCommits, withAi: 2, tools: ['claude'] }, noAiPrs);
+    expect(r).toMatchObject({ flags: [], toolMismatch: true });
+  });
+  it('an agent PR also counts as declaration; generic config never causes a tool mismatch', () => {
+    const cfg = analyzeAiConfig(['AGENTS.md'], 'complete', emptyCtx);
+    expect(analyzeCoherence(cfg, noAiCommits, { ...noAiPrs, byAgents: 1, agentTools: ['copilot'] })).toMatchObject({ flags: [], toolMismatch: false });
+  });
+  it('commits not measured: no rule fires and commits go to unverified', () => {
+    const cfg = analyzeAiConfig(['CLAUDE.md'], 'complete', { ...emptyCtx, gitignore: '.cursor/' });
+    const r = analyzeCoherence(cfg, analyzeAiCommits(null), noAiPrs);
+    expect(r.flags).toEqual([]);
+    expect(r.unverified).toContain('commits');
+  });
+});
+
+describe('analyzeResponsibleBadge', () => {
+  it('badge: not applicable without traces; na/unverified leave the denominator', () => {
+    expect(analyzeResponsibleBadge(noTraces).applicable).toBe(false);
+    const b = analyzeResponsibleBadge({ ...declaredWithConfig, safeguards: { available: true, agentPrs: 0 }, maturity: { testsDetected: true, ciCdDetected: null } });
+    expect(b.criteria.find((c) => c.id === 'agentReviewed').state).toBe('na');
+    expect(b.criteria.find((c) => c.id === 'testsCi').state).toBe('unverified');
+    expect(b).toMatchObject({ applicable: true, met: 3, total: 3 });
+  });
+  it('hidden local use alone makes it applicable; flags make coherent unmet', () => {
+    const cfg = analyzeAiConfig([], 'complete', { ...emptyCtx, gitignore: '.aider*' });
+    const b = analyzeResponsibleBadge(badgeInput(cfg, noAiCommits, noAiPrs, { maturity: { testsDetected: false, ciCdDetected: true } }));
+    expect(b.applicable).toBe(true);
+    expect(b.criteria.map((c) => [c.id, c.state])).toEqual([
+      ['config', 'unmet'], ['declared', 'unmet'], ['coherent', 'unmet'], ['agentReviewed', 'na'], ['testsCi', 'unmet'],
+    ]);
+    expect(b).toMatchObject({ met: 0, total: 4 });
+  });
+  it('template-only config is not a trace', () => {
+    const cfg = analyzeAiConfig(['CLAUDE.md'], 'complete', { ...emptyCtx, templatePaths: new Set(['CLAUDE.md']) });
+    expect(analyzeResponsibleBadge(badgeInput(cfg, noAiCommits, noAiPrs)).applicable).toBe(false);
+  });
+  it('agentReviewed: unverified without a token, met only with zero unapproved', () => {
+    const prs = { ...noAiPrs, byAgents: 2, agentTools: ['copilot'] };
+    const cfg = analyzeAiConfig([], 'complete', emptyCtx);
+    expect(stateOf(analyzeResponsibleBadge(badgeInput(cfg, noAiCommits, prs)), 'agentReviewed')).toBe('unverified');
+    const with1 = { available: true, agentPrs: 2, agentUnapproved: 1 };
+    expect(stateOf(analyzeResponsibleBadge(badgeInput(cfg, noAiCommits, prs, { safeguards: with1 })), 'agentReviewed')).toBe('unmet');
+    expect(stateOf(analyzeResponsibleBadge(badgeInput(cfg, noAiCommits, prs, { safeguards: { ...with1, agentUnapproved: 0 } })), 'agentReviewed')).toBe('met');
+  });
+  it('commits not measured: declared and coherent unverified; truncated tree: config unverified', () => {
+    const cfg = analyzeAiConfig(['src/a.js'], 'truncated', null);
+    const b = analyzeResponsibleBadge(badgeInput(cfg, analyzeAiCommits(null), { ...noAiPrs, aiReviewed: { available: true, count: 1, tools: ['coderabbit'] } }));
+    expect(b.applicable).toBe(true);
+    expect(['config', 'declared', 'coherent'].map((id) => stateOf(b, id))).toEqual(['unverified', 'unverified', 'unverified']);
+  });
+});
+
+describe('buildAiProcess', () => {
+  it('buildAiProcess has no person logins and the method/version', () => {
+    const ai = buildAiProcess(fullFixture);
+    expect(ai).toMatchObject({ method: 'ai-traces-v1', registryVersion: '2026-10-25' });
+    expect(JSON.stringify(ai)).not.toContain('alice');
+  });
+  it('merges sources per tool; template-only tools are flagged fromTemplate and have no config source', () => {
+    const ai = buildAiProcess({ ...fullFixture, treePaths: [...fullFixture.treePaths, 'AGENTS.md'], ctx: { ...emptyCtx, templatePaths: new Set(['AGENTS.md']) } });
+    expect(ai.tools).toEqual([
+      { id: 'claude', sources: ['config', 'commit'], configKind: 'extensions', fromTemplate: false },
+      { id: 'coderabbit', sources: ['review'], configKind: null, fromTemplate: false },
+      { id: 'copilot', sources: ['pr'], configKind: null, fromTemplate: false },
+      { id: 'generic', sources: [], configKind: 'instructions', fromTemplate: true },
+    ]);
+    expect(ai.commits).toMatchObject({ n: 2, withAi: 1 });
+    expect(ai.prs).toMatchObject({ n: 2, byAgents: 1 });
+    expect(ai.safeguards).toMatchObject({ available: true, agentPrs: 1, agentUnapproved: 0 });
+    expect(ai.badge).toMatchObject({ applicable: true, met: 5, total: 5 });
+  });
+  it('prLimit bounds the PR sample', () => {
+    expect(buildAiProcess({ ...fullFixture, prLimit: 1 }).prs.n).toBe(1);
+  });
+  it('empty repository → no traces, nothing crashes', () => {
+    const ai = buildAiProcess({ treePaths: [], treeStatus: 'complete', ctx: null, commits: [], prs: [], reviewsAvailable: false, maturity: null });
+    expect(ai.tools).toEqual([]);
+    expect(ai.badge.applicable).toBe(false);
+  });
+  it('failed sources → unavailable parts, still builds', () => {
+    const ai = buildAiProcess({ treePaths: null, treeStatus: 'unavailable', ctx: null, commits: null, prs: null, reviewsAvailable: true, maturity: null });
+    expect(ai).toMatchObject({ commits: { available: false }, prs: { available: false }, safeguards: { available: false, reason: 'error' }, tools: [] });
+  });
+});
+
+describe('normalizeSnapshotAiProcess', () => {
+  it('normalizer: old or unknown method → not recorded', () => {
+    expect(normalizeSnapshotAiProcess({ fullName: 'a/b' }).aiProcess).toEqual({ available: false, reason: 'snapshot' });
+    expect(normalizeSnapshotAiProcess({ aiProcess: { method: 'x' } }).aiProcess.reason).toBe('snapshot');
+  });
+  it('current method is kept as is', () => {
+    const report = { fullName: 'a/b', aiProcess: buildAiProcess(fullFixture) };
+    expect(normalizeSnapshotAiProcess(report)).toBe(report);
   });
 });

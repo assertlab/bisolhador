@@ -1,6 +1,10 @@
 import { MERGED_PR_SAMPLE, AI_MIN_GROUP } from '../constants.js';
 import { percentile } from './prReviewStats.js';
-import { parseCoauthors, toolsFromCoauthors, agentToolOf, reviewerToolOf, isMaintenanceBot, authorAgentTool } from './aiTraces.js';
+import {
+  parseCoauthors, toolsFromCoauthors, agentToolOf, reviewerToolOf, isMaintenanceBot, authorAgentTool,
+  detectConfig, gitignoreHidesAi, coauthorDisabled,
+} from './aiTraces.js';
+import { REGISTRY_VERSION } from './aiRegistry.js';
 
 const pct = (part, total) => Math.round((part / total) * 100);
 const unique = (xs) => [...new Set(xs)];
@@ -124,4 +128,176 @@ export function analyzeAiSafeguards(prs, { limit = MERGED_PR_SAMPLE, reviewsAvai
       humanN: humanLines.length,
     },
   };
+}
+
+export const AI_PROCESS_METHOD = 'ai-traces-v1';
+
+/**
+ * @typedef {{ gitignore: string|null, claudeSettings: string|null, templatePaths: Set<string>|null, available: boolean }} AiRepoContext
+ * templatePaths: null = template not verified; empty Set = verified, no template or no AI files in it.
+ */
+
+/** Versioned AI config in the tree, with template origin, AI paths hidden by .gitignore and the co-author switch. */
+export function analyzeAiConfig(paths, treeStatus, ctx) {
+  const context = ctx?.available ? ctx : null;
+  const templatePaths = context?.templatePaths ?? null;
+  return {
+    status: Array.isArray(paths) ? treeStatus : 'unavailable',
+    entries: detectConfig(paths).map((e) => ({ ...e, fromTemplate: templatePaths ? templatePaths.has(e.path) : null })),
+    hiddenLocal: gitignoreHidesAi(context?.gitignore ?? null),
+    coauthorDisabled: coauthorDisabled(context?.claudeSettings ?? null),
+  };
+}
+
+// Template files are listed, but never count as a trace of the repository's own use.
+const ownEntries = (config) => config.entries.filter((e) => e.fromTemplate !== true);
+const declares = (commits, prs) => commits.withAi > 0 || prs.byAgents > 0;
+
+/**
+ * Repository-level cross-check between sources (spec §5.6). Flags are neutral: "the sources do not agree",
+ * always shown with the legitimate causes. Rules only fire when commits were measured.
+ * @returns {{ flags: Array<'configWithoutDeclaration'|'hiddenWithoutDeclaration'>,
+ *   unverified: Array<'config'|'template'|'gitignore'|'commits'>, toolMismatch: boolean, coauthorDisabled: boolean }}
+ */
+export function analyzeCoherence(config, commits, prs) {
+  const own = ownEntries(config);
+  const measured = commits.available;
+  const declared = declares(commits, prs);
+  const unverified = [];
+  if (config.status !== 'complete') unverified.push('config');
+  if (own.some((e) => e.fromTemplate === null)) unverified.push('template');
+  if (config.hiddenLocal === null) unverified.push('gitignore');
+  if (!measured) unverified.push('commits');
+
+  const flags = [];
+  if (measured && !declared) {
+    if (own.length > 0) flags.push('configWithoutDeclaration');
+    if (config.hiddenLocal?.length > 0) flags.push('hiddenWithoutDeclaration');
+  }
+
+  // 'generic' (AGENTS.md, .mcp.json) belongs to no tool in particular, so it never mismatches.
+  const configTools = unique(own.map((e) => e.toolId).filter((id) => id !== 'generic'));
+  const declaredTools = unique([...(commits.tools ?? []), ...(prs.agentTools ?? [])]);
+  const toolMismatch = configTools.length > 0 && declaredTools.length > 0 && !configTools.some((t) => declaredTools.includes(t));
+
+  return { flags, unverified, toolMismatch, coauthorDisabled: config.coauthorDisabled === true };
+}
+
+function configState(config) {
+  if (ownEntries(config).length > 0) return 'met';
+  return config.status === 'complete' ? 'unmet' : 'unverified';
+}
+
+function declaredState(commits) {
+  if (!commits.available) return 'unverified';
+  return commits.withAi > 0 ? 'met' : 'unmet';
+}
+
+// No flag is "met" only when the rules could have fired: when declared, they never can.
+function coherentState(coherence, declared) {
+  if (coherence.flags.length > 0) return 'unmet';
+  if (declared) return 'met';
+  const blind = coherence.unverified.some((u) => u === 'commits' || u === 'config' || u === 'gitignore');
+  return blind ? 'unverified' : 'met';
+}
+
+function agentReviewedState(prs, safeguards) {
+  if (safeguards?.available) {
+    if (!safeguards.agentPrs) return 'na';
+    return safeguards.agentUnapproved === 0 ? 'met' : 'unmet';
+  }
+  if (prs.available && prs.byAgents === 0) return 'na';
+  return 'unverified';
+}
+
+function testsCiState(maturity) {
+  if (!maturity || maturity.testsDetected == null || maturity.ciCdDetected == null) return 'unverified';
+  return maturity.testsDetected && maturity.ciCdDetected ? 'met' : 'unmet';
+}
+
+/**
+ * "Responsible AI use" badge (spec §5.7): observable practices and coherence between traces, never real use.
+ * Applies only with some AI trace; 'na' and 'unverified' criteria stay out of the denominator.
+ */
+export function analyzeResponsibleBadge({ config, commits, prs, safeguards, coherence, maturity }) {
+  const applicable = ownEntries(config).length > 0
+    || config.hiddenLocal?.length > 0
+    || commits.withAi > 0
+    || prs.byAgents > 0
+    || prs.aiReviewed?.count > 0;
+  const criteria = [
+    { id: 'config', state: configState(config) },
+    { id: 'declared', state: declaredState(commits) },
+    { id: 'coherent', state: coherentState(coherence, declares(commits, prs)) },
+    { id: 'agentReviewed', state: agentReviewedState(prs, safeguards) },
+    { id: 'testsCi', state: testsCiState(maturity) },
+  ];
+  return {
+    applicable,
+    criteria,
+    met: criteria.filter((c) => c.state === 'met').length,
+    total: criteria.filter((c) => c.state === 'met' || c.state === 'unmet').length,
+  };
+}
+
+const SOURCE_ORDER = ['config', 'commit', 'pr', 'review'];
+const configKindOf = (entries) => {
+  if (entries.length === 0) return null;
+  return entries.some((e) => e.kind === 'extensions') ? 'extensions' : 'instructions';
+};
+
+// One row per tool with the sources that show it. Template-only tools are listed with no 'config' source.
+function mergeTools(config, commits, prs) {
+  const own = ownEntries(config);
+  const template = config.entries.filter((e) => e.fromTemplate === true);
+  const bySource = {
+    config: own.map((e) => e.toolId),
+    commit: commits.tools ?? [],
+    pr: prs.agentTools ?? [],
+    review: prs.aiReviewed?.tools ?? [],
+  };
+  const ids = unique([...Object.values(bySource).flat(), ...template.map((e) => e.toolId)]).sort();
+  return ids.map((id) => {
+    const mine = own.filter((e) => e.toolId === id);
+    const fromTemplate = mine.length === 0 && template.some((e) => e.toolId === id);
+    return {
+      id,
+      sources: SOURCE_ORDER.filter((src) => bySource[src].includes(id)),
+      configKind: configKindOf(fromTemplate ? template.filter((e) => e.toolId === id) : mine),
+      fromTemplate,
+    };
+  });
+}
+
+/**
+ * report.aiProcess. Carries no person login or name (spec §3 anti-goals): analyzers only return counts and tool ids.
+ * commits: AiCommit[]|null, prs: merged PR stats|null (null = fetch failed).
+ */
+export function buildAiProcess({ treePaths, treeStatus, ctx, commits, prs, reviewsAvailable, maturity, prLimit }) {
+  const options = { limit: prLimit ?? MERGED_PR_SAMPLE, reviewsAvailable };
+  const config = analyzeAiConfig(treePaths, treeStatus, ctx);
+  const commitStats = analyzeAiCommits(commits);
+  const prStats = analyzeAiPrs(prs, options);
+  const safeguards = analyzeAiSafeguards(prs, options);
+  const coherence = analyzeCoherence(config, commitStats, prStats);
+  const badge = analyzeResponsibleBadge({ config, commits: commitStats, prs: prStats, safeguards, coherence, maturity });
+  return {
+    available: true,
+    method: AI_PROCESS_METHOD,
+    registryVersion: REGISTRY_VERSION,
+    tools: mergeTools(config, commitStats, prStats),
+    config,
+    commits: commitStats,
+    prs: prStats,
+    safeguards,
+    coherence,
+    badge,
+  };
+}
+
+/** Snapshots without the current method → "not recorded in this snapshot". */
+export function normalizeSnapshotAiProcess(report) {
+  if (!report || typeof report !== 'object') return report;
+  if (report.aiProcess?.method === AI_PROCESS_METHOD) return report;
+  return { ...report, aiProcess: { available: false, reason: 'snapshot' } };
 }
