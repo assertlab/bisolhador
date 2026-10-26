@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   fromRestCommit, fromGraphqlCommit, commitAiTools, analyzeAiCommits, analyzeAiPrs, analyzeAiSafeguards,
   analyzeAiConfig, analyzeCoherence, analyzeResponsibleBadge, buildAiProcess, normalizeSnapshotAiProcess,
+  parseAiRepoContext,
 } from './aiProcess.js';
+import { CONTEXT_DIRS } from './aiRegistry.js';
 
 const commit = (o = {}) => ({
   message: 'fix', authorLogin: 'alice', authorName: 'Alice', authorEmail: 'alice@example.com', authorType: 'User', date: null, parents: 1, ...o,
@@ -285,5 +287,36 @@ describe('normalizeSnapshotAiProcess', () => {
   it('current method is kept as is', () => {
     const report = { fullName: 'a/b', aiProcess: buildAiProcess(fullFixture) };
     expect(normalizeSnapshotAiProcess(report)).toBe(report);
+  });
+});
+
+describe('parseAiRepoContext', () => {
+  const dirs = (map) => Object.fromEntries(
+    CONTEXT_DIRS.map((d, i) => [`d${i}`, map[d] ? { entries: map[d].map(([name, type = 'blob']) => ({ name, type })) } : null]),
+  );
+  const blob = (text) => ({ text });
+
+  it('collects template paths that detectConfig recognizes', () => {
+    const ctx = parseAiRepoContext({ repository: {
+      gitignore: blob('node_modules'), claudeSettings: null, ...dirs({ '': [['README.md']] }),
+      templateRepository: { nameWithOwner: 'o/t', ...dirs({ '': [['AGENTS.md'], ['README.md']] }) },
+    } });
+    expect(ctx.available).toBe(true);
+    expect(ctx.gitignore).toBe('node_modules');
+    expect(ctx.claudeSettings).toBeNull();
+    expect(ctx.templatePaths).toEqual(new Set(['AGENTS.md']));
+  });
+  it('templateRepository null gives templatePaths null', () => {
+    const ctx = parseAiRepoContext({ repository: { gitignore: null, claudeSettings: null, ...dirs({}), templateRepository: null } });
+    expect(ctx.templatePaths).toBeNull();
+    expect(ctx.gitignore).toBeNull();
+  });
+  it('lists nested paths without leading or trailing slashes, trees included', () => {
+    const ctx = parseAiRepoContext({ repository: {
+      gitignore: null, claudeSettings: blob('{}'), templateRepository: null,
+      ...dirs({ '': [['CLAUDE.md'], ['.claude', 'tree']], '.claude': [['skills', 'tree'], ['settings.json']] }),
+    } });
+    expect(ctx.claudeSettings).toBe('{}');
+    expect(ctx.contextPaths).toEqual(expect.arrayContaining(['CLAUDE.md', '.claude', '.claude/skills', '.claude/settings.json']));
   });
 });

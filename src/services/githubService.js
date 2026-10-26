@@ -4,6 +4,7 @@
 import { getItem } from "../utils/storage.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
+import { CONTEXT_DIRS } from "../utils/aiRegistry.js";
 import {
   GITHUB_PER_PAGE_COMMITS,
   BRANCH_SCAN_MAX,
@@ -15,6 +16,7 @@ import {
 } from "../constants.js";
 
 const GITHUB_BASE_URL = "https://api.github.com";
+const AI_AUTHORSHIP_MAX_PATHS = 10;
 const MIN_PR_PAGE = 6; // classroom PR scan: smallest page before giving up
 
 export function hasGithubToken() {
@@ -485,6 +487,73 @@ export const githubService = {
     return result;
   },
 
+  // One GraphQL call: .gitignore, .claude/settings.json and the listing of every
+  // AI-config directory, for the repo and its template. Expressions come only from
+  // CONTEXT_DIRS (constants); owner/repo are variables. A missing file/dir is null
+  // (the file does not exist); a failed request throws.
+  async fetchAiRepoContext(owner, repo) {
+    if (!owner || !repo || !hasGithubToken()) {
+      throw new Error("fetchAiRepoContext needs owner, repo and a GitHub token");
+    }
+    const listings = CONTEXT_DIRS
+      .map((dir, i) => `d${i}: object(expression: "HEAD:${dir}") { ... on Tree { entries { name type } } }`)
+      .join("\n");
+    const query = `query($owner: String!, $name: String!) {
+      repository(owner: $owner, name: $name) {
+        gitignore: object(expression: "HEAD:.gitignore") { ... on Blob { text } }
+        claudeSettings: object(expression: "HEAD:.claude/settings.json") { ... on Blob { text } }
+        ${listings}
+        templateRepository { nameWithOwner
+          ${listings}
+        }
+      }
+    }`;
+    const data = await withExponentialBackoff(() => graphql(query, { owner, name: repo }, "AI repo context"), 1, 1000);
+    if (!data.repository) throw new Error("GraphQL AI repo context failed: repository not found");
+    return data;
+  },
+
+  // Who touched each AI-config path: the last 50 commits per path (max 10 paths).
+  // Paths go in as variables ($p0..), never interpolated.
+  async fetchAiConfigAuthorship(owner, repo, paths) {
+    if (!owner || !repo || !hasGithubToken()) {
+      throw new Error("fetchAiConfigAuthorship needs owner, repo and a GitHub token");
+    }
+    const list = (paths ?? []).slice(0, AI_AUTHORSHIP_MAX_PATHS);
+    if (list.length === 0) return [];
+    const vars = list.map((_, i) => `$p${i}: String!`).join(", ");
+    const histories = list
+      .map((_, i) => `h${i}: history(path: $p${i}, first: 50) {
+            pageInfo { hasNextPage }
+            nodes { committedDate author { name email user { login } } }
+          }`)
+      .join("\n");
+    const query = `query($owner: String!, $name: String!, ${vars}) {
+      repository(owner: $owner, name: $name) {
+        defaultBranchRef { target { ... on Commit {
+          ${histories}
+        } } }
+      }
+    }`;
+    const variables = { owner, name: repo, ...Object.fromEntries(list.map((p, i) => [`p${i}`, p])) };
+    const data = await withExponentialBackoff(() => graphql(query, variables, "AI config authorship"), 1, 1000);
+    if (!data.repository) throw new Error("GraphQL AI config authorship failed: repository not found");
+    const target = data.repository.defaultBranchRef?.target;
+    return list.map((path, i) => {
+      const history = target?.[`h${i}`];
+      return {
+        path,
+        commits: (history?.nodes ?? []).filter(Boolean).map((n) => ({
+          login: n.author?.user?.login ?? null,
+          name: n.author?.name ?? "",
+          email: n.author?.email ?? null,
+          date: n.committedDate,
+        })),
+        complete: history ? !history.pageInfo.hasNextPage : true,
+      };
+    });
+  },
+
   // Default-branch commits between since/until (ISO), up to maxPages × 100.
   async fetchCommitHistoryInPeriod(owner, repo, since, until, maxPages = 3) {
     const query = `query($owner: String!, $name: String!, $since: GitTimestamp!, $until: GitTimestamp!, $after: String) {
@@ -493,7 +562,7 @@ export const githubService = {
           history(since: $since, until: $until, first: 100, after: $after) {
             totalCount
             pageInfo { hasNextPage endCursor }
-            nodes { message parents { totalCount } author { name user { login } } }
+            nodes { message committedDate parents { totalCount } author { name email user { login } } }
           }
         } } }
       }

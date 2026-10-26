@@ -4,7 +4,7 @@ import {
   parseCoauthors, toolsFromCoauthors, agentToolOf, reviewerToolOf, isMaintenanceBot, authorAgentTool,
   detectConfig, gitignoreHidesAi, coauthorDisabled,
 } from './aiTraces.js';
-import { REGISTRY_VERSION } from './aiRegistry.js';
+import { REGISTRY_VERSION, CONTEXT_DIRS } from './aiRegistry.js';
 
 const pct = (part, total) => Math.round((part / total) * 100);
 const unique = (xs) => [...new Set(xs)];
@@ -136,6 +136,31 @@ export const AI_PROCESS_METHOD = 'ai-traces-v1';
  * @typedef {{ gitignore: string|null, claudeSettings: string|null, templatePaths: Set<string>|null, available: boolean }} AiRepoContext
  * templatePaths: null = template not verified; empty Set = verified, no template or no AI files in it.
  */
+
+const listedPaths = (node) => {
+  const out = [];
+  CONTEXT_DIRS.forEach((dir, i) => {
+    for (const entry of node?.[`d${i}`]?.entries ?? []) out.push(dir ? `${dir}/${entry.name}` : entry.name);
+  });
+  return out;
+};
+
+/**
+ * Turns the raw `fetchAiRepoContext` response into an AiRepoContext plus `contextPaths`
+ * (every path listed in the repository itself, for Classroom, which has no tree).
+ * gitignore/claudeSettings are null only when the file does not exist.
+ */
+export function parseAiRepoContext(data) {
+  const repo = data?.repository;
+  const template = repo?.templateRepository ?? null;
+  return {
+    gitignore: repo?.gitignore?.text ?? null,
+    claudeSettings: repo?.claudeSettings?.text ?? null,
+    templatePaths: template ? new Set(detectConfig(listedPaths(template)).map((e) => e.path)) : null,
+    contextPaths: listedPaths(repo),
+    available: true,
+  };
+}
 
 /** Versioned AI config in the tree, with template origin, AI paths hidden by .gitignore and the co-author switch. */
 export function analyzeAiConfig(paths, treeStatus, ctx) {
