@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare, closedShareOf, normalizeSnapshotActivity, addDeleteRatioOf } from './activityStats.js';
+import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare, closedShareOf, normalizeSnapshotActivity, addDeleteRatioOf, recentCommitsOf } from './activityStats.js';
 
 describe('statsStatus (202 / 422 / failure are not "no activity")', () => {
   const rejected = (code) => ({ status: 'rejected', reason: Object.assign(new Error('x'), { code }) });
@@ -100,5 +100,20 @@ describe('normalizeSnapshotActivity (reading persisted full_report)', () => {
     expect(addDeleteRatioOf({ codeChurn: { ratio: '1.95', categoryKey: 'balanced' } })).toBe(1.95);
     expect(addDeleteRatioOf({ codeChurn: { ratio: '1.95', category: 'x' } })).toBeNull();
     expect(addDeleteRatioOf({ codeChurn: { ratio: null, reason: 'tooLarge' } })).toBeNull();
+  });
+});
+
+describe('recentCommitsOf (failed request is not "no commits")', () => {
+  const commit = (sha) => ({ sha });
+  it('fulfilled: the latest commits, capped at the limit', () => {
+    const value = Array.from({ length: 15 }, (_, i) => commit(String(i)));
+    expect(recentCommitsOf({ status: 'fulfilled', value }, 10)).toEqual(value.slice(0, 10));
+  });
+  it('fulfilled with [] (empty repository, 409): a real empty list', () => {
+    expect(recentCommitsOf({ status: 'fulfilled', value: [] }, 10)).toEqual([]);
+  });
+  it('rejected or missing: null (unavailable), never []', () => {
+    expect(recentCommitsOf({ status: 'rejected', reason: new Error('HTTP 500') }, 10)).toBeNull();
+    expect(recentCommitsOf(undefined, 10)).toBeNull();
   });
 });

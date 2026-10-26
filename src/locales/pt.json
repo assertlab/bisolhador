@@ -284,7 +284,10 @@
       "closed": "Closed",
       "merged": "Merged"
     },
-    "commitBy": "por {{author}} • {{date}}"
+    "commitBy": "por {{author}} • {{date}}",
+    "noCommits": "Repositório sem commits.",
+    "commitsUnavailable": "Não foi possível carregar os commits agora (falha ou limite da API do GitHub).",
+    "commitsNotRecorded": "Nenhum commit registrado neste snapshot."
   },
   "charts": {
     "commitActivity": {

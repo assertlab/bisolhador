@@ -3,7 +3,10 @@ import { Tooltip } from './Tooltip.jsx';
 import { formatters } from '../utils/formatters.js';
 import { intlLocale } from '../i18n.js';
 
-export function ActivityLogs({ commits, pullRequests }) {
+// commits: null = not measured (request failed), [] = repository with no
+// commits (409). Never render a failure as an empty list. Snapshots: older ones
+// saved a failure as [], so an empty list there only says "none recorded".
+export function ActivityLogs({ commits, pullRequests, isSnapshot = false }) {
   const { t, i18n } = useTranslation();
   const locale = intlLocale(i18n.language);
 
@@ -33,6 +36,11 @@ export function ActivityLogs({ commits, pullRequests }) {
         {/* Últimos Commits */}
         <div>
           <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">{t('activity.sections.commits')}</h4>
+          {!Array.isArray(commits) || commits.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-slate-400">
+              {t(isSnapshot ? 'activity.commitsNotRecorded' : Array.isArray(commits) ? 'activity.noCommits' : 'activity.commitsUnavailable')}
+            </p>
+          ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {commits.slice(0, 10).map((commit, index) => (
               <div key={index} className="flex items-start space-x-3 p-3 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700">
@@ -59,6 +67,7 @@ export function ActivityLogs({ commits, pullRequests }) {
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Últimos PRs */}
