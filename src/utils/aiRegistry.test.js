@@ -29,7 +29,7 @@ describe('registry display fields', () => {
         expect(Boolean(c.name), `${tool.id}: name rule shown`).toBe(Boolean(c.nameShow));
         if (c.name) expect(['contains', 'prefix']).toContain(c.nameMatch);
         for (const example of c.examples) {
-          const email = example.replace('<id>+', '12345+');
+          const email = example.replaceAll('<id>+', '12345+');
           expect(c.email.test(email), `${tool.id}: ${email}`).toBe(true);
           const name = c.nameMatch === 'prefix' ? `${c.nameShow} (model)` : `Model ${c.nameShow ?? ''}`;
           expect(toolsFromCoauthors([{ name, email }]), `${tool.id}: ${email}`).toEqual([tool.id]);
