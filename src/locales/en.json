@@ -863,7 +863,8 @@
       "hiddenLocal": "Local use ignored in .gitignore: {{paths}}",
       "none": "No versioned AI configuration.",
       "treeTruncated": "? Configuration not fully verified: the file tree came truncated (very large repository).",
-      "treeUnavailable": "? Configuration not verified: the file tree could not be fetched."
+      "treeUnavailable": "? Configuration not verified: the file tree could not be fetched.",
+      "listingIncomplete": "? Configuration not fully verified: the listing of some AI configuration directory failed."
     },
     "commitsLabel": "Commits with an AI trace",
     "commits": "{{withAi}} of {{n}} commits",

@@ -330,6 +330,21 @@ describe('parseAiRepoContext', () => {
     expect(ctx.templatePaths).toEqual(new Set());
     expect(ctx.gitignore).toBeNull();
   });
+  it('partial GraphQL errors: the field that failed is unverified, never "file absent"', () => {
+    const repository = { gitignore: null, claudeSettings: null, templateRepository: null, ...dirs({ '': [['CLAUDE.md']] }) };
+    const err = (...path) => ({ message: 'timeout', path: ['repository', ...path] });
+    const ctxOf = (...errors) => parseAiRepoContext({ repository, errors });
+    expect(ctxOf().unverified).toEqual([]);
+    const gi = analyzeAiConfig(['CLAUDE.md'], 'complete', ctxOf(err('gitignore')));
+    expect(gi).toMatchObject({ hiddenLocal: null, coauthorDisabled: false });
+    const cs = analyzeAiConfig(['CLAUDE.md'], 'complete', ctxOf(err('claudeSettings')));
+    expect(cs).toMatchObject({ hiddenLocal: [], coauthorDisabled: null });
+    expect(ctxOf(err('templateRepository', 'd0')).templatePaths).toBeNull();
+    expect(ctxOf(err('d3')).unverified).toEqual(['listings']);
+    // An error that can't be placed: nothing from the context counts as verified
+    const unknown = ctxOf({ message: 'boom' });
+    expect(unknown).toMatchObject({ templatePaths: null, unverified: ['gitignore', 'claudeSettings', 'listings'] });
+  });
   it('lists nested paths without leading or trailing slashes, trees included', () => {
     const ctx = parseAiRepoContext({ repository: {
       gitignore: null, claudeSettings: blob('{}'), templateRepository: null,

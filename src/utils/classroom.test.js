@@ -97,6 +97,13 @@ describe('analyzeTeamRepo', () => {
     expect(row.commits).toMatchObject({ commits: 2, authors: 1 }); // existing indicators unchanged
   });
 
+  it('AI: a failed directory listing leaves the configuration not fully verified', () => {
+    const aiContext = ok({ repository: { d0: { entries: [] }, templateRepository: null }, errors: [{ message: 'x', path: ['repository', 'd6'] }] });
+    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail, aiContext }, p, []);
+    expect(row.ai.config.status).toBe('incomplete');
+    expect(row.ai.coherence.unverified).toContain('config');
+  });
+
   it('AI: github-classroom files are template, not student configuration', () => {
     const aiContext = ok({ repository: { d0: { entries: [{ name: 'CLAUDE.md', type: 'blob' }, { name: 'AGENTS.md', type: 'blob' }] }, templateRepository: null } });
     const authorship = [

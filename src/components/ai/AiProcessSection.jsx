@@ -152,6 +152,7 @@ function ConfigDepth({ tools, config, toolLabel }) {
       ) : config.status === 'complete' && <p>{t('aiProcess.depth.none')}</p>}
       {config.status === 'truncated' && <p className={NOTE}>{t('aiProcess.depth.treeTruncated')}</p>}
       {config.status === 'unavailable' && <p className={NOTE}>{t('aiProcess.depth.treeUnavailable')}</p>}
+      {config.status === 'incomplete' && <p className={NOTE}>{t('aiProcess.depth.listingIncomplete')}</p>}
       {config.hiddenLocal?.length > 0 && (
         <p>{t('aiProcess.depth.hiddenLocal', { paths: config.hiddenLocal.join(', ') })}</p>
       )}

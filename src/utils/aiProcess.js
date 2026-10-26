@@ -134,7 +134,7 @@ export const AI_PROCESS_METHOD = 'ai-traces-v1';
 
 /**
  * @typedef {{ gitignore: string|null, claudeSettings: string|null, templatePaths: Set<string>|null,
- *   originChecked?: Set<string>, available: boolean }} AiRepoContext
+ *   unverified?: Array<'gitignore'|'claudeSettings'|'listings'>, originChecked?: Set<string>, available: boolean }} AiRepoContext
  * templatePaths: null = template not verified (no context); empty Set = no template, or no AI files in it.
  * originChecked (Classroom only): paths whose origin was verified by their history; others outside the template are unverified.
  */
@@ -147,10 +147,30 @@ const listedPaths = (node) => {
   return out;
 };
 
+const CONTEXT_PARTS = ['gitignore', 'claudeSettings', 'listings'];
+
 /**
- * Turns the raw `fetchAiRepoContext` response into an AiRepoContext plus `contextPaths`
- * (every path listed in the repository itself, for Classroom, which has no tree).
- * gitignore/claudeSettings are null only when the file does not exist.
+ * Parts of the context that a partial GraphQL error left unread: 'gitignore', 'claudeSettings',
+ * 'listings' (a directory alias d<i>) and 'template' (anything under templateRepository).
+ * An error that can't be placed makes every part unverified (fail closed).
+ */
+function unreadParts(errors) {
+  const out = new Set();
+  for (const e of errors ?? []) {
+    const [root, field] = Array.isArray(e?.path) ? e.path : [];
+    if (root === 'repository' && (field === 'gitignore' || field === 'claudeSettings')) out.add(field);
+    else if (root === 'repository' && field === 'templateRepository') out.add('template');
+    else if (root === 'repository' && /^d\d+$/.test(field ?? '')) out.add('listings');
+    else [...CONTEXT_PARTS, 'template'].forEach((part) => out.add(part));
+  }
+  return out;
+}
+
+/**
+ * Turns the raw `fetchAiRepoContext` response ({ repository, errors }) into an AiRepoContext plus
+ * `contextPaths` (every path listed in the repository itself, for Classroom, which has no tree).
+ * gitignore/claudeSettings are null when the file does not exist; a part with a partial error is
+ * listed in `unverified` instead (and a template error leaves templatePaths null).
  * templateRepository null counts as "no template": GitHub can't tell that from a template the
  * user can't see, but "origin ?" on every repository would be noise (Classroom falls back to
  * the github-classroom[bot] initial commit).
@@ -158,11 +178,16 @@ const listedPaths = (node) => {
 export function parseAiRepoContext(data) {
   const repo = data?.repository;
   const template = repo?.templateRepository ?? null;
+  const unread = unreadParts(data?.errors);
+  let templatePaths = new Set();
+  if (unread.has('template')) templatePaths = null;
+  else if (template) templatePaths = new Set(detectConfig(listedPaths(template)).map((e) => e.path));
   return {
     gitignore: repo?.gitignore?.text ?? null,
     claudeSettings: repo?.claudeSettings?.text ?? null,
-    templatePaths: template ? new Set(detectConfig(listedPaths(template)).map((e) => e.path)) : new Set(),
+    templatePaths,
     contextPaths: listedPaths(repo),
+    unverified: CONTEXT_PARTS.filter((part) => unread.has(part)),
     available: true,
   };
 }
@@ -182,12 +207,14 @@ export function analyzeAiConfig(paths, treeStatus, ctx) {
   const context = ctx?.available ? ctx : null;
   const templatePaths = context?.templatePaths ?? null;
   const originChecked = context?.originChecked ?? null;
+  // With an available context, a missing file was verified: nothing hidden, trailer not turned off.
+  // A file whose read failed (partial GraphQL error) stays not verified.
+  const read = (part) => Boolean(context) && !context.unverified?.includes(part);
   return {
     status: Array.isArray(paths) ? treeStatus : 'unavailable',
     entries: detectConfig(paths).map((e) => ({ ...e, fromTemplate: originOf(e.path, templatePaths, originChecked) })),
-    // With an available context, a missing file was verified: nothing hidden, trailer not turned off.
-    hiddenLocal: gitignoreHidesAi(context ? (context.gitignore ?? '') : null),
-    coauthorDisabled: context ? (context.claudeSettings == null ? false : coauthorDisabled(context.claudeSettings)) : null,
+    hiddenLocal: gitignoreHidesAi(read('gitignore') ? (context.gitignore ?? '') : null),
+    coauthorDisabled: read('claudeSettings') ? (context.claudeSettings == null ? false : coauthorDisabled(context.claudeSettings)) : null,
   };
 }
 

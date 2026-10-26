@@ -108,6 +108,12 @@ export function releasesInPeriod(releases, period) {
 
 const settled = (r) => (r?.status === 'fulfilled' ? r.value : null);
 
+// Classroom has no tree, only the directory listings of the context query.
+function configStatusOf(ctx) {
+  if (!ctx) return 'unavailable';
+  return ctx.unverified?.includes('listings') ? 'incomplete' : 'complete';
+}
+
 /**
  * AI in the Process for one team repository: the repository section (same as the Dashboard, over
  * the period) and the per-student rows (in memory only). ctx null = AI context query failed.
@@ -119,7 +125,7 @@ function analyzeTeamAi(history, prs, rawContext, authorship, period) {
     ai: {
       ...buildAiProcess({
         treePaths: ctx?.contextPaths ?? null,
-        treeStatus: ctx ? 'complete' : 'unavailable',
+        treeStatus: configStatusOf(ctx),
         ctx,
         commits,
         prs: prs?.stats ?? null,
