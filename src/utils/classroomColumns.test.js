@@ -56,6 +56,18 @@ describe('classroomCsvRows', () => {
     }
   });
 
+  it('n is 0 when the fetch succeeded with an empty sample (measured, nothing to count)', () => {
+    const row = { status: 'ok', fullName: 'org/e', isPrivate: false, ...analyzeTeamRepo({
+      history: ok({ totalCount: 0, capped: false, nodes: [] }), prs: ok({ capped: false, stats: [] }),
+      runs: ok({ total_count: 0, workflow_runs: [] }), releases: ok([]),
+    }, p, { ctx: null, authorship: [] }) };
+    const [csv] = classroomCsvRows(['org/e'], { 'org/e': row }, () => null, t);
+    for (const col of CLASSROOM_COLUMNS.filter((c) => c.pct)) {
+      expect(csv[`classroom.csv.${col.key}`], col.key).toBe('');
+      expect(csv[`classroom.csv.${col.key}N`], col.key).toBe(0);
+    }
+  });
+
   it('pending / failed rows: every value empty', () => {
     const [csv] = classroomCsvRows(['org/x'], {}, () => null, t);
     expect(csv['classroom.csv.approvedN']).toBe('');

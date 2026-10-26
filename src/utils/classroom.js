@@ -165,7 +165,7 @@ export function analyzeTeamRepo(results, period, { ctx = null, authorship = null
           merged: review.codeReview.n ?? 0, // human-authored, merged in the period (any branch)
           capped: prs.capped, // scan bound reached: merged and medians are a minimum / partial
           approvedPercentage: rp?.available ? rp.coverage.approvedPercentage : null,
-          approvedN: rp?.available ? rp.coverage.n : null, // merged human PRs behind approvedPercentage (CSV)
+          approvedN: review.codeReview.n ?? 0, // merged human PRs behind approvedPercentage (= coverage.n; 0 = none merged)
           firstReviewHours: rp?.available && rp.firstReview.n > 0 ? rp.firstReview.medianHours : null,
           prSizeLines: rp?.available && rp.prSize.n > 0 ? rp.prSize.medianLines : null,
           leadTimeHours: leadTime?.n > 0 ? leadTime.medianHours : null,

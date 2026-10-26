@@ -4,11 +4,14 @@ import { toolLabel } from '../components/ai/toolLabel.js';
 // Classroom table/CSV columns: header key, guide entry, raw value, and whether the
 // value comes from a capped sample (shown with "*" / "+"). Rows that failed for a
 // part show N/A in that column only. `n` (percentage columns): the count the
-// percentage was computed over, exported as the next CSV column; null when the
-// part could not be measured (never 0). Screen-only rendering (`show` with JSX)
+// percentage was computed over, exported as the next CSV column. Fetch succeeded
+// = the sample size, 0 for an empty sample; null ('' in the CSV) only when the
+// part failed or wasn't measured. Screen-only rendering (`show` with JSX)
 // is added in pages/Classroom.jsx.
 const commitsCapped = (r) => r.commits.available && r.commits.capped;
 const conventionalOf = (r) => (r.commits.available && r.commits.conventional.available ? r.commits.conventional : null);
+// Empty samples carry n: 0 (analyzeConventionalCommits, analyzeCiRuns); a failed fetch has no n.
+const conventionalN = (r) => (r.commits.available ? r.commits.conventional.n ?? null : null);
 
 // Tools with a trace of the repository's own use (template-only tools are listed in the expanded row).
 // null when no source could be read.
@@ -30,12 +33,12 @@ export const CLASSROOM_COLUMNS = [
   { key: 'authors', guide: 'contributors', get: (r) => (r.commits.available ? r.commits.authors : null), sampled: commitsCapped },
   { key: 'topShare', guide: 'bus-factor', get: (r) => r.commits.topSharePercentage, pct: true, n: (r) => (r.commits.available ? r.commits.humanCommits : null), sampled: commitsCapped },
   { key: 'mergedPrs', guide: 'prs-merges', get: (r) => (r.prs.available ? r.prs.merged : null), atLeast: (r) => r.prs.capped },
-  { key: 'approved', guide: 'review-coverage', get: (r) => r.prs.approvedPercentage, pct: true, n: (r) => r.prs.approvedN, sampled: (r) => r.prs.capped },
+  { key: 'approved', guide: 'review-coverage', get: (r) => r.prs.approvedPercentage, pct: true, n: (r) => (r.prs.available ? r.prs.approvedN : null), sampled: (r) => r.prs.capped },
   { key: 'firstReview', guide: 'first-review', get: (r) => r.prs.firstReviewHours, hours: true, sampled: (r) => r.prs.capped },
   { key: 'leadTime', guide: 'lead-time', get: (r) => r.prs.leadTimeHours, hours: true, sampled: (r) => r.prs.capped },
   { key: 'prSize', guide: 'pr-size', get: (r) => r.prs.prSizeLines, sampled: (r) => r.prs.capped },
-  { key: 'ci', guide: 'ci-health', get: (r) => (r.ci.available ? r.ci.successPercentage : null), pct: true, n: (r) => (r.ci.available ? r.ci.n : null) },
-  { key: 'conventional', guide: 'conventional-commits', get: (r) => conventionalOf(r)?.percentage ?? null, pct: true, n: (r) => conventionalOf(r)?.n ?? null, sampled: commitsCapped },
+  { key: 'ci', guide: 'ci-health', get: (r) => (r.ci.available ? r.ci.successPercentage : null), pct: true, n: (r) => r.ci.n ?? null },
+  { key: 'conventional', guide: 'conventional-commits', get: (r) => conventionalOf(r)?.percentage ?? null, pct: true, n: conventionalN, sampled: commitsCapped },
   { key: 'releases', guide: 'release-cadence', get: (r) => r.releases?.count ?? null, atLeast: (r) => r.releases?.capped },
   // AI in the Process (repository level only; per student stays in the expanded row, never in the CSV).
   // `show`/`csv` replace the default number formatting; `count` adds the n behind a percentage on screen.

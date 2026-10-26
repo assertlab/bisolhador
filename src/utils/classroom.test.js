@@ -130,13 +130,14 @@ describe('analyzeTeamRepo', () => {
     expect(row.students.rows[0].configPaths).toEqual([]);
   });
 
-  it('exposes the n behind review coverage (CSV), null when the PR fetch failed', () => {
+  it('exposes the n behind review coverage (CSV): 0 for an empty sample, absent when the PR fetch failed', () => {
     const stats = Array.from({ length: 4 }, (_, i) => pr(i % 2 === 0));
     const row = analyzeTeamRepo({ history: fail, prs: ok({ capped: false, stats }), runs: fail, releases: fail }, p);
     expect(row.prs).toMatchObject({ approvedPercentage: 50, approvedN: 4 });
     expect(row.ci).toMatchObject({ available: false, reason: 'error' });
     const empty = analyzeTeamRepo({ history: fail, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail }, p);
-    expect(empty.prs.approvedN).toBeNull();
+    expect(empty.prs.approvedN).toBe(0);
+    expect(analyzeTeamRepo({ history: fail, prs: fail, runs: fail, releases: fail }, p).prs.approvedN).toBeUndefined();
   });
 
   describe('AI badge: tests and CI from the listings and the period runs (no new requests)', () => {
