@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   fromRestCommit, fromGraphqlCommit, commitAiTools, analyzeAiCommits, analyzeAiPrs, analyzeAiSafeguards,
   analyzeAiConfig, analyzeCoherence, analyzeResponsibleBadge, buildAiProcess, normalizeSnapshotAiProcess,
-  parseAiRepoContext,
+  parseAiRepoContext, isClassroomCreated,
 } from './aiProcess.js';
 import { CONTEXT_DIRS } from './aiRegistry.js';
 
@@ -318,6 +318,51 @@ describe('buildAiProcess', () => {
   it('failed sources → unavailable parts, still builds', () => {
     const ai = buildAiProcess({ treePaths: null, treeStatus: 'unavailable', ctx: null, commits: null, prs: null, reviewsAvailable: true, maturity: null });
     expect(ai).toMatchObject({ commits: { available: false }, prs: { available: false }, safeguards: { available: false, reason: 'error' }, tools: [] });
+  });
+});
+
+describe('repositories created by GitHub Classroom', () => {
+  const CLASSROOM_EMAIL = '66690702+github-classroom[bot]@users.noreply.github.com';
+  const restRoot = fromRestCommit({
+    author: { login: 'github-classroom[bot]', type: 'Bot' }, parents: [],
+    commit: { message: 'Initial commit', author: { name: 'github-classroom[bot]', email: CLASSROOM_EMAIL, date: '2026-09-01T00:00:00Z' } },
+  });
+  const graphqlRoot = fromGraphqlCommit({
+    message: 'add deadline', parents: { totalCount: 0 },
+    author: { name: 'github-classroom[bot]', email: CLASSROOM_EMAIL, user: null },
+  });
+  const sample = (root) => [commit(), commit({ message: 'feat: x' }), root];
+
+  it('detects a root commit by github-classroom[bot] (REST and GraphQL shapes, login or email)', () => {
+    expect(isClassroomCreated(sample(restRoot))).toBe(true);
+    expect(isClassroomCreated(sample(graphqlRoot))).toBe(true);
+    expect(isClassroomCreated([commit({ authorLogin: 'github-classroom[bot]', authorEmail: null, parents: 0 })])).toBe(true);
+    expect(isClassroomCreated([commit({ authorLogin: null, authorEmail: 'github-classroom[bot]@users.noreply.github.com', parents: 0 })])).toBe(true);
+  });
+  it('a non-root commit by the bot, a human root commit or no sample does not count', () => {
+    expect(isClassroomCreated([commit(), { ...restRoot, parents: 1 }])).toBe(false);
+    expect(isClassroomCreated([commit({ parents: 0, message: 'Initial commit' })])).toBe(false);
+    expect(isClassroomCreated([])).toBe(false);
+    expect(isClassroomCreated(null)).toBe(false);
+  });
+  it('Dashboard: config origin becomes unverified, so rule 1 says "template" in unverified', () => {
+    const base = { treePaths: ['AGENTS.md', 'src/a.js'], treeStatus: 'complete', ctx: emptyCtx, prs: [], reviewsAvailable: false, maturity: null };
+    const ai = buildAiProcess({ ...base, commits: sample(restRoot) });
+    expect(ai.config.entries).toEqual([{ toolId: 'generic', path: 'AGENTS.md', kind: 'instructions', fromTemplate: null }]);
+    expect(ai.coherence.flags).toEqual(['configWithoutDeclaration']);
+    expect(ai.coherence.unverified).toContain('template');
+    // Without the Classroom root commit, templateRepository null still means "no template".
+    const own = buildAiProcess({ ...base, commits: sample(commit({ parents: 0 })) });
+    expect(own.config.entries[0].fromTemplate).toBe(false);
+    expect(own.coherence.unverified).not.toContain('template');
+  });
+  it('keeps a definite answer: template listing (true) and, in Classroom, a checked history (false)', () => {
+    const tpl = buildAiProcess({ treePaths: ['AGENTS.md'], treeStatus: 'complete', ctx: { ...emptyCtx, templatePaths: new Set(['AGENTS.md']) }, commits: sample(restRoot), prs: [], reviewsAvailable: false, maturity: null });
+    expect(tpl.config.entries[0].fromTemplate).toBe(true);
+    const ctx = { ...emptyCtx, templatePaths: new Set(['CLAUDE.md']), originChecked: new Set(['CLAUDE.md', 'AGENTS.md']) };
+    const classroom = buildAiProcess({ treePaths: ['AGENTS.md', 'CLAUDE.md', '.cursorrules'], treeStatus: 'partial', ctx, commits: sample(graphqlRoot), prs: [], reviewsAvailable: true, maturity: null, prLimit: Infinity });
+    expect(Object.fromEntries(classroom.config.entries.map((e) => [e.path, e.fromTemplate])))
+      .toEqual({ 'CLAUDE.md': true, 'AGENTS.md': false, '.cursorrules': null });
   });
 });
 

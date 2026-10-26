@@ -2,9 +2,9 @@ import { MERGED_PR_SAMPLE, AI_MIN_GROUP } from '../constants.js';
 import { percentile } from './prReviewStats.js';
 import {
   parseCoauthors, toolsFromCoauthors, agentToolOf, reviewerToolOf, isMaintenanceBot, authorAgentTool,
-  detectConfig, gitignoreHidesAi, coauthorDisabled,
+  detectConfig, gitignoreHidesAi, coauthorDisabled, normalizeLogin,
 } from './aiTraces.js';
-import { REGISTRY_VERSION, CONTEXT_DIRS } from './aiRegistry.js';
+import { REGISTRY_VERSION, CONTEXT_DIRS, CLASSROOM_BOT } from './aiRegistry.js';
 import { isBot } from './contributors.js';
 
 const pct = (part, total) => Math.round((part / total) * 100);
@@ -45,6 +45,18 @@ export function fromGraphqlCommit(node) {
     date: node.committedDate ?? null,
     parents: node.parents.totalCount,
   };
+}
+
+const CLASSROOM_BOT_EMAIL = /^(\d+\+)?github-classroom\[bot\]@users\.noreply\.github\.com$/i;
+
+/**
+ * Repository created by GitHub Classroom: a root commit (no parents) of the sample is github-classroom[bot],
+ * by login (REST; GraphQL when linked) or by its noreply email. GitHub reports no templateRepository for
+ * these repositories, so "no template" can't be trusted. Only detectable when the root commit is in the sample.
+ */
+export function isClassroomCreated(commits) {
+  return Array.isArray(commits) && commits.some((c) => c.parents === 0
+    && (normalizeLogin(c.authorLogin) === CLASSROOM_BOT || CLASSROOM_BOT_EMAIL.test(c.authorEmail ?? '')));
 }
 
 /** Tool ids with a trace in this commit: co-author trailers plus an agent as the author. */
@@ -199,7 +211,7 @@ function unreadParts(errors) {
  * allowPrivateTemplate (Classroom only): read a private template's listings; elsewhere its origin is unverified.
  * templateRepository null counts as "no template": GitHub can't tell that from a template the
  * user can't see, but "origin ?" on every repository would be noise (Classroom falls back to
- * the github-classroom[bot] initial commit).
+ * the github-classroom[bot] initial commit; the Dashboard, via isClassroomCreated, leaves the origin unverified).
  */
 export function parseAiRepoContext(data, { allowPrivateTemplate = false } = {}) {
   const repo = data?.repository;
@@ -222,16 +234,19 @@ export function parseAiRepoContext(data, { allowPrivateTemplate = false } = {}) 
 
 /**
  * Template origin of one config path: true/false, or null when not verified. `originChecked` (Classroom)
- * lists the paths whose own history was read; without it (Dashboard) the template listing decides alone.
+ * lists the paths whose own history was read; without it (Dashboard) the template listing decides alone,
+ * unless the repository was created by GitHub Classroom (no templateRepository reported): then a path
+ * outside the listing has an unverified origin.
  */
-function originOf(path, templatePaths, originChecked) {
+function originOf(path, templatePaths, originChecked, classroomCreated) {
   if (!templatePaths) return null;
   if (templatePaths.has(path)) return true;
-  return originChecked && !originChecked.has(path) ? null : false;
+  if (originChecked) return originChecked.has(path) ? false : null;
+  return classroomCreated ? null : false;
 }
 
 /** Versioned AI config in the tree, with template origin, AI paths hidden by .gitignore and the co-author switch. */
-export function analyzeAiConfig(paths, treeStatus, ctx) {
+export function analyzeAiConfig(paths, treeStatus, ctx, { classroomCreated = false } = {}) {
   const context = ctx?.available ? ctx : null;
   const templatePaths = context?.templatePaths ?? null;
   const originChecked = context?.originChecked ?? null;
@@ -240,7 +255,7 @@ export function analyzeAiConfig(paths, treeStatus, ctx) {
   const read = (part) => Boolean(context) && !context.unverified?.includes(part);
   return {
     status: Array.isArray(paths) ? treeStatus : 'unavailable',
-    entries: detectConfig(paths).map((e) => ({ ...e, fromTemplate: originOf(e.path, templatePaths, originChecked) })),
+    entries: detectConfig(paths).map((e) => ({ ...e, fromTemplate: originOf(e.path, templatePaths, originChecked, classroomCreated) })),
     hiddenLocal: gitignoreHidesAi(read('gitignore') ? (context.gitignore ?? '') : null),
     coauthorDisabled: read('claudeSettings') ? (context.claudeSettings == null ? false : coauthorDisabled(context.claudeSettings)) : null,
   };
@@ -383,7 +398,7 @@ function mergeTools(config, commits, prs) {
  */
 export function buildAiProcess({ treePaths, treeStatus, ctx, commits, prs, reviewsAvailable, maturity, prLimit }) {
   const split = splitSample(prs, prLimit ?? MERGED_PR_SAMPLE);
-  const config = analyzeAiConfig(treePaths, treeStatus, ctx);
+  const config = analyzeAiConfig(treePaths, treeStatus, ctx, { classroomCreated: isClassroomCreated(commits) });
   const commitStats = analyzeAiCommits(commits);
   const prStats = aiPrStats(split, reviewsAvailable);
   const safeguards = safeguardStats(split, reviewsAvailable);
