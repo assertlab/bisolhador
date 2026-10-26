@@ -49,9 +49,14 @@ export function markLocaleInUse(name) {
 /**
  * Changes the language after the bundles of the mounted pages are loaded in it, so the page
  * swaps text in one render instead of flashing the loading state. A failed load doesn't block
- * the switch: the page then shows its own error state.
+ * the switch: the page then shows its own error state. Only the latest call switches.
  */
+let switchSeq = 0;
+
 export async function changeLanguageWithLocales(i18n, lng) {
+  const seq = ++switchSeq;
   await Promise.allSettled([...inUse.keys()].map((name) => loadLocale(i18n, name, lng)));
+  // EN then PT quickly: PT (already loaded) switches first; the late EN load must not undo it.
+  if (seq !== switchSeq) return undefined;
   return i18n.changeLanguage(lng);
 }

@@ -23,31 +23,48 @@ describe('lazy locale bundles', () => {
       expect(en, name).not.toHaveProperty(name);
     }
   });
+});
 
-  it('i18n.js does not import the page-only files statically', () => {
-    const source = readFileSync(new URL('../i18n.js', import.meta.url), 'utf8');
-    for (const name of LAZY_LOCALE_NAMES) expect(source).not.toContain(`${name}.`);
+// Source files (no tests) under src/, comments stripped.
+function sourceFiles() {
+  const files = [];
+  const walk = (dir) => readdirSync(dir).forEach((f) => {
+    const p = join(dir, f);
+    if (statSync(p).isDirectory()) walk(p);
+    else if (/\.jsx?$/.test(p) && !p.endsWith('.test.js')) files.push(p);
+  });
+  walk(fileURLToPath(new URL('..', import.meta.url)));
+  return files.map((file) => [file, readFileSync(file, 'utf8').replace(/^\s*(\/\/|\*|\/\*).*$/gm, '')]);
+}
+
+const keyPaths = (obj, prefix = '') => Object.entries(obj).flatMap(([k, v]) => (
+  v && typeof v === 'object' && !Array.isArray(v) ? keyPaths(v, `${prefix}${k}.`) : [`${prefix}${k}`]
+));
+
+describe('lazy locale bundles: source guards', () => {
+  it('only lazyLocales.js imports the page-only files (a static import would put them back in a shared chunk)', () => {
+    for (const [file, text] of sourceFiles()) {
+      if (file.endsWith(join('lib', 'lazyLocales.js'))) continue;
+      expect(text, file).not.toMatch(/locales\/(guide|aiGuide)\.(pt|en)\.json/);
+    }
   });
 
   it('only the pages that load a bundle read its keys (anywhere else they would render raw)', () => {
     const owners = { guide: 'pages/Guide.jsx', aiGuide: 'pages/AiGuide.jsx' };
-    const src = fileURLToPath(new URL('..', import.meta.url));
-    const files = [];
-    const walk = (dir) => readdirSync(dir).forEach((f) => {
-      const p = join(dir, f);
-      if (statSync(p).isDirectory()) walk(p);
-      else if (/\.jsx?$/.test(p) && !p.endsWith('.test.js')) files.push(p);
-    });
-    walk(src);
-    for (const file of files) {
-      const text = readFileSync(file, 'utf8').replace(/^\s*(\/\/|\*|\/\*).*$/gm, ''); // code only
+    for (const [file, text] of sourceFiles()) {
       for (const [name, owner] of Object.entries(owners)) {
         if (file.endsWith(owner)) continue;
-        expect(text, file).not.toMatch(new RegExp(`(?:t\\(|i18nKey=)\\s*['"\`]${name}\\.`));
+        expect(text, file).not.toMatch(new RegExp(`(?:\\bt\\(|i18nKey=\\{?)\\s*['"\`]${name}\\.`));
       }
     }
   });
 
+  it('the main pt and en locales have the same keys', () => {
+    expect(keyPaths(en).sort()).toEqual(keyPaths(pt).sort());
+  });
+});
+
+describe('lazy locale bundles: loader', () => {
   it('maps UI languages to a bundle language like intlLocale does', () => {
     expect(bundleLanguage('en')).toBe('en');
     expect(bundleLanguage('en-US')).toBe('en');
