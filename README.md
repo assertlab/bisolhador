@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.15.0
+# 🦈 Bisolhador Dashboard v3.16.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -31,6 +31,10 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.16.0 - Testes e CI no Modo Turma
+- **🧪 Testes e CI no selo do Modo Turma**: o critério passa a ser medido pelas listagens da raiz e de `.github/workflows` e pelas execuções do GitHub Actions no período, sem requisições novas. Testes só aparecem como encontrados ou não verificados, nunca como ausentes
+- **📊 n no CSV da turma**: cada porcentagem vem com o número de commits, PRs ou execuções sobre o qual foi calculada
 
 ### v3.15.0 - IA no Processo
 - **🤖 IA no Processo** (Dashboard): ferramentas de IA detectadas, profundidade da configuração versionada, % de commits com coautoria de IA, PRs abertos por agentes e, com token, revisões por bots de IA e salvaguardas (PRs de agentes mergeados sem aprovação, tamanho dos PRs de agentes vs. pessoas). Tudo é limite inferior: sem rastro aparece "Nenhum rastro de IA encontrado", nunca "0% IA"
