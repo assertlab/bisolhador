@@ -38,13 +38,23 @@ export function reviewerToolOf(login) {
 // Same bot rules as analyzeCommitHistory (classroom.js): isBot or a name containing "bot".
 const BOT_NAME = /(\[bot\]|\bbot\b)/i;
 
+// GraphQL authors without a GitHub user have no login, only a git name (forgeable) and an e-mail.
+// The name counts as identity only in bot form ("claude[bot]"); otherwise login or e-mail decide.
+const loginOrBotName = ({ login, name }) => login ?? (/\[bot\]$/i.test(name ?? '') ? name : null);
+
+export function authorAgentTool(author) {
+  return agentToolOf(loginOrBotName(author), author.email ?? null);
+}
+
+export function authorReviewerTool(author) {
+  return reviewerToolOf(loginOrBotName(author));
+}
+
 // Dependabot, Renovate, github-actions…: bots that are neither an agent nor an AI reviewer of the registry.
 export function isMaintenanceBot(author) {
   if (!author) return false;
   const bot = isBot(author) || BOT_NAME.test(author.name ?? '');
-  // GraphQL bot authors have no login, only a name ("claude[bot]") and a noreply e-mail
-  const id = author.login ?? author.name;
-  return bot && !agentToolOf(id, author.email ?? null) && !reviewerToolOf(id);
+  return bot && !authorAgentTool(author) && !authorReviewerTool(author);
 }
 
 // One entry per matching path, in path order; a path matches only the first tool of the registry.

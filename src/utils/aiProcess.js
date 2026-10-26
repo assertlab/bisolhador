@@ -1,6 +1,6 @@
 import { MERGED_PR_SAMPLE, AI_MIN_GROUP } from '../constants.js';
 import { percentile } from './prReviewStats.js';
-import { parseCoauthors, toolsFromCoauthors, agentToolOf, reviewerToolOf, isMaintenanceBot } from './aiTraces.js';
+import { parseCoauthors, toolsFromCoauthors, agentToolOf, reviewerToolOf, isMaintenanceBot, authorAgentTool } from './aiTraces.js';
 
 const pct = (part, total) => Math.round((part / total) * 100);
 const unique = (xs) => [...new Set(xs)];
@@ -39,7 +39,7 @@ export function fromGraphqlCommit(node) {
 /** Tool ids with a trace in this commit: co-author trailers plus an agent as the author. */
 export function commitAiTools(c) {
   const fromTrailers = toolsFromCoauthors(parseCoauthors(c.message));
-  const agent = agentToolOf(c.authorLogin ?? c.authorName, c.authorEmail);
+  const agent = authorAgentTool({ login: c.authorLogin, name: c.authorName, email: c.authorEmail });
   return unique(agent ? [...fromTrailers, agent] : fromTrailers);
 }
 
@@ -96,8 +96,10 @@ export function analyzeAiPrs(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable }
 
 const medianOf = (values) => percentile([...values].sort((a, b) => a - b), 0.5);
 
-/** `reviewsAvailable` must be true only for the GraphQL sample (REST items have no approvedByOther). */
-/** Agent PRs merged without approval, and agent vs human PR size (needs AI_MIN_GROUP per side). */
+/**
+ * Agent PRs merged without approval, and agent vs human PR size (needs AI_MIN_GROUP per side).
+ * `reviewsAvailable` must be true only for the GraphQL sample (REST items have no approvedByOther).
+ */
 export function analyzeAiSafeguards(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable } = {}) {
   const emptySize = { available: false, agentMedian: null, humanMedian: null, agentN: 0, humanN: 0 };
   const off = (reason) => ({ available: false, reason, agentPrs: 0, agentUnapproved: null, size: emptySize });

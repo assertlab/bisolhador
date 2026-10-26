@@ -31,7 +31,7 @@ describe('commit adapters', () => {
   });
   it('commitAiTools combines coauthors and agent author', () => {
     expect(commitAiTools(commit({ message: 'a\n\nCo-Authored-By: Claude <noreply@anthropic.com>' }))).toEqual(['claude']);
-    expect(commitAiTools(commit({ authorLogin: null, authorName: 'Copilot' }))).toEqual(['copilot']);
+    expect(commitAiTools(commit({ authorLogin: null, authorName: 'Copilot', authorEmail: '198982749+Copilot@users.noreply.github.com' }))).toEqual(['copilot']);
     expect(commitAiTools(commit())).toEqual([]);
   });
 });
@@ -53,6 +53,10 @@ describe('analyzeAiCommits', () => {
   });
   it('GraphQL agent author (no login, [bot] name) counts as AI, not as a maintenance bot', () => {
     const r = analyzeAiCommits([commit({ authorLogin: null, authorName: 'claude[bot]', authorEmail: '41898282+claude[bot]@users.noreply.github.com' }), commit({})]);
+    expect(r).toMatchObject({ n: 2, withAi: 1, tools: ['claude'] });
+  });
+  it('a login-less author only named like an agent is not AI (names are forgeable)', () => {
+    const r = analyzeAiCommits([commit({ authorLogin: null, authorName: 'claude', authorEmail: 'someone@gmail.com' }), commit({ authorLogin: null, authorName: 'claude[bot]', authorEmail: null })]);
     expect(r).toMatchObject({ n: 2, withAi: 1, tools: ['claude'] });
   });
   it('firstTraceAt is the earliest date among AI commits', () => {

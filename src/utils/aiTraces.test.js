@@ -6,6 +6,7 @@ import {
   agentToolOf,
   reviewerToolOf,
   isMaintenanceBot,
+  authorAgentTool,
   detectConfig,
   gitignoreHidesAi,
   coauthorDisabled,
@@ -71,6 +72,16 @@ describe('logins', () => {
     // GraphQL author without login: name and e-mail identify the agent
     expect(isMaintenanceBot({ login: null, type: null, name: 'claude[bot]', email: '41898282+claude[bot]@users.noreply.github.com' })).toBe(false);
     expect(isMaintenanceBot({ login: null, name: 'renovate[bot]' })).toBe(true);
+  });
+});
+
+describe('authorAgentTool (login-less authors)', () => {
+  it('a plain name is not identity; a [bot] name or the e-mail is', () => {
+    expect(authorAgentTool({ login: null, name: 'claude', email: 'someone@gmail.com' })).toBeNull();
+    expect(authorAgentTool({ login: null, name: 'claude[bot]', email: null })).toBe('claude');
+    expect(authorAgentTool({ login: null, name: 'Copilot', email: '198982749+Copilot@users.noreply.github.com' })).toBe('copilot');
+    expect(authorAgentTool({ login: 'claude', name: 'x' })).toBe('claude');
+    expect(isMaintenanceBot({ login: null, name: 'claude [bot]', email: 'x@y.z' })).toBe(true);
   });
 });
 
