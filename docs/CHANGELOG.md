@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [3.15.0] - 2026-10-26
+
+### ✨ Added
+
+- **NEW**: Seção **IA no Processo** no Dashboard: os rastros de uso de IA que o GitHub guarda. Tudo é **limite inferior**: sem rastro aparece "Nenhum rastro de IA encontrado", com a explicação de que o autocomplete não deixa marca; nunca "0% IA" nem "não usa IA". Toda fração mostra o n.
+  - **Ferramentas detectadas** e **profundidade da configuração**: arquivos de configuração de agentes versionados (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.cursor/rules`, …) e, com token, a origem no template, os caminhos de IA ignorados no `.gitignore` e a coautoria desligada em `.claude/settings.json`.
+  - **Commits com IA**: % dos commits recentes (sem merges e sem bots de manutenção) com trailer `Co-authored-by` de uma ferramenta de IA, casado pelo **e-mail**, ou com um agente como autor.
+  - **PRs de agentes** e, com token, **revisão por IA** e **salvaguardas**: PRs de agentes mergeados sem aprovação de outra pessoa e o tamanho dos PRs de agentes vs. pessoas (só com pelo menos 5 PRs de cada lado).
+  - **Fontes em desacordo**: aviso neutro, no nível do repositório, quando a configuração versionada fora do template ou o `.gitignore` mostram IA e nenhum commit nem PR de agente declara uso, sempre com as causas legítimas (squash, commit de outra pessoa da equipe, ferramenta sem trailer, coautoria desligada).
+  - **Selo "Uso responsável de IA"**: cinco critérios observáveis (configuração versionada, uso declarado, coerência entre fontes, PRs de agentes aprovados por outra pessoa antes do merge, testes e CI). "Não se aplica" e "não verificado" saem do denominador; sem rastro de IA, o selo não se aplica. Só por repositório e fora do Ranking.
+  - Os snapshots guardam a seção (`aiProcess`, método `ai-traces-v1`, registro `2026-10-25`); os antigos mostram "não registrado neste snapshot". Uma falha na parte de IA nunca impede salvar o snapshot.
+  - Custo: sem token, nenhuma requisição nova; com token, +1 consulta GraphQL por análise (além das já existentes).
+  - Os indicadores de revisão (lead time, cobertura, 1ª revisão, tamanho de PR, divergência) continuam medindo **só PRs de pessoas**, sem mudança de método; PRs de agentes aparecem só nesta seção.
+- **NEW**: **IA no Modo Turma**: colunas por repositório (ferramentas, % de commits com IA, % de PRs de agentes, fontes em desacordo e selo, também no CSV). Ao expandir a linha: a seção do repositório no período e uma **visão por estudante** (commits, commits com IA, ferramentas e arquivos de configuração de IA alterados no período), com uma linha por agente e uma linha "não identificado" para commits sem conta. Custa +1 consulta GraphQL por repositório (além das já existentes) e +1 de autoria quando há configuração de IA fora do template.
+- **NEW**: Entradas de IA no guia **Como interpretar**: ferramentas, profundidade da configuração, commits, PRs, revisão por IA, salvaguardas, fontes em desacordo e selo, cada uma com seus limites (nenhuma tem métrica CHAOSS correspondente).
+
+### 🔒 Security
+
+- **SEC**: Nada de IA por pessoa no Dashboard nem no snapshot: `aiProcess` só guarda contagens e ids de ferramentas. A visão por estudante do Modo Turma, a única que nomeia autores, fica só na memória do navegador: fora do CSV, do Supabase e do Google Analytics (já desligado no Modo Turma). Não há alerta individual: o desacordo entre fontes só aparece por repositório.
+- **SEC**: O Dashboard não lê a configuração de um template privado (a origem fica "não verificada"); só o Modo Turma, que já analisa privados sem salvar nada, lê.
+
 ### 🐛 Fixed
 
 - **FIX**: Quando a busca dos commits falhava (erro da API do GitHub ou limite de requisições), **Últimos Commits** aparecia vazio, como se o repositório não tivesse commits. Agora diz que não foi possível carregar (o aviso de dados parciais já listava `commits`). Repositório vazio continua aparecendo como sem commits. O snapshot continua sendo salvo (nenhum histórico compara commits), com a lista e a adesão a Conventional Commits como não registradas. Snapshots antigos podem ter gravado uma falha como lista vazia; neles, a lista vazia aparece como "Nenhum commit registrado neste snapshot".

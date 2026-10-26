@@ -3,8 +3,10 @@ import { githubService } from '../services/githubService.js';
 import { withExponentialBackoff } from '../utils/retry.js';
 import { parseSafeRepoName } from '../utils/repoName.js';
 import { analyzeTeamRepo } from '../utils/classroom.js';
+import { parseAiRepoContext } from '../utils/aiProcess.js';
+import { authorshipPaths } from '../utils/aiClassroom.js';
 
-const CONCURRENCY = 3; // repositories analyzed at once (~5–7 requests each)
+const CONCURRENCY = 3; // repositories analyzed at once (~6–9 requests each)
 
 /**
  * One repository: visibility check first, then the period fetches in parallel.
@@ -30,17 +32,38 @@ async function analyzeRepository(name, period) {
   const canonical = parseSafeRepoName(info.full_name);
   if (!canonical) return { status: 'error' };
   const [o, r] = canonical;
-  const [history, prs, runs, releases] = await Promise.allSettled([
+  const [history, prs, runs, releases, aiContext] = await Promise.allSettled([
     githubService.fetchCommitHistoryInPeriod(o, r, period.since, period.until),
     githubService.fetchMergedPullRequestsInPeriod(o, r, period.since, period.until),
     info.default_branch ? githubService.fetchActionRunsInPeriod(o, r, info.default_branch, period.from, period.to) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
     githubService.fetchReleases(o, r),
+    githubService.fetchAiRepoContext(o, r),
   ]);
   // Parts fail on their own (N/A in that column): say why in the console
-  for (const [part, result] of Object.entries({ history, prs, runs, releases })) {
+  for (const [part, result] of Object.entries({ history, prs, runs, releases, aiContext })) {
     if (result.status === 'rejected') console.warn(`[classroom] ${info.full_name}: ${part} failed:`, result.reason?.message);
   }
-  return { status: 'ok', fullName: info.full_name, isPrivate: info.private, ...analyzeTeamRepo({ history, prs, runs, releases }, period) };
+  // Parsed once: the authorship query and the analysis read the same context. Classroom may read
+  // a private template (it already analyzes private repositories, in memory only).
+  const ctx = aiContext.status === 'fulfilled' ? parseAiRepoContext(aiContext.value, { allowPrivateTemplate: true }) : null;
+  const authorship = await fetchAuthorship(o, r, ctx, info.full_name);
+  return { status: 'ok', fullName: info.full_name, isPrivate: info.private, ...analyzeTeamRepo({ history, prs, runs, releases }, period, { ctx, authorship }) };
+}
+
+/**
+ * Who added or changed each AI-config file (+1 GraphQL, only when the repository has
+ * configuration outside the template). [] = nothing to ask; null = unknown (context or query failed).
+ */
+async function fetchAuthorship(owner, repo, ctx, fullName) {
+  if (!ctx) return null;
+  const paths = authorshipPaths(ctx);
+  if (paths.length === 0) return [];
+  try {
+    return await githubService.fetchAiConfigAuthorship(owner, repo, paths);
+  } catch (error) {
+    console.warn(`[classroom] ${fullName}: AI config authorship failed:`, error?.message);
+    return null;
+  }
 }
 
 /**

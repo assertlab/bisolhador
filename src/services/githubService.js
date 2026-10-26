@@ -4,6 +4,7 @@
 import { getItem } from "../utils/storage.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
+import { CONTEXT_DIRS } from "../utils/aiRegistry.js";
 import {
   GITHUB_PER_PAGE_COMMITS,
   BRANCH_SCAN_MAX,
@@ -12,6 +13,7 @@ import {
   MERGED_PR_SCAN,
   GITHUB_PER_PAGE_CONTRIBUTORS,
   GITHUB_PER_PAGE_RELEASES,
+  AUTHORSHIP_MAX_PATHS,
 } from "../constants.js";
 
 const GITHUB_BASE_URL = "https://api.github.com";
@@ -42,7 +44,9 @@ function lastPageFromLink(linkHeader) {
 // POST a query to the GitHub GraphQL API (token required). owner/repo always
 // go in `variables`, never interpolated into the query. Returns `data`;
 // throws when there is none; partial errors (data + errors) are logged.
-async function graphql(query, variables, label) {
+// withErrors: returns { data, errors } so the caller can tell a field that
+// failed (null + an error on its path) from one that doesn't exist (null).
+async function graphql(query, variables, label, { withErrors = false } = {}) {
   const response = await fetch(`${GITHUB_BASE_URL}/graphql`, {
     method: "POST",
     headers: { ...getHeaders(), "Content-Type": "application/json" },
@@ -58,8 +62,13 @@ async function graphql(query, variables, label) {
   if (body.errors?.length) {
     console.warn(`[githubService] GraphQL ${label} returned partial data:`, body.errors[0].message);
   }
-  return body.data;
+  return withErrors ? { data: body.data, errors: body.errors ?? [] } : body.data;
 }
+
+// Partial errors whose path starts with `prefix`: the alias right after it (e.g. "gitignore", "h3").
+const erroredAliases = (errors, prefix) => new Set(errors
+  .filter((e) => Array.isArray(e?.path) && prefix.every((p, i) => e.path[i] === p))
+  .map((e) => e.path[prefix.length]));
 
 function statsError(code, path, status) {
   const error = new Error(`GitHub stats ${path} ${code}${status ? `: HTTP ${status}` : ''}`);
@@ -485,6 +494,78 @@ export const githubService = {
     return result;
   },
 
+  // One GraphQL call: .gitignore, .claude/settings.json and the listing of every
+  // AI-config directory, for the repo and its template. Expressions come only from
+  // CONTEXT_DIRS (constants); owner/repo are variables. A missing file/dir is null
+  // (the file does not exist); a failed request throws. Returns the data plus
+  // `errors` (partial GraphQL errors): parseAiRepoContext turns a field with an
+  // error into "not verified", not "absent".
+  async fetchAiRepoContext(owner, repo) {
+    if (!owner || !repo || !hasGithubToken()) {
+      throw new Error("fetchAiRepoContext needs owner, repo and a GitHub token");
+    }
+    const listings = CONTEXT_DIRS
+      .map((dir, i) => `d${i}: object(expression: "HEAD:${dir}") { ... on Tree { entries { name type } } }`)
+      .join("\n");
+    const query = `query($owner: String!, $name: String!) {
+      repository(owner: $owner, name: $name) {
+        gitignore: object(expression: "HEAD:.gitignore") { ... on Blob { text } }
+        claudeSettings: object(expression: "HEAD:.claude/settings.json") { ... on Blob { text } }
+        ${listings}
+        templateRepository { nameWithOwner isPrivate
+          ${listings}
+        }
+      }
+    }`;
+    const { data, errors } = await withExponentialBackoff(() => graphql(query, { owner, name: repo }, "AI repo context", { withErrors: true }), 1, 1000);
+    if (!data.repository) throw new Error("GraphQL AI repo context failed: repository not found");
+    return { ...data, errors };
+  },
+
+  // Who touched each AI-config path: the last 50 commits per path (max 10 paths).
+  // Paths go in as variables ($p0..), never interpolated. A history that is
+  // missing or has a partial error is incomplete (its origin stays unverified).
+  async fetchAiConfigAuthorship(owner, repo, paths) {
+    if (!owner || !repo || !hasGithubToken()) {
+      throw new Error("fetchAiConfigAuthorship needs owner, repo and a GitHub token");
+    }
+    const list = (paths ?? []).slice(0, AUTHORSHIP_MAX_PATHS);
+    if (list.length === 0) return [];
+    const vars = list.map((_, i) => `$p${i}: String!`).join(", ");
+    const histories = list
+      .map((_, i) => `h${i}: history(path: $p${i}, first: 50) {
+            pageInfo { hasNextPage }
+            nodes { committedDate author { name email user { login } } }
+          }`)
+      .join("\n");
+    const query = `query($owner: String!, $name: String!, ${vars}) {
+      repository(owner: $owner, name: $name) {
+        defaultBranchRef { target { ... on Commit {
+          ${histories}
+        } } }
+      }
+    }`;
+    const variables = { owner, name: repo, ...Object.fromEntries(list.map((p, i) => [`p${i}`, p])) };
+    const { data, errors } = await withExponentialBackoff(() => graphql(query, variables, "AI config authorship", { withErrors: true }), 1, 1000);
+    if (!data.repository) throw new Error("GraphQL AI config authorship failed: repository not found");
+    const target = data.repository.defaultBranchRef?.target;
+    const failed = erroredAliases(errors, ["repository", "defaultBranchRef", "target"]);
+    const unplaced = errors.some((e) => !Array.isArray(e?.path)); // can't tell which history: none is complete
+    return list.map((path, i) => {
+      const history = unplaced || failed.has(`h${i}`) ? null : target?.[`h${i}`];
+      return {
+        path,
+        commits: (history?.nodes ?? []).filter(Boolean).map((n) => ({
+          login: n.author?.user?.login ?? null,
+          name: n.author?.name ?? "",
+          email: n.author?.email ?? null,
+          date: n.committedDate,
+        })),
+        complete: history ? !history.pageInfo.hasNextPage : false,
+      };
+    });
+  },
+
   // Default-branch commits between since/until (ISO), up to maxPages × 100.
   async fetchCommitHistoryInPeriod(owner, repo, since, until, maxPages = 3) {
     const query = `query($owner: String!, $name: String!, $since: GitTimestamp!, $until: GitTimestamp!, $after: String) {
@@ -493,7 +574,7 @@ export const githubService = {
           history(since: $since, until: $until, first: 100, after: $after) {
             totalCount
             pageInfo { hasNextPage endCursor }
-            nodes { message parents { totalCount } author { name user { login } } }
+            nodes { message committedDate parents { totalCount } author { name email user { login } } }
           }
         } } }
       }
