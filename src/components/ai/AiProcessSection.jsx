@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { GuideLink } from '../GuideLink.jsx';
 import { AI_MIN_GROUP } from '../../constants.js';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
+import { AI_GUIDE_PATH } from '../../utils/indicatorGuide.js';
 import { AiCoherence } from './AiCoherence.jsx';
 import { AiResponsibleBadge } from './AiResponsibleBadge.jsx';
 import { BlockTitle, Chip, InfoTip } from './AiParts.jsx';
@@ -130,7 +132,10 @@ export function AiProcessSection({ aiProcess }) {
       <AiResponsibleBadge badge={badge} />
 
       {/* 7. Lower bound */}
-      <p className={`${NOTE} border-t border-gray-100 dark:border-slate-700 pt-3`}>{t('aiProcess.lowerBoundNote')}</p>
+      <p className={`${NOTE} border-t border-gray-100 dark:border-slate-700 pt-3`}>
+        {t('aiProcess.lowerBoundNote')}{' '}
+        <Link to={AI_GUIDE_PATH} className="font-medium text-ocean hover:underline">{t('aiGuide.link')} →</Link>
+      </p>
     </div>
   );
 }

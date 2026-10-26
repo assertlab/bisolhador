@@ -964,5 +964,171 @@
       "configUnavailable": "n/a: could not check who added or changed the AI configuration files.",
       "footnote": "Default-branch commits in the period, without merges and maintenance bots. \"Unidentified author\" gathers commits not linked to a GitHub account (we don't group by name). Configuration: AI files (template files excluded) with a commit by that person in the period, in the checked locations. Nothing in this table is saved or goes into the CSV."
     }
+  },
+  "aiGuide": {
+    "title": "AI in the Process guide",
+    "intro": "How to read the AI in the Process section of the Dashboard and Classroom Mode, how to make AI use visible in a repository, and what Bisolhador can (and can't) see.",
+    "back": "How to read: every indicator",
+    "toc": "On this page",
+    "link": "AI in the Process guide",
+    "guideIntro": "How to declare AI use, what is detected, guidance for teachers and frequently asked questions:",
+    "studentsLink": "How to read this view",
+    "blocks": {
+      "overview": "Overview and principles",
+      "declare": "How to make AI use visible",
+      "detect": "What Bisolhador detects",
+      "teachers": "For teachers (Classroom Mode)",
+      "faq": "Frequently asked questions",
+      "limits": "Limits"
+    },
+    "overview": {
+      "questionsTitle": "What the section answers",
+      "questions": {
+        "adoption": {
+          "title": "Declared adoption",
+          "text": "Does the project guide AI agents? With which tools? The answer comes from configuration files versioned in the repository."
+        },
+        "participation": {
+          "title": "Visible participation",
+          "text": "What share of commits and merged PRs has an agent as author or declared co-author."
+        },
+        "safeguards": {
+          "title": "Safeguards",
+          "text": "Did what the AI produced go through a person before it landed? Agent PRs with human approval, and their size compared to people's PRs."
+        },
+        "coherence": {
+          "title": "Coherence between sources",
+          "text": "Do the configuration, commits and PRs tell the same story? When they don't, the section shows \"sources disagree\"."
+        }
+      },
+      "lowerBoundTitle": "Principle: lower bound",
+      "lowerBound": "Everything in the section is a lower bound: only AI use that left a trace on GitHub shows up. No trace doesn't mean no AI. Autocomplete leaves no mark, not every tool writes co-authorship, and whoever commits can turn the trailer off. That's why every share comes with its n (\"12 of 100 commits\") and an empty result reads \"No AI traces found\", never \"doesn't use AI\".",
+      "notTitle": "What the section is not",
+      "not": {
+        "detector": "Not a cheating detector: Bisolhador doesn't analyze code to guess whether AI wrote it. There is no reliable method for that.",
+        "proof": "Not proof of use or non-use: it shows declarations and agent traces, which can be missing and which anyone can write by hand.",
+        "grade": "Not a grade: neither the share of AI commits nor the \"Responsible AI use\" badge should become an automatic grade."
+      },
+      "ethicsTitle": "Data ethics",
+      "ethics": "On the Dashboard, everything stays at repository level: no person's login or name goes into the section or the saved snapshot. The per-student view exists only in Classroom Mode, runs in your browser with your token, and is never saved or exported (it's not in the CSV)."
+    },
+    "declare": {
+      "intro": "The simplest way to make AI use visible is to declare co-authorship in the commit itself, with the Co-authored-by trailer, which GitHub and Bisolhador recognize.",
+      "manualTitle": "Manual trailer (works for any tool)",
+      "manual": "Write the co-author lines at the end of the commit message, after a blank line, one line per co-author:",
+      "manualExample": "feat: validate the sign-up form\n\nExplain why the change was made.\n\nCo-authored-by: Tool Name <tool-email>",
+      "manualNote": "Bisolhador recognizes the tool by its e-mail (case-insensitive), not by its name: use the e-mail listed below. For generic e-mails, the name must match too.",
+      "manualSource": "Syntax in GitHub's documentation",
+      "toolsTitle": "By tool",
+      "recognizes": "Bisolhador recognizes the e-mail",
+      "nameRule": {
+        "contains": "with a name containing “{{name}}”",
+        "prefix": "with a name starting with “{{name}}”"
+      },
+      "emailOnly": "We couldn't find in the official documentation how this tool declares co-authorship. If it doesn't write the trailer, use the manual trailer with this e-mail.",
+      "checked": "Checked against the documentation on {{date}}",
+      "tools": {
+        "claude": "Claude Code adds a Co-Authored-By trailer with the e-mail noreply@anthropic.com by default. The attribution setting controls it: attribution: false or attribution.commit: \"\" remove the trailer (so does the older includeCoAuthoredBy: false). A .claude/settings.json versioned in the repository sets the default for the whole project, but each person can override it in their own .claude/settings.local.json, which isn't versioned. With a token, Bisolhador reads the versioned .claude/settings.json and says when it turns the trailer off.",
+        "copilot": "The Copilot coding agent (when you assign a task to Copilot on GitHub) makes commits with Copilot as the author and marks whoever asked for the task as co-author. Bisolhador counts those commits by their author (the agent), and the PRs it opens too. Copilot as co-author of your own commit is recognized by the e-mail below.",
+        "cursor": "Cursor's attribution (Cursor Settings › Agent › Attribution, on by default; from Cursor 3.11, under Git & PRs › Attribution) adds a \"Made with Cursor\" trailer to agent commits. That trailer isn't a co-authorship trailer and Bisolhador doesn't count it. To declare, use the manual trailer with the e-mail below, the one we saw on Cursor agent commits in real repositories.",
+        "aider": "Aider adds the trailer Co-authored-by: aider (<model>) <aider@aider.chat> to the commits it makes, by default (option --attribute-co-authored-by; --no-attribute-co-authored-by turns it off)."
+      },
+      "policyTitle": "A suggestion for your course",
+      "policy": "Ask teams to keep the co-authorship trailers (and not to delete them when editing a squash message). Agreed from the start, this turns the section into a conversation about process: where AI helped, who reviewed, and what the team learned."
+    },
+    "detect": {
+      "intro": "This table is generated from the tool registry in the code itself (version {{version}}). Tools outside the registry don't show up. A change to the registry changes the numbers of later analyses; that's why every snapshot records the registry version it used.",
+      "caption": "Recognized tools and where each leaves a trace",
+      "columns": {
+        "tool": "Tool",
+        "config": "Configuration files",
+        "coauthor": "Co-author e-mail",
+        "agent": "Agent author (commit or PR)",
+        "reviewer": "Reviewer (bot)"
+      },
+      "extension": "extension",
+      "legend": "**/ = in any folder (in Classroom Mode, only at the root and in known directories); trailing / = directory; <id>+ = account number in GitHub's noreply e-mail. Bot logins are shown without the [bot] suffix GitHub displays. \"extension\" = skills, commands, subagents, prompts or MCP; the rest are instructions.",
+      "genericNote": "\"Agents (generic)\": AGENTS.md and .mcp.json serve several tools, so they're attributed to none of them.",
+      "gitignoreTitle": "Ignored local use (.gitignore)",
+      "gitignore": "With a token, Bisolhador reads the root .gitignore. Lines that hide AI artifacts count as a trace of local, unversioned use (comments and lines starting with ! don't count):"
+    },
+    "teachers": {
+      "readingTitle": "Reading the Per student view",
+      "reading": "When you expand a repository's row in Classroom Mode, the Per student view shows, for each commit author of the period, their commits, how many declare AI co-authorship, the declared tools and the AI configuration files the person added or changed.",
+      "configNotUse": "Configuring isn't using: in a group, one person may set up the configuration for everyone. And whoever doesn't declare doesn't show up: no record isn't no use.",
+      "conversation": "Use the table as a starting point for a conversation with the team, not as a conclusion. It has no alerts or highlights on purpose: the facts sit side by side and the reading is yours.",
+      "templateTitle": "AI files in the assignment template",
+      "template": "If you want, put an AGENTS.md or CLAUDE.md in the assignment's template repository. Files that arrive in the initial commit created by GitHub Classroom count as template files: they appear in the tool list, but not as the team's configuration nor as student authorship.",
+      "disagreeTitle": "\"Sources disagree\"",
+      "disagree": "The notice appears when the team's own AI configuration exists (or AI lines in .gitignore) and no commit of the period declares AI or is by an agent (and no PR is by an agent). There are legitimate causes: the trailer turned off in the configuration, a squash that rewrote the messages, configuration made by someone else, a tool that doesn't write co-authorship. Ask the team how they used the tool, without assuming bad faith.",
+      "policiesTitle": "Suggested course policies",
+      "policies": {
+        "declare": "Agree at the start whether and how AI may be used, and that use should be declared with the co-authorship trailer.",
+        "review": "Ask that every PR, agent PRs included, be approved by another team member before merging.",
+        "config": "Encourage versioning the configuration (AGENTS.md, CLAUDE.md…) instead of keeping it only on someone's machine.",
+        "reflect": "Ask for a short account of what the AI did and what the team reviewed or changed."
+      },
+      "privacyTitle": "Privacy",
+      "privacy": "Nothing from the Per student view leaves the browser: it isn't saved to Supabase or put in the CSV, and Google Analytics is off from the first visit to /turma until the page is closed. The analysis uses your token and only sees what you can already see on GitHub."
+    },
+    "faq": {
+      "items": {
+        "zero": {
+          "q": "Does 0% mean the team didn't use AI?",
+          "a": "No. It means no commit in the sample declares AI co-authorship or is by an agent. Autocomplete leaves no trace, not every tool writes co-authorship, and the trailer can be turned off. Always read it with the n."
+        },
+        "disagree": {
+          "q": "My repository shows \"sources disagree\". What now?",
+          "a": "There is AI configuration (or AI lines in .gitignore) and no commit or PR in the sample declares use. If you use AI, keep the co-authorship trailer (see How to make AI use visible) and your next commits will count. Configuration made by someone else or brought from a template is also a legitimate cause. The notice is about the repository, never about a person."
+        },
+        "notAvailable": {
+          "q": "Why do I see N/A or \"not verified\"?",
+          "a": "When something couldn't be obtained, Bisolhador says so instead of showing zero: the request failed, the file tree came back truncated, there's no token, or the sample is empty."
+        },
+        "token": {
+          "q": "Why do some parts need a token?",
+          "a": "AI review, safeguards, .gitignore, .claude/settings.json and the template origin come from GitHub's GraphQL API, which requires a token. Without one, those parts show N/A and the PR sample comes from the {{closedScan}} most recently updated closed PRs (REST API). Classroom Mode only works with a token."
+        },
+        "badge": {
+          "q": "What does \"3 of 4\" on the badge mean? And \"not applicable\"?",
+          "a": "The badge has five criteria. Those that don't apply (for example, there's no agent PR to review) or couldn't be verified are left out: \"3 of 4\" means 3 criteria met out of the 4 verifiable ones. With no AI trace at all, the whole badge is \"not applicable\", and nobody is penalized for not using AI."
+        },
+        "generic": {
+          "q": "Why does my AGENTS.md count as \"Agents (generic)\"?",
+          "a": "AGENTS.md (like .mcp.json) is a format read by several agents. The file doesn't tell which tool the team uses, so it's attributed to none and never counts as a \"different tool\" in the cross-check between sources."
+        },
+        "fakeTrailer": {
+          "q": "Can someone fake a co-authorship trailer?",
+          "a": "Yes: anyone can write a Co-authored-by line. That's why Bisolhador matches the tool's e-mail, not the name, but that doesn't stop a hand-written line. The opposite holds too: a message can be edited and the co-authorship removed. Traces are declarations, not proof."
+        },
+        "readsCode": {
+          "q": "Does Bisolhador read my code?",
+          "a": "No. It reads GitHub metadata (commit, PR and review messages and authors), file paths and, with a token, the contents of only two files: .gitignore and .claude/settings.json."
+        },
+        "saved": {
+          "q": "Is anything saved?",
+          "a": "On the Dashboard, the analysis saves a public snapshot; its AI part keeps only counts, dates, tool ids, the paths of AI configuration files and the .gitignore lines that hide AI, with no person's login or name. In Classroom Mode, nothing is saved."
+        },
+        "grade": {
+          "q": "Can I use this for grading?",
+          "a": "We don't recommend it. The section shows declared traces, which depend on each person's tool and configuration. Use it to talk about process (declaration, review, tests), not as a grade or as proof."
+        }
+      }
+    },
+    "limits": {
+      "intro": "Each item links to the matching How to read entry.",
+      "more": "Details",
+      "items": {
+        "samples": "Samples: on the Dashboard, the {{commits}} most recent commits of the default branch and up to {{prSample}} merged PRs (with a token, among the {{prScan}} most recently updated merged PRs; without one, among the {{closedScan}} closed PRs). In Classroom Mode, up to the {{classroomCommits}} most recent commits of the period and the PRs merged in the period, scanning up to {{classroomPrScan}} PRs.",
+        "token": "Token: without one, AI review, safeguards, .gitignore, .claude/settings.json and the template origin show N/A on the Dashboard. Classroom Mode only works with a token.",
+        "classroomLocations": "Classroom Mode: configuration is looked for only at the root and in known directories ({{dirs}}), in the repository's current state (HEAD), not at the end of the period. A CLAUDE.md or AGENTS.md in a subfolder doesn't show up.",
+        "classroomTestsCi": "Classroom Mode: the badge's \"tests and CI\" criterion looks only at the root and .github/workflows, plus the period's GitHub Actions runs. Tests next to the code (*.test.js) don't show up, and the criterion stays not verified.",
+        "authorship": "Classroom Mode: configuration authorship reads up to {{authorshipCommits}} commits per file, in up to {{authorshipPaths}} files per repository (root files first). The others keep an unverified origin.",
+        "personalBots": "Personal agent bots (custom GitHub Apps, such as someone-agent[bot]) can't be classified by login: they count as maintenance bots and are left out of the counts.",
+        "reviewOnly": "When the only trace is a review by an AI bot, the badge criteria \"versioned configuration\" and \"declared co-authorship\" don't apply: an external reviewer needs neither.",
+        "dashboardTemplate": "Dashboard and GitHub Classroom: GitHub doesn't report the template of these repositories. The configuration files' origin is left unverified only when Classroom's initial commit is in the {{commits}}-commit sample; outside it, the files count as the repository's own.",
+        "method": "Snapshots: the section is saved with method {{method}} and the registry version ({{registryVersion}}). Snapshots without that method show \"not recorded in this analysis\"."
+      }
+    }
   }
 }
