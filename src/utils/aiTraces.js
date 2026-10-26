@@ -7,10 +7,31 @@ export function normalizeLogin(login) {
   return login.replace(/\[bot\]$/i, '').toLowerCase();
 }
 
-const COAUTHOR_LINE = /^co-authored-by:\s*(.+?)\s*<([^>]+)>\s*$/gim;
+const COAUTHOR_PREFIX = 'co-authored-by:';
+const TRAILER_WINDOW = 4096; // trailers close the message; the rest is never scanned
 
+// "Co-authored-by: Name <email>" → { name, email }, or null. Plain string scanning, no regex:
+// commit messages are attacker-controlled and a backtracking regex froze the page (ReDoS).
+function parseCoauthorLine(raw) {
+  const line = raw.trim();
+  if (line.slice(0, COAUTHOR_PREFIX.length).toLowerCase() !== COAUTHOR_PREFIX) return null;
+  const rest = line.slice(COAUTHOR_PREFIX.length);
+  const open = rest.lastIndexOf('<');
+  const close = open < 0 ? -1 : rest.indexOf('>', open);
+  if (close < 0 || close !== rest.length - 1) return null; // nothing may follow the e-mail
+  const name = rest.slice(0, open).trim();
+  const email = rest.slice(open + 1, close);
+  return name && email ? { name, email } : null;
+}
+
+/** Co-author trailers of a commit message, read from its last TRAILER_WINDOW characters. */
 export function parseCoauthors(message) {
-  return [...(message ?? '').matchAll(COAUTHOR_LINE)].map((m) => ({ name: m[1], email: m[2] }));
+  let text = message ?? '';
+  if (text.length > TRAILER_WINDOW) {
+    text = text.slice(-TRAILER_WINDOW);
+    text = text.slice(text.indexOf('\n') + 1); // drop the line cut in half
+  }
+  return text.split('\n').map(parseCoauthorLine).filter(Boolean);
 }
 
 // Matches by e-mail (a name alone is forgeable); shared e-mails also require the name.

@@ -48,6 +48,25 @@ describe('co-authors', () => {
     expect(parseCoauthors('x\n\nCo-authored-by: Jane Doe <jane@x.org>')).toEqual([{ name: 'Jane Doe', email: 'jane@x.org' }]);
     expect(parseCoauthors('no trailer')).toEqual([]);
   });
+  it('line parsing: surrounding spaces, CRLF, "<" in the name; nothing after ">", no empty name or e-mail', () => {
+    expect(parseCoauthors('x\r\n\r\n  Co-authored-by:   Jane  <jane@x.org>  \r\n')).toEqual([{ name: 'Jane', email: 'jane@x.org' }]);
+    expect(parseCoauthors('x\n\nCo-authored-by: a <b> <c@d.e>')).toEqual([{ name: 'a <b>', email: 'c@d.e' }]);
+    expect(parseCoauthors('x\n\nCo-authored-by: Jane <jane@x.org> extra')).toEqual([]);
+    expect(parseCoauthors('x\n\nCo-authored-by: <jane@x.org>')).toEqual([]);
+    expect(parseCoauthors('x\n\nCo-authored-by: Jane <>')).toEqual([]);
+    expect(parseCoauthors(null)).toEqual([]);
+  });
+  it('a 200 KB crafted message parses in under 50 ms (no regex backtracking)', () => {
+    const evil = `x\n\nCo-authored-by: a <x${' '.repeat(200_000)}`;
+    const start = performance.now();
+    expect(parseCoauthors(evil)).toEqual([]);
+    expect(performance.now() - start).toBeLessThan(50);
+  });
+  it('trailers live at the end: only the last 4 KB are read', () => {
+    const trailer = 'Co-Authored-By: Claude <noreply@anthropic.com>';
+    expect(tools(`${'a'.repeat(200_000)}\n\n${trailer}`)).toEqual(['claude']);
+    expect(tools(`x\n\n${trailer}\n${'a'.repeat(5000)}`)).toEqual([]);
+  });
 });
 
 describe('logins', () => {
