@@ -24,12 +24,18 @@ export function templateFromAuthorship(authorship) {
   return out;
 }
 
-/** AI-config paths worth an authorship query: not from the template, registry order, capped. */
+const depthOf = (path) => path.split('/').length;
+
+/**
+ * AI-config paths worth an authorship query: not from the template, top-level first (AGENTS.md,
+ * CLAUDE.md, .claude… before files deep in a rules directory), then registry order, capped.
+ * Paths left out keep an unverified origin (classroomAiContext).
+ */
 export function authorshipPaths(ctx) {
   if (!ctx) return [];
   return detectConfig(ctx.contextPaths)
     .filter((e) => !ctx.templatePaths?.has(e.path))
-    .sort((a, b) => TOOL_ORDER.get(a.toolId) - TOOL_ORDER.get(b.toolId))
+    .sort((a, b) => depthOf(a.path) - depthOf(b.path) || TOOL_ORDER.get(a.toolId) - TOOL_ORDER.get(b.toolId))
     .slice(0, AUTHORSHIP_MAX_PATHS)
     .map((e) => e.path);
 }
@@ -39,11 +45,15 @@ export function authorshipPaths(ctx) {
  * files GitHub Classroom committed. null = context query failed. When the authorship query failed and
  * no template file is known, the origin stays "not verified" (null): Classroom repositories often have
  * no visible templateRepository, and the github-classroom fallback is what was missing.
+ * originChecked: paths whose complete history was read. Any other path outside the template (beyond the
+ * query cap, incomplete history, failed query) keeps an unverified origin instead of "own configuration".
  */
 export function classroomAiContext(ctx, authorship) {
   if (!ctx) return null;
-  if (authorship == null && ctx.templatePaths.size === 0) return { ...ctx, templatePaths: null };
-  return { ...ctx, templatePaths: new Set([...ctx.templatePaths, ...templateFromAuthorship(authorship)]) };
+  const known = ctx.templatePaths ?? new Set();
+  if (authorship == null && known.size === 0) return { ...ctx, templatePaths: null };
+  const checked = (Array.isArray(authorship) ? authorship : []).filter((e) => e.complete).map((e) => e.path);
+  return { ...ctx, templatePaths: new Set([...known, ...templateFromAuthorship(authorship)]), originChecked: new Set(checked) };
 }
 
 const inPeriod = (date, since, until) => {

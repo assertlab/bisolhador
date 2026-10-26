@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { analyzeStudents, templateFromAuthorship, authorshipPaths, classroomAiContext } from './aiClassroom.js';
+import { analyzeAiConfig, analyzeCoherence } from './aiProcess.js';
 
 const period = { since: '2026-08-01T00:00:00.000Z', until: '2026-10-26T23:59:59.000Z' };
 const inPeriod = '2026-09-10T12:00:00Z';
@@ -95,9 +96,13 @@ describe('templateFromAuthorship', () => {
 describe('authorshipPaths / classroomAiContext', () => {
   const ctx = (paths, template = new Set()) => ({ gitignore: '', claudeSettings: null, templatePaths: template, available: true, contextPaths: paths });
 
-  it('non-template config paths in registry order, at most 10', () => {
+  it('non-template config paths, top-level first (then registry order), at most 10', () => {
     expect(authorshipPaths(ctx(['AGENTS.md', 'README.md', '.github/copilot-instructions.md', 'CLAUDE.md'], new Set(['CLAUDE.md']))))
-      .toEqual(['.github/copilot-instructions.md', 'AGENTS.md']);
+      .toEqual(['AGENTS.md', '.github/copilot-instructions.md']);
+    const deep = Array.from({ length: 12 }, (_, i) => `.cursor/rules/r${i}.mdc`);
+    const picked = authorshipPaths(ctx([...deep, '.github/instructions', 'AGENTS.md', '.claude', 'CLAUDE.md']));
+    expect(picked.slice(0, 4)).toEqual(['.claude', 'CLAUDE.md', 'AGENTS.md', '.github/instructions']);
+    expect(picked).toHaveLength(10);
     const many = Array.from({ length: 12 }, (_, i) => `.cursor/rules/r${i}.mdc`);
     expect(authorshipPaths(ctx(many))).toHaveLength(10);
     expect(authorshipPaths(null)).toEqual([]);
@@ -108,6 +113,29 @@ describe('authorshipPaths / classroomAiContext', () => {
     expect(classroomAiContext(ctx(['CLAUDE.md', 'AGENTS.md'], new Set(['AGENTS.md'])), authorship).templatePaths)
       .toEqual(new Set(['AGENTS.md', 'CLAUDE.md']));
     expect(classroomAiContext(null, authorship)).toBeNull();
+  });
+
+  it('origin is a fact only for checked paths: beyond the cap, incomplete history or failed query → null', () => {
+    const deep = Array.from({ length: 12 }, (_, i) => `.cursor/rules/r${i}.mdc`);
+    const raw = ctx(['CLAUDE.md', 'AGENTS.md', 'GEMINI.md', ...deep], new Set(['GEMINI.md']));
+    const paths = authorshipPaths(raw);
+    const authorship = paths.map((path) => ({ path, complete: path !== 'AGENTS.md', commits: [{ login: 'alice', date: inPeriod }] }));
+    const origin = (cls) => Object.fromEntries(analyzeAiConfig(raw.contextPaths, 'partial', cls).entries.map((e) => [e.path, e.fromTemplate]));
+    const checked = origin(classroomAiContext(raw, authorship));
+    expect(checked['CLAUDE.md']).toBe(false); // complete history, first commit by a student
+    expect(checked['GEMINI.md']).toBe(true); // known from the template repository
+    expect(checked['AGENTS.md']).toBeNull(); // incomplete history
+    expect(checked['.cursor/rules/r11.mdc']).toBeNull(); // beyond the cap: never asked
+    expect(Object.values(origin(classroomAiContext(raw, null))).filter((v) => v !== true)).toEqual(Array(14).fill(null));
+  });
+
+  it('own config of unknown origin fires the rule with the template note', () => {
+    const raw = ctx(['AGENTS.md']);
+    const config = analyzeAiConfig(raw.contextPaths, 'partial', classroomAiContext(raw, [{ path: 'AGENTS.md', complete: false, commits: [] }]));
+    const commits = { available: true, n: 3, withAi: 0, tools: [] };
+    const coherence = analyzeCoherence(config, commits, { available: true, byAgents: 0, agentTools: [] });
+    expect(coherence.flags).toEqual(['configWithoutDeclaration']);
+    expect(coherence.unverified).toContain('template');
   });
 
   it('authorship failed and no template known → template origin not verified (null)', () => {

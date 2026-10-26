@@ -133,8 +133,10 @@ export function analyzeAiSafeguards(prs, { limit = MERGED_PR_SAMPLE, reviewsAvai
 export const AI_PROCESS_METHOD = 'ai-traces-v1';
 
 /**
- * @typedef {{ gitignore: string|null, claudeSettings: string|null, templatePaths: Set<string>|null, available: boolean }} AiRepoContext
+ * @typedef {{ gitignore: string|null, claudeSettings: string|null, templatePaths: Set<string>|null,
+ *   originChecked?: Set<string>, available: boolean }} AiRepoContext
  * templatePaths: null = template not verified (no context); empty Set = no template, or no AI files in it.
+ * originChecked (Classroom only): paths whose origin was verified by their history; others outside the template are unverified.
  */
 
 const listedPaths = (node) => {
@@ -165,13 +167,24 @@ export function parseAiRepoContext(data) {
   };
 }
 
+/**
+ * Template origin of one config path: true/false, or null when not verified. `originChecked` (Classroom)
+ * lists the paths whose own history was read; without it (Dashboard) the template listing decides alone.
+ */
+function originOf(path, templatePaths, originChecked) {
+  if (!templatePaths) return null;
+  if (templatePaths.has(path)) return true;
+  return originChecked && !originChecked.has(path) ? null : false;
+}
+
 /** Versioned AI config in the tree, with template origin, AI paths hidden by .gitignore and the co-author switch. */
 export function analyzeAiConfig(paths, treeStatus, ctx) {
   const context = ctx?.available ? ctx : null;
   const templatePaths = context?.templatePaths ?? null;
+  const originChecked = context?.originChecked ?? null;
   return {
     status: Array.isArray(paths) ? treeStatus : 'unavailable',
-    entries: detectConfig(paths).map((e) => ({ ...e, fromTemplate: templatePaths ? templatePaths.has(e.path) : null })),
+    entries: detectConfig(paths).map((e) => ({ ...e, fromTemplate: originOf(e.path, templatePaths, originChecked) })),
     // With an available context, a missing file was verified: nothing hidden, trailer not turned off.
     hiddenLocal: gitignoreHidesAi(context ? (context.gitignore ?? '') : null),
     coauthorDisabled: context ? (context.claudeSettings == null ? false : coauthorDisabled(context.claudeSettings)) : null,
