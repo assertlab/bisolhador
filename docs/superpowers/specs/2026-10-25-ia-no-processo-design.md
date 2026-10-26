@@ -1,6 +1,6 @@
 # IA no Processo — desenho
 
-Data: 2026-10-25 · Branch: `feat/ia-no-processo` · Status: aguardando aprovação do mantenedor
+Data: 2026-10-25 · Branch: `feat/ia-no-processo` · Status: aprovado pelo mantenedor (2026-10-26)
 
 ## 1. Intenção
 
@@ -11,6 +11,7 @@ A seção **"IA no Processo"** (*AI in the Process*) mostra esses rastros e resp
 1. **Adoção declarada:** o projeto orienta agentes de IA? Com quais ferramentas?
 2. **Participação visível:** que fração dos commits e PRs tem um agente como autor ou coautor?
 3. **Salvaguardas:** o que a IA produziu passou por revisão humana?
+4. **Coerência:** as fontes contam a mesma história? Um aluno pode editar as mensagens dos commits e tirar a coautoria, mas a configuração versionada (`.claude/`, skills, `CLAUDE.md`) continua lá. A seção aponta esse **desacordo entre fontes** (§5.6).
 
 O foco é **processo**, não "quanto código é IA". A terceira pergunta é a que mais interessa para o ensino: a IA vira um caso do que o Bisolhador já mede (revisão, tamanho de PR), não um placar à parte.
 
@@ -29,8 +30,10 @@ Consequências:
 - Dashboard: seção "IA no Processo" com ferramentas detectadas (com a origem da evidência), cobertura em commits, cobertura em PRs, revisão por IA e salvaguardas.
 - Modo Turma: colunas de IA por repositório, detalhe por estudante ao expandir a linha (aberto por padrão quando há um único repositório) e colunas por repositório no CSV.
 - Snapshot persistido com método versionado; snapshots antigos mostram "não registrado nesta análise".
+- Cruzamento entre fontes ("fontes em desacordo"), profundidade da configuração e o selo **"Uso responsável de IA"** (§5.5–§5.7).
+- Duas subseções: **IA no Processo › Repositório** (Dashboard e Modo Turma) e **IA no Processo › Por estudante** (só Modo Turma).
 - Guia "Como interpretar" com uma entrada por indicador novo.
-- **Zero requisições novas** no Dashboard; no Modo Turma, no máximo campos a mais em consultas que já existem.
+- **Custo:** sem token, zero requisições novas no Dashboard. Com token, campos a mais em consultas GraphQL que já existem, mais **uma** requisição GraphQL de autoria por repositório **que tenha configuração de IA** (§4.3).
 
 **Não-objetivos (agora)**
 - Ler o conteúdo dos workflows de CI (item 5 da conversa). Pode voltar como fase 2, só com token, numa única consulta GraphQL com aliases.
@@ -43,6 +46,9 @@ Consequências:
 - **Atribuir uso a quem não declarou.** Nada de heurísticas de estilo, de horário ou de volume.
 - **Punir a transparência sem avisar.** Quem declara aparece e quem não declara não aparece. A tela precisa dizer isso.
 - **Enviar dados por estudante para fora do navegador.** Sem Supabase, sem GA e sem CSV por estudante.
+- **Atribuir IA a pessoas no Dashboard.** O Dashboard grava snapshots públicos e permanentes. Lá, nada de IA por pessoa: nem na tela, nem no `report`.
+- **Alerta individual.** O desacordo é sinalizado no repositório. Na visão por estudante aparecem só fatos lado a lado, sem alerta, sem selo e sem nota.
+- **Selo como placar.** O selo não entra no Ranking nem existe por estudante, e não penaliza quem não usa IA (§5.7).
 
 ## 4. Fontes de evidência
 
@@ -52,6 +58,10 @@ Consequências:
 | Coautoria em commits | amostra REST de commits recentes (`GITHUB_PER_PAGE_COMMITS` = 100) | histórico do período (`fetchCommitHistoryInPeriod`, já traz `message` e autor) | zero |
 | Autoria de PR por agente | amostra GraphQL de PRs mesclados (com token) ou REST de PRs fechados (sem token) | PRs mesclados no período (`fetchMergedPullRequestsInPeriod`) | zero |
 | Revisão por IA | `reviews`/`comments` da amostra GraphQL (com token) | `reviews` da consulta do período | zero |
+
+| `.gitignore` e `.claude/settings.json` (conteúdo) | alias `object(expression: "HEAD:<arquivo>") { ... on Blob { text } }` na consulta GraphQL de PRs (só com token) | aliases na consulta de histórico | campos a mais |
+| Origem template | `repository.templateRepository` + o mesmo caminho no template (alias, só com token) | idem | campos a mais |
+| Autoria da configuração | histórico por caminho (`history(path:)`), só para descartar template quando `templateRepository` não resolver; **nada por pessoa** | histórico por caminho de cada arquivo de IA detectado, com autor (visão por estudante) | +1 requisição GraphQL por repositório com configuração |
 
 Sem token, a revisão por IA fica "n/d" com a explicação que já existe para os outros indicadores de revisão. As demais fontes funcionam sem token.
 
@@ -100,6 +110,14 @@ Os formatos de coautoria e os logins marcados com ✓ foram conferidos pela busc
 
 Quem implementar deve repetir a conferência para qualquer ferramenta nova. Os trailers coletados viram fixtures de teste.
 
+### 4.3 Configuração: profundidade, ocultação e origem
+
+- **Profundidade:** além da presença, o registro classifica cada caminho em **instruções** (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.cursor/rules/`…) ou **extensões** (`.claude/skills/`, `.claude/commands/`, `.claude/agents/`, `.github/prompts/`, `.mcp.json`, `.claude/settings.json` com hooks…). Conferir os caminhos na implementação (○).
+- **Ocultação (`.gitignore`):** padrões que ignoram artefatos de IA (`.claude/`, `.claude/settings.local.json`, `CLAUDE.local.md`, `.cursor/`, `.aider*`…) contam como rastro de **uso local não versionado**. Lista no registro, com testes.
+- **Declaração desligada:** o Claude Code tem uma configuração que desliga o trailer de coautoria. Se ela estiver versionada em `.claude/settings.json`, o desacordo vem acompanhado da explicação "declaração desligada na configuração". O nome exato da chave (`includeCoAuthoredBy` em versões antigas; verificar a atual, `attribution`) precisa ser conferido na documentação do Claude Code na implementação.
+- **Origem template:** um arquivo de IA que também existe no repositório-modelo (`templateRepository`) ou que entrou no commit inicial criado pelo GitHub Classroom (`github-classroom[bot]`) é marcado "do template". Ele aparece na lista de ferramentas, mas **não conta** como indício no cruzamento (§5.6) nem como autoria de estudante. Sem token, a origem fica "não verificada", e isso é dito no cruzamento.
+- **Autoria (Modo Turma):** para cada arquivo de IA detectado, os autores dos commits que o adicionaram ou alteraram no período. Uma consulta GraphQL por repositório, com um alias `history(path:)` por arquivo, só quando há configuração. Falhou: a coluna fica "n/d" e o resto da linha não é afetado.
+
 ## 5. Indicadores
 
 ### 5.1 Ferramentas detectadas
@@ -117,6 +135,30 @@ Sobre os PRs mesclados da amostra (o mesmo conjunto buscado hoje, mas sem descar
 - **PRs de agentes mesclados sem aprovação humana:** mesma regra de "aprovação" do indicador atual (`APPROVED` antes do merge, de alguém que não é o autor e não é bot). O número é mostrado mesmo com n pequeno, sempre com o n.
 - **Tamanho mediano: PRs de agentes × PRs de humanos:** só quando os dois grupos têm n ≥ `AI_MIN_GROUP` (constante nova; minha sugestão é 5).
 
+### 5.5 Profundidade da configuração
+"Instruções" ou "instruções + extensões (skills, comandos, subagentes, MCP)", por ferramenta. Mais "uso local ignorado" quando o `.gitignore` o indicar.
+
+### 5.6 Fontes em desacordo (coerência)
+Um bloco no nível do **repositório** que aparece quando as fontes não contam a mesma história. Regras (puras, testadas):
+1. **Configuração sem declaração:** há configuração de IA versionada que **não é do template**, e nenhum commit da amostra (Dashboard) ou do período (Modo Turma) declara coautoria de IA nem é de autoria de um agente.
+2. **Uso local ocultado sem declaração:** o `.gitignore` ignora artefatos de IA e nenhum commit declara.
+3. **Ferramenta diferente** (informativo, não é desacordo): a configuração é de uma ferramenta e as declarações são de outra.
+
+O bloco sempre lista as **causas legítimas** possíveis: declaração desligada na configuração (mostrada como fato quando detectada, §4.3), merge com squash que reescreve a mensagem, configuração de outra pessoa do grupo, ferramenta que não grava trailer. Tom: "as fontes não concordam", nunca "fraude" ou "ocultação deliberada". Sem token, origem template "não verificada" é dita no bloco. A edição de mensagens em si **não é detectável** pela API; o que se detecta é a incoerência que ficou.
+
+### 5.7 Selo "Uso responsável de IA"
+Só no nível do repositório, no estilo do Health Score: uma lista de critérios cumpridos ("x de 5"), completo quando cumpre todos. **Só se aplica a repositórios com algum rastro de IA**. Sem rastro, o selo "não se aplica" e nada é penalizado.
+
+- **Transparência:**
+  1. configuração de IA versionada (instruções ou extensões, excluindo as do template);
+  2. commits com coautoria declarada (pelo menos um na amostra ou no período);
+  3. coerência: nenhuma regra de desacordo da §5.6 disparada.
+- **Salvaguardas:**
+  4. PRs de agentes com aprovação humana (todos os da amostra; **não se aplica** se não houver PRs de agentes; sem token, "não verificado");
+  5. testes e CI detectados (reaproveita `maturity.testsDetected` e `ciDetected`; "?" conta como não verificado, não como falha).
+
+Um critério "não verificado" ou "não se aplica" sai do denominador ("3 de 4"). O tooltip diz que o selo verifica **práticas observáveis e coerência entre rastros**, não uso real nem caráter. Fora do Ranking (antiobjetivo §3).
+
 ## 6. Bots: manutenção × agentes de código
 
 Hoje `isBot` (`contributors.js`) descarta qualquer bot de **todos** os indicadores de revisão, PR e commit. Esta feature cria uma classificação `botKind(author)` → `'maintenance' | 'agent' | 'reviewer' | null`, com `agent`/`reviewer` vindos do registro e o resto dos bots como `maintenance`.
@@ -125,37 +167,42 @@ Só a seção de IA usa essa classificação. Os indicadores de revisão, PR e c
 
 ## 7. Interface
 
-### 7.1 Dashboard
+A seção "IA no Processo" tem duas subseções: **Repositório** (Dashboard e Modo Turma) e **Por estudante** (só no Modo Turma, §7.3).
+
+### 7.1 Dashboard (subseção Repositório)
 Uma seção nova "IA no Processo", depois de saúde, maturidade e bus factor (posição exata a cargo de quem implementar, seguindo o padrão visual de `MaturityCard`), com:
 - ferramentas detectadas (selos de origem);
 - três números: cobertura em commits, PRs de agentes e PRs com revisão de IA;
 - bloco de salvaguardas;
+- profundidade da configuração (§5.5);
+- bloco "Fontes em desacordo", quando houver (§5.6);
+- selo "Uso responsável de IA" com a lista de critérios (§5.7);
 - uma nota fixa de limite inferior;
 - `GuideLink` para cada indicador.
 
 O PDF e o JSON incluem a seção, que vem do mesmo `report`.
 
 ### 7.2 Modo Turma: tabela
-Três colunas novas por repositório: **Ferramentas IA** (ícones ou siglas com legenda), **% commits com IA** e **% PRs de agentes**. Cada linha pode ser expandida (botão acessível, `aria-expanded`). Com um único repositório, a linha já vem expandida.
+Colunas novas por repositório: **Ferramentas IA** (ícones ou siglas com legenda), **% commits com IA**, **% PRs de agentes**, **Desacordo** (ícone neutro com tooltip, quando houver) e **Selo** ("x de 5"). Ao expandir a linha aparecem a subseção Repositório completa (como no Dashboard) e a subseção Por estudante. Cada linha pode ser expandida (botão acessível, `aria-expanded`). Com um único repositório, a linha já vem expandida.
 
 ### 7.3 Modo Turma: detalhe por estudante
-Uma subtabela por autor de commit do período: autor (login, ou "autor não identificado" quando o commit não está ligado a uma conta), commits, commits com IA declarada (n e %) e ferramentas. Commits sem login **não** são agrupados por nome, para não adivinhar identidades: todos vão para uma única linha "não identificado".
+Uma subtabela por autor de commit do período: autor (login, ou "autor não identificado" quando o commit não está ligado a uma conta), commits, commits com IA declarada (n e %), ferramentas declaradas e **configuração de IA adicionada ou alterada** (caminhos, excluindo os do template, §4.3). Sem alerta, sem selo e sem destaque visual para "configurou e não declarou": os fatos ficam lado a lado e a leitura é do professor. Commits sem login **não** são agrupados por nome, para não adivinhar identidades: todos vão para uma única linha "não identificado".
 
 Aviso fixo, acima da subtabela (texto final nos locales):
-> Mostra só o uso de IA **declarado** nos commits (coautoria). Quem não declara não aparece aqui, então ausência de registro não significa ausência de uso. Não use este dado como nota ou prova.
+> Mostra só o uso de IA **declarado** nos commits (coautoria) e quem **configurou** ferramentas de IA no repositório. Configurar não é o mesmo que usar: num grupo, uma pessoa pode montar a configuração para todos. Quem não declara não aparece aqui, então ausência de registro não significa ausência de uso. Não use este dado como nota ou prova.
 
 O CSV recebe só as colunas por repositório. **O detalhe por estudante não vai para o CSV** (decisão minha, §10).
 
 ## 8. Snapshot e método
 
-- Chave nova no `report`: `aiProcess`, com `method: 'ai-traces-v1'`, `registryVersion` (data do registro) e os campos de §5 (`n` sempre presente).
+- Chave nova no `report`: `aiProcess`, com `method: 'ai-traces-v1'`, `registryVersion` (data do registro) e os campos de §5, incluindo desacordo e selo (`n` sempre presente). **Sem logins nem nomes de pessoas** (antiobjetivo §3); a autoria de configuração não entra no `report`.
 - `normalizeSnapshotAiProcess(report)`, no padrão dos normalizadores existentes, chamado em `useSnapshot`: sem `method` atual → `{ available: false, reason: 'snapshot' }` → "não registrado nesta análise".
 - A falha de uma fonte de IA **não** bloqueia a persistência (não entra em `PERSIST_BLOCKERS`). O indicador correspondente fica `available: false, reason: 'error'`.
 - Classificar uma ferramenta nova no registro muda os números de análises futuras. Por isso o snapshot grava `registryVersion`.
 
 ## 9. Guia "Como interpretar"
 
-Uma nova seção `ai` em `GUIDE_SECTIONS`, com itens `ai-tools`, `ai-commits`, `ai-prs`, `ai-review` e `ai-safeguards`, todos `relation: 'none'` (não encontrei métrica CHAOSS equivalente; conferir na implementação). Os textos em `guide.items.<id>` nos dois locales precisam dizer o limite inferior e o que cada fonte não enxerga.
+Uma nova seção `ai` em `GUIDE_SECTIONS`, com itens `ai-tools`, `ai-config-depth`, `ai-commits`, `ai-prs`, `ai-review`, `ai-safeguards`, `ai-coherence` e `ai-badge`, todos `relation: 'none'` (não encontrei métrica CHAOSS equivalente; conferir na implementação). Os textos em `guide.items.<id>` nos dois locales precisam dizer o limite inferior e o que cada fonte não enxerga.
 
 ## 10. Decisões tomadas
 
@@ -163,6 +210,10 @@ Uma nova seção `ai` em `GUIDE_SECTIONS`, com itens `ai-tools`, `ai-commits`, `
 - Nome da seção: "IA no Processo".
 - Fase 1 = configuração + autoria de PR + revisão por IA + coautoria em commits. Workflows de CI ficam fora (custo de rate limit).
 - Indicadores de revisão existentes continuam só com humanos; agentes são medidos só na seção de IA (aditivo, minor).
+- Cruzamento entre fontes ("fontes em desacordo") sinalizado no nível do repositório; na visão por estudante, só fatos lado a lado (quem declarou, quem configurou), sem alerta individual.
+- Duas subseções: Repositório e Por estudante.
+- Selo "Uso responsável de IA" (nome escolhido entre coerência, ética e responsabilidade: "ética" promete o que a API não mede; "coerência" vira um dos critérios), só por repositório, com critérios de transparência e salvaguardas, fora do Ranking.
+- Nada de IA por pessoa no Dashboard nem no snapshot.
 - Modo Turma mostra detalhe por estudante, disponível ao expandir a linha, mesmo com vários repositórios. Isso é uma **exceção** à regra atual de não nomear autores no Modo Turma, restrita a esta visão e registrada no AGENTS.md (§ Decisões Arquiteturais) como decisão do mantenedor.
 
 **Minhas (conferíveis):**
@@ -172,6 +223,9 @@ Uma nova seção `ai` em `GUIDE_SECTIONS`, com itens `ai-tools`, `ai-commits`, `
 - Commits sem login não agrupados por nome.
 - `AI_MIN_GROUP = 5` para comparar tamanho de PR.
 - Falha de IA não bloqueia a persistência.
+- Origem template via `templateRepository` primeiro; histórico por caminho só como complemento.
+- Critério do selo "não verificado"/"não se aplica" sai do denominador.
+- Leitura de `.gitignore` e `.claude/settings.json` só com token (alias GraphQL), para manter zero requisições novas sem token.
 
 ## 11. Pendências e decisões da revisão independente
 
@@ -185,7 +239,7 @@ Uma nova seção `ai` em `GUIDE_SECTIONS`, com itens `ai-tools`, `ai-commits`, `
 
 ## 12. Testes e documentação
 
-- Testes unitários (Vitest) colocados junto ao código: detecção por caminho, por trailer (variações de caixa e de nome de modelo, e-mail falso com nome "Copilot"), `botKind`, coberturas com n = 0, árvore truncada → "?", normalizador de snapshot e visão por estudante (agrupamento, "não identificado").
+- Testes unitários (Vitest) colocados junto ao código: detecção por caminho, por trailer (variações de caixa e de nome de modelo, e-mail falso com nome "Copilot"), `botKind`, coberturas com n = 0, árvore truncada → "?", normalizador de snapshot, visão por estudante (agrupamento, "não identificado", autoria de configuração), regras de desacordo (com e sem template, com declaração desligada), padrões de `.gitignore` e critérios do selo (incluindo "não se aplica").
 - Fixtures com trailers reais coletados no reconhecimento (§4.2).
 - Atualizar: AGENTS.md (Architecture, Folder Structure, Classroom Mode, Decisões), README, guia (dois locales), CHANGELOG e versão. Minor (comportamento novo e aditivo; nenhum indicador existente muda de método).
 - Fluxo do AGENTS.md: `/code-review`, `/simplify`, `/security-review` (toca integração com o GitHub, dados de estudantes e persistência), lint e build.
