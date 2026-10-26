@@ -444,7 +444,21 @@ describe('parseAiRepoContext', () => {
     expect(ctxOf(err('d3')).unverified).toEqual(['listings']);
     // An error that can't be placed: nothing from the context counts as verified
     const unknown = ctxOf({ message: 'boom' });
-    expect(unknown).toMatchObject({ templatePaths: null, unverified: ['gitignore', 'claudeSettings', 'listings'] });
+    expect(unknown).toMatchObject({ templatePaths: null, unverified: ['gitignore', 'claudeSettings', 'listings', 'workflows'] });
+  });
+  it('.github/workflows listing: dir/name paths, root directories, and its own unverified part', () => {
+    const ctx = parseAiRepoContext({ repository: {
+      gitignore: null, claudeSettings: null, templateRepository: null,
+      ...dirs({ '': [['tests', 'tree'], ['README.md'], ['.circleci', 'tree']] }),
+      workflows: { entries: [{ name: 'ci.yml', type: 'blob' }] },
+    } });
+    expect(ctx.workflowPaths).toEqual(['.github/workflows/ci.yml']);
+    expect(ctx.rootDirs).toEqual(['tests', '.circleci']);
+    expect(ctx.unverified).toEqual([]);
+    // No .github/workflows directory: verified empty, not unverified
+    expect(parseAiRepoContext({ repository: { templateRepository: null, ...dirs({}), workflows: null } }).workflowPaths).toEqual([]);
+    const failed = parseAiRepoContext({ repository: { templateRepository: null, ...dirs({}) }, errors: [{ message: 'x', path: ['repository', 'workflows'] }] });
+    expect(failed.unverified).toEqual(['workflows']);
   });
   it('lists nested paths without leading or trailing slashes, trees included', () => {
     const ctx = parseAiRepoContext({ repository: {

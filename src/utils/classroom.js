@@ -3,7 +3,7 @@ import { isBot, isBotName } from './contributors.js';
 import { analyzeReviewMetrics, analyzeLeadTime } from './prReviewStats.js';
 import { analyzeCiRuns, analyzeConventionalCommits, RELEASES_PAGE } from './projectPractices.js';
 import { buildAiProcess, fromGraphqlCommit } from './aiProcess.js';
-import { analyzeStudents, classroomAiContext } from './aiClassroom.js';
+import { analyzeStudents, classroomAiContext, classroomMaturity } from './aiClassroom.js';
 
 // Classroom mode: the same indicators as the Dashboard, computed over a course
 // period for a list of team repositories (public, or private ones the user's
@@ -81,6 +81,7 @@ export function analyzeCommitHistory(history) {
     capped: history.capped,
     sampled: history.nodes.length,
     authors: byAuthor.size,
+    humanCommits: human.length, // n behind topSharePercentage
     topSharePercentage: human.length ? Math.round((top / human.length) * 100) : null,
     conventional: analyzeConventionalCommits(rest),
   };
@@ -118,8 +119,9 @@ function configStatusOf(ctx) {
 /**
  * AI in the Process for one team repository: the repository section (same as the Dashboard, over
  * the period) and the per-student rows (in memory only). parsed null = AI context query failed.
+ * runs: the period's Actions runs (null = failed), CI evidence for the badge's tests/CI criterion.
  */
-function analyzeTeamAi(history, prs, parsed, authorship, period) {
+function analyzeTeamAi(history, prs, runs, parsed, authorship, period) {
   const ctx = classroomAiContext(parsed, authorship);
   const commits = history ? history.nodes.map(fromGraphqlCommit) : null;
   return {
@@ -131,7 +133,7 @@ function analyzeTeamAi(history, prs, parsed, authorship, period) {
         commits,
         prs: prs?.stats ?? null,
         reviewsAvailable: true,
-        maturity: null,
+        maturity: classroomMaturity(ctx, runs),
         prLimit: Infinity,
       }),
       withToken: true, // Classroom always runs with a token
@@ -163,6 +165,7 @@ export function analyzeTeamRepo(results, period, { ctx = null, authorship = null
           merged: review.codeReview.n ?? 0, // human-authored, merged in the period (any branch)
           capped: prs.capped, // scan bound reached: merged and medians are a minimum / partial
           approvedPercentage: rp?.available ? rp.coverage.approvedPercentage : null,
+          approvedN: rp?.available ? rp.coverage.n : null, // merged human PRs behind approvedPercentage (CSV)
           firstReviewHours: rp?.available && rp.firstReview.n > 0 ? rp.firstReview.medianHours : null,
           prSizeLines: rp?.available && rp.prSize.n > 0 ? rp.prSize.medianLines : null,
           leadTimeHours: leadTime?.n > 0 ? leadTime.medianHours : null,
@@ -170,6 +173,6 @@ export function analyzeTeamRepo(results, period, { ctx = null, authorship = null
       : { available: false, reason: 'error' },
     ci: analyzeCiRuns(settled(results.runs)),
     releases: releasesInPeriod(settled(results.releases), period),
-    ...analyzeTeamAi(settled(results.history), prs, ctx, authorship, period),
+    ...analyzeTeamAi(settled(results.history), prs, settled(results.runs), ctx, authorship, period),
   };
 }

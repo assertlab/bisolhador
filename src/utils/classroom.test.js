@@ -40,6 +40,7 @@ describe('analyzeCommitHistory', () => {
     ] });
     expect(r).toMatchObject({ available: true, commits: 8, authors: 3, topSharePercentage: 60, sampled: 8 });
     expect(r.conventional).toMatchObject({ available: true, percentage: 80, n: 5 });
+    expect(r.humanCommits).toBe(5); // n behind topSharePercentage (CSV)
   });
 
   it('failed fetch → unavailable; no human commits → null share', () => {
@@ -127,5 +128,42 @@ describe('analyzeTeamRepo', () => {
     const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail }, p, { ctx: parsed(raw), authorship });
     expect(row.ai.config.entries.map((e) => [e.path, e.fromTemplate])).toEqual([['CLAUDE.md', true], ['AGENTS.md', true]]);
     expect(row.students.rows[0].configPaths).toEqual([]);
+  });
+
+  it('exposes the n behind review coverage (CSV), null when the PR fetch failed', () => {
+    const stats = Array.from({ length: 4 }, (_, i) => pr(i % 2 === 0));
+    const row = analyzeTeamRepo({ history: fail, prs: ok({ capped: false, stats }), runs: fail, releases: fail }, p);
+    expect(row.prs).toMatchObject({ approvedPercentage: 50, approvedN: 4 });
+    expect(row.ci).toMatchObject({ available: false, reason: 'error' });
+    const empty = analyzeTeamRepo({ history: fail, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail }, p);
+    expect(empty.prs.approvedN).toBeNull();
+  });
+
+  describe('AI badge: tests and CI from the listings and the period runs (no new requests)', () => {
+    const listing = ({ root = [], workflows = null, errors = [] } = {}) => parsed({ repository: {
+      d0: { entries: root.map(([name, type = 'blob']) => ({ name, type })) },
+      workflows: workflows && { entries: workflows.map((name) => ({ name, type: 'blob' })) },
+      templateRepository: null,
+    }, errors });
+    const runs = (n) => ok({ total_count: n, workflow_runs: Array.from({ length: n }, () => ({ event: 'push', conclusion: 'success' })) });
+    const testsCi = (row) => row.ai.badge.criteria.find((c) => c.id === 'testsCi').state;
+    const analyze = (ctx, runsResult) => analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: runsResult, releases: fail }, p, { ctx, authorship: [] });
+
+    it('tests directory at the root + CI in .github/workflows → met', () => {
+      expect(testsCi(analyze(listing({ root: [['tests', 'tree']], workflows: ['ci.yml'] }), runs(0)))).toBe('met');
+    });
+    it('tests directory + CI only from the period runs → met', () => {
+      expect(testsCi(analyze(listing({ root: [['__tests__', 'tree']] }), runs(2)))).toBe('met');
+    });
+    it('tests directory, listings loaded, no CI file and no runs → unmet (only CI can make it unmet)', () => {
+      expect(testsCi(analyze(listing({ root: [['test', 'tree']] }), runs(0)))).toBe('unmet');
+    });
+    it('no tests directory never reads as unmet: unverified even when CI is missing', () => {
+      expect(testsCi(analyze(listing({ root: [['src', 'tree']] }), runs(0)))).toBe('unverified');
+      expect(testsCi(analyze(listing({ root: [['src', 'tree']], workflows: ['ci.yml'] }), runs(0)))).toBe('unverified');
+    });
+    it('context unavailable → unverified', () => {
+      expect(testsCi(analyze(null, runs(0)))).toBe('unverified');
+    });
   });
 });

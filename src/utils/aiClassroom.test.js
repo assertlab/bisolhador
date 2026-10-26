@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { analyzeStudents, templateFromAuthorship, authorshipPaths, classroomAiContext } from './aiClassroom.js';
+import { analyzeStudents, templateFromAuthorship, authorshipPaths, classroomAiContext, classroomMaturity } from './aiClassroom.js';
 import { analyzeAiConfig, analyzeCoherence } from './aiProcess.js';
 
 const period = { since: '2026-08-01T00:00:00.000Z', until: '2026-10-26T23:59:59.000Z' };
@@ -149,5 +149,46 @@ describe('authorshipPaths / classroomAiContext', () => {
     expect(classroomAiContext(ctx(['CLAUDE.md']), null).templatePaths).toBeNull();
     expect(classroomAiContext(ctx(['CLAUDE.md'], new Set(['CLAUDE.md'])), null).templatePaths).toEqual(new Set(['CLAUDE.md']));
     expect(classroomAiContext(ctx(['CLAUDE.md']), []).templatePaths).toEqual(new Set());
+  });
+});
+
+describe('classroomMaturity (badge "tests and CI" without a tree)', () => {
+  const ctx = ({ root = [], dirs = [], workflows = [], unverified = [] } = {}) => ({
+    available: true, contextPaths: [...root, ...dirs], rootDirs: dirs, workflowPaths: workflows.map((w) => `.github/workflows/${w}`), unverified,
+  });
+  const runs = (n) => ({ total_count: n, workflow_runs: Array.from({ length: n }, () => ({ event: 'push', conclusion: 'failure' })) });
+
+  it('CI from the .github/workflows listing → true', () => {
+    expect(classroomMaturity(ctx({ workflows: ['ci.yml'] }), runs(0)).ciCdDetected).toBe(true);
+  });
+  it('CI from root-level configs (files and directories) → true', () => {
+    expect(classroomMaturity(ctx({ root: ['.gitlab-ci.yml'] }), runs(0)).ciCdDetected).toBe(true);
+    expect(classroomMaturity(ctx({ dirs: ['.circleci'] }), runs(0)).ciCdDetected).toBe(true);
+  });
+  it('CI from the period runs only (any completed run, failed ones too) → true', () => {
+    expect(classroomMaturity(ctx(), runs(1)).ciCdDetected).toBe(true);
+    expect(classroomMaturity(null, runs(1)).ciCdDetected).toBe(true);
+  });
+  it('listings loaded, no CI config and no runs → false', () => {
+    expect(classroomMaturity(ctx({ root: ['README.md'] }), runs(0))).toEqual({ testsDetected: null, ciCdDetected: false, treeStatus: 'partial' });
+  });
+  it('not verifiable → null, never false: context unavailable, a listing failed, or runs failed', () => {
+    expect(classroomMaturity(null, runs(0)).ciCdDetected).toBeNull();
+    expect(classroomMaturity(null, null).ciCdDetected).toBeNull();
+    expect(classroomMaturity(ctx({ unverified: ['workflows'] }), runs(0)).ciCdDetected).toBeNull();
+    expect(classroomMaturity(ctx({ unverified: ['listings'] }), runs(0)).ciCdDetected).toBeNull();
+    expect(classroomMaturity(ctx(), null).ciCdDetected).toBeNull();
+    expect(classroomMaturity(ctx({ unverified: ['listings'], workflows: ['ci.yml'] }), null).ciCdDetected).toBe(true); // found is found
+  });
+  it('tests directory at the root → true (test/, tests/, __tests__/)', () => {
+    for (const dir of ['test', 'tests', '__tests__']) expect(classroomMaturity(ctx({ dirs: [dir] }), runs(0)).testsDetected).toBe(true);
+  });
+  it('no tests directory → null (co-located *.test.js are invisible without the tree), never false', () => {
+    expect(classroomMaturity(ctx({ dirs: ['src', 'spec'] }), runs(0)).testsDetected).toBeNull();
+    expect(classroomMaturity(ctx({ root: ['test'] }), runs(0)).testsDetected).toBeNull(); // a file named "test" is not a directory
+    expect(classroomMaturity(null, runs(0)).testsDetected).toBeNull();
+  });
+  it('only the root listing counts for tests (not .github/… or .claude/… entries)', () => {
+    expect(classroomMaturity(ctx({ root: ['.claude/skills/tests'] }), runs(0)).testsDetected).toBeNull();
   });
 });
