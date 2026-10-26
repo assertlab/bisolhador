@@ -998,14 +998,14 @@
         },
         "coherence": {
           "title": "Coherence between sources",
-          "text": "Do the configuration, commits and PRs tell the same story? When they don't, the section shows \"sources disagree\"."
+          "text": "Do the configuration, commits and PRs tell the same story? When they don't, the section shows the \"The sources disagree\" block (in Classroom Mode, the \"Disagreement\" column)."
         }
       },
       "lowerBoundTitle": "Principle: lower bound",
       "lowerBound": "Everything in the section is a lower bound: only AI use that left a trace on GitHub shows up. No trace doesn't mean no AI. Autocomplete leaves no mark, not every tool writes co-authorship, and whoever commits can turn the trailer off. That's why every share comes with its n (\"12 of 100 commits\") and an empty result reads \"No AI traces found\", never \"doesn't use AI\".",
       "notTitle": "What the section is not",
       "not": {
-        "detector": "Not a cheating detector: Bisolhador doesn't analyze code to guess whether AI wrote it. There is no reliable method for that.",
+        "detector": "It doesn't detect whether code was written by AI: Bisolhador doesn't analyze code contents, because there is no reliable method for that. It only reads the traces the process leaves on GitHub.",
         "proof": "Not proof of use or non-use: it shows declarations and agent traces, which can be missing and which anyone can write by hand.",
         "grade": "Not a grade: neither the share of AI commits nor the \"Responsible AI use\" badge should become an automatic grade."
       },
@@ -1047,20 +1047,20 @@
         "reviewer": "Reviewer (bot)"
       },
       "extension": "extension",
-      "legend": "**/ = in any folder (in Classroom Mode, only at the root and in known directories); trailing / = directory; <id>+ = account number in GitHub's noreply e-mail. Bot logins are shown without the [bot] suffix GitHub displays. \"extension\" = skills, commands, subagents, prompts or MCP; the rest are instructions.",
+      "legend": "**/ = in any folder (in Classroom Mode, only at the root and in known directories); trailing / = directory; <id>+ = account number in GitHub's noreply e-mail, optional (the e-mail without it is recognized too). Bot logins are shown without the [bot] suffix GitHub displays. \"extension\" = skills, commands, subagents, prompts or MCP; the rest are instructions.",
       "genericNote": "\"Agents (generic)\": AGENTS.md and .mcp.json serve several tools, so they're attributed to none of them.",
       "gitignoreTitle": "Ignored local use (.gitignore)",
       "gitignore": "With a token, Bisolhador reads the root .gitignore. Lines that hide AI artifacts count as a trace of local, unversioned use (comments and lines starting with ! don't count):"
     },
     "teachers": {
       "readingTitle": "Reading the Per student view",
-      "reading": "When you expand a repository's row in Classroom Mode, the Per student view shows, for each commit author of the period, their commits, how many declare AI co-authorship, the declared tools and the AI configuration files the person added or changed.",
+      "reading": "When you expand a repository's row in Classroom Mode, the Per student view shows, for each commit author of the period, their commits, how many declare AI co-authorship, the declared tools and the AI configuration files the person added or changed in the period.",
       "configNotUse": "Configuring isn't using: in a group, one person may set up the configuration for everyone. And whoever doesn't declare doesn't show up: no record isn't no use.",
       "conversation": "Use the table as a starting point for a conversation with the team, not as a conclusion. It has no alerts or highlights on purpose: the facts sit side by side and the reading is yours.",
       "templateTitle": "AI files in the assignment template",
       "template": "If you want, put an AGENTS.md or CLAUDE.md in the assignment's template repository. Files that arrive in the initial commit created by GitHub Classroom count as template files: they appear in the tool list, but not as the team's configuration nor as student authorship.",
-      "disagreeTitle": "\"Sources disagree\"",
-      "disagree": "The notice appears when the team's own AI configuration exists (or AI lines in .gitignore) and no commit of the period declares AI or is by an agent (and no PR is by an agent). There are legitimate causes: the trailer turned off in the configuration, a squash that rewrote the messages, configuration made by someone else, a tool that doesn't write co-authorship. Ask the team how they used the tool, without assuming bad faith.",
+      "disagreeTitle": "\"The sources disagree\" (\"Disagreement\" column)",
+      "disagree": "The notice appears when the team's own AI configuration exists (or AI lines in .gitignore) and no commit of the period declares AI or is by an agent (and no PR is by an agent). It only fires when the period has commits (n > 0); with an empty sample, the cross-check stays not verified. There are legitimate causes: the trailer turned off in the configuration, a squash that rewrote the messages, configuration made by someone else, a tool that doesn't write co-authorship. Ask the team how they used the tool, without assuming bad faith.",
       "policiesTitle": "Suggested course policies",
       "policies": {
         "declare": "Agree at the start whether and how AI may be used, and that use should be declared with the co-authorship trailer.",
@@ -1078,8 +1078,8 @@
           "a": "No. It means no commit in the sample declares AI co-authorship or is by an agent. Autocomplete leaves no trace, not every tool writes co-authorship, and the trailer can be turned off. Always read it with the n."
         },
         "disagree": {
-          "q": "My repository shows \"sources disagree\". What now?",
-          "a": "There is AI configuration (or AI lines in .gitignore) and no commit or PR in the sample declares use. If you use AI, keep the co-authorship trailer (see How to make AI use visible) and your next commits will count. Configuration made by someone else or brought from a template is also a legitimate cause. The notice is about the repository, never about a person."
+          "q": "My repository shows \"The sources disagree\". What now?",
+          "a": "There is AI configuration (or AI lines in .gitignore) and no commit or PR in the sample declares use. The notice only appears when the sample has commits (n > 0). If you use AI, keep the co-authorship trailer (see How to make AI use visible) and your next commits will count. Configuration made by someone else or brought from a template is also a legitimate cause. The notice is about the repository, never about a person."
         },
         "notAvailable": {
           "q": "Why do I see N/A or \"not verified\"?",
@@ -1107,7 +1107,7 @@
         },
         "saved": {
           "q": "Is anything saved?",
-          "a": "On the Dashboard, the analysis saves a public snapshot; its AI part keeps only counts, dates, tool ids, the paths of AI configuration files and the .gitignore lines that hide AI, with no person's login or name. In Classroom Mode, nothing is saved."
+          "a": "On the Dashboard, the analysis saves a public snapshot. Its AI part keeps counts, dates, tool ids, the paths of AI configuration files, the .gitignore lines that hide AI and derived indicators (percentages, medians, badge states), with no person's login or name. In Classroom Mode, nothing is saved."
         },
         "grade": {
           "q": "Can I use this for grading?",
@@ -1118,6 +1118,17 @@
     "limits": {
       "intro": "Each item links to the matching How to read entry.",
       "more": "Details",
+      "labels": {
+        "samples": "samples",
+        "token": "token",
+        "classroomLocations": "locations checked in Classroom Mode",
+        "classroomTestsCi": "tests and CI in Classroom Mode",
+        "authorship": "configuration authorship",
+        "personalBots": "personal agent bots",
+        "reviewOnly": "review-only traces",
+        "dashboardTemplate": "template origin on the Dashboard",
+        "method": "snapshot method"
+      },
       "items": {
         "samples": "Samples: on the Dashboard, the {{commits}} most recent commits of the default branch and up to {{prSample}} merged PRs (with a token, among the {{prScan}} most recently updated merged PRs; without one, among the {{closedScan}} closed PRs). In Classroom Mode, up to the {{classroomCommits}} most recent commits of the period and the PRs merged in the period, scanning up to {{classroomPrScan}} PRs.",
         "token": "Token: without one, AI review, safeguards, .gitignore, .claude/settings.json and the template origin show N/A on the Dashboard. Classroom Mode only works with a token.",
@@ -1125,8 +1136,8 @@
         "classroomTestsCi": "Classroom Mode: the badge's \"tests and CI\" criterion looks only at the root and .github/workflows, plus the period's GitHub Actions runs. Tests next to the code (*.test.js) don't show up, and the criterion stays not verified.",
         "authorship": "Classroom Mode: configuration authorship reads up to {{authorshipCommits}} commits per file, in up to {{authorshipPaths}} files per repository (root files first). The others keep an unverified origin.",
         "personalBots": "Personal agent bots (custom GitHub Apps, such as someone-agent[bot]) can't be classified by login: they count as maintenance bots and are left out of the counts.",
-        "reviewOnly": "When the only trace is a review by an AI bot, the badge criteria \"versioned configuration\" and \"declared co-authorship\" don't apply: an external reviewer needs neither.",
-        "dashboardTemplate": "Dashboard and GitHub Classroom: GitHub doesn't report the template of these repositories. The configuration files' origin is left unverified only when Classroom's initial commit is in the {{commits}}-commit sample; outside it, the files count as the repository's own.",
+        "reviewOnly": "When the only trace is a review by an AI bot, the badge criteria \"Versioned AI configuration\" and \"Commits with declared co-authorship\" don't apply: an external reviewer needs neither.",
+        "dashboardTemplate": "Template origin on the Dashboard: without a token or with a private template, the configuration files' origin is always unverified (in the cross-check between sources, they count as the repository's own). With a token and a public or no template, it is verified, with one exception: GitHub doesn't report the template of repositories created by GitHub Classroom, so the origin is left unverified when Classroom's initial commit is in the {{commits}}-commit sample; outside it, the files count as the repository's own.",
         "method": "Snapshots: the section is saved with method {{method}} and the registry version ({{registryVersion}}). Snapshots without that method show \"not recorded in this analysis\"."
       }
     }

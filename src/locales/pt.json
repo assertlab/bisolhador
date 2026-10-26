@@ -1006,14 +1006,14 @@
         },
         "coherence": {
           "title": "Coerência entre fontes",
-          "text": "A configuração, os commits e os PRs contam a mesma história? Quando não contam, a seção mostra \"fontes em desacordo\"."
+          "text": "A configuração, os commits e os PRs contam a mesma história? Quando não contam, a seção mostra o bloco \"As fontes não concordam\" (no Modo Turma, a coluna \"Desacordo\")."
         }
       },
       "lowerBoundTitle": "Princípio: limite inferior",
       "lowerBound": "Tudo na seção é limite inferior: só aparece o uso de IA que deixou rastro no GitHub. Sem rastro não quer dizer sem IA. O autocomplete não deixa marca, nem toda ferramenta grava coautoria e quem commita pode desligar o trailer. Por isso toda fração vem com o n (\"12 de 100 commits\") e um resultado vazio aparece como \"Nenhum rastro de IA encontrado\", nunca como \"não usa IA\".",
       "notTitle": "O que a seção não é",
       "not": {
-        "detector": "Não é detector de cola: o Bisolhador não analisa o código para adivinhar se foi escrito por IA. Não existe método confiável para isso.",
+        "detector": "Não detecta se o código foi escrito por IA: o Bisolhador não analisa o conteúdo do código, porque não existe método confiável para isso. Ele só lê os rastros que o processo deixa no GitHub.",
         "proof": "Não é prova de uso nem de não uso: mostra declarações e rastros de agentes, que podem faltar e que qualquer pessoa pode escrever à mão.",
         "grade": "Não é nota: nem a fração de commits com IA nem o selo \"Uso responsável de IA\" devem virar nota automática."
       },
@@ -1055,20 +1055,20 @@
         "reviewer": "Revisor (bot)"
       },
       "extension": "extensão",
-      "legend": "**/ = em qualquer pasta (no Modo Turma, só na raiz e nos diretórios conhecidos); / no fim = diretório; <id>+ = número da conta no e-mail noreply do GitHub. Logins de bot aparecem sem o sufixo [bot] que o GitHub mostra. \"extensão\" = skills, comandos, subagentes, prompts ou MCP; o resto é instrução.",
+      "legend": "**/ = em qualquer pasta (no Modo Turma, só na raiz e nos diretórios conhecidos); / no fim = diretório; <id>+ = número da conta no e-mail noreply do GitHub, opcional (o e-mail sem ele também é reconhecido). Logins de bot aparecem sem o sufixo [bot] que o GitHub mostra. \"extensão\" = skills, comandos, subagentes, prompts ou MCP; o resto é instrução.",
       "genericNote": "\"Agentes (genérico)\": AGENTS.md e .mcp.json servem a várias ferramentas, então não são atribuídos a nenhuma delas.",
       "gitignoreTitle": "Uso local ignorado (.gitignore)",
       "gitignore": "Com token, o Bisolhador lê o .gitignore da raiz. Linhas que escondem artefatos de IA contam como rastro de uso local não versionado (comentários e linhas com ! não contam):"
     },
     "teachers": {
       "readingTitle": "Lendo a visão Por estudante",
-      "reading": "Ao expandir a linha de um repositório no Modo Turma, a visão Por estudante mostra, para cada autor de commit do período, os commits, quantos declaram coautoria de IA, as ferramentas declaradas e os arquivos de configuração de IA que a pessoa adicionou ou alterou.",
+      "reading": "Ao expandir a linha de um repositório no Modo Turma, a visão Por estudante mostra, para cada autor de commit do período, os commits, quantos declaram coautoria de IA, as ferramentas declaradas e os arquivos de configuração de IA que a pessoa adicionou ou alterou no período.",
       "configNotUse": "Configurar não é usar: num grupo, uma pessoa pode montar a configuração para todos. E quem não declara não aparece: ausência de registro não é ausência de uso.",
       "conversation": "Use a tabela como ponto de partida para uma conversa com a equipe, não como conclusão. Ela não tem alertas nem destaques de propósito: os fatos ficam lado a lado e a leitura é sua.",
       "templateTitle": "Arquivos de IA no template da tarefa",
       "template": "Se quiser, coloque um AGENTS.md ou CLAUDE.md no repositório-modelo da tarefa. Os arquivos que chegam no commit inicial criado pelo GitHub Classroom contam como do template: aparecem na lista de ferramentas, mas não como configuração da equipe nem como autoria de estudante.",
-      "disagreeTitle": "\"Fontes em desacordo\"",
-      "disagree": "O aviso aparece quando há configuração de IA da própria equipe (ou linhas de IA no .gitignore) e nenhum commit do período declara IA nem é de um agente (nem há PR de agente). Há causas legítimas: o trailer desligado na configuração, um squash que reescreveu as mensagens, a configuração feita por outra pessoa, uma ferramenta que não grava coautoria. Pergunte à equipe como ela usou a ferramenta, sem partir do pressuposto de má-fé.",
+      "disagreeTitle": "\"As fontes não concordam\" (coluna \"Desacordo\")",
+      "disagree": "O aviso aparece quando há configuração de IA da própria equipe (ou linhas de IA no .gitignore) e nenhum commit do período declara IA nem é de um agente (nem há PR de agente). Só dispara quando há commits no período (n > 0); com a amostra vazia, o cruzamento fica não verificado. Há causas legítimas: o trailer desligado na configuração, um squash que reescreveu as mensagens, a configuração feita por outra pessoa, uma ferramenta que não grava coautoria. Pergunte à equipe como ela usou a ferramenta, sem partir do pressuposto de má-fé.",
       "policiesTitle": "Políticas sugeridas para a disciplina",
       "policies": {
         "declare": "Combine no início se e como a IA pode ser usada, e que o uso deve ser declarado com o trailer de coautoria.",
@@ -1086,8 +1086,8 @@
           "a": "Não. Quer dizer que nenhum commit da amostra declara coautoria de IA nem é de um agente. O autocomplete não deixa rastro, nem toda ferramenta grava coautoria e o trailer pode ser desligado. Leia sempre junto com o n."
         },
         "disagree": {
-          "q": "Meu repositório aparece com \"fontes em desacordo\". E agora?",
-          "a": "Há configuração de IA (ou linhas de IA no .gitignore) e nenhum commit ou PR da amostra declara uso. Se vocês usam IA, mantenham o trailer de coautoria (veja Como tornar o uso de IA visível) e os próximos commits passam a contar. Configuração feita por outra pessoa ou trazida de um modelo também é uma causa legítima. O aviso é sobre o repositório, nunca sobre uma pessoa."
+          "q": "Meu repositório aparece com \"As fontes não concordam\". E agora?",
+          "a": "Há configuração de IA (ou linhas de IA no .gitignore) e nenhum commit ou PR da amostra declara uso. O aviso só aparece quando há commits na amostra (n > 0). Se vocês usam IA, mantenham o trailer de coautoria (veja Como tornar o uso de IA visível) e os próximos commits passam a contar. Configuração feita por outra pessoa ou trazida de um modelo também é uma causa legítima. O aviso é sobre o repositório, nunca sobre uma pessoa."
         },
         "notAvailable": {
           "q": "Por que aparece n/d ou \"não verificado\"?",
@@ -1115,7 +1115,7 @@
         },
         "saved": {
           "q": "Alguma coisa fica salva?",
-          "a": "No Dashboard, a análise grava um snapshot público; a parte de IA guarda só contagens, datas, ids de ferramentas, os caminhos dos arquivos de configuração de IA e as linhas do .gitignore que escondem IA, sem login ou nome de pessoa. No Modo Turma, nada é salvo."
+          "a": "No Dashboard, a análise grava um snapshot público. A parte de IA guarda contagens, datas, ids de ferramentas, os caminhos dos arquivos de configuração de IA, as linhas do .gitignore que escondem IA e indicadores derivados (percentuais, medianas, estados do selo), sem nenhum login ou nome de pessoa. No Modo Turma, nada é salvo."
         },
         "grade": {
           "q": "Posso usar isto para dar nota?",
@@ -1126,6 +1126,17 @@
     "limits": {
       "intro": "Cada item leva à entrada correspondente de Como interpretar.",
       "more": "Detalhes",
+      "labels": {
+        "samples": "amostras",
+        "token": "token",
+        "classroomLocations": "locais verificados no Modo Turma",
+        "classroomTestsCi": "testes e CI no Modo Turma",
+        "authorship": "autoria da configuração",
+        "personalBots": "bots-agente pessoais",
+        "reviewOnly": "rastro só de revisão",
+        "dashboardTemplate": "origem template no Dashboard",
+        "method": "método dos snapshots"
+      },
       "items": {
         "samples": "Amostras: no Dashboard, os {{commits}} commits mais recentes do branch principal e até {{prSample}} PRs mergeados (com token, dentre os {{prScan}} mergeados atualizados mais recentemente; sem token, dentre os {{closedScan}} PRs fechados). No Modo Turma, até os {{classroomCommits}} commits mais recentes do período e os PRs mergeados no período, examinando até {{classroomPrScan}} PRs.",
         "token": "Token: sem ele, revisão por IA, salvaguardas, .gitignore, .claude/settings.json e origem template ficam n/d no Dashboard. O Modo Turma só funciona com token.",
@@ -1133,8 +1144,8 @@
         "classroomTestsCi": "Modo Turma: o critério \"testes e CI\" do selo olha só a raiz e .github/workflows, mais as execuções do GitHub Actions no período. Testes junto do código (*.test.js) não aparecem, e o critério fica não verificado.",
         "authorship": "Modo Turma: a autoria da configuração lê até {{authorshipCommits}} commits por arquivo, em até {{authorshipPaths}} arquivos por repositório (os da raiz primeiro). Os demais ficam com origem não verificada.",
         "personalBots": "Bots-agente pessoais (GitHub Apps próprios, como fulano-agent[bot]) não podem ser classificados pelo login: contam como bots de manutenção e ficam fora das contas.",
-        "reviewOnly": "Quando o único rastro é a revisão de um bot de IA, os critérios do selo \"configuração versionada\" e \"coautoria declarada\" não se aplicam: um revisor externo não precisa de nenhum dos dois.",
-        "dashboardTemplate": "Dashboard e GitHub Classroom: o GitHub não informa o template desses repositórios. A origem dos arquivos de configuração fica não verificada só quando o commit inicial do Classroom está na amostra de {{commits}} commits; fora dela, os arquivos contam como do próprio repositório.",
+        "reviewOnly": "Quando o único rastro é a revisão de um bot de IA, os critérios do selo \"Configuração de IA versionada\" e \"Commits com coautoria declarada\" não se aplicam: um revisor externo não precisa de nenhum dos dois.",
+        "dashboardTemplate": "Origem template no Dashboard: sem token ou com template privado, a origem dos arquivos de configuração fica sempre não verificada (no cruzamento entre fontes, eles contam como do próprio repositório). Com token e template público ou ausente, ela é verificada, com uma exceção: o GitHub não informa o template dos repositórios criados pelo GitHub Classroom, então a origem fica não verificada quando o commit inicial do Classroom está na amostra de {{commits}} commits; fora dela, os arquivos contam como do próprio repositório.",
         "method": "Snapshots: a seção é gravada com o método {{method}} e a versão do registro ({{registryVersion}}). Snapshots sem esse método mostram \"não registrado nesta análise\"."
       }
     }
