@@ -16,8 +16,10 @@ const NOTE = 'text-xs text-gray-500 dark:text-slate-400';
 /**
  * "AI in the Process › Repository" (Dashboard and Classroom Mode). Receives only report.aiProcess:
  * counts and tool ids, never people. Everything is a lower bound: no trace ≠ no AI.
+ * guideInNewTab (Classroom): open the AI guide in a new tab, so the in-memory class analysis isn't lost;
+ * noreferrer keeps the /turma?repos=… URL out of the new page's referrer (GA is on there).
  */
-export function AiProcessSection({ aiProcess }) {
+export function AiProcessSection({ aiProcess, guideInNewTab = false }) {
   const { t } = useTranslation();
 
   if (!aiProcess?.available) {
@@ -134,7 +136,13 @@ export function AiProcessSection({ aiProcess }) {
       {/* 7. Lower bound */}
       <p className={`${NOTE} border-t border-gray-100 dark:border-slate-700 pt-3`}>
         {t('aiProcess.lowerBoundNote')}{' '}
-        <Link to={AI_GUIDE_PATH} className="font-medium text-ocean hover:underline">{t('aiGuide.link')} →</Link>
+        <Link
+          to={AI_GUIDE_PATH}
+          {...(guideInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          className="font-medium text-ocean hover:underline"
+        >
+          {t('aiGuide.link')} →
+        </Link>
       </p>
     </div>
   );

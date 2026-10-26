@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { AI_TOOLS } from './aiRegistry.js';
+import { detectConfig } from './aiTraces.js';
 import { GUIDE_IDS, AI_GUIDE_PATH } from './indicatorGuide.js';
 import {
-  AI_GUIDE_BLOCKS, DECLARATION_TOOLS, AI_GUIDE_FAQ, AI_GUIDE_LIMITS, AI_GUIDE_NUMBERS, detectionRows,
+  AI_GUIDE_BLOCKS, DECLARATION_TOOLS, DECLARATION_EXCLUDED, AI_GUIDE_FAQ, AI_GUIDE_LIMITS, AI_GUIDE_NUMBERS, detectionRows,
 } from './aiGuide.js';
 import pt from '../locales/pt.json';
 import en from '../locales/en.json';
@@ -13,6 +14,12 @@ const keyPaths = (obj, prefix = '') => Object.entries(obj).flatMap(([k, v]) => (
   v && typeof v === 'object' ? keyPaths(v, `${prefix}${k}.`) : [`${prefix}${k}`]
 ));
 const at = (obj, path) => path.split('.').reduce((o, k) => o?.[k], obj);
+const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
+// File paths written in prose: optional dir/ segments, then a dotted file name (CLAUDE.md, .mcp.json…).
+const PATH = /(?<![\w@/.-])(?:\.?[\w-]+\/)*\.?[\w-]+(?:\.[\w-]+)*\.(?:md|json|ya?ml)\b/g;
+// Paths the prose names on purpose although no registry entry detects them.
+const NOT_DETECTED = new Set(['.claude/settings.local.json']); // personal, never versioned (Claude Code docs)
+const coauthorTool = (email) => AI_TOOLS.find((tool) => tool.coauthors.some((c) => c.email.test(email)))?.id ?? null;
 const placeholders = (text) => [...text.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).sort();
 
 describe('AI guide (/guia/ia)', () => {
@@ -53,6 +60,31 @@ describe('AI guide (/guia/ia)', () => {
     }
   });
 
+  it('every tool with co-author e-mails is in block 2 or explicitly excluded', () => {
+    const listed = new Set(DECLARATION_TOOLS.map((tool) => tool.id));
+    for (const tool of AI_TOOLS.filter((x) => x.coauthors.length > 0)) {
+      expect(listed.has(tool.id) || tool.id in DECLARATION_EXCLUDED, tool.id).toBe(true);
+    }
+    for (const id of Object.keys(DECLARATION_EXCLUDED)) expect(listed.has(id), id).toBe(false);
+  });
+
+  it.each([['pt', pt], ['en', en]])('e-mails and config paths in the %s prose match the registry entry of their tool', (_, locale) => {
+    for (const path of keyPaths(locale.aiGuide)) {
+      const text = at(locale.aiGuide, path);
+      const toolId = path.match(/^declare\.tools\.(\w+)$/)?.[1] ?? null;
+      for (const email of text.match(EMAIL) ?? []) {
+        const owner = coauthorTool(email);
+        expect(owner, `${path}: ${email}`).not.toBeNull();
+        if (toolId) expect(owner, `${path}: ${email}`).toBe(toolId);
+      }
+      if (!toolId && path !== 'detect.genericNote') continue;
+      for (const file of text.match(PATH) ?? []) {
+        if (NOT_DETECTED.has(file)) continue;
+        expect(detectConfig([file])[0]?.toolId, `${path}: ${file}`).toBe(toolId ?? 'generic');
+      }
+    }
+  });
+
   it('pt and en have the same keys and the same placeholders in the aiGuide namespace', () => {
     const ptKeys = keyPaths(pt.aiGuide).sort();
     expect(keyPaths(en.aiGuide).sort()).toEqual(ptKeys);
@@ -68,6 +100,10 @@ describe('AI guide (/guia/ia)', () => {
     expect(AI_GUIDE_FAQ.length).toBeLessThanOrEqual(12);
     expect(Object.keys(pt.aiGuide.faq.items).sort()).toEqual([...AI_GUIDE_FAQ].sort());
     expect(Object.keys(pt.aiGuide.limits.items).sort()).toEqual(AI_GUIDE_LIMITS.map((l) => l.id).sort());
+    // Each "Details" link gets a distinct accessible name.
+    expect(Object.keys(pt.aiGuide.limits.labels).sort()).toEqual(AI_GUIDE_LIMITS.map((l) => l.id).sort());
+    const names = Object.values(pt.aiGuide.limits.labels);
+    expect(new Set(names).size).toBe(names.length);
     for (const limit of AI_GUIDE_LIMITS) expect(GUIDE_IDS, limit.id).toContain(limit.guide);
     const texts = [
       ...AI_GUIDE_FAQ.map((id) => pt.aiGuide.faq.items[id].a),

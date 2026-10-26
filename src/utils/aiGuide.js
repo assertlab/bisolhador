@@ -26,7 +26,7 @@ export const AI_GUIDE_BLOCKS = ['overview', 'declare', 'detect', 'teachers', 'fa
  * - aider: aider.chat/docs/config/options.html — `--attribute-co-authored-by` (default: True); aider/repo.py
  *   (github.com/Aider-AI/aider) writes "Co-authored-by: aider (<model>) <aider@aider.chat>".
  * - cursor: cursor.com/help/integrations/git.md — agent commits get a "Made with Cursor" trailer (on by default,
- *   Settings > Agent > Attribution). That is not a Co-authored-by trailer, so Bisolhador doesn't count it; the
+ *   Settings > Agent > Attribution; from Cursor 3.11, Settings > Git & PRs > Attribution). That is not a Co-authored-by trailer, so Bisolhador doesn't count it; the
  *   cursoragent@cursor.com co-author was seen in real commits (spec §4.2), not in the docs.
  * - email only (no official doc found on 2026-10-26): codex (the trailer "Co-authored-by: Codex <noreply@openai.com>"
  *   is in openai/codex source tests, but how it is turned on is not documented), gemini, junie, amp, kiro, cline,
@@ -56,6 +56,13 @@ export const DECLARATION_TOOLS = [
   { id: 'windsurf', mode: 'emailOnly' },
   { id: 'opencode', mode: 'emailOnly' },
 ];
+
+/**
+ * Registry tools with co-author e-mails left out of block 2 on purpose: cloud agents that commit with
+ * their own bot account (the e-mail is the bot's noreply address). There is nothing to declare by hand:
+ * Bisolhador counts them as agent authors, and the block 3 table lists their e-mails and logins.
+ */
+export const DECLARATION_EXCLUDED = { devin: 'cloud agent, commits as its own bot', jules: 'cloud agent, commits as its own bot' };
 
 const TOOLS_BY_ID = new Map(AI_TOOLS.map((tool) => [tool.id, tool]));
 

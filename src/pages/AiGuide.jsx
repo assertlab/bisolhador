@@ -267,7 +267,7 @@ function Limits({ numbers }) {
           <li key={item.id} className={TEXT}>
             {t(`aiGuide.limits.items.${item.id}`, numbers)}{' '}
             <Link to={guidePath(item.guide)} className="text-xs text-ocean hover:underline whitespace-nowrap">
-              {t('aiGuide.limits.more')} →
+              {t('aiGuide.limits.more')}<span className="sr-only">: {t(`aiGuide.limits.labels.${item.id}`)}</span> →
             </Link>
           </li>
         ))}

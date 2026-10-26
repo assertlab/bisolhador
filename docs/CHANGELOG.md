@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ Added
 
-- **NEW**: Página **Guia de IA no Processo** (`/guia/ia`, pt e en), com links no topo da seção "IA no Processo" de Como interpretar, no card IA no Processo (Dashboard e Modo Turma) e no aviso da visão Por estudante. Blocos:
+- **NEW**: Página **Guia de IA no Processo** (`/guia/ia`, pt e en), com links no topo da seção "IA no Processo" de Como interpretar, no card IA no Processo (Dashboard e Modo Turma) e no aviso da visão Por estudante. No Modo Turma, esses links abrem em outra aba, para não perder a análise da turma, que fica só na memória. Blocos:
   - **Visão geral e princípios**: as quatro perguntas da seção, o limite inferior (sem rastro não é sem IA), o que ela não é (detector de cola, prova, nota) e a ética dos dados.
   - **Como tornar o uso de IA visível**: o trailer `Co-authored-by` manual e, por ferramenta, como a coautoria é declarada e qual e-mail o Bisolhador reconhece. Só há instruções para as ferramentas conferidas na documentação oficial ou no código-fonte em 2026-10-26 (Claude Code, agente de código do Copilot, Cursor, Aider), com o link da fonte; as outras mostram só o e-mail. O trailer "Made with Cursor" não é de coautoria e não é contado, e a página diz isso.
   - **O que o Bisolhador detecta**: tabela gerada em tempo de execução a partir do registro (`AI_TOOLS`), com caminhos de configuração, e-mails de coautoria, logins de agentes e de revisores, os padrões do `.gitignore` e a versão do registro.

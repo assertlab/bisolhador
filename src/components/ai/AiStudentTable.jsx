@@ -36,7 +36,9 @@ export function AiStudentTable({ students }) {
         <p><Trans i18nKey="aiProcess.students.notice" components={{ strong: <strong /> }} /></p>
         <p>{t('aiProcess.students.agentLimit')}</p>
         <p>
-          <Link to={`${AI_GUIDE_PATH}#teachers`} className="font-medium text-ocean hover:underline">
+          {/* New tab: following it in place would lose the in-memory class analysis; noreferrer keeps
+              /turma?repos=… out of the guide page's referrer (GA is on there). */}
+          <Link to={`${AI_GUIDE_PATH}#teachers`} target="_blank" rel="noopener noreferrer" className="font-medium text-ocean hover:underline">
             {t('aiGuide.studentsLink')}: {t('aiGuide.link')} →
           </Link>
         </p>
