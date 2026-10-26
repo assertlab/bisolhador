@@ -37,10 +37,12 @@ export const CONTEXT_DIRS = [
   '.gemini',
 ];
 
+// Every regex metacharacter, backslash included (not only '.': CodeQL js/incomplete-sanitization).
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // Config patterns match a directory itself and anything under it (Classroom only sees directory listings).
-const dir = (path) => new RegExp(`^${path.replace(/[.]/g, '\\.')}(/|$)`);
+const dir = (path) => new RegExp(`^${escapeRegExp(path)}(/|$)`);
 // A file with this name at any depth.
-const anyLevel = (name) => new RegExp(`(^|/)${name.replace(/[.]/g, '\\.')}$`);
+const anyLevel = (name) => new RegExp(`(^|/)${escapeRegExp(name)}$`);
 
 // Order matters: a path matches at most one tool, the first in this list ('generic' stays last).
 // An entry with `name` requires the trailer name too (shared, generic e-mails).
