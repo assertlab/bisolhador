@@ -201,6 +201,12 @@ describe('analyzeCoherence', () => {
     const r = analyzeCoherence(cfg, noAiCommits, analyzeAiPrs(null, { reviewsAvailable: true }));
     expect(r).toMatchObject({ flags: ['configWithoutDeclaration'], unverified: ['prs'] });
   });
+  it('measured but empty commit sample (n = 0): no rule fires and commits go to unverified', () => {
+    const cfg = analyzeAiConfig(['CLAUDE.md'], 'complete', { ...emptyCtx, gitignore: '.cursor/' });
+    const r = analyzeCoherence(cfg, { ...noAiCommits, n: 0, percentage: null }, noAiPrs);
+    expect(r.flags).toEqual([]);
+    expect(r.unverified).toContain('commits');
+  });
   it('commits not measured: no rule fires and commits go to unverified', () => {
     const cfg = analyzeAiConfig(['CLAUDE.md'], 'complete', { ...emptyCtx, gitignore: '.cursor/' });
     const r = analyzeCoherence(cfg, analyzeAiCommits(null), noAiPrs);
@@ -284,6 +290,14 @@ describe('normalizeSnapshotAiProcess', () => {
     expect(normalizeSnapshotAiProcess({ fullName: 'a/b' }).aiProcess).toEqual({ available: false, reason: 'snapshot' });
     expect(normalizeSnapshotAiProcess({ aiProcess: { method: 'x' } }).aiProcess.reason).toBe('snapshot');
   });
+  it('current method with a malformed shape → not recorded', () => {
+    const { coherence: _c, ...noCoherence } = buildAiProcess(fullFixture);
+    expect(normalizeSnapshotAiProcess({ aiProcess: noCoherence }).aiProcess).toEqual({ available: false, reason: 'snapshot' });
+    const ai = buildAiProcess(fullFixture);
+    expect(normalizeSnapshotAiProcess({ aiProcess: { ...ai, tools: null } }).aiProcess.reason).toBe('snapshot');
+    expect(normalizeSnapshotAiProcess({ aiProcess: { ...ai, coherence: { ...ai.coherence, flags: 'x' } } }).aiProcess.reason).toBe('snapshot');
+    expect(normalizeSnapshotAiProcess({ aiProcess: { ...ai, badge: null } }).aiProcess.reason).toBe('snapshot');
+  });
   it('current method is kept as is', () => {
     const report = { fullName: 'a/b', aiProcess: buildAiProcess(fullFixture) };
     expect(normalizeSnapshotAiProcess(report)).toBe(report);
@@ -306,9 +320,9 @@ describe('parseAiRepoContext', () => {
     expect(ctx.claudeSettings).toBeNull();
     expect(ctx.templatePaths).toEqual(new Set(['AGENTS.md']));
   });
-  it('templateRepository null gives templatePaths null', () => {
+  it('templateRepository null under a successful fetch = verified, no template (empty Set)', () => {
     const ctx = parseAiRepoContext({ repository: { gitignore: null, claudeSettings: null, ...dirs({}), templateRepository: null } });
-    expect(ctx.templatePaths).toBeNull();
+    expect(ctx.templatePaths).toEqual(new Set());
     expect(ctx.gitignore).toBeNull();
   });
   it('lists nested paths without leading or trailing slashes, trees included', () => {

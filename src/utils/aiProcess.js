@@ -134,7 +134,7 @@ export const AI_PROCESS_METHOD = 'ai-traces-v1';
 
 /**
  * @typedef {{ gitignore: string|null, claudeSettings: string|null, templatePaths: Set<string>|null, available: boolean }} AiRepoContext
- * templatePaths: null = template not verified; empty Set = verified, no template or no AI files in it.
+ * templatePaths: null = template not verified (no context); empty Set = no template, or no AI files in it.
  */
 
 const listedPaths = (node) => {
@@ -149,6 +149,9 @@ const listedPaths = (node) => {
  * Turns the raw `fetchAiRepoContext` response into an AiRepoContext plus `contextPaths`
  * (every path listed in the repository itself, for Classroom, which has no tree).
  * gitignore/claudeSettings are null only when the file does not exist.
+ * templateRepository null counts as "no template": GitHub can't tell that from a template the
+ * user can't see, but "origin ?" on every repository would be noise (Classroom falls back to
+ * the github-classroom[bot] initial commit).
  */
 export function parseAiRepoContext(data) {
   const repo = data?.repository;
@@ -156,7 +159,7 @@ export function parseAiRepoContext(data) {
   return {
     gitignore: repo?.gitignore?.text ?? null,
     claudeSettings: repo?.claudeSettings?.text ?? null,
-    templatePaths: template ? new Set(detectConfig(listedPaths(template)).map((e) => e.path)) : null,
+    templatePaths: template ? new Set(detectConfig(listedPaths(template)).map((e) => e.path)) : new Set(),
     contextPaths: listedPaths(repo),
     available: true,
   };
@@ -188,7 +191,8 @@ const declares = (commits, prs) => commits.withAi > 0 || prs.byAgents > 0;
  */
 export function analyzeCoherence(config, commits, prs) {
   const own = ownEntries(config);
-  const measured = commits.available;
+  // An empty sample (n = 0) can't show a declaration: no rule fires on it.
+  const measured = commits.available && commits.n > 0;
   const declared = declares(commits, prs);
   const unverified = [];
   if (config.status !== 'complete') unverified.push('config');
@@ -325,9 +329,21 @@ export function buildAiProcess({ treePaths, treeStatus, ctx, commits, prs, revie
   };
 }
 
-/** Snapshots without the current method → "not recorded in this snapshot". */
+const isObject = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
+
+// Persisted data may be edited outside the app: the UI reads these fields without guards.
+function hasCurrentShape(ai) {
+  return isObject(ai)
+    && ai.method === AI_PROCESS_METHOD
+    && ['config', 'commits', 'prs', 'safeguards', 'coherence', 'badge'].every((k) => isObject(ai[k]))
+    && Array.isArray(ai.tools)
+    && Array.isArray(ai.coherence.unverified)
+    && Array.isArray(ai.coherence.flags);
+}
+
+/** Snapshots without the current method (or with a malformed aiProcess) → "not recorded in this snapshot". */
 export function normalizeSnapshotAiProcess(report) {
   if (!report || typeof report !== 'object') return report;
-  if (report.aiProcess?.method === AI_PROCESS_METHOD) return report;
+  if (hasCurrentShape(report.aiProcess)) return report;
   return { ...report, aiProcess: { available: false, reason: 'snapshot' } };
 }

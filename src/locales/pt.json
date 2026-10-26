@@ -770,6 +770,7 @@
     "repoSubtitle": "Repositório",
     "tooltip": "Rastros que o GitHub guarda: configuração de agentes de IA versionada, coautoria declarada em commits, PRs abertos por agentes e revisões de bots de IA. Não mede quanto código foi escrito por IA.",
     "noTraces": "Nenhum rastro de IA encontrado",
+    "hiddenOnly": "Nenhuma ferramenta identificada: o único rastro é uso local ignorado no .gitignore (veja Profundidade da configuração).",
     "noTracesDetail": "Sem rastro não quer dizer sem IA: o autocomplete não deixa marca, e a coautoria nos commits depende da ferramenta e da configuração de quem commita.",
     "lowerBoundNote": "Tudo aqui é limite inferior: só aparece o uso de IA que deixou rastro no repositório. Ausência de rastro não significa ausência de uso. Os indicadores de revisão e de PR das outras seções continuam medindo só PRs de pessoas; PRs de agentes aparecem só aqui.",
     "genericTool": "Agentes (genérico)",
@@ -804,10 +805,10 @@
     "commitsTooltip": "Commits recentes sem merge, sem bots de manutenção (Dependabot, Renovate…), com coautoria de IA declarada ou de autoria de um agente.",
     "firstTrace": "Primeiro rastro na amostra: {{date}}",
     "prsLabel": "PRs abertos por agentes",
-    "prs": "{{count}} de {{n}} PRs mesclados",
+    "prs": "{{byAgents}} de {{n}} PRs mesclados",
     "prsTooltip": "PRs mesclados mais recentes, sem bots de manutenção, cujo autor é um agente de código (Copilot, Claude, Devin…).",
     "aiReviewedLabel": "PRs com revisão de IA",
-    "aiReviewed": "{{count}} de {{n}} PRs mesclados",
+    "aiReviewed": "{{reviewed}} de {{n}} PRs mesclados",
     "aiReviewedTooltip": "PRs mesclados com pelo menos uma revisão ou comentário de um bot de revisão de IA (CodeRabbit, Copilot, Gemini…).",
     "needsToken": "exige token",
     "fetchFailed": "falha ao buscar",
@@ -839,7 +840,7 @@
       "commitsUnverified": "commits (não foi possível obter os commits recentes)",
       "configUnverified": "configuração (árvore de arquivos truncada ou indisponível)",
       "gitignoreUnverified": ".gitignore e declaração desligada (consulta de contexto de IA indisponível)",
-      "templateUnverified": "origem template (o GitHub não informa um repositório-modelo, ou a consulta não estava disponível)",
+      "templateUnverified": "origem template (consulta de contexto de IA indisponível)",
       "prsUnverified": "PRs (não foi possível obter os PRs mesclados)"
     },
     "badge": {
@@ -864,8 +865,7 @@
     },
     "unavailable": {
       "noToken": "Com token do GitHub, também verificamos .gitignore, configuração (declaração desligada), template, revisão por IA e salvaguardas.",
-      "error": "Não foi possível obter parte dos dados (falha ou limite da API do GitHub): os itens marcados n/d ou ? não foram verificados.",
-      "snapshot": "Este snapshot histórico não registrou os rastros de IA."
+      "error": "Não foi possível obter parte dos dados (falha ou limite da API do GitHub): os itens marcados n/d ou ? não foram verificados."
     },
     "notRecorded": "IA no Processo: não registrado nesta análise."
   }

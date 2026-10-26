@@ -762,6 +762,7 @@
     "repoSubtitle": "Repository",
     "tooltip": "Traces GitHub keeps: versioned AI agent configuration, co-authorship declared in commits, PRs opened by agents and reviews by AI bots. It does not measure how much code AI wrote.",
     "noTraces": "No AI traces found",
+    "hiddenOnly": "No tool identified: the only trace is local use ignored in .gitignore (see Configuration depth).",
     "noTracesDetail": "No trace does not mean no AI: autocomplete leaves no mark, and commit co-authorship depends on the tool and on the committer's settings.",
     "lowerBoundNote": "Everything here is a lower bound: only AI use that left a trace in the repository shows up. No trace does not mean no use. The review and PR indicators in the other sections still measure only PRs by people; agent PRs appear only here.",
     "genericTool": "Agents (generic)",
@@ -796,10 +797,10 @@
     "commitsTooltip": "Recent non-merge commits, without maintenance bots (Dependabot, Renovate…), with declared AI co-authorship or authored by an agent.",
     "firstTrace": "First trace in the sample: {{date}}",
     "prsLabel": "PRs opened by agents",
-    "prs": "{{count}} of {{n}} merged PRs",
+    "prs": "{{byAgents}} of {{n}} merged PRs",
     "prsTooltip": "Latest merged PRs, without maintenance bots, authored by a coding agent (Copilot, Claude, Devin…).",
     "aiReviewedLabel": "PRs reviewed by AI",
-    "aiReviewed": "{{count}} of {{n}} merged PRs",
+    "aiReviewed": "{{reviewed}} of {{n}} merged PRs",
     "aiReviewedTooltip": "Merged PRs with at least one review or comment from an AI review bot (CodeRabbit, Copilot, Gemini…).",
     "needsToken": "requires a token",
     "fetchFailed": "fetch failed",
@@ -831,7 +832,7 @@
       "commitsUnverified": "commits (recent commits could not be fetched)",
       "configUnverified": "configuration (file tree truncated or unavailable)",
       "gitignoreUnverified": ".gitignore and turned-off declaration (AI context query unavailable)",
-      "templateUnverified": "template origin (GitHub reports no template repository, or the query was unavailable)",
+      "templateUnverified": "template origin (AI context query unavailable)",
       "prsUnverified": "PRs (merged PRs could not be fetched)"
     },
     "badge": {
@@ -856,8 +857,7 @@
     },
     "unavailable": {
       "noToken": "With a GitHub token, we also check .gitignore, configuration (turned-off declaration), template, AI review and safeguards.",
-      "error": "Part of the data could not be fetched (GitHub API failure or limit): items marked N/A or ? were not verified.",
-      "snapshot": "This historical snapshot did not record AI traces."
+      "error": "Part of the data could not be fetched (GitHub API failure or limit): items marked N/A or ? were not verified."
     },
     "notRecorded": "AI in the Process: not recorded in this analysis."
   }

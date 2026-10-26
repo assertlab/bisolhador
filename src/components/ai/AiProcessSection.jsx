@@ -38,7 +38,6 @@ export function AiProcessSection({ aiProcess }) {
   const anyFailure = !commits.available || !prs.available || (!noToken && (contextMissing || !safeguards.available));
   const toolLabel = (id) => (id === 'generic' ? t('aiProcess.genericTool') : TOOL_LABELS[id] ?? id);
   const unknownTemplate = new Set(config.entries.filter((e) => e.fromTemplate === null).map((e) => e.toolId));
-  const hasTrace = tools.length > 0 || config.hiddenLocal?.length > 0;
 
   return (
     <div className={`${CARD} space-y-5`}>
@@ -53,7 +52,7 @@ export function AiProcessSection({ aiProcess }) {
       {/* 1. Tools and the sources that show them */}
       <section>
         <BlockTitle>{t('aiProcess.toolsTitle')}</BlockTitle>
-        {hasTrace ? (
+        {tools.length > 0 ? (
           <ul className="space-y-2">
             {tools.map((tool) => (
               <li key={tool.id} className="flex flex-wrap items-center gap-2 text-sm text-gray-800 dark:text-slate-100">
@@ -68,6 +67,8 @@ export function AiProcessSection({ aiProcess }) {
               </li>
             ))}
           </ul>
+        ) : config.hiddenLocal?.length > 0 ? (
+          <p className="text-sm text-gray-700 dark:text-slate-200">{t('aiProcess.hiddenOnly')}</p>
         ) : (
           <div className="p-3 rounded-md bg-gray-50 dark:bg-slate-900/40 text-sm">
             <p className="font-medium text-gray-900 dark:text-white">{t('aiProcess.noTraces')}</p>
@@ -101,7 +102,7 @@ export function AiProcessSection({ aiProcess }) {
           tooltip={t('aiProcess.prsTooltip')}
           value={!prs.available ? t('aiProcess.notAvailable')
             : prs.n === 0 ? t('aiProcess.emptySample')
-            : `${t('aiProcess.prs', { count: num(prs.byAgents), n: num(prs.n) })} (${prs.percentage}%)`}
+            : `${t('aiProcess.prs', { byAgents: num(prs.byAgents), n: num(prs.n) })} (${prs.percentage}%)`}
           detail={!prs.available ? t('aiProcess.fetchFailed') : null}
           guideId="ai-prs"
         />
@@ -110,7 +111,7 @@ export function AiProcessSection({ aiProcess }) {
           tooltip={t('aiProcess.aiReviewedTooltip')}
           value={!prs.available || !prs.aiReviewed.available ? t('aiProcess.notAvailable')
             : prs.n === 0 ? t('aiProcess.emptySample')
-            : `${t('aiProcess.aiReviewed', { count: num(prs.aiReviewed.count), n: num(prs.n) })} (${prs.aiReviewed.percentage}%)`}
+            : `${t('aiProcess.aiReviewed', { reviewed: num(prs.aiReviewed.count), n: num(prs.n) })} (${prs.aiReviewed.percentage}%)`}
           detail={prs.available && !prs.aiReviewed.available ? t(noToken ? 'aiProcess.needsToken' : 'aiProcess.fetchFailed') : null}
           guideId="ai-review"
         />
