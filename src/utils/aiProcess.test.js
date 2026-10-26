@@ -453,7 +453,7 @@ describe('parseAiRepoContext', () => {
       workflows: { entries: [{ name: 'ci.yml', type: 'blob' }] },
     } });
     expect(ctx.workflowPaths).toEqual(['.github/workflows/ci.yml']);
-    expect(ctx.rootDirs).toEqual(['tests', '.circleci']);
+    expect(ctx.rootPaths).toEqual(['tests/', 'README.md', '.circleci/']);
     expect(ctx.unverified).toEqual([]);
     // No .github/workflows directory: verified empty, not unverified
     expect(parseAiRepoContext({ repository: { templateRepository: null, ...dirs({}), workflows: null } }).workflowPaths).toEqual([]);

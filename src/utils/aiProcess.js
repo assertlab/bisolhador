@@ -185,8 +185,8 @@ const listedPaths = (node) => {
 };
 
 const workflowPaths = (node) => (node?.workflows?.entries ?? []).map((entry) => `${WORKFLOWS_DIR}/${entry.name}`);
-// Root directories (CONTEXT_DIRS[0] = ''): contextPaths keeps bare names, so tests/ and .circleci/ need the type.
-const rootDirs = (node) => (node?.d0?.entries ?? []).filter((entry) => entry.type === 'tree').map((entry) => entry.name);
+// Root listing (CONTEXT_DIRS[0] = '') with a trailing slash on directories, so tree patterns (tests/, .circleci/) match.
+const rootPaths = (node) => (node?.d0?.entries ?? []).map((entry) => (entry.type === 'tree' ? `${entry.name}/` : entry.name));
 
 const CONTEXT_PARTS = ['gitignore', 'claudeSettings', 'listings', 'workflows'];
 
@@ -210,7 +210,7 @@ function unreadParts(errors) {
 /**
  * Turns the raw `fetchAiRepoContext` response ({ repository, errors }) into an AiRepoContext plus
  * `contextPaths` (every path listed in the repository itself, for Classroom, which has no tree),
- * `workflowPaths` (.github/workflows/<name>) and `rootDirs` (directory names at the root).
+ * `workflowPaths` (.github/workflows/<name>) and `rootPaths` (the root listing, directories as `name/`).
  * gitignore/claudeSettings are null when the file does not exist; a part with a partial error is
  * listed in `unverified` instead (and a template error leaves templatePaths null).
  * allowPrivateTemplate (Classroom only): read a private template's listings; elsewhere its origin is unverified.
@@ -233,7 +233,7 @@ export function parseAiRepoContext(data, { allowPrivateTemplate = false } = {}) 
     templatePaths,
     contextPaths: listedPaths(repo),
     workflowPaths: workflowPaths(repo),
-    rootDirs: rootDirs(repo),
+    rootPaths: rootPaths(repo),
     unverified: CONTEXT_PARTS.filter((part) => unread.has(part)),
     available: true,
   };

@@ -154,7 +154,7 @@ describe('authorshipPaths / classroomAiContext', () => {
 
 describe('classroomMaturity (badge "tests and CI" without a tree)', () => {
   const ctx = ({ root = [], dirs = [], workflows = [], unverified = [] } = {}) => ({
-    available: true, contextPaths: [...root, ...dirs], rootDirs: dirs, workflowPaths: workflows.map((w) => `.github/workflows/${w}`), unverified,
+    available: true, contextPaths: [...root, ...dirs], rootPaths: [...root, ...dirs.map((d) => `${d}/`)], workflowPaths: workflows.map((w) => `.github/workflows/${w}`), unverified,
   });
   const runs = (n) => ({ total_count: n, workflow_runs: Array.from({ length: n }, () => ({ event: 'push', conclusion: 'failure' })) });
 
@@ -170,7 +170,7 @@ describe('classroomMaturity (badge "tests and CI" without a tree)', () => {
     expect(classroomMaturity(null, runs(1)).ciCdDetected).toBe(true);
   });
   it('listings loaded, no CI config and no runs → false', () => {
-    expect(classroomMaturity(ctx({ root: ['README.md'] }), runs(0))).toEqual({ testsDetected: null, ciCdDetected: false, treeStatus: 'partial' });
+    expect(classroomMaturity(ctx({ root: ['README.md'] }), runs(0))).toEqual({ testsDetected: null, ciCdDetected: false });
   });
   it('not verifiable → null, never false: context unavailable, a listing failed, or runs failed', () => {
     expect(classroomMaturity(null, runs(0)).ciCdDetected).toBeNull();
@@ -189,6 +189,7 @@ describe('classroomMaturity (badge "tests and CI" without a tree)', () => {
     expect(classroomMaturity(null, runs(0)).testsDetected).toBeNull();
   });
   it('only the root listing counts for tests (not .github/… or .claude/… entries)', () => {
-    expect(classroomMaturity(ctx({ root: ['.claude/skills/tests'] }), runs(0)).testsDetected).toBeNull();
+    const nested = { ...ctx(), contextPaths: ['.claude/skills/tests/x.test.js', '.github/a.spec.js'] }; // listed, not at the root
+    expect(classroomMaturity(nested, runs(0)).testsDetected).toBeNull();
   });
 });

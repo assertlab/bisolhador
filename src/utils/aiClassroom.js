@@ -148,18 +148,17 @@ export function analyzeStudents(commits, authorship, period, templatePaths) {
  *   runs loaded and both are negative; null otherwise.
  * - Tests: a test directory at the root (test/, tests/, __tests__/…; spec/ excluded, as in repoTree). Never false:
  *   co-located *.test.js and src/test are invisible without the tree, so "not found" = not verified (null).
- * Directory names get a trailing slash so the tree patterns (tests/, .circleci/) match a bare listing entry.
+ * Only the two fields the badge reads (testsCiState); there is no tree, so no treeStatus.
  * @param {object|null} ctx - parseAiRepoContext result (null = context query failed)
  * @param {{total_count: number, workflow_runs: Array}|null} runs - null = request failed
  */
 export function classroomMaturity(ctx, runs) {
   const listing = ctx?.available ? ctx : null;
-  const rootFiles = (listing?.contextPaths ?? []).filter((p) => !p.includes('/') && !listing.rootDirs?.includes(p));
-  const root = [...rootFiles, ...(listing?.rootDirs ?? []).map((d) => `${d}/`)];
+  const root = listing?.rootPaths ?? [];
   const hasRuns = runs ? (runs.total_count ?? 0) > 0 || (runs.workflow_runs?.length ?? 0) > 0 : null;
   const listingsRead = Boolean(listing) && !listing.unverified?.some((part) => part === 'listings' || part === 'workflows');
   let ciCdDetected = null;
   if (detectCi([...root, ...(listing?.workflowPaths ?? [])]) || hasRuns === true) ciCdDetected = true;
   else if (listingsRead && hasRuns === false) ciCdDetected = false;
-  return { testsDetected: detectTests(root) ? true : null, ciCdDetected, treeStatus: 'partial' };
+  return { testsDetected: detectTests(root) ? true : null, ciCdDetected };
 }
