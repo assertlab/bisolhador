@@ -163,4 +163,3 @@ export function classroomMaturity(ctx, runs) {
   else if (listingsRead && hasRuns === false) ciCdDetected = false;
   return { testsDetected: detectTests(root) ? true : null, ciCdDetected, treeStatus: 'partial' };
 }
-
