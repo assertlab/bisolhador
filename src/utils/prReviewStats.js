@@ -1,5 +1,6 @@
 import { isBot, round1 } from './contributors.js';
 import { MERGED_PR_SAMPLE } from '../constants.js';
+import { normalizeLogin } from './aiTraces.js';
 
 // PR process metrics: lead time, merged-without-approval rate and divergence.
 // All three are measured over the latest merged PRs by humans (up to
@@ -95,8 +96,16 @@ export function toPullRequestStats(nodes) {
     // An approval submitted after the merge doesn't count as review before it
     const approvedBeforeMerge = (r) => r.state === 'APPROVED' && r.author.login !== pr.author?.login
       && !(r.submittedAt && pr.mergedAt && Date.parse(r.submittedAt) > Date.parse(pr.mergedAt));
+    // Bots that reviewed or commented (feeds the AI-in-the-process indicators only)
+    const aiParticipants = [...new Set(
+      [...comments, ...(pr.reviews?.nodes ?? [])]
+        .map((x) => x.author)
+        .filter((a) => a && isBot(toAuthor(a)))
+        .map((a) => normalizeLogin(a.login)),
+    )];
     return {
       user: toAuthor(pr.author),
+      aiParticipants,
       merged_by: pr.mergedBy ? { login: pr.mergedBy.login } : null,
       created_at: pr.createdAt,
       merged_at: pr.mergedAt,

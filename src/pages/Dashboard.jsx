@@ -8,6 +8,7 @@ import { StatCard } from '../components/StatCard';
 import { HealthScoreCard } from '../components/HealthScoreCard';
 import { MaturityCard } from '../components/MaturityCard';
 import { BusFactorCard } from '../components/BusFactorCard';
+import { AiProcessSection } from '../components/ai/AiProcessSection.jsx';
 import { ContributorsTable } from '../components/ContributorsTable';
 import { ActivityLogs } from '../components/ActivityLogs';
 import { SettingsModal } from '../components/SettingsModal';
@@ -338,6 +339,10 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
                 <BusFactorCard busFactorAnalysis={displayData.busFactorAnalysis} />
               </>
             )}
+
+            {/* 4.6. IA no Processo › Repositório */}
+            <h3 className="text-lg font-semibold text-shark dark:text-white pt-4">{t('aiProcess.title')}</h3>
+            <AiProcessSection aiProcess={displayData.aiProcess} />
 
             {/* 5. Área de Gráficos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

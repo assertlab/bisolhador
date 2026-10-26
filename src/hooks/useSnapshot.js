@@ -5,13 +5,14 @@ import { normalizeSnapshotProcessMetrics } from '../utils/prReviewStats.js';
 import { normalizeSnapshotContributors } from '../utils/contributors.js';
 import { normalizeSnapshotActivity } from '../utils/activityStats.js';
 import { normalizeSnapshotPractices } from '../utils/projectPractices.js';
+import { normalizeSnapshotAiProcess } from '../utils/aiProcess.js';
 import { CACHE_STALE_TIME_MS } from '../constants.js';
 
 // Converte o registro do Supabase no formato que o Dashboard renderiza:
 // full_report (JSON completo) quando existe, senão um mock a partir das colunas.
 function toRepoData(snapshotResult) {
   const report = parseFullReport(snapshotResult.full_report, 'useSnapshot');
-  const data = report ? normalizeSnapshotPractices(normalizeSnapshotActivity(normalizeSnapshotContributors(normalizeSnapshotProcessMetrics(report)))) : createMockRepoData(snapshotResult);
+  const data = report ? normalizeSnapshotAiProcess(normalizeSnapshotPractices(normalizeSnapshotActivity(normalizeSnapshotContributors(normalizeSnapshotProcessMetrics(report))))) : createMockRepoData(snapshotResult);
 
   if (typeof data === 'object') {
     data.analysisDate = snapshotResult.created_at || new Date().toISOString();

@@ -89,6 +89,15 @@ describe('toPullRequestStats', () => {
     expect(pr).toMatchObject({ user: { login: 'a', type: 'User' }, comments: 1, review_comments: 3, approvedByOther: true });
   });
 
+  it('aiParticipants lists the bots that reviewed or commented, normalized and unique', () => {
+    const n = node({ author: 'a', comments: ['claude[bot]', 'b'] });
+    n.reviews.nodes.push({ state: 'COMMENTED', author: user('coderabbitai[bot]'), comments: { totalCount: 2 } });
+    n.reviews.nodes.push({ state: 'COMMENTED', author: user('CodeRabbitAI[bot]'), comments: { totalCount: 0 } });
+    const [pr] = toPullRequestStats([n]);
+    expect(pr.aiParticipants.sort()).toEqual(['claude', 'coderabbitai']);
+    expect(pr).toMatchObject({ comments: 1, review_comments: 0, approvedByOther: false });
+  });
+
   it('an approval submitted after the merge is not a review before it', () => {
     const n = node({ approvedBy: ['b'] });
     n.reviews.nodes[0].submittedAt = iso(T0 + HOUR);

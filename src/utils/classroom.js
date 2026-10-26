@@ -1,7 +1,9 @@
 import { parseSafeRepoName } from './repoName.js';
-import { isBot } from './contributors.js';
+import { isBot, isBotName } from './contributors.js';
 import { analyzeReviewMetrics, analyzeLeadTime } from './prReviewStats.js';
 import { analyzeCiRuns, analyzeConventionalCommits, RELEASES_PAGE } from './projectPractices.js';
+import { buildAiProcess, fromGraphqlCommit } from './aiProcess.js';
+import { analyzeStudents, classroomAiContext } from './aiClassroom.js';
 
 // Classroom mode: the same indicators as the Dashboard, computed over a course
 // period for a list of team repositories (public, or private ones the user's
@@ -66,7 +68,7 @@ const toRestCommit = (node) => {
 export function analyzeCommitHistory(history) {
   if (!history) return { available: false, reason: 'error' };
   const rest = history.nodes.map(toRestCommit);
-  const human = rest.filter((c) => c.parents.length <= 1 && !isBot(c.author) && !/(\[bot\]|\bbot\b)/i.test(c.commit.author.name));
+  const human = rest.filter((c) => c.parents.length <= 1 && !isBot(c.author) && !isBotName(c.commit.author.name));
   const byAuthor = new Map();
   for (const c of human) {
     const id = (c.author?.login ?? c.commit.author.name).toLowerCase();
@@ -106,12 +108,49 @@ export function releasesInPeriod(releases, period) {
 
 const settled = (r) => (r?.status === 'fulfilled' ? r.value : null);
 
+// Classroom has no tree, only the directory listings of the context query: 'partial' = every known
+// location was listed ("none in the checked locations"), 'incomplete' = some listing failed.
+function configStatusOf(ctx) {
+  if (!ctx) return 'unavailable';
+  return ctx.unverified?.includes('listings') ? 'incomplete' : 'partial';
+}
+
+/**
+ * AI in the Process for one team repository: the repository section (same as the Dashboard, over
+ * the period) and the per-student rows (in memory only). parsed null = AI context query failed.
+ */
+function analyzeTeamAi(history, prs, parsed, authorship, period) {
+  const ctx = classroomAiContext(parsed, authorship);
+  const commits = history ? history.nodes.map(fromGraphqlCommit) : null;
+  return {
+    ai: {
+      ...buildAiProcess({
+        treePaths: ctx?.contextPaths ?? null,
+        treeStatus: configStatusOf(ctx),
+        ctx,
+        commits,
+        prs: prs?.stats ?? null,
+        reviewsAvailable: true,
+        maturity: null,
+        prLimit: Infinity,
+      }),
+      withToken: true, // Classroom always runs with a token
+    },
+    students: {
+      ...analyzeStudents(commits, authorship, period, ctx?.templatePaths ?? null),
+      sampled: Boolean(history?.capped),
+    },
+  };
+}
+
 /**
  * One table row from the settled fetches of a repository. Each part fails on
  * its own (null → N/A in that column only).
  * @param {{history, prs, runs, releases}} results - Promise.allSettled results
+ * @param {{ctx?: object|null, authorship?: Array|null}} ai - parseAiRepoContext result (null = context
+ *   query failed) and fetchAiConfigAuthorship result ([] = nothing to ask, null = failed)
  */
-export function analyzeTeamRepo(results, period) {
+export function analyzeTeamRepo(results, period, { ctx = null, authorship = null } = {}) {
   const prs = settled(results.prs);
   const review = prs ? analyzeReviewMetrics(prs.stats, 'error', { limit: Infinity }) : null;
   const leadTime = prs ? analyzeLeadTime(prs.stats, 'graphql', { limit: Infinity }) : null;
@@ -131,5 +170,6 @@ export function analyzeTeamRepo(results, period) {
       : { available: false, reason: 'error' },
     ci: analyzeCiRuns(settled(results.runs)),
     releases: releasesInPeriod(settled(results.releases), period),
+    ...analyzeTeamAi(settled(results.history), prs, ctx, authorship, period),
   };
 }

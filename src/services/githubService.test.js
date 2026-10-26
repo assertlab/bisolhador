@@ -282,6 +282,71 @@ describe('githubService: failures are errors, not zeros', () => {
     expect(fetchMock.mock.calls[0][0]).toContain('per_page=100');
   });
 
+  describe('fetchAiRepoContext (token, GraphQL)', () => {
+    it('needs a token: throws without calling GitHub', async () => {
+      await expect(githubService.fetchAiRepoContext('o', 'r')).rejects.toThrow(/token/);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('returns partial errors with the data, owner/repo only as variables', async () => {
+      vi.stubGlobal('localStorage', { getItem: () => 'token' });
+      const errors = [{ message: 'timeout', path: ['repository', 'gitignore'] }];
+      fetchMock.mockReturnValue(json({ data: { repository: { gitignore: null, templateRepository: null } }, errors }));
+      const result = await githubService.fetchAiRepoContext('own"er', 'repo');
+      expect(result).toMatchObject({ repository: { gitignore: null }, errors });
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(body.variables).toEqual({ owner: 'own"er', name: 'repo' });
+      expect(body.query).not.toContain('own"er');
+      expect(body.query).toMatch(/templateRepository \{[^}]*isPrivate/);
+    });
+
+    it('no errors → empty list; no repository → throws', async () => {
+      vi.stubGlobal('localStorage', { getItem: () => 'token' });
+      fetchMock.mockReturnValue(json({ data: { repository: { templateRepository: null } } }));
+      await expect(githubService.fetchAiRepoContext('o', 'r')).resolves.toMatchObject({ errors: [] });
+      fetchMock.mockReturnValue(json({ data: { repository: null }, errors: [{ message: 'NOT_FOUND', path: ['repository'] }] }));
+      await expect(githubService.fetchAiRepoContext('o', 'r')).rejects.toThrow(/not found/);
+    });
+  });
+
+  describe('fetchAiConfigAuthorship (token, GraphQL)', () => {
+    beforeEach(() => vi.stubGlobal('localStorage', { getItem: () => 'token' }));
+    const history = (nodes, hasNextPage = false) => ({ pageInfo: { hasNextPage }, nodes });
+
+    it('no paths → [] without calling GitHub', async () => {
+      await expect(githubService.fetchAiConfigAuthorship('o', 'r', [])).resolves.toEqual([]);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('paths go only as variables, capped at 10', async () => {
+      fetchMock.mockReturnValue(json({ data: { repository: { defaultBranchRef: { target: {} } } } }));
+      const paths = Array.from({ length: 12 }, (_, i) => `.cursor/rules/r"${i}.mdc`);
+      await githubService.fetchAiConfigAuthorship('o', 'r', paths);
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(body.variables).toMatchObject({ owner: 'o', name: 'r', p0: paths[0], p9: paths[9] });
+      expect(body.variables.p10).toBeUndefined();
+      expect(body.query).not.toContain('.cursor');
+    });
+
+    it('maps each history; hasNextPage, a missing history or an error on it → incomplete', async () => {
+      fetchMock.mockReturnValue(json({
+        data: { repository: { defaultBranchRef: { target: {
+          h0: history([{ committedDate: '2026-09-01T00:00:00Z', author: { name: 'Alice', email: 'a@x.io', user: { login: 'alice' } } }, null]),
+          h1: history([{ committedDate: '2026-09-02T00:00:00Z', author: { name: 'Bob', email: null, user: null } }], true),
+          h3: history([]),
+        } } } },
+        errors: [{ message: 'timeout', path: ['repository', 'defaultBranchRef', 'target', 'h3'] }],
+      }));
+      const result = await githubService.fetchAiConfigAuthorship('o', 'r', ['CLAUDE.md', 'AGENTS.md', '.claude', '.mcp.json']);
+      expect(result).toEqual([
+        { path: 'CLAUDE.md', complete: true, commits: [{ login: 'alice', name: 'Alice', email: 'a@x.io', date: '2026-09-01T00:00:00Z' }] },
+        { path: 'AGENTS.md', complete: false, commits: [{ login: null, name: 'Bob', email: null, date: '2026-09-02T00:00:00Z' }] },
+        { path: '.claude', complete: false, commits: [] },
+        { path: '.mcp.json', complete: false, commits: [] },
+      ]);
+    });
+  });
+
   it('fetchReleasesCount throws on failure instead of returning 0', async () => {
     fetchMock.mockReturnValue(json({ message: 'boom' }, { status: 500 }));
     await expect(githubService.fetchReleasesCount('react', 'react')).rejects.toThrow(/500/);
