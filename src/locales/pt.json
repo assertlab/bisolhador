@@ -66,7 +66,8 @@
     "governanceMaturity": "Governança e Maturidade",
     "footerCopyright": "© 2025 Vinicius Cardoso Garcia. Licenciado sob MIT.",
     "footerPowered": "Powered by ASSERT Lab. Orgulhosamente feito em Recife 🦈",
-    "projectPractices": "Práticas do Projeto"
+    "projectPractices": "Práticas do Projeto",
+    "opensInNewTab": "abre em nova aba"
   },
   "stats": {
     "stars": "Stars",

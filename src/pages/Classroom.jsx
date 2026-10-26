@@ -17,6 +17,8 @@ import { guidePath } from '../utils/indicatorGuide.js';
 import { AiProcessSection } from '../components/ai/AiProcessSection.jsx';
 import { AiStudentTable } from '../components/ai/AiStudentTable.jsx';
 import { Tooltip } from '../components/Tooltip.jsx';
+import { NewTabHint } from '../components/NewTabHint.jsx';
+import { NEW_TAB_LINK_PROPS, NewTabContext } from '../lib/newTab.js';
 
 const DEFAULT_PERIOD_DAYS = 120;
 const isoDay = (d) => d.toISOString().slice(0, 10);
@@ -158,7 +160,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
           <h1 className="text-3xl font-bold text-shark dark:text-white">{t('classroom.title')}</h1>
           <p className="text-gray-600 dark:text-slate-300">{t('classroom.subtitle', { max: CLASSROOM_MAX_REPOS })}</p>
           <p className="text-sm text-gray-500 dark:text-slate-400">
-            {t('classroom.ethics')} <GuideLink id="classroom" />
+            {t('classroom.ethics')} <GuideLink id="classroom" newTab />
           </p>
         </header>
 
@@ -231,100 +233,108 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
           </div>
         </form>
 
+        {/* Results: every link opens in a new tab (the analysis lives only in memory; see lib/newTab.js) */}
         {total > 0 && (
-          <section className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-shark dark:text-white">
-                {t('classroom.resultsTitle', { from: period.from, to: period.to })}
-              </h2>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500 dark:text-slate-400" aria-live="polite">
-                  {running ? t('classroom.progress', { done, total }) : t('classroom.finished', { total })}
-                </span>
-                <button type="button" onClick={exportCsv} disabled={running} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg disabled:opacity-50">
-                  {t('button.csvExport')}
-                </button>
+          <NewTabContext.Provider value>
+            <section className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-shark dark:text-white">
+                  {t('classroom.resultsTitle', { from: period.from, to: period.to })}
+                </h2>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500 dark:text-slate-400" aria-live="polite">
+                    {running ? t('classroom.progress', { done, total }) : t('classroom.finished', { total })}
+                  </span>
+                  <button type="button" onClick={exportCsv} disabled={running} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg disabled:opacity-50">
+                    {t('button.csvExport')}
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 text-sm">
-                <thead className="bg-gray-50 dark:bg-slate-700">
-                  <tr>
-                    <th scope="col" className="sticky left-0 z-10 bg-gray-50 dark:bg-slate-700 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">{t('classroom.columns.repo')}</th>
-                    {COLUMNS.map((col) => (
-                      <th key={col.key} scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-slate-300 uppercase whitespace-nowrap">
-                        <Link to={guidePath(col.guide)} className="hover:underline" title={t('guide.link')}>
-                          {t(`classroom.columns.${col.key}`)}
-                          <span className="sr-only"> — {t('guide.link')}</span>
-                        </Link>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {requested.repos.map((name, index) => {
-                    const row = rows[name];
-                    const dup = duplicateOf(name);
-                    const ok = row?.status === 'ok' && !dup;
-                    const open = ok && isExpanded(name);
-                    const detailId = `classroom-ai-${index}`;
-                    const shownName = dup ? name : row?.fullName ?? name;
-                    return (
-                      <Fragment key={name}>
-                        <tr>
-                          <td className="sticky left-0 bg-white dark:bg-slate-800 px-3 py-2 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                            {ok && (
-                              <button
-                                type="button"
-                                onClick={() => toggle(name)}
-                                aria-expanded={open}
-                                aria-controls={open ? detailId : undefined}
-                                aria-label={t(open ? 'classroom.ai.collapse' : 'classroom.ai.expand', { repo: shownName })}
-                                title={t(open ? 'classroom.ai.collapse' : 'classroom.ai.expand', { repo: shownName })}
-                                className="mr-2 inline-flex w-5 h-5 items-center justify-center rounded border border-gray-300 dark:border-slate-600 text-xs text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
-                              >
-                                <span aria-hidden="true">{open ? '−' : '+'}</span>
-                              </button>
-                            )}
-                            <a href={`https://github.com/${shownName}`} target="_blank" rel="noopener noreferrer" className="hover:underline">{shownName}</a>
-                            {row?.isPrivate && !dup && <span className="ml-1" title={t('classroom.privateBadge')} aria-label={t('classroom.privateBadge')}>🔒</span>}
-                          </td>
-                          {ok
-                            ? COLUMNS.map((col) => (
-                                <td key={col.key} className="px-3 py-2 text-right whitespace-nowrap text-gray-700 dark:text-slate-300">{cell(col, row)}</td>
-                              ))
-                            : (
-                              <td colSpan={COLUMNS.length} className="px-3 py-2 text-gray-500 dark:text-slate-400">
-                                {t(`classroom.status.${dup ? 'duplicate' : row?.status ?? 'pending'}`, { name: dup })}
-                              </td>
-                            )}
-                        </tr>
-                        {open && (
-                          <tr id={detailId}>
-                            <td colSpan={COLUMNS.length + 1} className="bg-gray-50 dark:bg-slate-900/40 px-3 py-4">
-                              <div className="sticky left-0 max-w-5xl space-y-4">
-                                <h3 className="text-base font-semibold text-shark dark:text-white">{t('aiProcess.title')} — {shownName}</h3>
-                                <AiProcessSection aiProcess={row.ai} guideInNewTab />
-                                <AiStudentTable students={row.students} />
-                              </div>
+              {/* relative: contains the absolutely positioned sr-only spans, which otherwise widen the page.
+                  The container query lets the detail panel be as wide as this box, not the table. */}
+              <div className="relative overflow-x-auto [container-type:inline-size]">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 text-sm">
+                  <thead className="bg-gray-50 dark:bg-slate-700">
+                    <tr>
+                      <th scope="col" className="sticky left-0 z-10 bg-gray-50 dark:bg-slate-700 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">{t('classroom.columns.repo')}</th>
+                      {COLUMNS.map((col) => (
+                        <th key={col.key} scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-slate-300 uppercase whitespace-nowrap">
+                          <Link to={guidePath(col.guide)} {...NEW_TAB_LINK_PROPS} className="hover:underline" title={t('guide.link')}>
+                            {t(`classroom.columns.${col.key}`)}
+                            <span className="sr-only"> — {t('guide.link')}</span>
+                            <NewTabHint />
+                          </Link>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                    {requested.repos.map((name, index) => {
+                      const row = rows[name];
+                      const dup = duplicateOf(name);
+                      const ok = row?.status === 'ok' && !dup;
+                      const open = ok && isExpanded(name);
+                      const detailId = `classroom-ai-${index}`;
+                      const shownName = dup ? name : row?.fullName ?? name;
+                      return (
+                        <Fragment key={name}>
+                          <tr>
+                            <td className="sticky left-0 bg-white dark:bg-slate-800 px-3 py-2 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                              {ok && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggle(name)}
+                                  aria-expanded={open}
+                                  aria-controls={open ? detailId : undefined}
+                                  aria-label={t(open ? 'classroom.ai.collapse' : 'classroom.ai.expand', { repo: shownName })}
+                                  title={t(open ? 'classroom.ai.collapse' : 'classroom.ai.expand', { repo: shownName })}
+                                  className="mr-2 inline-flex w-5 h-5 items-center justify-center rounded border border-gray-300 dark:border-slate-600 text-xs text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                                >
+                                  <span aria-hidden="true">{open ? '−' : '+'}</span>
+                                </button>
+                              )}
+                              <a href={`https://github.com/${shownName}`} {...NEW_TAB_LINK_PROPS} className="hover:underline">{shownName}<NewTabHint /></a>
+                              {row?.isPrivate && !dup && <span className="ml-1" title={t('classroom.privateBadge')} aria-label={t('classroom.privateBadge')}>🔒</span>}
                             </td>
+                            {ok
+                              ? COLUMNS.map((col) => (
+                                  <td key={col.key} className="px-3 py-2 text-right whitespace-nowrap text-gray-700 dark:text-slate-300">{cell(col, row)}</td>
+                                ))
+                              : (
+                                <td colSpan={COLUMNS.length} className="px-3 py-2 text-gray-500 dark:text-slate-400">
+                                  {t(`classroom.status.${dup ? 'duplicate' : row?.status ?? 'pending'}`, { name: dup })}
+                                </td>
+                              )}
                           </tr>
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {anyPrivate && (
-              <p role="note" className="text-xs bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 px-3 py-2 rounded">
-                🔒 {t('classroom.privateNote')}
-              </p>
-            )}
-            {anySampled && <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.sampledNote')}</p>}
-            <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.ai.note')}</p>
-            <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.notes')}</p>
-          </section>
+                          {open && (
+                            <tr id={detailId}>
+                              <td colSpan={COLUMNS.length + 1} className="bg-gray-50 dark:bg-slate-900/40 px-3 py-4">
+                                {/* The cell spans the whole (scrolling) table: pin the panel to the visible part
+                                    and cap it at the scroll box width (100cqw) minus the cell padding. */}
+                                <div className="sticky left-3 w-[calc(100cqw-1.5rem)] max-w-5xl space-y-4 break-words">
+                                  <h3 className="text-base font-semibold text-shark dark:text-white">{t('aiProcess.title')} — {shownName}</h3>
+                                  <AiProcessSection aiProcess={row.ai} />
+                                  <AiStudentTable students={row.students} />
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {anyPrivate && (
+                <p role="note" className="text-xs bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 px-3 py-2 rounded">
+                  🔒 {t('classroom.privateNote')}
+                </p>
+              )}
+              {anySampled && <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.sampledNote')}</p>}
+              <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.ai.note')}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.notes')}</p>
+            </section>
+          </NewTabContext.Provider>
         )}
       </main>
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
