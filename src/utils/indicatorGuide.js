@@ -107,5 +107,8 @@ export const GUIDE_SECTIONS = [
 
 export const GUIDE_IDS = GUIDE_SECTIONS.flatMap((s) => s.items.map((i) => i.id));
 
+/** "Guia de IA no Processo" page (pages/AiGuide.jsx). */
+export const AI_GUIDE_PATH = '/guia/ia';
+
 /** Path to an indicator's entry ("Como interpretar" links on cards). */
 export const guidePath = (id) => `/guia#${id}`;

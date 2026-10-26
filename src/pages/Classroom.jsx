@@ -304,7 +304,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                             <td colSpan={COLUMNS.length + 1} className="bg-gray-50 dark:bg-slate-900/40 px-3 py-4">
                               <div className="sticky left-0 max-w-5xl space-y-4">
                                 <h3 className="text-base font-semibold text-shark dark:text-white">{t('aiProcess.title')} — {shownName}</h3>
-                                <AiProcessSection aiProcess={row.ai} />
+                                <AiProcessSection aiProcess={row.ai} guideInNewTab />
                                 <AiStudentTable students={row.students} />
                               </div>
                             </td>

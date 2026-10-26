@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { GuideLink } from '../GuideLink.jsx';
 import { AI_MIN_GROUP } from '../../constants.js';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
+import { AI_GUIDE_PATH } from '../../utils/indicatorGuide.js';
 import { AiCoherence } from './AiCoherence.jsx';
 import { AiResponsibleBadge } from './AiResponsibleBadge.jsx';
 import { BlockTitle, Chip, InfoTip } from './AiParts.jsx';
@@ -14,8 +16,10 @@ const NOTE = 'text-xs text-gray-500 dark:text-slate-400';
 /**
  * "AI in the Process › Repository" (Dashboard and Classroom Mode). Receives only report.aiProcess:
  * counts and tool ids, never people. Everything is a lower bound: no trace ≠ no AI.
+ * guideInNewTab (Classroom): open the AI guide in a new tab, so the in-memory class analysis isn't lost;
+ * noreferrer keeps the /turma?repos=… URL out of the new page's referrer (GA is on there).
  */
-export function AiProcessSection({ aiProcess }) {
+export function AiProcessSection({ aiProcess, guideInNewTab = false }) {
   const { t } = useTranslation();
 
   if (!aiProcess?.available) {
@@ -130,7 +134,16 @@ export function AiProcessSection({ aiProcess }) {
       <AiResponsibleBadge badge={badge} />
 
       {/* 7. Lower bound */}
-      <p className={`${NOTE} border-t border-gray-100 dark:border-slate-700 pt-3`}>{t('aiProcess.lowerBoundNote')}</p>
+      <p className={`${NOTE} border-t border-gray-100 dark:border-slate-700 pt-3`}>
+        {t('aiProcess.lowerBoundNote')}{' '}
+        <Link
+          to={AI_GUIDE_PATH}
+          {...(guideInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          className="font-medium text-ocean hover:underline"
+        >
+          {t('aiGuide.link')} →
+        </Link>
+      </p>
     </div>
   );
 }

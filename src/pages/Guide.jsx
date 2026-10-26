@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
-import { GUIDE_SECTIONS, CHAOSS, DATA_ETHICS_URL } from '../utils/indicatorGuide.js';
+import { useHashScroll } from '../hooks/useHashScroll.js';
+import { GUIDE_SECTIONS, CHAOSS, DATA_ETHICS_URL, AI_GUIDE_PATH } from '../utils/indicatorGuide.js';
 
 const RELATION_STYLE = {
   equivalent: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
@@ -15,21 +15,9 @@ const RELATION_STYLE = {
 // indicator. Cards link here with #<id> (indicatorGuide.guidePath).
 export function Guide({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
-  const { hash } = useLocation();
-
-  const target = decodeURIComponent(hash.slice(1));
-
   // react-router doesn't scroll to #anchors, nor reset scroll on navigation;
   // focus moves to the entry for keyboard and screen-reader users.
-  useEffect(() => {
-    const el = target && document.getElementById(target);
-    if (!el) {
-      window.scrollTo(0, 0);
-      return;
-    }
-    el.scrollIntoView({ block: 'start' });
-    el.focus({ preventScroll: true });
-  }, [target]);
+  const target = useHashScroll();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
@@ -49,6 +37,12 @@ export function Guide({ isSettingsOpen, setIsSettingsOpen }) {
         {GUIDE_SECTIONS.map((section) => (
           <section key={section.id} className="space-y-4">
             <h2 className="text-xl font-semibold text-shark dark:text-white">{t(`guide.sections.${section.id}`)}</h2>
+            {section.id === 'ai' && (
+              <p className="text-sm text-gray-700 dark:text-slate-300">
+                {t('aiGuide.guideIntro')}{' '}
+                <Link to={AI_GUIDE_PATH} className="font-medium text-ocean hover:underline">{t('aiGuide.link')} →</Link>
+              </p>
+            )}
             {section.items.map((item) => {
               const note = t(`guide.items.${item.id}.chaossNote`);
               return (

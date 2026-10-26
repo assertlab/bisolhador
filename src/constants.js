@@ -50,3 +50,8 @@ export const DAY_MS = 86_400_000;
 // AI in the Process: PR-size comparison (agent vs human) only when both groups have at least this many PRs
 export const AI_MIN_GROUP = 5;
 export const AUTHORSHIP_MAX_PATHS = 10; // Classroom: AI-config paths per authorship query (githubService, aiClassroom)
+export const AUTHORSHIP_COMMITS_PER_PATH = 50; // Classroom: commits read per AI-config path (complete = no next page)
+
+// Classroom period caps (githubService defaults; also quoted by the AI guide, /guia/ia)
+export const CLASSROOM_COMMIT_PAGES = 3; // × 100 commits of the period
+export const CLASSROOM_PR_SCAN = 200; // merged PRs scanned (by last update) to find the period's

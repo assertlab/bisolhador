@@ -27,14 +27,15 @@ npm run smoke:csp  # CSP + PDF-export smoke test (Playwright, build + dev modes)
 ```
 src/
 ├── main.jsx                    # React initialization
-├── App.jsx                     # Router setup (/, /ranking, /timeline, /benchmark, /guia, /turma)
+├── App.jsx                     # Router setup (/, /ranking, /timeline, /benchmark, /guia, /guia/ia, /turma)
 ├── constants.js                # Shared constants (API limits, thresholds, etc.)
 ├── pages/
 │   ├── Dashboard.jsx           # Main analysis dashboard
 │   ├── Ranking.jsx             # Leaderboard (Bisolhômetro)
 │   ├── Timeline.jsx            # Time Machine — repo evolution over time
 │   ├── Benchmark.jsx           # Multi-repo comparison (up to 10 repos)
-│   └── Guide.jsx               # /guia "Como interpretar": one entry per indicator + CHAOSS reference
+│   ├── Guide.jsx               # /guia "Como interpretar": one entry per indicator + CHAOSS reference
+│   └── AiGuide.jsx             # /guia/ia "Guia de IA no Processo": principles, how to declare co-authorship, detection table generated from the registry, Classroom guidance, FAQ, limits
 ├── components/
 │   ├── Header.jsx, SearchBar.jsx, StatCard.jsx, ...
 │   ├── BusFactorCard.jsx       # Advanced Bus Factor risk card (stacked bar, avatars)
@@ -64,7 +65,8 @@ src/
 │   ├── useBenchmarkRepos.js    # Parallel fetch via TanStack useQueries
 │   ├── useTimeFilter.js        # Unified time range filtering logic
 │   ├── useChartTheme.js        # Chart colors for light/dark mode
-│   └── useTheme.js             # Dark mode toggle with localStorage
+│   ├── useTheme.js             # Dark mode toggle with localStorage
+│   └── useHashScroll.js        # Scroll to and focus the #hash target (Guide, AiGuide)
 ├── services/
 │   ├── githubService.js        # GitHub REST API calls with token support
 │   ├── supabase.js             # Supabase client
@@ -81,6 +83,7 @@ src/
 │   ├── aiClassroom.js          # Classroom AI: template origin (github-classroom[bot]), authorship paths, per-student rows, tests/CI badge input (classroomMaturity)
 │   ├── classroomColumns.js     # Classroom table columns (shared with the CSV) and classroomCsvRows (n after each %)
 │   ├── indicatorGuide.js       # Guide structure and CHAOSS mapping (relation equivalent/related/none); texts in locales guide.*
+│   ├── aiGuide.js              # /guia/ia structure: per-tool declaration entries (verified vs e-mail only, with sources), detection rows from AI_TOOLS, FAQ, limits, numbers quoted from constants; texts in locales aiGuide.*
 │   ├── repoName.js             # SAFE_GITHUB_NAME_PATTERN / parseSafeRepoName for app-built routes
 │   ├── projectPractices.js     # CI health (push runs on the default branch), Conventional Commits, release cadence (12 months, min(created_at, published_at)); snapshot normalizer
 │   ├── activityStats.js        # /stats/* status (computing/tooLarge/error), weekdays from punch_card, additions/deletions ratio, closed share
@@ -237,6 +240,8 @@ GA4 is initialized with `send_page_view: false`, and `RouteTracker` (`App.jsx`) 
 Whenever a code change has the potential to change behavior documented in this file, in `README.md`, or in `docs/DESIGN_SYSTEM.md`, explicitly evaluate — before considering the task done — whether any of those documents need updating, and whether the change justifies a new `docs/CHANGELOG.md` entry and a `package.json` version bump (following SemVer: patch for fixes with no visible behavior change, minor for new behavior/hardening that doesn't break existing usage, major for changes that break existing usage).
 
 Changing how an indicator is measured also means updating its entry in the "Como interpretar" guide (`guide.items.<id>` in both locales, and `relation`/CHAOSS refs in `src/utils/indicatorGuide.js`): the guide states definitions and differences from CHAOSS, so it goes stale exactly like this file. `indicatorGuide.test.js` only checks structure, not that the text still matches the code.
+
+The same goes for the "Guia de IA no Processo" page (`/guia/ia`, `src/pages/AiGuide.jsx`, `src/utils/aiGuide.js`, locales `aiGuide.*`): update it whenever the AI registry (`src/utils/aiRegistry.js`) or the AI rules (`aiTraces.js`, `aiProcess.js`, `aiClassroom.js`, Classroom caps) change. Its detection table is generated from `AI_TOOLS` (display fields `show`/`examples`, checked against the patterns by `aiRegistry.test.js`) and its numbers come from `constants.js`, but the prose (limits, FAQ, per-tool instructions) is hand-written. Per-tool instructions in block 2 are only for tools whose mechanism was checked against official docs or source (`mode: 'verified'`, with `sources` and `checked` date in `aiGuide.js`); re-check them when a tool changes how it attributes commits, and leave unconfirmed tools as e-mail only.
 
 Stale documentation isn't a cosmetic problem in this project. It has already, concretely, caused a false sense of security about RLS protections that didn't actually exist — this file and the project's other docs asserted for months that anonymous INSERT into `analytics_searches` was blocked, when in fact two public RLS policies made it (and anonymous SELECT) fully open. Treat every doc claim about security posture as something that needs re-verifying against the actual code/config, not something to copy forward from the previous version.
 

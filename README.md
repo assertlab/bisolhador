@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.17.0 - Guia de IA no Processo
+- **🧭 Guia de IA no Processo** (`/guia/ia`): princípios (limite inferior, o que a seção não é, ética dos dados), como declarar a coautoria de IA nos commits (trailer manual e, por ferramenta, o que a documentação oficial confirma), a tabela do que o Bisolhador detecta gerada do próprio registro de ferramentas, orientações para professores no Modo Turma, perguntas frequentes e os limites consolidados. Links a partir de Como interpretar, do card IA no Processo e da visão Por estudante
+
 ### v3.16.0 - Testes e CI no Modo Turma
 - **🧪 Testes e CI no selo do Modo Turma**: o critério passa a ser medido pelas listagens da raiz e de `.github/workflows` e pelas execuções do GitHub Actions no período, sem requisições novas. Testes só aparecem como encontrados ou não verificados, nunca como ausentes
 - **📊 n no CSV da turma**: cada porcentagem vem com o número de commits, PRs ou execuções sobre o qual foi calculada

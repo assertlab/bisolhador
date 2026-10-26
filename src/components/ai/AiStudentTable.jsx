@@ -1,6 +1,8 @@
 import { Trans, useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
+import { AI_GUIDE_PATH } from '../../utils/indicatorGuide.js';
 import { toolLabel } from './toolLabel.js';
 
 const NOTE = 'text-xs text-gray-500 dark:text-slate-400';
@@ -33,6 +35,13 @@ export function AiStudentTable({ students }) {
       <div role="note" className="text-sm text-gray-700 dark:text-slate-200 bg-gray-50 dark:bg-slate-900/40 border border-gray-200 dark:border-slate-700 rounded-md p-3 space-y-1">
         <p><Trans i18nKey="aiProcess.students.notice" components={{ strong: <strong /> }} /></p>
         <p>{t('aiProcess.students.agentLimit')}</p>
+        <p>
+          {/* New tab: following it in place would lose the in-memory class analysis; noreferrer keeps
+              /turma?repos=… out of the guide page's referrer (GA is on there). */}
+          <Link to={`${AI_GUIDE_PATH}#teachers`} target="_blank" rel="noopener noreferrer" className="font-medium text-ocean hover:underline">
+            {t('aiGuide.studentsLink')}: {t('aiGuide.link')} →
+          </Link>
+        </p>
       </div>
 
       {!students?.available ? (
