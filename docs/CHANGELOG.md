@@ -16,10 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ✨ Added
 
 - **NEW**: No Modo Turma, o critério **"Testes e CI"** do selo "Uso responsável de IA" passa a ser medido (antes ficava sempre "não verificado"), sem nenhuma requisição nova: a consulta de contexto de IA que já existia ganha a listagem de `.github/workflows`.
-  - **CI**: configuração de CI na raiz ou em `.github/workflows` (os mesmos padrões da Maturidade de engenharia), ou qualquer execução do GitHub Actions (push no branch padrão) no período, que o Modo Turma já buscava. "Não detectado" só quando as listagens foram lidas e as execuções foram buscadas e nenhuma mostra CI; se uma delas falhou e a outra não mostra CI, fica "não verificado".
+  - **CI**: configuração de CI na raiz ou em `.github/workflows` (os mesmos padrões da Maturidade de engenharia, mas só nesses dois lugares: um `Jenkinsfile` em subpasta não é visto), ou qualquer execução do GitHub Actions (push no branch padrão) no período, que o Modo Turma já buscava. "Não detectado" só quando as listagens foram lidas e as execuções foram buscadas e nenhuma mostra CI; se uma delas falhou e a outra não mostra CI, fica "não verificado".
   - **Testes**: só "encontrados" (pasta `test/`, `tests/` ou `__tests__/` na raiz) ou "não verificados". Arquivos `*.test.js` junto do código não aparecem sem a árvore, então a falta de pasta de testes nunca torna o critério não cumprido: ele só fica "não cumprido" por falta de CI.
+  - As listagens são lidas no estado atual do repositório (HEAD), não no fim do período; só as execuções se limitam ao período.
   - A coluna **CI ok** (saúde do CI pelas execuções) não muda.
-- **NEW**: O **CSV do Modo Turma** traz, logo depois de cada coluna de porcentagem, o **n** sobre o qual ela foi calculada: commits analisados (concentração, Conventional Commits, commits com IA), PRs analisados (aprovação por outra pessoa, PRs de agentes) e execuções de CI. Vazio quando a parte não pôde ser medida, nunca 0. Nada por estudante entra no CSV.
+- **NEW**: O **CSV do Modo Turma** traz, logo depois de cada coluna de porcentagem, o **n** sobre o qual ela foi calculada: commits analisados (concentração, Conventional Commits, commits com IA), PRs analisados (aprovação por outra pessoa, PRs de agentes) e execuções de CI. Com a busca bem-sucedida, o n é o tamanho da amostra, 0 quando ela está vazia; vazio só quando a parte falhou ou não foi medida. Nada por estudante entra no CSV. As colunas antigas mudaram de posição: leia o CSV pelo cabeçalho, não pela posição da coluna.
 
 ---
 
