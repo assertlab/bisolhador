@@ -108,10 +108,11 @@ export function releasesInPeriod(releases, period) {
 
 const settled = (r) => (r?.status === 'fulfilled' ? r.value : null);
 
-// Classroom has no tree, only the directory listings of the context query.
+// Classroom has no tree, only the directory listings of the context query: 'partial' = every known
+// location was listed ("none in the checked locations"), 'incomplete' = some listing failed.
 function configStatusOf(ctx) {
   if (!ctx) return 'unavailable';
-  return ctx.unverified?.includes('listings') ? 'incomplete' : 'complete';
+  return ctx.unverified?.includes('listings') ? 'incomplete' : 'partial';
 }
 
 /**
@@ -119,7 +120,7 @@ function configStatusOf(ctx) {
  * the period) and the per-student rows (in memory only). ctx null = AI context query failed.
  */
 function analyzeTeamAi(history, prs, rawContext, authorship, period) {
-  const ctx = classroomAiContext(rawContext ? parseAiRepoContext(rawContext) : null, authorship);
+  const ctx = classroomAiContext(rawContext ? parseAiRepoContext(rawContext, { allowPrivateTemplate: true }) : null, authorship);
   const commits = history ? history.nodes.map(fromGraphqlCommit) : null;
   return {
     ai: {

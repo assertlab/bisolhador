@@ -75,6 +75,20 @@ describe('analyzeAiPrs', () => {
     expect(analyzeAiPrs(prs, { reviewsAvailable: true })).toMatchObject({ n: 3, byAgents: 1, percentage: 33, agentTools: ['copilot'], aiReviewed: { available: true, count: 1, percentage: 33, tools: ['coderabbit'] } });
     expect(analyzeAiPrs(prs, { reviewsAvailable: false }).aiReviewed).toMatchObject({ available: false, count: null });
   });
+  it('a PR author is an agent only on a bot account (a person called "copilot" is not)', () => {
+    const prs = [
+      pr({ user: { login: 'Copilot', type: 'User' } }),
+      pr({ user: { login: 'claude', type: 'User' } }),
+      pr({ user: { login: 'Copilot', type: 'Bot' } }),
+      pr({ user: { login: 'claude[bot]' } }),
+    ];
+    expect(analyzeAiPrs(prs, { reviewsAvailable: false })).toMatchObject({ n: 4, byAgents: 2, agentTools: ['claude', 'copilot'] });
+    expect(analyzeAiSafeguards(prs.map((p) => ({ ...p, approvedByOther: false })), { reviewsAvailable: true })).toMatchObject({ agentPrs: 2, agentUnapproved: 2 });
+  });
+  it('a REST commit by a person account named like an agent is not AI', () => {
+    expect(commitAiTools(commit({ authorLogin: 'claude', authorType: 'User', authorName: 'Claude' }))).toEqual([]);
+    expect(commitAiTools(commit({ authorLogin: 'Copilot', authorType: 'Bot', authorName: 'Copilot' }))).toEqual(['copilot']);
+  });
   it('limit Infinity keeps every merged PR', () => {
     const prs = Array.from({ length: 60 }, () => pr({}));
     expect(analyzeAiPrs(prs, { limit: Infinity, reviewsAvailable: true }).n).toBe(60);
@@ -244,6 +258,23 @@ describe('analyzeResponsibleBadge', () => {
     expect(stateOf(analyzeResponsibleBadge(badgeInput(cfg, noAiCommits, prs, { safeguards: with1 })), 'agentReviewed')).toBe('unmet');
     expect(stateOf(analyzeResponsibleBadge(badgeInput(cfg, noAiCommits, prs, { safeguards: { ...with1, agentUnapproved: 0 } })), 'agentReviewed')).toBe('met');
   });
+  it('AI reviews as the only trace: config and declared do not apply (an external reviewer needs neither)', () => {
+    const reviewed = { ...noAiPrs, aiReviewed: { available: true, count: 1, percentage: 50, tools: ['coderabbit'] } };
+    const b = analyzeResponsibleBadge(badgeInput(analyzeAiConfig([], 'complete', emptyCtx), noAiCommits, reviewed));
+    expect(b.applicable).toBe(true);
+    expect(['config', 'declared'].map((id) => stateOf(b, id))).toEqual(['na', 'na']);
+    // Any other trace and the criteria apply again
+    const hidden = analyzeAiConfig([], 'complete', { ...emptyCtx, gitignore: '.cursor/' });
+    expect(['config', 'declared'].map((id) => stateOf(analyzeResponsibleBadge(badgeInput(hidden, noAiCommits, reviewed)), id))).toEqual(['unmet', 'unmet']);
+  });
+  it('known locations only (Classroom, status partial): rules and criteria as for a complete tree', () => {
+    const cfg = analyzeAiConfig([], 'partial', emptyCtx);
+    expect(analyzeCoherence(cfg, noAiCommits, noAiPrs).unverified).not.toContain('config');
+    const withConfig = analyzeAiConfig(['AGENTS.md'], 'partial', emptyCtx);
+    expect(analyzeCoherence(withConfig, noAiCommits, noAiPrs).flags).toEqual(['configWithoutDeclaration']);
+    const hidden = analyzeAiConfig([], 'partial', { ...emptyCtx, gitignore: '.aider*' });
+    expect(stateOf(analyzeResponsibleBadge(badgeInput(hidden, noAiCommits, noAiPrs)), 'config')).toBe('unmet');
+  });
   it('empty commit sample (n = 0): declared is unverified, not unmet', () => {
     const cfg = analyzeAiConfig(['CLAUDE.md'], 'complete', emptyCtx);
     const empty = { ...noAiCommits, n: 0, percentage: null };
@@ -303,6 +334,21 @@ describe('normalizeSnapshotAiProcess', () => {
     expect(normalizeSnapshotAiProcess({ aiProcess: { ...ai, coherence: { ...ai.coherence, flags: 'x' } } }).aiProcess.reason).toBe('snapshot');
     expect(normalizeSnapshotAiProcess({ aiProcess: { ...ai, badge: null } }).aiProcess.reason).toBe('snapshot');
   });
+  it('current method but a field the UI dereferences is malformed → not recorded', () => {
+    const ai = buildAiProcess(fullFixture);
+    const broken = [
+      { ...ai, config: { ...ai.config, entries: null } },
+      { ...ai, config: { ...ai.config, hiddenLocal: 'x' } },
+      { ...ai, prs: { ...ai.prs, aiReviewed: null } },
+      { ...ai, safeguards: { ...ai.safeguards, size: 3 } },
+      { ...ai, tools: [{ id: 'claude', sources: null }] },
+      { ...ai, tools: [null] },
+      { ...ai, badge: { ...ai.badge, criteria: {} } },
+    ];
+    for (const aiProcess of broken) expect(normalizeSnapshotAiProcess({ aiProcess }).aiProcess.reason).toBe('snapshot');
+    const noHidden = { ...ai, config: { ...ai.config, hiddenLocal: null } };
+    expect(normalizeSnapshotAiProcess({ aiProcess: noHidden }).aiProcess).toBe(noHidden);
+  });
   it('current method is kept as is', () => {
     const report = { fullName: 'a/b', aiProcess: buildAiProcess(fullFixture) };
     expect(normalizeSnapshotAiProcess(report)).toBe(report);
@@ -318,12 +364,22 @@ describe('parseAiRepoContext', () => {
   it('collects template paths that detectConfig recognizes', () => {
     const ctx = parseAiRepoContext({ repository: {
       gitignore: blob('node_modules'), claudeSettings: null, ...dirs({ '': [['README.md']] }),
-      templateRepository: { nameWithOwner: 'o/t', ...dirs({ '': [['AGENTS.md'], ['README.md']] }) },
+      templateRepository: { nameWithOwner: 'o/t', isPrivate: false, ...dirs({ '': [['AGENTS.md'], ['README.md']] }) },
     } });
     expect(ctx.available).toBe(true);
     expect(ctx.gitignore).toBe('node_modules');
     expect(ctx.claudeSettings).toBeNull();
     expect(ctx.templatePaths).toEqual(new Set(['AGENTS.md']));
+  });
+  it('a private template is not read on the Dashboard (origin not verified); Classroom may read it', () => {
+    const data = (isPrivate) => ({ repository: {
+      gitignore: null, claudeSettings: null, ...dirs({ '': [['AGENTS.md']] }),
+      templateRepository: { nameWithOwner: 'o/t', isPrivate, ...dirs({ '': [['AGENTS.md']] }) },
+    } });
+    expect(parseAiRepoContext(data(true)).templatePaths).toBeNull();
+    expect(parseAiRepoContext(data(undefined)).templatePaths).toBeNull(); // visibility unknown: fail closed
+    expect(parseAiRepoContext(data(true), { allowPrivateTemplate: true }).templatePaths).toEqual(new Set(['AGENTS.md']));
+    expect(parseAiRepoContext(data(false)).templatePaths).toEqual(new Set(['AGENTS.md']));
   });
   it('templateRepository null under a successful fetch = verified, no template (empty Set)', () => {
     const ctx = parseAiRepoContext({ repository: { gitignore: null, claudeSettings: null, ...dirs({}), templateRepository: null } });

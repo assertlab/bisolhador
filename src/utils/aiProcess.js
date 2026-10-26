@@ -5,8 +5,15 @@ import {
   detectConfig, gitignoreHidesAi, coauthorDisabled,
 } from './aiTraces.js';
 import { REGISTRY_VERSION, CONTEXT_DIRS } from './aiRegistry.js';
+import { isBot } from './contributors.js';
 
 const pct = (part, total) => Math.round((part / total) * 100);
+
+/**
+ * Config status whose "nothing found" is a verified result: 'complete' (whole tree, Dashboard) or
+ * 'partial' (Classroom: the known locations were all listed; "none in the checked locations", spec §11).
+ */
+export const configChecked = (status) => status === 'complete' || status === 'partial';
 const unique = (xs) => [...new Set(xs)];
 
 /**
@@ -43,7 +50,7 @@ export function fromGraphqlCommit(node) {
 /** Tool ids with a trace in this commit: co-author trailers plus an agent as the author. */
 export function commitAiTools(c) {
   const fromTrailers = toolsFromCoauthors(parseCoauthors(c.message));
-  const agent = authorAgentTool({ login: c.authorLogin, name: c.authorName, email: c.authorEmail });
+  const agent = authorAgentTool({ login: c.authorLogin, type: c.authorType, name: c.authorName, email: c.authorEmail });
   return unique(agent ? [...fromTrailers, agent] : fromTrailers);
 }
 
@@ -73,7 +80,8 @@ function aiSample(prs, limit) {
     .slice(0, limit);
 }
 
-const agentToolOfPr = (p) => agentToolOf(p.user?.login);
+// Only a bot account opens an agent PR: a person whose login is "copilot" or "claude" is not one.
+const agentToolOfPr = (p) => (isBot(p.user) ? agentToolOf(p.user.login) : null);
 
 /** PRs opened by agents and PRs with an AI reviewer, over the merged sample. */
 export function analyzeAiPrs(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable } = {}) {
@@ -171,16 +179,19 @@ function unreadParts(errors) {
  * `contextPaths` (every path listed in the repository itself, for Classroom, which has no tree).
  * gitignore/claudeSettings are null when the file does not exist; a part with a partial error is
  * listed in `unverified` instead (and a template error leaves templatePaths null).
+ * allowPrivateTemplate (Classroom only): read a private template's listings; elsewhere its origin is unverified.
  * templateRepository null counts as "no template": GitHub can't tell that from a template the
  * user can't see, but "origin ?" on every repository would be noise (Classroom falls back to
  * the github-classroom[bot] initial commit).
  */
-export function parseAiRepoContext(data) {
+export function parseAiRepoContext(data, { allowPrivateTemplate = false } = {}) {
   const repo = data?.repository;
   const template = repo?.templateRepository ?? null;
   const unread = unreadParts(data?.errors);
   let templatePaths = new Set();
-  if (unread.has('template')) templatePaths = null;
+  // The Dashboard never reads a private repository, the template included (visibility unknown = private).
+  // Classroom may: it already analyzes private repositories in memory (AGENTS.md decision, v3.14.0).
+  if (unread.has('template') || (template && template.isPrivate !== false && !allowPrivateTemplate)) templatePaths = null;
   else if (template) templatePaths = new Set(detectConfig(listedPaths(template)).map((e) => e.path));
   return {
     gitignore: repo?.gitignore?.text ?? null,
@@ -235,7 +246,7 @@ export function analyzeCoherence(config, commits, prs) {
   const measured = commits.available && commits.n > 0;
   const declared = declares(commits, prs);
   const unverified = [];
-  if (config.status !== 'complete') unverified.push('config');
+  if (!configChecked(config.status)) unverified.push('config');
   if (own.some((e) => e.fromTemplate === null)) unverified.push('template');
   if (config.hiddenLocal === null) unverified.push('gitignore');
   if (!measured) unverified.push('commits');
@@ -255,15 +266,19 @@ export function analyzeCoherence(config, commits, prs) {
   return { flags, unverified, toolMismatch, coauthorDisabled: config.coauthorDisabled === true };
 }
 
-function configState(config) {
+// onlyReviews: an AI reviewer is the only trace. It is an external app: the repository needs no
+// config for it and its commits have nothing to declare, so those two criteria don't apply.
+function configState(config, onlyReviews) {
   if (ownEntries(config).length > 0) return 'met';
-  return config.status === 'complete' ? 'unmet' : 'unverified';
+  if (!configChecked(config.status)) return 'unverified';
+  return onlyReviews ? 'na' : 'unmet';
 }
 
 // An empty sample can't show a declaration either way (same rule as analyzeCoherence).
-function declaredState(commits) {
+function declaredState(commits, onlyReviews) {
   if (!commits.available || commits.n === 0) return 'unverified';
-  return commits.withAi > 0 ? 'met' : 'unmet';
+  if (commits.withAi > 0) return 'met';
+  return onlyReviews ? 'na' : 'unmet';
 }
 
 // No flag is "met" only when the rules could have fired: when declared, they never can.
@@ -293,14 +308,15 @@ function testsCiState(maturity) {
  * Applies only with some AI trace; 'na' and 'unverified' criteria stay out of the denominator.
  */
 export function analyzeResponsibleBadge({ config, commits, prs, safeguards, coherence, maturity }) {
-  const applicable = ownEntries(config).length > 0
+  const otherTraces = ownEntries(config).length > 0
     || config.hiddenLocal?.length > 0
     || commits.withAi > 0
-    || prs.byAgents > 0
-    || prs.aiReviewed?.count > 0;
+    || prs.byAgents > 0;
+  const onlyReviews = !otherTraces && prs.aiReviewed?.count > 0;
+  const applicable = otherTraces || onlyReviews;
   const criteria = [
-    { id: 'config', state: configState(config) },
-    { id: 'declared', state: declaredState(commits) },
+    { id: 'config', state: configState(config, onlyReviews) },
+    { id: 'declared', state: declaredState(commits, onlyReviews) },
     { id: 'coherent', state: coherentState(coherence, declares(commits, prs)) },
     { id: 'agentReviewed', state: agentReviewedState(prs, safeguards) },
     { id: 'testsCi', state: testsCiState(maturity) },
@@ -378,8 +394,14 @@ function hasCurrentShape(ai) {
     && ai.method === AI_PROCESS_METHOD
     && ['config', 'commits', 'prs', 'safeguards', 'coherence', 'badge'].every((k) => isObject(ai[k]))
     && Array.isArray(ai.tools)
+    && ai.tools.every((tool) => isObject(tool) && Array.isArray(tool.sources))
+    && Array.isArray(ai.config.entries)
+    && (ai.config.hiddenLocal === null || Array.isArray(ai.config.hiddenLocal))
+    && isObject(ai.prs.aiReviewed)
+    && isObject(ai.safeguards.size)
     && Array.isArray(ai.coherence.unverified)
-    && Array.isArray(ai.coherence.flags);
+    && Array.isArray(ai.coherence.flags)
+    && Array.isArray(ai.badge.criteria);
 }
 
 /** Snapshots without the current method (or with a malformed aiProcess) → "not recorded in this snapshot". */

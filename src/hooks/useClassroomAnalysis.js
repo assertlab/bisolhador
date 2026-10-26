@@ -53,7 +53,7 @@ async function analyzeRepository(name, period) {
  */
 async function fetchAuthorship(owner, repo, aiContext, fullName) {
   if (aiContext.status !== 'fulfilled') return null;
-  const paths = authorshipPaths(parseAiRepoContext(aiContext.value));
+  const paths = authorshipPaths(parseAiRepoContext(aiContext.value, { allowPrivateTemplate: true }));
   if (paths.length === 0) return [];
   try {
     return await githubService.fetchAiConfigAuthorship(owner, repo, paths);

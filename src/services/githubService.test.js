@@ -297,6 +297,7 @@ describe('githubService: failures are errors, not zeros', () => {
       const body = JSON.parse(fetchMock.mock.calls[0][1].body);
       expect(body.variables).toEqual({ owner: 'own"er', name: 'repo' });
       expect(body.query).not.toContain('own"er');
+      expect(body.query).toMatch(/templateRepository \{[^}]*isPrivate/);
     });
 
     it('no errors → empty list; no repository → throws', async () => {

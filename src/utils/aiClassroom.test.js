@@ -48,10 +48,17 @@ describe('analyzeStudents', () => {
   });
 
   it('agent rows get config paths authored by that agent; unidentified rows never do', () => {
-    const authorship = [{ path: 'AGENTS.md', complete: true, commits: [{ login: 'Copilot', name: 'Copilot', date: inPeriod }, { login: null, name: 'Bob', date: inPeriod }] }];
-    const r = analyzeStudents([c({ authorLogin: 'Copilot', authorName: 'Copilot' }), c({ authorLogin: null, authorName: 'Bob' })], authorship, period, new Set());
+    const copilotEmail = '198982749+Copilot@users.noreply.github.com';
+    const authorship = [{ path: 'AGENTS.md', complete: true, commits: [{ login: null, name: 'Copilot', email: copilotEmail, date: inPeriod }, { login: null, name: 'Bob', date: inPeriod }] }];
+    const r = analyzeStudents([c({ authorLogin: null, authorName: 'Copilot', authorEmail: copilotEmail }), c({ authorLogin: null, authorName: 'Bob' })], authorship, period, new Set());
     expect(rowOf(r, 'agent').configPaths).toEqual(['AGENTS.md']);
     expect(rowOf(r, 'unidentified').configPaths).toEqual([]);
+  });
+
+  it('a student account named like an agent stays a student (GraphQL user login, no bot name or e-mail)', () => {
+    const authorship = [{ path: 'AGENTS.md', complete: true, commits: [{ login: 'claude', name: 'Claude', email: 'claude@uni.br', date: inPeriod }] }];
+    const r = analyzeStudents([c({ authorLogin: 'claude', authorName: 'Claude', authorEmail: 'claude@uni.br' })], authorship, period, new Set());
+    expect(r.rows).toEqual([expect.objectContaining({ kind: 'person', login: 'claude', withAi: 0, configPaths: ['AGENTS.md'] })]);
   });
 
   it('maintenance bots and merges are out of the base; logins are grouped case-insensitively', () => {

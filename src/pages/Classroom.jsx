@@ -16,6 +16,7 @@ import { guidePath } from '../utils/indicatorGuide.js';
 import { AiProcessSection } from '../components/ai/AiProcessSection.jsx';
 import { AiStudentTable } from '../components/ai/AiStudentTable.jsx';
 import { toolLabel } from '../components/ai/toolLabel.js';
+import { configChecked } from '../utils/aiProcess.js';
 import { Tooltip } from '../components/Tooltip.jsx';
 
 const DEFAULT_PERIOD_DAYS = 120;
@@ -42,16 +43,23 @@ const COLUMNS = [
   { key: 'aiTools', guide: 'ai-tools', get: aiToolIds, show: (ids, t) => (ids.length ? ids.map((id) => toolLabel(id, t)).join(', ') : '—'), csv: (ids, t) => ids.map((id) => toolLabel(id, t)).join(', ') },
   { key: 'aiCommits', guide: 'ai-commits', get: (r) => r.ai.commits.percentage, pct: true, count: (r) => [r.ai.commits.withAi, r.ai.commits.n], sampled: commitsCapped },
   { key: 'aiPrs', guide: 'ai-prs', get: (r) => r.ai.prs.percentage, pct: true, count: (r) => [r.ai.prs.byAgents, r.ai.prs.n], sampled: (r) => r.prs.capped },
-  { key: 'aiCoherence', guide: 'ai-coherence', get: (r) => r.ai.coherence.flags, show: (flags, t) => (flags.length ? <CoherenceMark flags={flags} t={t} /> : '—'), csv: (flags, t) => flags.map((f) => t(`aiProcess.coherence.${f}`)).join(' ') },
+  { key: 'aiCoherence', guide: 'ai-coherence', get: coherenceFlags, show: (flags, t) => (flags.length ? <CoherenceMark flags={flags} t={t} /> : '—'), csv: (flags, t) => flags.map((f) => t(`aiProcess.coherence.${f}`)).join(' ') },
   { key: 'aiBadge', guide: 'ai-badge', get: (r) => (r.ai.badge.applicable && r.ai.badge.total > 0 ? r.ai.badge : null), show: (b) => `${b.met}/${b.total}`, csv: (b, t) => t('aiProcess.badge.score', { met: b.met, total: b.total }), na: '—' },
 ];
 
 // Tools with a trace of the repository's own use (template-only tools are listed in the expanded row).
 // null when no source could be read.
 function aiToolIds(r) {
+  if (!r.ai.available) return null;
   const { config, commits, prs, tools } = r.ai;
-  if (config.status !== 'complete' && !commits.available && !prs.available) return null;
+  if (!configChecked(config.status) && !commits.available && !prs.available) return null;
   return tools.filter((tool) => tool.sources.length > 0).map((tool) => tool.id);
+}
+
+// "Sources disagree" needs measured commits (no rule fires otherwise): N/A, not "—", when they weren't.
+function coherenceFlags(r) {
+  if (!r.ai.available || r.ai.coherence.unverified.includes('commits')) return null;
+  return r.ai.coherence.flags;
 }
 
 // Neutral mark (no alert color): the sources disagree, at the repository level only.
@@ -318,7 +326,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                                 type="button"
                                 onClick={() => toggle(name)}
                                 aria-expanded={open}
-                                aria-controls={detailId}
+                                aria-controls={open ? detailId : undefined}
                                 aria-label={t(open ? 'classroom.ai.collapse' : 'classroom.ai.expand', { repo: shownName })}
                                 title={t(open ? 'classroom.ai.collapse' : 'classroom.ai.expand', { repo: shownName })}
                                 className="mr-2 inline-flex w-5 h-5 items-center justify-center rounded border border-gray-300 dark:border-slate-600 text-xs text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"

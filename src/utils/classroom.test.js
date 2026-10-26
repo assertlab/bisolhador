@@ -104,6 +104,17 @@ describe('analyzeTeamRepo', () => {
     expect(row.ai.coherence.unverified).toContain('config');
   });
 
+  it('AI: configuration is read only in known locations (status partial); a private template counts', () => {
+    const aiContext = ok({ repository: {
+      d0: { entries: [{ name: 'AGENTS.md', type: 'blob' }] },
+      templateRepository: { nameWithOwner: 'prof/template', isPrivate: true, d0: { entries: [{ name: 'AGENTS.md', type: 'blob' }] } },
+    }, errors: [] });
+    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail, aiContext }, p, []);
+    expect(row.ai.config.status).toBe('partial');
+    expect(row.ai.config.entries).toEqual([expect.objectContaining({ path: 'AGENTS.md', fromTemplate: true })]);
+    expect(row.ai.coherence.unverified).not.toContain('config');
+  });
+
   it('AI: github-classroom files are template, not student configuration', () => {
     const aiContext = ok({ repository: { d0: { entries: [{ name: 'CLAUDE.md', type: 'blob' }, { name: 'AGENTS.md', type: 'blob' }] }, templateRepository: null } });
     const authorship = [

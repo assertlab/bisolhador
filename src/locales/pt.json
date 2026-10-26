@@ -870,6 +870,7 @@
       "extensions": "instruções + extensões (skills, comandos, subagentes, MCP)",
       "hiddenLocal": "Uso local ignorado no .gitignore: {{paths}}",
       "none": "Nenhuma configuração de IA versionada.",
+      "nonePartial": "Nenhuma configuração de IA nos locais verificados.",
       "treeTruncated": "? Configuração não verificada por completo: a árvore de arquivos veio truncada (repositório muito grande).",
       "treeUnavailable": "? Configuração não verificada: não foi possível obter a árvore de arquivos.",
       "listingIncomplete": "? Configuração não verificada por completo: a listagem de algum diretório de configuração de IA falhou."

@@ -99,7 +99,16 @@ describe('authorAgentTool (login-less authors)', () => {
     expect(authorAgentTool({ login: null, name: 'claude', email: 'someone@gmail.com' })).toBeNull();
     expect(authorAgentTool({ login: null, name: 'claude[bot]', email: null })).toBe('claude');
     expect(authorAgentTool({ login: null, name: 'Copilot', email: '198982749+Copilot@users.noreply.github.com' })).toBe('copilot');
-    expect(authorAgentTool({ login: 'claude', name: 'x' })).toBe('claude');
+  });
+  it('a login names an agent only on a bot account', () => {
+    expect(authorAgentTool({ login: 'claude', type: 'User', name: 'Claude' })).toBeNull();
+    expect(authorAgentTool({ login: 'Copilot', type: 'User', name: 'Copilot', email: 'me@x.org' })).toBeNull();
+    expect(authorAgentTool({ login: 'Copilot', type: 'Bot', name: 'Copilot' })).toBe('copilot');
+    expect(authorAgentTool({ login: 'claude[bot]', name: 'x' })).toBe('claude');
+    // GraphQL commit author (no type): its user login is a person; a [bot] name or the e-mail decides
+    expect(authorAgentTool({ login: 'claude', name: 'x' })).toBeNull();
+    expect(authorAgentTool({ login: 'claude', name: 'claude[bot]' })).toBe('claude');
+    expect(authorAgentTool({ login: 'someone', name: 'Copilot', email: '198982749+Copilot@users.noreply.github.com' })).toBe('copilot');
     expect(isMaintenanceBot({ login: null, name: 'claude [bot]', email: 'x@y.z' })).toBe(true);
   });
 });
@@ -142,6 +151,12 @@ describe('gitignore and settings', () => {
   });
   it('matches plain .claude and .cursor lines, ignores comments and negations', () => {
     expect(gitignoreHidesAi('.claude/\n.claude\n.cursor/\n# .claude\n!.claude/settings.json\n.aider*')).toEqual(['.claude/', '.claude', '.cursor/', '.aider*']);
+  });
+  it('caps what a .gitignore can put on screen: 200 characters per line, 20 lines', () => {
+    const long = `.claude/${'a'.repeat(500)}`;
+    expect(gitignoreHidesAi(long)[0]).toHaveLength(200);
+    const many = Array.from({ length: 30 }, (_, i) => `.claude/f${i}`).join('\n');
+    expect(gitignoreHidesAi(many)).toHaveLength(20);
   });
   it('detects the disabled co-author trailer', () => {
     expect(coauthorDisabled('{"includeCoAuthoredBy": false}')).toBe(true);

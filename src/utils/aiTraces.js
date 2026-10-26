@@ -63,8 +63,17 @@ const BOT_NAME = /(\[bot\]|\bbot\b)/i;
 // The name counts as identity only in bot form ("claude[bot]"); otherwise login or e-mail decide.
 const loginOrBotName = ({ login, name }) => login ?? (/\[bot\]$/i.test(name ?? '') ? name : null);
 
+// A login names an agent only on a bot account (REST type 'Bot' or the "[bot]" suffix): a person's
+// account called "claude" or "copilot" is not an agent. A REST author of type 'User' is a person.
+// GraphQL commit authors have no type and their `user` is always a person: there only a [bot] git
+// name or the e-mail identify an agent.
 export function authorAgentTool(author) {
-  return agentToolOf(loginOrBotName(author), author.email ?? null);
+  const { login, type, name } = author;
+  if (login && type === 'User') return null;
+  let identity = null;
+  if (login && isBot({ login, type })) identity = login;
+  else if (/\[bot\]$/i.test(name ?? '')) identity = name;
+  return agentToolOf(identity, author.email ?? null);
 }
 
 export function authorReviewerTool(author) {
@@ -93,13 +102,19 @@ export function detectConfig(paths) {
   return found;
 }
 
-// null = not verified (no file/token), [] = checked and nothing hidden.
+const GITIGNORE_LINE_MAX = 200;
+const GITIGNORE_LINES_MAX = 20;
+
+// null = not verified (no file/token), [] = checked and nothing hidden. The lines go on screen and into
+// the snapshot, so a crafted .gitignore is capped (characters per line and number of lines).
 export function gitignoreHidesAi(text) {
   if (text == null) return null;
   return text
     .split(/\r?\n/)
     .map((l) => l.trim())
-    .filter((l) => l && !l.startsWith('#') && !l.startsWith('!') && GITIGNORE_AI_PATTERNS.some((re) => re.test(l)));
+    .filter((l) => l && !l.startsWith('#') && !l.startsWith('!') && GITIGNORE_AI_PATTERNS.some((re) => re.test(l)))
+    .slice(0, GITIGNORE_LINES_MAX)
+    .map((l) => l.slice(0, GITIGNORE_LINE_MAX));
 }
 
 // true = trailer turned off; false = on; null = no file or invalid JSON.

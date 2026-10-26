@@ -512,7 +512,7 @@ export const githubService = {
         gitignore: object(expression: "HEAD:.gitignore") { ... on Blob { text } }
         claudeSettings: object(expression: "HEAD:.claude/settings.json") { ... on Blob { text } }
         ${listings}
-        templateRepository { nameWithOwner
+        templateRepository { nameWithOwner isPrivate
           ${listings}
         }
       }

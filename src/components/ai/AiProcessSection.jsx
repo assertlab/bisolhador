@@ -149,7 +149,8 @@ function ConfigDepth({ tools, config, toolLabel }) {
             </li>
           ))}
         </ul>
-      ) : config.status === 'complete' && <p>{t('aiProcess.depth.none')}</p>}
+      ) : config.status === 'complete' ? <p>{t('aiProcess.depth.none')}</p>
+        : config.status === 'partial' && <p>{t('aiProcess.depth.nonePartial')}</p>}
       {config.status === 'truncated' && <p className={NOTE}>{t('aiProcess.depth.treeTruncated')}</p>}
       {config.status === 'unavailable' && <p className={NOTE}>{t('aiProcess.depth.treeUnavailable')}</p>}
       {config.status === 'incomplete' && <p className={NOTE}>{t('aiProcess.depth.listingIncomplete')}</p>}
