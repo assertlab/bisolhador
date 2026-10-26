@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.17.1] - 2026-10-26
+
+### 🐛 Fixed
+
+- **Modo Turma: todos os links dos resultados abrem em nova aba.** A análise da turma fica só na memória, então seguir um link na mesma aba descartava até 50 repositórios analisados, e voltar refazia tudo no GitHub. Agora abrem em nova aba, com `rel="noopener noreferrer"`, os "Como interpretar" do cabeçalho das colunas e do topo da página, todos os links da linha expandida (card IA no Processo, desacordo entre fontes, selo, visão Por estudante) e os links dos repositórios. O `noreferrer` também tira `/turma?repos=…` do Referer enviado às páginas onde o GA está ligado. Leitores de tela ouvem "(abre em nova aba)". No Dashboard, os links continuam na mesma aba.
+- **Modo Turma no celular: a linha expandida não é mais cortada à direita.** A célula de detalhe ocupa a largura da tabela inteira, que rola na horizontal; o painel agora fica preso à parte visível e limitado à largura da caixa de rolagem (container query). A tabela Por estudante rola dentro da própria caixa quando não cabe.
+- **Modo Turma: sem rolagem horizontal da página inteira**, no celular e no desktop. Os textos só para leitores de tela (`sr-only`, posicionados em absoluto) dentro da tabela larga alargavam a página; a caixa de rolagem da tabela passa a contê-los.
+
+
 ## [3.17.0] - 2026-10-26
 
 ### ✨ Added

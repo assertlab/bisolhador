@@ -32,6 +32,10 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.17.1 - Links e celular no Modo Turma
+- **🔗 Links em nova aba no Modo Turma**: os links dos resultados (Como interpretar, card IA no Processo, visão Por estudante, repositórios) abrem em outra aba, para não perder a análise da turma, que fica só na memória
+- **📱 Linha expandida no celular**: o detalhe de IA no Processo cabe na tela, sem corte à direita e sem rolagem horizontal da página
+
 ### v3.17.0 - Guia de IA no Processo
 - **🧭 Guia de IA no Processo** (`/guia/ia`): princípios (limite inferior, o que a seção não é, ética dos dados), como declarar a coautoria de IA nos commits (trailer manual e, por ferramenta, o que a documentação oficial confirma), a tabela do que o Bisolhador detecta gerada do próprio registro de ferramentas, orientações para professores no Modo Turma, perguntas frequentes e os limites consolidados. Links a partir de Como interpretar, do card IA no Processo e da visão Por estudante
 
