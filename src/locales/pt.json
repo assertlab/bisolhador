@@ -692,7 +692,7 @@
     "title": "Modo Turma",
     "subtitle": "Compare os repositórios das equipes de uma turma no período da disciplina: até {{max}} repositórios, públicos ou privados aos quais o seu token tem acesso, analisados agora, com os mesmos indicadores de processo do Dashboard. Nada é salvo; a turma fica no link desta página.",
     "ethics": "Use como ponto de partida para conversar com as equipes, não como nota automática: commits e PRs não medem esforço nem aprendizado.",
-    "needsToken": "O modo turma exige um token do GitHub: cada repositório faz de 5 a 7 consultas, e sem token o limite é de 60 por hora. Para repositórios privados (ex.: GitHub Classroom), o token precisa ter acesso a eles.",
+    "needsToken": "O modo turma exige um token do GitHub: cada repositório faz de 6 a 9 consultas, e sem token o limite é de 60 por hora. Para repositórios privados (ex.: GitHub Classroom), o token precisa ter acesso a eles.",
     "openSettings": "Configurar token",
     "reposLabel": "Repositórios das equipes",
     "reposPlaceholder": "dono/repositorio ou https://github.com/dono/repositorio — um por linha",
@@ -721,7 +721,12 @@
       "prSize": "Tamanho PR (linhas)",
       "ci": "CI ok",
       "conventional": "Conventional",
-      "releases": "Releases"
+      "releases": "Releases",
+      "aiTools": "Ferramentas IA",
+      "aiCommits": "Commits com IA",
+      "aiPrs": "PRs de agentes",
+      "aiCoherence": "Desacordo",
+      "aiBadge": "Selo IA"
     },
     "status": {
       "pending": "Na fila…",
@@ -748,7 +753,12 @@
       "yes": "sim",
       "visibility": "Visibilidade",
       "private": "privado",
-      "public": "público"
+      "public": "público",
+      "aiTools": "Ferramentas IA",
+      "aiCommits": "Commits com IA (%)",
+      "aiPrs": "PRs de agentes (%)",
+      "aiCoherence": "Fontes de IA em desacordo",
+      "aiBadge": "Uso responsável de IA (critérios atendidos)"
     },
     "privateNote": "Esta turma inclui repositórios privados. Os dados foram lidos com o seu token e ficam só neste navegador: nada é salvo no Bisolhador. O link e o CSV contêm nomes e números desses repositórios; compartilhe só com quem já tem acesso a eles.",
     "privateBadge": "Repositório privado",
@@ -763,6 +773,12 @@
       "invalidOrg": "Nome de organização inválido.",
       "orgNotFound": "Organização ou usuário não encontrado (ou sem acesso com o seu token).",
       "orgFailed": "Não foi possível listar os repositórios (falha ou limite da API)."
+    },
+    "ai": {
+      "expand": "Mostrar IA no Processo de {{repo}}",
+      "collapse": "Ocultar IA no Processo de {{repo}}",
+      "coherenceTip": "As fontes de rastro de IA não concordam. Expanda a linha para ver o porquê e as causas legítimas.",
+      "note": "Colunas de IA: limite inferior, só rastros declarados (coautoria, agente como autor) ou versionados (configuração). Sem rastro não significa sem IA. Commits com IA e PRs de agentes mostram (com IA/total). Selo: critérios atendidos/verificáveis. Expanda a linha (+) para ver a seção completa e o detalhe por estudante, que não vai para o CSV."
     }
   },
   "aiProcess": {
@@ -867,6 +883,26 @@
       "noToken": "Com token do GitHub, também verificamos .gitignore, configuração (declaração desligada), template, revisão por IA e salvaguardas.",
       "error": "Não foi possível obter parte dos dados (falha ou limite da API do GitHub): os itens marcados n/d ou ? não foram verificados."
     },
-    "notRecorded": "IA no Processo: não registrado nesta análise."
+    "notRecorded": "IA no Processo: não registrado nesta análise.",
+    "students": {
+      "title": "Por estudante",
+      "notice": "Mostra só o uso de IA <strong>declarado</strong> nos commits (coautoria) e quem <strong>configurou</strong> ferramentas de IA no repositório. Configurar não é o mesmo que usar: num grupo, uma pessoa pode montar a configuração para todos. Quem não declara não aparece aqui, então ausência de registro não significa ausência de uso. Não use este dado como nota ou prova.",
+      "agentLimit": "Quem usa agentes na nuvem pode aparecer com menos IA declarada do que usou: commits feitos pelo próprio agente aparecem na linha do agente.",
+      "columns": {
+        "author": "Autor",
+        "commits": "Commits",
+        "withAi": "Com IA declarada",
+        "tools": "Ferramentas declaradas",
+        "config": "Configuração de IA adicionada ou alterada"
+      },
+      "agent": "{{tool}} (agente)",
+      "unidentified": "Autor não identificado",
+      "notAvailable": "n/d",
+      "unavailable": "Não foi possível obter os commits do período.",
+      "empty": "Nenhum commit no período (sem merges e sem bots de manutenção).",
+      "sampled": "Calculado sobre os 300 commits mais recentes do período.",
+      "configUnavailable": "n/d: não foi possível consultar quem adicionou ou alterou os arquivos de configuração de IA.",
+      "footnote": "Commits do branch principal no período, sem merges e sem bots de manutenção. \"Autor não identificado\" reúne os commits que não estão ligados a uma conta do GitHub (não agrupamos por nome). Configuração: arquivos de IA (fora os do template) com commit da pessoa no período, nos locais verificados. Nada desta tabela é salvo nem vai para o CSV."
+    }
   }
 }

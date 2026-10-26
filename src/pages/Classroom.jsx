@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Header } from '../components/Header';
@@ -13,6 +13,10 @@ import { formatters } from '../utils/formatters.js';
 import { exportToCsv } from '../utils/csvExporter.js';
 import { intlLocale } from '../i18n.js';
 import { guidePath } from '../utils/indicatorGuide.js';
+import { AiProcessSection } from '../components/ai/AiProcessSection.jsx';
+import { AiStudentTable } from '../components/ai/AiStudentTable.jsx';
+import { toolLabel } from '../components/ai/toolLabel.js';
+import { Tooltip } from '../components/Tooltip.jsx';
 
 const DEFAULT_PERIOD_DAYS = 120;
 const isoDay = (d) => d.toISOString().slice(0, 10);
@@ -33,7 +37,33 @@ const COLUMNS = [
   { key: 'ci', guide: 'ci-health', get: (r) => (r.ci.available ? r.ci.successPercentage : null), pct: true },
   { key: 'conventional', guide: 'conventional-commits', get: (r) => (r.commits.available && r.commits.conventional.available ? r.commits.conventional.percentage : null), pct: true, sampled: commitsCapped },
   { key: 'releases', guide: 'release-cadence', get: (r) => r.releases?.count ?? null, atLeast: (r) => r.releases?.capped },
+  // AI in the Process (repository level only; per student stays in the expanded row, never in the CSV).
+  // `show`/`csv` replace the default number formatting; `count` adds the n behind a percentage.
+  { key: 'aiTools', guide: 'ai-tools', get: aiToolIds, show: (ids, t) => (ids.length ? ids.map((id) => toolLabel(id, t)).join(', ') : '—'), csv: (ids, t) => ids.map((id) => toolLabel(id, t)).join(', ') },
+  { key: 'aiCommits', guide: 'ai-commits', get: (r) => r.ai.commits.percentage, pct: true, count: (r) => [r.ai.commits.withAi, r.ai.commits.n], sampled: commitsCapped },
+  { key: 'aiPrs', guide: 'ai-prs', get: (r) => r.ai.prs.percentage, pct: true, count: (r) => [r.ai.prs.byAgents, r.ai.prs.n], sampled: (r) => r.prs.capped },
+  { key: 'aiCoherence', guide: 'ai-coherence', get: (r) => r.ai.coherence.flags, show: (flags, t) => (flags.length ? <CoherenceMark flags={flags} t={t} /> : '—'), csv: (flags, t) => flags.map((f) => t(`aiProcess.coherence.${f}`)).join(' ') },
+  { key: 'aiBadge', guide: 'ai-badge', get: (r) => (r.ai.badge.applicable && r.ai.badge.total > 0 ? r.ai.badge : null), show: (b) => `${b.met}/${b.total}`, csv: (b, t) => t('aiProcess.badge.score', { met: b.met, total: b.total }), na: '—' },
 ];
+
+// Tools with a trace of the repository's own use (template-only tools are listed in the expanded row).
+// null when no source could be read.
+function aiToolIds(r) {
+  const { config, commits, prs, tools } = r.ai;
+  if (config.status !== 'complete' && !commits.available && !prs.available) return null;
+  return tools.filter((tool) => tool.sources.length > 0).map((tool) => tool.id);
+}
+
+// Neutral mark (no alert color): the sources disagree, at the repository level only.
+function CoherenceMark({ flags, t }) {
+  const text = `${t('aiProcess.coherence.title')}: ${flags.map((f) => t(`aiProcess.coherence.${f}`)).join(' ')}`;
+  return (
+    <Tooltip text={t('classroom.ai.coherenceTip')}>
+      <span aria-hidden="true">≠</span>
+      <span className="sr-only">{text}</span>
+    </Tooltip>
+  );
+}
 
 export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
   const { t, i18n } = useTranslation();
@@ -120,16 +150,25 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
 
   const cell = (col, row) => {
     const v = col.get(row);
-    if (v == null) return 'N/A';
+    if (v == null) return col.na ?? 'N/A';
+    if (col.show) return col.show(v, t);
     let text;
     if (col.pct) text = formatters.formatPercent(v, locale);
     else if (col.hours) {
       const { value, unit } = formatDuration(v);
       text = `${value.toLocaleString(locale)} ${t('units.' + unit, { count: value })}`;
     } else text = formatters.formatNumber(v, locale);
+    if (col.count) {
+      const [part, n] = col.count(row);
+      text = `${text} (${formatters.formatNumber(part, locale)}/${formatters.formatNumber(n, locale)})`;
+    }
     if (col.atLeast?.(row)) return `${text}+`;
     return col.sampled?.(row) ? `${text}*` : text;
   };
+  // AI detail row: closed by default, open when a single repository was requested
+  const [expanded, setExpanded] = useState({});
+  const isExpanded = (name) => expanded[name] ?? requested.repos.length === 1;
+  const toggle = (name) => setExpanded((e) => ({ ...e, [name]: !isExpanded(name) }));
   const anyPrivate = requested.repos.some((name) => rows[name]?.isPrivate);
   const anySampled = requested.repos.some((name) => rows[name]?.status === 'ok' && COLUMNS.some((c) => c.sampled?.(rows[name]) || c.atLeast?.(rows[name])));
 
@@ -143,7 +182,8 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
       const base = { [t('classroom.columns.repo')]: row?.fullName ?? name, [t('classroom.csv.visibility')]: row?.status === 'ok' ? t(row.isPrivate ? 'classroom.csv.private' : 'classroom.csv.public') : '', [t('classroom.columns.status')]: t(`classroom.status.${status}`, { name: dup }) };
       for (const col of COLUMNS) {
         const header = t(`classroom.csv.${col.key}`);
-        base[header] = status === 'ok' ? col.get(row) ?? '' : '';
+        const v = status === 'ok' ? col.get(row) : null;
+        base[header] = v == null ? '' : col.csv ? col.csv(v, t) : v;
       }
       base[t('classroom.csv.partial')] = status === 'ok' && COLUMNS.some((c) => c.sampled?.(row) || c.atLeast?.(row)) ? t('classroom.csv.yes') : '';
       return base;
@@ -262,25 +302,55 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {requested.repos.map((name) => {
+                  {requested.repos.map((name, index) => {
                     const row = rows[name];
                     const dup = duplicateOf(name);
+                    const ok = row?.status === 'ok' && !dup;
+                    const open = ok && isExpanded(name);
+                    const detailId = `classroom-ai-${index}`;
+                    const shownName = dup ? name : row?.fullName ?? name;
                     return (
-                      <tr key={name}>
-                        <td className="sticky left-0 bg-white dark:bg-slate-800 px-3 py-2 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                          <a href={`https://github.com/${dup ? name : row?.fullName ?? name}`} target="_blank" rel="noopener noreferrer" className="hover:underline">{dup ? name : row?.fullName ?? name}</a>
-                          {row?.isPrivate && !dup && <span className="ml-1" title={t('classroom.privateBadge')} aria-label={t('classroom.privateBadge')}>🔒</span>}
-                        </td>
-                        {row?.status === 'ok' && !dup
-                          ? COLUMNS.map((col) => (
-                              <td key={col.key} className="px-3 py-2 text-right whitespace-nowrap text-gray-700 dark:text-slate-300">{cell(col, row)}</td>
-                            ))
-                          : (
-                            <td colSpan={COLUMNS.length} className="px-3 py-2 text-gray-500 dark:text-slate-400">
-                              {t(`classroom.status.${dup ? 'duplicate' : row?.status ?? 'pending'}`, { name: dup })}
+                      <Fragment key={name}>
+                        <tr>
+                          <td className="sticky left-0 bg-white dark:bg-slate-800 px-3 py-2 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                            {ok && (
+                              <button
+                                type="button"
+                                onClick={() => toggle(name)}
+                                aria-expanded={open}
+                                aria-controls={detailId}
+                                aria-label={t(open ? 'classroom.ai.collapse' : 'classroom.ai.expand', { repo: shownName })}
+                                title={t(open ? 'classroom.ai.collapse' : 'classroom.ai.expand', { repo: shownName })}
+                                className="mr-2 inline-flex w-5 h-5 items-center justify-center rounded border border-gray-300 dark:border-slate-600 text-xs text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                              >
+                                <span aria-hidden="true">{open ? '−' : '+'}</span>
+                              </button>
+                            )}
+                            <a href={`https://github.com/${shownName}`} target="_blank" rel="noopener noreferrer" className="hover:underline">{shownName}</a>
+                            {row?.isPrivate && !dup && <span className="ml-1" title={t('classroom.privateBadge')} aria-label={t('classroom.privateBadge')}>🔒</span>}
+                          </td>
+                          {ok
+                            ? COLUMNS.map((col) => (
+                                <td key={col.key} className="px-3 py-2 text-right whitespace-nowrap text-gray-700 dark:text-slate-300">{cell(col, row)}</td>
+                              ))
+                            : (
+                              <td colSpan={COLUMNS.length} className="px-3 py-2 text-gray-500 dark:text-slate-400">
+                                {t(`classroom.status.${dup ? 'duplicate' : row?.status ?? 'pending'}`, { name: dup })}
+                              </td>
+                            )}
+                        </tr>
+                        {open && (
+                          <tr id={detailId}>
+                            <td colSpan={COLUMNS.length + 1} className="bg-gray-50 dark:bg-slate-900/40 px-3 py-4">
+                              <div className="sticky left-0 max-w-5xl space-y-4">
+                                <h3 className="text-base font-semibold text-shark dark:text-white">{t('aiProcess.title')} — {shownName}</h3>
+                                <AiProcessSection aiProcess={row.ai} />
+                                <AiStudentTable students={row.students} />
+                              </div>
                             </td>
-                          )}
-                      </tr>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </tbody>
@@ -292,6 +362,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
               </p>
             )}
             {anySampled && <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.sampledNote')}</p>}
+            <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.ai.note')}</p>
             <p className="text-xs text-gray-500 dark:text-slate-400">{t('classroom.notes')}</p>
           </section>
         )}

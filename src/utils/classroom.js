@@ -2,6 +2,8 @@ import { parseSafeRepoName } from './repoName.js';
 import { isBot } from './contributors.js';
 import { analyzeReviewMetrics, analyzeLeadTime } from './prReviewStats.js';
 import { analyzeCiRuns, analyzeConventionalCommits, RELEASES_PAGE } from './projectPractices.js';
+import { buildAiProcess, fromGraphqlCommit, parseAiRepoContext } from './aiProcess.js';
+import { analyzeStudents, classroomAiContext } from './aiClassroom.js';
 
 // Classroom mode: the same indicators as the Dashboard, computed over a course
 // period for a list of team repositories (public, or private ones the user's
@@ -107,11 +109,40 @@ export function releasesInPeriod(releases, period) {
 const settled = (r) => (r?.status === 'fulfilled' ? r.value : null);
 
 /**
+ * AI in the Process for one team repository: the repository section (same as the Dashboard, over
+ * the period) and the per-student rows (in memory only). ctx null = AI context query failed.
+ */
+function analyzeTeamAi(history, prs, rawContext, authorship, period) {
+  const ctx = classroomAiContext(rawContext ? parseAiRepoContext(rawContext) : null, authorship);
+  const commits = history ? history.nodes.map(fromGraphqlCommit) : null;
+  return {
+    ai: {
+      ...buildAiProcess({
+        treePaths: ctx?.contextPaths ?? null,
+        treeStatus: ctx ? 'complete' : 'unavailable',
+        ctx,
+        commits,
+        prs: prs?.stats ?? null,
+        reviewsAvailable: true,
+        maturity: null,
+        prLimit: Infinity,
+      }),
+      withToken: true, // Classroom always runs with a token
+    },
+    students: {
+      ...analyzeStudents(commits, authorship, period, ctx?.templatePaths ?? null),
+      sampled: Boolean(history?.capped),
+    },
+  };
+}
+
+/**
  * One table row from the settled fetches of a repository. Each part fails on
  * its own (null → N/A in that column only).
- * @param {{history, prs, runs, releases}} results - Promise.allSettled results
+ * @param {{history, prs, runs, releases, aiContext}} results - Promise.allSettled results
+ * @param {Array|null} authorship - fetchAiConfigAuthorship result ([] = nothing to ask, null = failed)
  */
-export function analyzeTeamRepo(results, period) {
+export function analyzeTeamRepo(results, period, authorship = null) {
   const prs = settled(results.prs);
   const review = prs ? analyzeReviewMetrics(prs.stats, 'error', { limit: Infinity }) : null;
   const leadTime = prs ? analyzeLeadTime(prs.stats, 'graphql', { limit: Infinity }) : null;
@@ -131,5 +162,6 @@ export function analyzeTeamRepo(results, period) {
       : { available: false, reason: 'error' },
     ci: analyzeCiRuns(settled(results.runs)),
     releases: releasesInPeriod(settled(results.releases), period),
+    ...analyzeTeamAi(settled(results.history), prs, settled(results.aiContext), authorship, period),
   };
 }

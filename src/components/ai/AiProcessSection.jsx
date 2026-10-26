@@ -1,14 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { GuideLink } from '../GuideLink.jsx';
-import { AI_TOOLS } from '../../utils/aiRegistry.js';
 import { AI_MIN_GROUP } from '../../constants.js';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
 import { AiCoherence } from './AiCoherence.jsx';
 import { AiResponsibleBadge } from './AiResponsibleBadge.jsx';
 import { BlockTitle, Chip, InfoTip } from './AiParts.jsx';
+import { toolLabel as labelOf } from './toolLabel.js';
 
-const TOOL_LABELS = Object.fromEntries(AI_TOOLS.map((tool) => [tool.id, tool.label]));
 const CARD = 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow';
 const NOTE = 'text-xs text-gray-500 dark:text-slate-400';
 
@@ -36,7 +35,7 @@ export function AiProcessSection({ aiProcess }) {
   // Context query (.gitignore, settings, template) skipped or failed: those checks read null.
   const contextMissing = config.hiddenLocal === null;
   const anyFailure = !commits.available || !prs.available || (!noToken && (contextMissing || !safeguards.available));
-  const toolLabel = (id) => (id === 'generic' ? t('aiProcess.genericTool') : TOOL_LABELS[id] ?? id);
+  const toolLabel = (id) => labelOf(id, t);
   const unknownTemplate = new Set(config.entries.filter((e) => e.fromTemplate === null).map((e) => e.toolId));
 
   return (

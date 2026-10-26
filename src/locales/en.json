@@ -684,7 +684,7 @@
     "title": "Classroom Mode",
     "subtitle": "Compare a class's team repositories over the course period: up to {{max}} repositories, public or private ones your token can access, analyzed now, with the same process indicators as the Dashboard. Nothing is saved; the class lives in this page's link.",
     "ethics": "Use it as a starting point for conversations with teams, not as an automatic grade: commits and PRs don't measure effort or learning.",
-    "needsToken": "Classroom mode needs a GitHub token: each repository makes 5 to 7 requests, and without a token the limit is 60 per hour. For private repositories (e.g. GitHub Classroom), the token must have access to them.",
+    "needsToken": "Classroom mode needs a GitHub token: each repository makes 6 to 9 requests, and without a token the limit is 60 per hour. For private repositories (e.g. GitHub Classroom), the token must have access to them.",
     "openSettings": "Set up token",
     "reposLabel": "Team repositories",
     "reposPlaceholder": "owner/repository or https://github.com/owner/repository — one per line",
@@ -713,7 +713,12 @@
       "prSize": "PR size (lines)",
       "ci": "CI ok",
       "conventional": "Conventional",
-      "releases": "Releases"
+      "releases": "Releases",
+      "aiTools": "AI tools",
+      "aiCommits": "Commits with AI",
+      "aiPrs": "Agent PRs",
+      "aiCoherence": "Disagreement",
+      "aiBadge": "AI badge"
     },
     "status": {
       "pending": "Queued…",
@@ -740,7 +745,12 @@
       "yes": "yes",
       "visibility": "Visibility",
       "private": "private",
-      "public": "public"
+      "public": "public",
+      "aiTools": "AI tools",
+      "aiCommits": "Commits with AI (%)",
+      "aiPrs": "Agent PRs (%)",
+      "aiCoherence": "AI sources in disagreement",
+      "aiBadge": "Responsible AI use (criteria met)"
     },
     "privateNote": "This class includes private repositories. The data was read with your token and stays in this browser: nothing is saved by Bisolhador. The link and the CSV contain these repositories' names and numbers; share them only with people who already have access.",
     "privateBadge": "Private repository",
@@ -755,6 +765,12 @@
       "invalidOrg": "Invalid organization name.",
       "orgNotFound": "Organization or user not found (or no access with your token).",
       "orgFailed": "Couldn't list the repositories (API failure or rate limit)."
+    },
+    "ai": {
+      "expand": "Show AI in the Process for {{repo}}",
+      "collapse": "Hide AI in the Process for {{repo}}",
+      "coherenceTip": "The AI trace sources disagree. Expand the row to see why and the legitimate causes.",
+      "note": "AI columns: a lower bound, only traces that are declared (co-authorship, an agent as author) or versioned (configuration). No trace does not mean no AI. Commits with AI and Agent PRs show (with AI/total). Badge: criteria met/verifiable. Expand the row (+) for the full section and the per-student detail, which does not go into the CSV."
     }
   },
   "aiProcess": {
@@ -859,6 +875,26 @@
       "noToken": "With a GitHub token, we also check .gitignore, configuration (turned-off declaration), template, AI review and safeguards.",
       "error": "Part of the data could not be fetched (GitHub API failure or limit): items marked N/A or ? were not verified."
     },
-    "notRecorded": "AI in the Process: not recorded in this analysis."
+    "notRecorded": "AI in the Process: not recorded in this analysis.",
+    "students": {
+      "title": "Per student",
+      "notice": "Shows only AI use <strong>declared</strong> in commits (co-authorship) and who <strong>configured</strong> AI tools in the repository. Configuring is not the same as using: in a group, one person may set up the configuration for everyone. Whoever does not declare does not show up here, so no record does not mean no use. Do not use this data as a grade or as proof.",
+      "agentLimit": "People who use cloud agents may show less declared AI than they used: commits made by the agent itself appear in the agent's row.",
+      "columns": {
+        "author": "Author",
+        "commits": "Commits",
+        "withAi": "With declared AI",
+        "tools": "Declared tools",
+        "config": "AI configuration added or changed"
+      },
+      "agent": "{{tool}} (agent)",
+      "unidentified": "Unidentified author",
+      "notAvailable": "n/a",
+      "unavailable": "The period's commits could not be fetched.",
+      "empty": "No commits in the period (merges and maintenance bots excluded).",
+      "sampled": "Computed over the 300 most recent commits of the period.",
+      "configUnavailable": "n/a: could not check who added or changed the AI configuration files.",
+      "footnote": "Default-branch commits in the period, without merges and maintenance bots. \"Unidentified author\" gathers commits not linked to a GitHub account (we don't group by name). Configuration: AI files (template files excluded) with a commit by that person in the period, in the checked locations. Nothing in this table is saved or goes into the CSV."
+    }
   }
 }

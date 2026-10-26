@@ -84,4 +84,27 @@ describe('analyzeTeamRepo', () => {
     expect(row.prs).toMatchObject({ merged: 0, approvedPercentage: null, firstReviewHours: null });
     expect(row.releases).toEqual({ count: 0, capped: false });
   });
+
+  const node = (o = {}) => ({ message: 'fix', committedDate: '2026-09-02T00:00:00Z', parents: { totalCount: 1 }, author: { name: 'Alice', email: 'a@x.io', user: { login: 'alice' } }, ...o });
+  const history = ok({ totalCount: 2, capped: false, nodes: [node(), node({ message: 'x\n\nCo-Authored-By: Claude <noreply@anthropic.com>' })] });
+
+  it('AI: repository section without people, students in memory; context failure → config unavailable, authorship n/d', () => {
+    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail, aiContext: fail }, p, null);
+    expect(row.ai).toMatchObject({ available: true, withToken: true, config: { status: 'unavailable' }, commits: { n: 2, withAi: 1 } });
+    expect(JSON.stringify(row.ai)).not.toContain('alice');
+    expect(row.students).toMatchObject({ available: true, authorshipAvailable: false, sampled: false });
+    expect(row.students.rows).toEqual([expect.objectContaining({ login: 'alice', commits: 2, withAi: 1 })]);
+    expect(row.commits).toMatchObject({ commits: 2, authors: 1 }); // existing indicators unchanged
+  });
+
+  it('AI: github-classroom files are template, not student configuration', () => {
+    const aiContext = ok({ repository: { d0: { entries: [{ name: 'CLAUDE.md', type: 'blob' }, { name: 'AGENTS.md', type: 'blob' }] }, templateRepository: null } });
+    const authorship = [
+      { path: 'CLAUDE.md', complete: true, commits: [{ login: 'github-classroom[bot]', date: '2026-07-01T00:00:00Z' }] },
+      { path: 'AGENTS.md', complete: true, commits: [{ login: 'alice', date: '2026-09-02T00:00:00Z' }, { login: 'github-classroom[bot]', date: '2026-07-01T00:00:00Z' }] },
+    ];
+    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail, aiContext }, p, authorship);
+    expect(row.ai.config.entries.map((e) => [e.path, e.fromTemplate])).toEqual([['CLAUDE.md', true], ['AGENTS.md', true]]);
+    expect(row.students.rows[0].configPaths).toEqual([]);
+  });
 });
