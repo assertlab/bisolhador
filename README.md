@@ -1,4 +1,4 @@
-# 🦈 Bisolhador Dashboard v3.14.0
+# 🦈 Bisolhador Dashboard v3.15.0
 
 Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
@@ -13,7 +13,8 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
 - **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução
 - **📖 Como interpretar**: definição, limitações e referência às métricas CHAOSS de cada indicador
-- **🎓 Modo Turma**: compare os repositórios públicos das equipes de uma turma no período da disciplina, com exportação CSV
+- **🎓 Modo Turma**: compare os repositórios das equipes de uma turma no período da disciplina (privados também, com o token de quem usa, sem salvar nada), com exportação CSV
+- **🤖 IA no Processo**: rastros de IA que o GitHub guarda (configuração de agentes versionada, coautoria declarada em commits, PRs abertos por agentes, revisões de bots de IA), com cruzamento entre as fontes e o selo "Uso responsável de IA"; tudo é limite inferior (sem rastro não quer dizer sem IA)
 - **📊 Benchmark Multi-Repo**: Compare a evolução de até 10 repositórios lado a lado com gráficos comparativos, filtros temporais (7d, 30d, 60d, 90d, todo histórico) e tabela de métricas detalhada
 - **📈 Time Machine (Histórico de Evolução)**: Visualize a evolução temporal de qualquer repositório através de gráficos interativos com filtros de período (7d, 30d, 60d, 90d, todo histórico). Acompanhe o crescimento de Stars, Forks e Watchers ao longo do tempo com dados baseados em snapshots históricos
 - **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca, com data/hora da coleta sempre visível
@@ -30,6 +31,13 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
 ## 🔄 Últimas Atualizações
+
+### v3.15.0 - IA no Processo
+- **🤖 IA no Processo** (Dashboard): ferramentas de IA detectadas, profundidade da configuração versionada, % de commits com coautoria de IA, PRs abertos por agentes e, com token, revisões por bots de IA e salvaguardas (PRs de agentes mergeados sem aprovação, tamanho dos PRs de agentes vs. pessoas). Tudo é limite inferior: sem rastro aparece "Nenhum rastro de IA encontrado", nunca "0% IA"
+- **🔀 Fontes em desacordo**: quando a configuração versionada fora do template (ou o `.gitignore`) mostra IA e nenhum commit nem PR de agente declara uso, o repositório recebe um aviso neutro, sempre com as causas legítimas
+- **🏅 Selo "Uso responsável de IA"**: práticas observáveis (configuração versionada, uso declarado, coerência entre fontes, PRs de agentes aprovados por outra pessoa, testes e CI), só por repositório e fora do Ranking
+- **🎓 IA no Modo Turma**: colunas de IA por repositório e, ao expandir a linha, uma visão por estudante que fica só no navegador (fora do CSV, do Supabase e do GA)
+- **📖 Como interpretar**: uma entrada para cada indicador de IA
 
 ### v3.14.0 - Turmas do GitHub Classroom
 - **🔒 Repositórios privados no Modo Turma**: turmas do GitHub Classroom (privadas por padrão) podem ser analisadas com o token de quem usa — nada é salvo, e o Google Analytics fica desligado no Modo Turma. O resto do app continua recusando privados
