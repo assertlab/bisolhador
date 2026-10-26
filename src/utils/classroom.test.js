@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseRepoList, parsePeriod, analyzeCommitHistory, releasesInPeriod, analyzeTeamRepo, CLASSROOM_MAX_REPOS } from './classroom.js';
+import { parseAiRepoContext } from './aiProcess.js';
 
 describe('parseRepoList', () => {
   it('accepts owner/repo and GitHub URLs, any separator; dedupes case-insensitively', () => {
@@ -87,9 +88,11 @@ describe('analyzeTeamRepo', () => {
 
   const node = (o = {}) => ({ message: 'fix', committedDate: '2026-09-02T00:00:00Z', parents: { totalCount: 1 }, author: { name: 'Alice', email: 'a@x.io', user: { login: 'alice' } }, ...o });
   const history = ok({ totalCount: 2, capped: false, nodes: [node(), node({ message: 'x\n\nCo-Authored-By: Claude <noreply@anthropic.com>' })] });
+  // The hook parses the context once (Classroom may read a private template) and passes it in
+  const parsed = (raw) => parseAiRepoContext(raw, { allowPrivateTemplate: true });
 
   it('AI: repository section without people, students in memory; context failure → config unavailable, authorship n/d', () => {
-    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail, aiContext: fail }, p, null);
+    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail }, p, { ctx: null, authorship: null });
     expect(row.ai).toMatchObject({ available: true, withToken: true, config: { status: 'unavailable' }, commits: { n: 2, withAi: 1 } });
     expect(JSON.stringify(row.ai)).not.toContain('alice');
     expect(row.students).toMatchObject({ available: true, authorshipAvailable: false, sampled: false });
@@ -98,30 +101,30 @@ describe('analyzeTeamRepo', () => {
   });
 
   it('AI: a failed directory listing leaves the configuration not fully verified', () => {
-    const aiContext = ok({ repository: { d0: { entries: [] }, templateRepository: null }, errors: [{ message: 'x', path: ['repository', 'd6'] }] });
-    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail, aiContext }, p, []);
+    const raw = { repository: { d0: { entries: [] }, templateRepository: null }, errors: [{ message: 'x', path: ['repository', 'd6'] }] };
+    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail }, p, { ctx: parsed(raw), authorship: [] });
     expect(row.ai.config.status).toBe('incomplete');
     expect(row.ai.coherence.unverified).toContain('config');
   });
 
   it('AI: configuration is read only in known locations (status partial); a private template counts', () => {
-    const aiContext = ok({ repository: {
+    const raw = { repository: {
       d0: { entries: [{ name: 'AGENTS.md', type: 'blob' }] },
       templateRepository: { nameWithOwner: 'prof/template', isPrivate: true, d0: { entries: [{ name: 'AGENTS.md', type: 'blob' }] } },
-    }, errors: [] });
-    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail, aiContext }, p, []);
+    }, errors: [] };
+    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail }, p, { ctx: parsed(raw), authorship: [] });
     expect(row.ai.config.status).toBe('partial');
     expect(row.ai.config.entries).toEqual([expect.objectContaining({ path: 'AGENTS.md', fromTemplate: true })]);
     expect(row.ai.coherence.unverified).not.toContain('config');
   });
 
   it('AI: github-classroom files are template, not student configuration', () => {
-    const aiContext = ok({ repository: { d0: { entries: [{ name: 'CLAUDE.md', type: 'blob' }, { name: 'AGENTS.md', type: 'blob' }] }, templateRepository: null } });
+    const raw = { repository: { d0: { entries: [{ name: 'CLAUDE.md', type: 'blob' }, { name: 'AGENTS.md', type: 'blob' }] }, templateRepository: null } };
     const authorship = [
       { path: 'CLAUDE.md', complete: true, commits: [{ login: 'github-classroom[bot]', date: '2026-07-01T00:00:00Z' }] },
       { path: 'AGENTS.md', complete: true, commits: [{ login: 'alice', date: '2026-09-02T00:00:00Z' }, { login: 'github-classroom[bot]', date: '2026-07-01T00:00:00Z' }] },
     ];
-    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail, aiContext }, p, authorship);
+    const row = analyzeTeamRepo({ history, prs: ok({ capped: false, stats: [] }), runs: fail, releases: fail }, p, { ctx: parsed(raw), authorship });
     expect(row.ai.config.entries.map((e) => [e.path, e.fromTemplate])).toEqual([['CLAUDE.md', true], ['AGENTS.md', true]]);
     expect(row.students.rows[0].configPaths).toEqual([]);
   });

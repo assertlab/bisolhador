@@ -13,10 +13,10 @@ import {
   MERGED_PR_SCAN,
   GITHUB_PER_PAGE_CONTRIBUTORS,
   GITHUB_PER_PAGE_RELEASES,
+  AUTHORSHIP_MAX_PATHS,
 } from "../constants.js";
 
 const GITHUB_BASE_URL = "https://api.github.com";
-const AI_AUTHORSHIP_MAX_PATHS = 10;
 const MIN_PR_PAGE = 6; // classroom PR scan: smallest page before giving up
 
 export function hasGithubToken() {
@@ -529,7 +529,7 @@ export const githubService = {
     if (!owner || !repo || !hasGithubToken()) {
       throw new Error("fetchAiConfigAuthorship needs owner, repo and a GitHub token");
     }
-    const list = (paths ?? []).slice(0, AI_AUTHORSHIP_MAX_PATHS);
+    const list = (paths ?? []).slice(0, AUTHORSHIP_MAX_PATHS);
     if (list.length === 0) return [];
     const vars = list.map((_, i) => `$p${i}: String!`).join(", ");
     const histories = list

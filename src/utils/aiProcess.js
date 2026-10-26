@@ -83,13 +83,23 @@ function aiSample(prs, limit) {
 // Only a bot account opens an agent PR: a person whose login is "copilot" or "claude" is not one.
 const agentToolOfPr = (p) => (isBot(p.user) ? agentToolOf(p.user.login) : null);
 
-/** PRs opened by agents and PRs with an AI reviewer, over the merged sample. */
-export function analyzeAiPrs(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable } = {}) {
+/** The merged sample split once into agent and human PRs (null = PR fetch failed). */
+function splitSample(prs, limit) {
+  if (!Array.isArray(prs)) return null;
+  const sample = aiSample(prs, limit).map((p) => ({ p, agent: agentToolOfPr(p) }));
+  return {
+    sample: sample.map((x) => x.p),
+    agents: sample.filter((x) => x.agent).map((x) => x.p),
+    humans: sample.filter((x) => !x.agent).map((x) => x.p),
+    agentTools: unique(sample.map((x) => x.agent).filter(Boolean)).sort(),
+  };
+}
+
+function aiPrStats(split, reviewsAvailable) {
   const noReviews = { available: false, count: null, percentage: null, tools: [] };
-  if (!Array.isArray(prs)) return { available: false, reason: 'error', n: 0, byAgents: 0, percentage: null, agentTools: [], aiReviewed: noReviews };
-  const sample = aiSample(prs, limit);
+  if (!split) return { available: false, reason: 'error', n: 0, byAgents: 0, percentage: null, agentTools: [], aiReviewed: noReviews };
+  const { sample, agents, agentTools } = split;
   const n = sample.length;
-  const agentPrs = sample.filter((p) => agentToolOfPr(p));
   let aiReviewed = noReviews;
   if (reviewsAvailable) {
     const reviewerTools = sample.map((p) => unique((p.aiParticipants ?? []).map(reviewerToolOf).filter(Boolean)));
@@ -99,27 +109,26 @@ export function analyzeAiPrs(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable }
   return {
     available: true,
     n,
-    byAgents: agentPrs.length,
-    percentage: n ? pct(agentPrs.length, n) : null,
-    agentTools: unique(agentPrs.map(agentToolOfPr)).sort(),
+    byAgents: agents.length,
+    percentage: n ? pct(agents.length, n) : null,
+    agentTools,
     aiReviewed,
   };
 }
 
+/** PRs opened by agents and PRs with an AI reviewer, over the merged sample. */
+export function analyzeAiPrs(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable } = {}) {
+  return aiPrStats(splitSample(prs, limit), reviewsAvailable);
+}
+
 const medianOf = (values) => percentile([...values].sort((a, b) => a - b), 0.5);
 
-/**
- * Agent PRs merged without approval, and agent vs human PR size (needs AI_MIN_GROUP per side).
- * `reviewsAvailable` must be true only for the GraphQL sample (REST items have no approvedByOther).
- */
-export function analyzeAiSafeguards(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable } = {}) {
+function safeguardStats(split, reviewsAvailable) {
   const emptySize = { available: false, agentMedian: null, humanMedian: null, agentN: 0, humanN: 0 };
   const off = (reason) => ({ available: false, reason, agentPrs: 0, agentUnapproved: null, size: emptySize });
   if (!reviewsAvailable) return off('noToken');
-  if (!Array.isArray(prs)) return off('error');
-  const sample = aiSample(prs, limit);
-  const agents = sample.filter(agentToolOfPr);
-  const humans = sample.filter((p) => !agentToolOfPr(p));
+  if (!split) return off('error');
+  const { agents, humans } = split;
   const lines = (group) => group.map((p) => p.changedLines).filter((x) => x != null);
   const agentLines = lines(agents);
   const humanLines = lines(humans);
@@ -136,6 +145,14 @@ export function analyzeAiSafeguards(prs, { limit = MERGED_PR_SAMPLE, reviewsAvai
       humanN: humanLines.length,
     },
   };
+}
+
+/**
+ * Agent PRs merged without approval, and agent vs human PR size (needs AI_MIN_GROUP per side).
+ * `reviewsAvailable` must be true only for the GraphQL sample (REST items have no approvedByOther).
+ */
+export function analyzeAiSafeguards(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable } = {}) {
+  return safeguardStats(splitSample(prs, limit), reviewsAvailable);
 }
 
 export const AI_PROCESS_METHOD = 'ai-traces-v1';
@@ -365,11 +382,11 @@ function mergeTools(config, commits, prs) {
  * commits: AiCommit[]|null, prs: merged PR stats|null (null = fetch failed).
  */
 export function buildAiProcess({ treePaths, treeStatus, ctx, commits, prs, reviewsAvailable, maturity, prLimit }) {
-  const options = { limit: prLimit ?? MERGED_PR_SAMPLE, reviewsAvailable };
+  const split = splitSample(prs, prLimit ?? MERGED_PR_SAMPLE);
   const config = analyzeAiConfig(treePaths, treeStatus, ctx);
   const commitStats = analyzeAiCommits(commits);
-  const prStats = analyzeAiPrs(prs, options);
-  const safeguards = analyzeAiSafeguards(prs, options);
+  const prStats = aiPrStats(split, reviewsAvailable);
+  const safeguards = safeguardStats(split, reviewsAvailable);
   const coherence = analyzeCoherence(config, commitStats, prStats);
   const badge = analyzeResponsibleBadge({ config, commits: commitStats, prs: prStats, safeguards, coherence, maturity });
   return {

@@ -49,3 +49,4 @@ export const DAY_MS = 86_400_000;
 
 // AI in the Process: PR-size comparison (agent vs human) only when both groups have at least this many PRs
 export const AI_MIN_GROUP = 5;
+export const AUTHORSHIP_MAX_PATHS = 10; // Classroom: AI-config paths per authorship query (githubService, aiClassroom)

@@ -1,4 +1,4 @@
-import { isBot } from './contributors.js';
+import { isBot, isBotName } from './contributors.js';
 import { AI_TOOLS, GITIGNORE_AI_PATTERNS } from './aiRegistry.js';
 
 // REST returns bot logins as "name[bot]", GraphQL as "name": compare without the suffix.
@@ -56,11 +56,8 @@ export function reviewerToolOf(login) {
   return l ? AI_TOOLS.find((t) => t.reviewerLogins.includes(l))?.id ?? null : null;
 }
 
-// Same bot rules as analyzeCommitHistory (classroom.js): isBot or a name containing "bot".
-const BOT_NAME = /(\[bot\]|\bbot\b)/i;
-
-// GraphQL authors without a GitHub user have no login, only a git name (forgeable) and an e-mail.
-// The name counts as identity only in bot form ("claude[bot]"); otherwise login or e-mail decide.
+// AI reviewers (used to keep them out of the maintenance bots). GraphQL authors without a GitHub user
+// have no login, only a git name (forgeable): the name counts only in bot form ("claude[bot]").
 const loginOrBotName = ({ login, name }) => login ?? (/\[bot\]$/i.test(name ?? '') ? name : null);
 
 // A login names an agent only on a bot account (REST type 'Bot' or the "[bot]" suffix): a person's
@@ -83,7 +80,8 @@ export function authorReviewerTool(author) {
 // Dependabot, Renovate, github-actions…: bots that are neither an agent nor an AI reviewer of the registry.
 export function isMaintenanceBot(author) {
   if (!author) return false;
-  const bot = isBot(author) || BOT_NAME.test(author.name ?? '');
+  // Same bot rules as analyzeCommitHistory (classroom.js): isBot or a name containing "bot".
+  const bot = isBot(author) || isBotName(author.name);
   return bot && !authorAgentTool(author) && !authorReviewerTool(author);
 }
 

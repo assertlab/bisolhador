@@ -43,17 +43,20 @@ async function analyzeRepository(name, period) {
   for (const [part, result] of Object.entries({ history, prs, runs, releases, aiContext })) {
     if (result.status === 'rejected') console.warn(`[classroom] ${info.full_name}: ${part} failed:`, result.reason?.message);
   }
-  const authorship = await fetchAuthorship(o, r, aiContext, info.full_name);
-  return { status: 'ok', fullName: info.full_name, isPrivate: info.private, ...analyzeTeamRepo({ history, prs, runs, releases, aiContext }, period, authorship) };
+  // Parsed once: the authorship query and the analysis read the same context. Classroom may read
+  // a private template (it already analyzes private repositories, in memory only).
+  const ctx = aiContext.status === 'fulfilled' ? parseAiRepoContext(aiContext.value, { allowPrivateTemplate: true }) : null;
+  const authorship = await fetchAuthorship(o, r, ctx, info.full_name);
+  return { status: 'ok', fullName: info.full_name, isPrivate: info.private, ...analyzeTeamRepo({ history, prs, runs, releases }, period, { ctx, authorship }) };
 }
 
 /**
  * Who added or changed each AI-config file (+1 GraphQL, only when the repository has
  * configuration outside the template). [] = nothing to ask; null = unknown (context or query failed).
  */
-async function fetchAuthorship(owner, repo, aiContext, fullName) {
-  if (aiContext.status !== 'fulfilled') return null;
-  const paths = authorshipPaths(parseAiRepoContext(aiContext.value, { allowPrivateTemplate: true }));
+async function fetchAuthorship(owner, repo, ctx, fullName) {
+  if (!ctx) return null;
+  const paths = authorshipPaths(ctx);
   if (paths.length === 0) return [];
   try {
     return await githubService.fetchAiConfigAuthorship(owner, repo, paths);

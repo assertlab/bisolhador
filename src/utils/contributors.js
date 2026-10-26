@@ -17,6 +17,10 @@ export function isBot(author) {
   return author.type === 'Bot' || /\[bot\]$/i.test(author.login || '');
 }
 
+// A git author name that looks like a bot ("renovate[bot]", "release bot"): commit authors without a login.
+const BOT_NAME = /(\[bot\]|\bbot\b)/i;
+export const isBotName = (name) => BOT_NAME.test(name ?? '');
+
 const byCommitsDesc = (a, b) => b.commits - a.commits;
 
 /**

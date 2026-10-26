@@ -1,11 +1,10 @@
+import { AUTHORSHIP_MAX_PATHS } from '../constants.js';
 import { AI_TOOLS, CLASSROOM_BOT } from './aiRegistry.js';
 import { normalizeLogin, authorAgentTool, isMaintenanceBot, detectConfig } from './aiTraces.js';
 import { commitAiTools } from './aiProcess.js';
 
 // Classroom Mode only: "AI in the Process › Per student". Everything here stays in the
 // browser's memory — never in the CSV, Supabase or GA (spec §3 anti-goals, §7.3).
-
-export const AUTHORSHIP_MAX_PATHS = 10; // same cap as githubService.fetchAiConfigAuthorship
 
 const TOOL_ORDER = new Map(AI_TOOLS.map((tool, i) => [tool.id, i]));
 
