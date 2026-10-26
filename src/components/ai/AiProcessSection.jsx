@@ -9,6 +9,8 @@ import { AiCoherence } from './AiCoherence.jsx';
 import { AiResponsibleBadge } from './AiResponsibleBadge.jsx';
 import { BlockTitle, Chip, InfoTip } from './AiParts.jsx';
 import { toolLabel as labelOf } from './toolLabel.js';
+import { linkTargetProps, useNewTab } from '../../lib/newTab.js';
+import { NewTabHint } from '../NewTabHint.jsx';
 
 const CARD = 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow';
 const NOTE = 'text-xs text-gray-500 dark:text-slate-400';
@@ -16,11 +18,11 @@ const NOTE = 'text-xs text-gray-500 dark:text-slate-400';
 /**
  * "AI in the Process › Repository" (Dashboard and Classroom Mode). Receives only report.aiProcess:
  * counts and tool ids, never people. Everything is a lower bound: no trace ≠ no AI.
- * guideInNewTab (Classroom): open the AI guide in a new tab, so the in-memory class analysis isn't lost;
- * noreferrer keeps the /turma?repos=… URL out of the new page's referrer (GA is on there).
+ * Inside NewTabContext (Classroom) every link here opens in a new tab: see lib/newTab.js.
  */
-export function AiProcessSection({ aiProcess, guideInNewTab = false }) {
+export function AiProcessSection({ aiProcess }) {
   const { t } = useTranslation();
+  const newTab = useNewTab();
 
   if (!aiProcess?.available) {
     return (
@@ -138,10 +140,11 @@ export function AiProcessSection({ aiProcess, guideInNewTab = false }) {
         {t('aiProcess.lowerBoundNote')}{' '}
         <Link
           to={AI_GUIDE_PATH}
-          {...(guideInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          {...linkTargetProps(newTab)}
           className="font-medium text-ocean hover:underline"
         >
           {t('aiGuide.link')} →
+          {newTab && <NewTabHint />}
         </Link>
       </p>
     </div>

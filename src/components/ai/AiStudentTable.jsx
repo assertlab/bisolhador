@@ -4,6 +4,8 @@ import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
 import { AI_GUIDE_PATH } from '../../utils/indicatorGuide.js';
 import { toolLabel } from './toolLabel.js';
+import { NEW_TAB_LINK_PROPS } from '../../lib/newTab.js';
+import { NewTabHint } from '../NewTabHint.jsx';
 
 const NOTE = 'text-xs text-gray-500 dark:text-slate-400';
 const TH = 'px-3 py-2 text-xs font-medium text-gray-500 dark:text-slate-300 uppercase';
@@ -38,8 +40,9 @@ export function AiStudentTable({ students }) {
         <p>
           {/* New tab: following it in place would lose the in-memory class analysis; noreferrer keeps
               /turma?repos=… out of the guide page's referrer (GA is on there). */}
-          <Link to={`${AI_GUIDE_PATH}#teachers`} target="_blank" rel="noopener noreferrer" className="font-medium text-ocean hover:underline">
+          <Link to={`${AI_GUIDE_PATH}#teachers`} {...NEW_TAB_LINK_PROPS} className="font-medium text-ocean hover:underline">
             {t('aiGuide.studentsLink')}: {t('aiGuide.link')} →
+            <NewTabHint />
           </Link>
         </p>
       </div>
