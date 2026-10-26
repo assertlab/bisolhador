@@ -8,6 +8,8 @@ import { intlLocale } from '../i18n.js';
 // saved a failure as [], so an empty list there only says "none recorded".
 export function ActivityLogs({ commits, pullRequests, isSnapshot = false }) {
   const { t, i18n } = useTranslation();
+  // null = the request failed (live) or wasn't recorded (snapshot); [] = no commits
+  const emptyCommitsKey = isSnapshot ? 'activity.commitsNotRecorded' : Array.isArray(commits) ? 'activity.noCommits' : 'activity.commitsUnavailable';
   const locale = intlLocale(i18n.language);
 
   const formatDate = (dateString) => formatters.formatDateLong(dateString, locale);
@@ -38,7 +40,7 @@ export function ActivityLogs({ commits, pullRequests, isSnapshot = false }) {
           <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">{t('activity.sections.commits')}</h4>
           {!Array.isArray(commits) || commits.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-slate-400">
-              {t(isSnapshot ? 'activity.commitsNotRecorded' : Array.isArray(commits) ? 'activity.noCommits' : 'activity.commitsUnavailable')}
+              {t(emptyCommitsKey)}
             </p>
           ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto">
