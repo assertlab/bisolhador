@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SEC**: Nada de IA por pessoa no Dashboard nem no snapshot: `aiProcess` só guarda contagens e ids de ferramentas. A visão por estudante do Modo Turma, a única que nomeia autores, fica só na memória do navegador: fora do CSV, do Supabase e do Google Analytics (já desligado no Modo Turma). Não há alerta individual: o desacordo entre fontes só aparece por repositório.
 - **SEC**: O Dashboard não lê a configuração de um template privado (a origem fica "não verificada"); só o Modo Turma, que já analisa privados sem salvar nada, lê.
 
+### 🐛 Fixed
+
+- **FIX**: Quando a busca dos commits falhava (erro da API do GitHub ou limite de requisições), **Últimos Commits** aparecia vazio, como se o repositório não tivesse commits. Agora diz que não foi possível carregar (o aviso de dados parciais já listava `commits`). Repositório vazio continua aparecendo como sem commits. O snapshot continua sendo salvo (nenhum histórico compara commits), com a lista e a adesão a Conventional Commits como não registradas. Snapshots antigos podem ter gravado uma falha como lista vazia; neles, a lista vazia aparece como "Nenhum commit registrado neste snapshot".
+
 ---
 
 ## [3.14.0] - 2026-10-24

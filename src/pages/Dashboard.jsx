@@ -368,7 +368,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <ContributorsTable contributors={displayData.contributors} busFactor={displayData.busFactor} analysis={displayData.busFactorAnalysis} />
 
             {/* 8. Atividades Recentes */}
-            <ActivityLogs commits={displayData.recentCommits} pullRequests={displayData.recentPRs} />
+            <ActivityLogs commits={displayData.recentCommits} pullRequests={displayData.recentPRs} isSnapshot={isSnapshotUrl} />
 
           </div>
         ) : (

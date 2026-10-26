@@ -284,7 +284,10 @@
       "closed": "Closed",
       "merged": "Merged"
     },
-    "commitBy": "by {{author}} • {{date}}"
+    "commitBy": "by {{author}} • {{date}}",
+    "noCommits": "This repository has no commits.",
+    "commitsUnavailable": "Could not load the commits right now (GitHub API failure or rate limit).",
+    "commitsNotRecorded": "No commits recorded in this snapshot."
   },
   "charts": {
     "commitActivity": {

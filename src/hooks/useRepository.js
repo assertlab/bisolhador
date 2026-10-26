@@ -6,7 +6,7 @@ import { analyzeContributors, peopleFromStats, peopleFromContributors } from '..
 import { analyzeBranches } from '../utils/branches.js';
 import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf, treeStatusOf } from '../utils/repoTree.js';
 import { buildAiProcess, parseAiRepoContext, fromRestCommit } from '../utils/aiProcess.js';
-import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare } from '../utils/activityStats.js';
+import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare, recentCommitsOf } from '../utils/activityStats.js';
 import { analyzeCiRuns, analyzeConventionalCommits, analyzeReleases, RELEASES_PAGE } from '../utils/projectPractices.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
@@ -147,7 +147,6 @@ async function fetchRepositoryData(repoName) {
     }, []);
 
     // Extract results with fail-safe handling
-    const commits = results[0]?.status === 'fulfilled' ? results[0].value : [];
     // Counts/branches/profile: null when the request failed (see _warnings), never a fake 0.
     const branches = results[1]?.status === 'fulfilled' ? results[1].value : null;
     const contributorAnalysis = results[2]?.status === 'fulfilled' ? results[2].value : null;
@@ -170,8 +169,9 @@ async function fetchRepositoryData(repoName) {
     // null = skipped (no token) or failed: the section shows those checks as not verified.
     const aiContext = results[18]?.status === 'fulfilled' && results[18].value ? parseAiRepoContext(results[18].value) : null;
 
-    // Get recent commits and PRs for activity logs
-    const recentCommits = commits.slice(0, RECENT_ITEMS_LIMIT);
+    // Get recent commits and PRs for activity logs. Commits: null when the
+    // request failed (shown as unavailable), [] only for an empty repository.
+    const recentCommits = recentCommitsOf(results[0], RECENT_ITEMS_LIMIT);
     const recentPRs = pullRequests.slice(0, RECENT_ITEMS_LIMIT);
 
     // Calculate repository age

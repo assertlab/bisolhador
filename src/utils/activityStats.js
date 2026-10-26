@@ -117,3 +117,13 @@ export function addDeleteRatioOf(report) {
   const n = parseFloat(churn.ratio);
   return Number.isFinite(n) ? n : null;
 }
+
+/**
+ * Latest commits for the activity list from the settled /commits request.
+ * A failed request is null (unavailable), never [] — that would read as a
+ * repository with no commits. An empty repository (409) is fulfilled with [].
+ * @returns {object[]|null}
+ */
+export function recentCommitsOf(settled, limit) {
+  return settled?.status === 'fulfilled' ? settled.value.slice(0, limit) : null;
+}
