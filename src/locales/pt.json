@@ -535,6 +535,7 @@
       "review": "Dinâmica de revisão",
       "practices": "Práticas do projeto",
       "governance": "Governança e maturidade",
+      "ai": "IA no Processo",
       "people": "Pessoas e atividade",
       "classroom": "Modo turma"
     },
@@ -571,35 +572,35 @@
         "name": "Lead time",
         "what": "Tempo mediano entre abrir um PR e mergeá-lo, nos até 50 PRs mergeados mais recentes, sem bots. O p90 mostra a cauda: 90% foram mergeados até esse tempo.",
         "read": "Lead time baixo indica ciclo de integração rápido. Compare com o p90: uma diferença grande significa que alguns PRs ficam esquecidos.",
-        "limits": "Só PRs mergeados (os fechados sem merge não entram). PRs pequenos de manutenção puxam a mediana para baixo.",
+        "limits": "Só PRs mergeados (os fechados sem merge não entram). PRs pequenos de manutenção puxam a mediana para baixo. PRs abertos por agentes de IA ficam de fora e aparecem em \"IA no Processo\".",
         "chaossNote": "Mesma pergunta e mesma agregação (mediana, só PRs aceitos). A amostra difere: a CHAOSS seleciona os PRs criados num período; aqui são os até 50 mergeados mais recentes, sem bots."
       },
       "review-coverage": {
         "name": "Cobertura de revisão",
         "what": "Percentual dos PRs mergeados recentes aprovados por outra pessoa antes do merge, e percentual com qualquer revisão de outra pessoa.",
         "read": "Mostra se o projeto pratica revisão formal. O badge \"Sem aprovação\" é o complemento.",
-        "limits": "Só conta a revisão formal do GitHub: projetos que aprovam por comando ou bot (/lgtm) aparecem com cobertura baixa. Exige token.",
+        "limits": "Só conta a revisão formal do GitHub: projetos que aprovam por comando ou bot (/lgtm) aparecem com cobertura baixa. Exige token. PRs abertos por agentes de IA ficam de fora e aparecem em \"IA no Processo\".",
         "chaossNote": "A CHAOSS (Change Request Reviews) não define uma fórmula única; Self-Merge Rates conta PRs mergeados pelo próprio autor sem revisão. Aqui conta a ausência de aprovação de outra pessoa, independentemente de quem fez o merge (o self-merge aparece no tooltip do badge)."
       },
       "first-review": {
         "name": "Tempo até a 1ª revisão",
         "what": "Tempo mediano (e p90) entre o PR ficar pronto para revisão e a primeira revisão de outra pessoa antes do merge.",
         "read": "Mede quanto tempo quem contribui espera por um retorno. Esperas longas desestimulam contribuições.",
-        "limits": "Só PRs mergeados que tiveram revisão. Uma revisão feita ainda no rascunho conta como espera zero. Comentários comuns não contam. Exige token.",
+        "limits": "Só PRs mergeados que tiveram revisão. Uma revisão feita ainda no rascunho conta como espera zero. Comentários comuns não contam. Exige token. PRs abertos por agentes de IA ficam de fora e aparecem em \"IA no Processo\".",
         "chaossNote": "A CHAOSS (Change Request Review Duration) conta a partir do envio do PR e sugere a média; aqui o relógio começa quando o PR fica pronto para revisão (rascunho não é espera) e usa-se a mediana, menos sensível a poucos PRs esquecidos. Time to First Response conta qualquer resposta, inclusive comentários; aqui só revisões formais contam."
       },
       "pr-size": {
         "name": "Tamanho dos PRs",
         "what": "Mediana de linhas alteradas (adicionadas + removidas) por PR mergeado recente, e percentual de PRs com menos de 400 linhas.",
         "read": "PRs pequenos são revisados com mais cuidado e integrados mais rápido. É uma das práticas mais fáceis de ensinar.",
-        "limits": "Arquivos gerados (lockfiles, snapshots) contam como linhas. Exige token.",
+        "limits": "Arquivos gerados (lockfiles, snapshots) contam como linhas. Exige token. PRs abertos por agentes de IA ficam de fora e aparecem em \"IA no Processo\".",
         "chaossNote": "A CHAOSS (Code Changes Lines) soma as linhas tocadas por período, a partir dos commits; aqui a medida é por PR."
       },
       "divergence": {
         "name": "Divergência",
         "what": "Média de comentários de pessoas (gerais e de revisão) por PR mergeado recente.",
         "read": "Pouca discussão pode indicar PRs simples ou revisão superficial; muita discussão pode indicar PRs grandes ou pouco claros.",
-        "limits": "Não distingue discussão produtiva de conflito. Comentários de bots não contam. Exige token.",
+        "limits": "Não distingue discussão produtiva de conflito. Comentários de bots não contam. Exige token. PRs abertos por agentes de IA ficam de fora e aparecem em \"IA no Processo\".",
         "chaossNote": "Não há métrica CHAOSS equivalente; a mais próxima é Change Request Reviews, que inclui comentários como parte da revisão."
       },
       "ci-health": {
@@ -644,6 +645,62 @@
         "limits": "Exige token para verificar a data do último commit de cada branch. A busca para em 1.000 branches, e aí o número é um mínimo.",
         "chaossNote": "A CHAOSS (Branch Lifecycle) olha como branches são criadas, mergeadas, mantidas e removidas; aqui só se contam as paradas."
       },
+      "ai-tools": {
+        "name": "Ferramentas de IA detectadas",
+        "what": "Ferramentas de IA com algum rastro no repositório, cada uma com a origem da evidência: config (arquivo de configuração versionado, como CLAUDE.md, .github/copilot-instructions.md ou .cursorrules), commit (coautoria declarada no trailer Co-authored-by, ou commit de autoria de um agente), PR (PR mergeado aberto por um agente) e revisão (revisão ou comentário de um bot de revisão de IA). AGENTS.md e .mcp.json aparecem como \"Agentes (genérico)\", porque servem a várias ferramentas.",
+        "read": "Responde se o projeto orienta agentes de IA e com quais ferramentas. A mesma ferramenta em várias origens indica uso consistente; só config pode ser uma configuração parada ou de uma única pessoa. Configuração marcada \"do template\" veio do repositório-modelo: aparece na lista, mas não conta como uso do próprio repositório.",
+        "limits": "É um limite inferior: \"Nenhum rastro de IA encontrado\" não quer dizer que não houve IA. O autocomplete não deixa marca, nem toda ferramenta grava o trailer de coautoria, e bots-agente pessoais (GitHub Apps próprios) não podem ser classificados: contam como bots de manutenção. A coautoria é reconhecida pelo e-mail do trailer, não pelo nome, que qualquer pessoa pode escrever; um nome do git só identifica um agente quando termina em [bot]. As ferramentas vêm de um registro fixo (versão 2026-10-25): as que estão fora dele não aparecem. No Dashboard, a configuração é procurada em toda a árvore de arquivos (fica não verificada se a árvore vier truncada); no Modo Turma, só na raiz e nos diretórios conhecidos (.github, .claude, .cursor, .gemini, .junie…), então um CLAUDE.md ou AGENTS.md em subpasta não aparece. A origem template só é verificada com token.",
+        "chaossNote": "Não há métrica CHAOSS equivalente para rastros de IA."
+      },
+      "ai-config-depth": {
+        "name": "Profundidade da configuração",
+        "what": "Para cada ferramenta configurada: só instruções (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md, .cursor/rules/…) ou instruções + extensões (skills, comandos e subagentes em .claude/, prompts em .github/prompts/, servidores MCP em .mcp.json). Com token, mostra também o uso local ignorado: linhas do .gitignore que escondem artefatos de IA (.claude/, CLAUDE.local.md, .cursor/, .cursorrules, .aider*).",
+        "read": "Instruções orientam o agente; extensões indicam um fluxo de trabalho mais elaborado em torno dele. Uso local ignorado é rastro de IA usada na máquina de alguém sem versionar a configuração.",
+        "limits": "Detecta a presença dos arquivos, não o que dizem nem se são seguidos. Uma linha como .claude/ no .gitignore pode ter vindo de um modelo de .gitignore copiado. O .gitignore só é lido com token (sem token, fica não verificado), e linhas de exceção (!) não contam. No Modo Turma, só a raiz e os diretórios conhecidos são verificados.",
+        "chaossNote": "Não há métrica CHAOSS equivalente para configuração de ferramentas de IA."
+      },
+      "ai-commits": {
+        "name": "Commits com rastro de IA",
+        "what": "Fração dos commits analisados com coautoria de IA declarada (trailer Co-authored-by com o e-mail de uma ferramenta do registro) ou de autoria de um agente (Copilot, claude[bot], Devin…), sempre com o n (\"12 de 100 commits\"). Merges e bots de manutenção (Dependabot, Renovate, github-actions) ficam fora; commits de agentes entram. Mostra também a data do primeiro rastro na amostra.",
+        "read": "Indica quanto do trabalho recente foi declarado como feito com IA. O primeiro rastro é o mais antigo da amostra, não do repositório: a adoção pode ser anterior.",
+        "limits": "Limite inferior: só conta o que foi declarado. O autocomplete não deixa marca, nem toda ferramenta grava o trailer, quem commita pode desligá-lo, e um merge com squash pode reescrever as mensagens. A coautoria casa pelo e-mail, sem diferenciar maiúsculas, nunca só pelo nome; para e-mails genéricos (noreply@google.com do Gemini, ai@local do opencode), exige também o nome. Um nome do git só conta como agente quando termina em [bot]; bots-agente pessoais (GitHub Apps próprios) contam como manutenção e saem da conta. Dashboard: os 100 commits mais recentes do branch principal. Modo Turma: os commits do branch principal no período, até os 300 mais recentes.",
+        "chaossNote": "Não há métrica CHAOSS equivalente. Code Changes Commits conta commits, mas não a participação de IA."
+      },
+      "ai-prs": {
+        "name": "PRs abertos por agentes",
+        "what": "Fração dos PRs mergeados da amostra cujo autor é um agente de código do registro (Copilot, Claude, Devin, Jules, Codex), sempre com o n. No Dashboard, a amostra são os até 50 PRs mergeados mais recentes, pessoas e agentes juntos, sem bots de manutenção: com token, dentre os 100 PRs mergeados atualizados mais recentemente; sem token, dentre os 100 PRs fechados atualizados mais recentemente. No Modo Turma, todos os PRs mergeados no período (examinados até um limite).",
+        "read": "Mostra quanto do trabalho integrado foi proposto diretamente por um agente. Leia junto com Salvaguardas: o que mais importa é se esses PRs passaram por revisão humana.",
+        "limits": "Limite inferior: um agente que roda na máquina de alguém abre o PR com a conta da pessoa, e o PR conta como humano. Bots-agente pessoais (GitHub Apps próprios) não podem ser classificados e ficam de fora, como bots de manutenção. Os indicadores de Dinâmica de revisão continuam medindo só PRs de pessoas; os PRs de agentes aparecem só aqui.",
+        "chaossNote": "Não há métrica CHAOSS equivalente. Change Requests conta PRs, mas não distingue quem os abriu."
+      },
+      "ai-review": {
+        "name": "PRs com revisão de IA",
+        "what": "Fração dos PRs mergeados da amostra (a mesma de PRs abertos por agentes) com pelo menos uma revisão ou comentário de um bot de revisão de IA do registro (CodeRabbit, Copilot, Gemini Code Assist, Cursor, Sourcery, Greptile, Codex, Claude), sempre com o n.",
+        "read": "Mostra se o projeto usa IA como revisora. A revisão de IA complementa a aprovação humana (Salvaguardas e Cobertura de revisão), não a substitui.",
+        "limits": "Exige token. Só conta revisores que são bots: uma IA usada pela conta de uma pessoa aparece como revisão humana. No Dashboard, entram as revisões e os comentários de cada PR; no Modo Turma, só as revisões (os comentários não são buscados).",
+        "chaossNote": "Não há métrica CHAOSS equivalente. Change Request Reviews trata de revisões em geral, sem separar as feitas por IA."
+      },
+      "ai-safeguards": {
+        "name": "Salvaguardas",
+        "what": "Quantos PRs de agentes mergeados na amostra não tiveram aprovação humana (review APPROVED antes do merge, de alguém que não é o autor nem bot; a mesma regra de Cobertura de revisão), sempre com o n. E o tamanho mediano (linhas alteradas) dos PRs de agentes comparado com o dos PRs de pessoas, na mesma amostra.",
+        "read": "É o indicador que mais interessa ao ensino: o que a IA produziu passou por uma pessoa antes de entrar? PRs de agentes muito maiores que os de pessoas são mais difíceis de revisar com cuidado.",
+        "limits": "Exige token. O número de PRs sem aprovação aparece mesmo com n pequeno; a comparação de tamanho só aparece quando os dois grupos têm pelo menos 5 PRs com tamanho conhecido. Projetos que aprovam por comando ou bot (/lgtm) aparecem sem aprovação. Só enxerga agentes que abrem PR com conta própria (veja PRs abertos por agentes).",
+        "chaossNote": "Não há métrica CHAOSS equivalente para revisão humana do trabalho de agentes."
+      },
+      "ai-coherence": {
+        "name": "Fontes em desacordo",
+        "what": "Confere, no nível do repositório, se as fontes de rastro contam a mesma história. O bloco aparece quando (1) há configuração de IA versionada fora do template, mas nenhum commit da amostra declara coautoria de IA nem é de um agente, e nenhum PR é de agente; ou (2) o .gitignore esconde artefatos de IA e nada declara uso. Configuração de uma ferramenta com declarações de outra aparece só como informação, não como desacordo (AGENTS.md não conta, por ser genérico). Se o .claude/settings.json versionado desliga o trailer de coautoria, isso aparece como fato.",
+        "read": "\"As fontes não concordam\" é um ponto de partida para conversar, não uma conclusão. O bloco sempre lista as causas legítimas possíveis: merge com squash que reescreve as mensagens, configuração feita por outra pessoa do grupo, ferramenta que não grava o trailer, declaração desligada na configuração.",
+        "limits": "A API do GitHub não mostra se uma mensagem de commit foi editada: o que se detecta é só a incoerência entre o que ficou. Configuração vinda do repositório-modelo (template; no Modo Turma, também o commit inicial do GitHub Classroom) não conta. As regras só disparam quando há commits na amostra; com a amostra vazia, o cruzamento fica não verificado. O .gitignore e a origem template só são verificados com token; sem token, a configuração conta como do próprio repositório. É sempre sobre o repositório, nunca sobre uma pessoa.",
+        "chaossNote": "Não há métrica CHAOSS equivalente para coerência entre rastros de IA."
+      },
+      "ai-badge": {
+        "name": "Uso responsável de IA",
+        "what": "Selo do repositório com cinco critérios: configuração de IA versionada (fora do template); commits com coautoria declarada (pelo menos um na amostra); fontes coerentes (nenhum desacordo); PRs de agentes com aprovação humana (todos os da amostra); testes e CI detectados (os mesmos de Maturidade de engenharia). Mostra \"x de y\" e fica completo quando todos os critérios verificáveis são cumpridos.",
+        "read": "Mede práticas observáveis e a coerência entre os rastros, não o uso real de IA nem o caráter de ninguém. IA declarada, revisada por pessoas e com testes e CI cumpre tudo. Sem nenhum rastro de IA, o selo \"não se aplica\": quem não usa IA não é penalizado.",
+        "limits": "Critérios que não se aplicam (nenhum PR de agente) ou não verificados (sem token, árvore truncada, amostra vazia) saem do denominador, então o total muda de um repositório para outro: leia o \"x de y\" junto com a lista de critérios. No Modo Turma, testes e CI ficam sempre como não verificados. Configuração que veio só do template não torna o selo aplicável. O selo não entra no Ranking e nunca é calculado por estudante.",
+        "chaossNote": "Não há métrica CHAOSS equivalente. O selo segue o estilo do Health Score (lista de itens cumpridos), com critérios próprios."
+      },
       "bus-factor": {
         "name": "Bus factor e concentração",
         "what": "Menor número de pessoas que respondem por 70% dos commits dos últimos 12 meses, ou de todo o histórico quando há pouca atividade recente (bots fora), e a participação do principal contribuidor.",
@@ -681,10 +738,10 @@
       },
       "classroom": {
         "name": "Modo turma",
-        "what": "Os mesmos indicadores de processo do Dashboard, calculados para cada repositório de uma turma dentro do período da disciplina: commits, autores ativos, concentração no autor principal, PRs mergeados, aprovação por outra pessoa, tempo até a 1ª revisão, lead time, tamanho dos PRs, saúde do CI, Conventional Commits e releases.",
+        "what": "Os mesmos indicadores de processo do Dashboard, calculados para cada repositório de uma turma dentro do período da disciplina: commits, autores ativos, concentração no autor principal, PRs mergeados, aprovação por outra pessoa, tempo até a 1ª revisão, lead time, tamanho dos PRs, saúde do CI, Conventional Commits e releases. Cada linha pode ser expandida (+) para mostrar a seção IA no Processo do repositório e a visão Por estudante: para cada autor de commit do período, os commits, quantos declaram coautoria de IA, as ferramentas declaradas e os arquivos de configuração de IA que a pessoa adicionou ou alterou.",
         "read": "Compare equipes pelo processo, não pelo volume: uma equipe com poucos commits e PRs pequenos e revisados pode estar trabalhando melhor que uma com muitos commits diretos no branch principal. Concentração alta indica que uma pessoa faz quase tudo; vale conversar com a equipe.",
-        "limits": "Repositórios privados são analisados só aqui, com o token de quem usa e sem salvar nada; o link e o CSV contêm seus nomes e números. Autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, e os PRs são examinados até um limite (marcados com * e +). Equipes que trabalham direto no branch principal aparecem com 0 PRs e sem dados de revisão. Commits e PRs não medem esforço, aprendizado nem qualidade, e não devem virar nota automática.",
-        "chaossNote": "Cada coluna segue a referência CHAOSS da entrada correspondente neste guia, calculada no período escolhido. A CHAOSS recomenda cuidado com privacidade ao usar métricas por pessoa ou por equipe; por isso a concentração não identifica quem é o autor principal."
+        "limits": "Repositórios privados são analisados só aqui, com o token de quem usa e sem salvar nada; o link e o CSV contêm seus nomes e números. Autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, e os PRs são examinados até um limite (marcados com * e +). Equipes que trabalham direto no branch principal aparecem com 0 PRs e sem dados de revisão. Commits e PRs não medem esforço, aprendizado nem qualidade, e não devem virar nota automática. A visão Por estudante mostra só o uso declarado e quem configurou: configurar não é usar (uma pessoa pode montar a configuração para o grupo), e quem não declara não aparece. Não é nota nem prova. Commits feitos por um agente vão para a linha do agente, então quem usa agentes na nuvem pode aparecer com menos IA declarada. A visão usa os mesmos até 300 commits do período: quem só tem commits fora dessa amostra não aparece. A autoria da configuração olha até 50 commits por arquivo, em até 10 arquivos. Nada da visão Por estudante sai do navegador: não vai para o CSV nem é salvo.",
+        "chaossNote": "Cada coluna segue a referência CHAOSS da entrada correspondente neste guia, calculada no período escolhido. A CHAOSS recomenda cuidado com privacidade ao usar métricas por pessoa ou por equipe; por isso a concentração não identifica quem é o autor principal. A visão de IA Por estudante nomeia autores por decisão do mantenedor, mas fica só na tela."
       }
     }
   },

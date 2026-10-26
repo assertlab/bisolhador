@@ -527,6 +527,7 @@
       "review": "Review dynamics",
       "practices": "Project practices",
       "governance": "Governance and maturity",
+      "ai": "AI in the Process",
       "people": "People and activity",
       "classroom": "Classroom mode"
     },
@@ -563,35 +564,35 @@
         "name": "Lead time",
         "what": "Median time from opening a PR to merging it, over the up to 50 most recent merged PRs, bots excluded. p90 shows the tail: 90% were merged within that time.",
         "read": "A low lead time means a fast integration cycle. Compare with p90: a big gap means some PRs get forgotten.",
-        "limits": "Merged PRs only (closed without merge aren't counted). Small maintenance PRs pull the median down.",
+        "limits": "Merged PRs only (closed without merge aren't counted). Small maintenance PRs pull the median down. PRs opened by AI agents are left out and show up in \"AI in the Process\".",
         "chaossNote": "Same question and aggregation (median, accepted PRs only). The sample differs: CHAOSS selects PRs created in a period; here it is the up to 50 most recently merged, bots excluded."
       },
       "review-coverage": {
         "name": "Review coverage",
         "what": "Share of recent merged PRs approved by someone else before merging, and share with any review by someone else.",
         "read": "Shows whether the project practices formal review. The \"Unapproved\" badge is the complement.",
-        "limits": "Only GitHub's formal review counts: projects that approve by command or bot (/lgtm) show low coverage. Requires a token.",
+        "limits": "Only GitHub's formal review counts: projects that approve by command or bot (/lgtm) show low coverage. Requires a token. PRs opened by AI agents are left out and show up in \"AI in the Process\".",
         "chaossNote": "CHAOSS (Change Request Reviews) doesn't define a single formula; Self-Merge Rates counts PRs merged by their author without review. Here it counts the lack of approval by someone else, whoever merged (self-merge is in the badge tooltip)."
       },
       "first-review": {
         "name": "Time to first review",
         "what": "Median (and p90) time from the PR being ready for review to the first review by someone else before merging.",
         "read": "How long contributors wait for feedback. Long waits discourage contributions.",
-        "limits": "Merged PRs that got a review only. A review made while still a draft counts as zero wait. Plain comments don't count. Requires a token.",
+        "limits": "Merged PRs that got a review only. A review made while still a draft counts as zero wait. Plain comments don't count. Requires a token. PRs opened by AI agents are left out and show up in \"AI in the Process\".",
         "chaossNote": "CHAOSS (Change Request Review Duration) starts at submission and suggests the mean; here the clock starts when the PR is ready for review (a draft isn't waiting) and the median is used, less sensitive to a few forgotten PRs. Time to First Response counts any response, comments included; here only formal reviews count."
       },
       "pr-size": {
         "name": "PR size",
         "what": "Median changed lines (added + removed) per recent merged PR, and share of PRs under 400 lines.",
         "read": "Small PRs get reviewed more carefully and merged faster. It's one of the easiest practices to teach.",
-        "limits": "Generated files (lockfiles, snapshots) count as lines. Requires a token.",
+        "limits": "Generated files (lockfiles, snapshots) count as lines. Requires a token. PRs opened by AI agents are left out and show up in \"AI in the Process\".",
         "chaossNote": "CHAOSS (Code Changes Lines) sums the lines touched per period, from commits; here it is per PR."
       },
       "divergence": {
         "name": "Divergence",
         "what": "Average comments by people (general and review) per recent merged PR.",
         "read": "Little discussion may mean simple PRs or shallow review; a lot may mean large or unclear PRs.",
-        "limits": "Doesn't tell productive discussion from conflict. Bot comments don't count. Requires a token.",
+        "limits": "Doesn't tell productive discussion from conflict. Bot comments don't count. Requires a token. PRs opened by AI agents are left out and show up in \"AI in the Process\".",
         "chaossNote": "There's no equivalent CHAOSS metric; the closest is Change Request Reviews, which includes comments as part of review."
       },
       "ci-health": {
@@ -636,6 +637,62 @@
         "limits": "Requires a token to check each branch's last commit date. The scan stops at 1,000 branches, and then the number is a minimum.",
         "chaossNote": "CHAOSS (Branch Lifecycle) looks at how branches are created, merged, kept and deleted; here only stale ones are counted."
       },
+      "ai-tools": {
+        "name": "Detected AI tools",
+        "what": "AI tools with some trace in the repository, each with where the evidence comes from: config (a versioned configuration file, such as CLAUDE.md, .github/copilot-instructions.md or .cursorrules), commit (co-authorship declared in a Co-authored-by trailer, or a commit authored by an agent), PR (a merged PR opened by an agent) and review (a review or comment by an AI review bot). AGENTS.md and .mcp.json show up as \"Agents (generic)\", since they serve several tools.",
+        "read": "Answers whether the project guides AI agents, and with which tools. The same tool from several sources suggests consistent use; config alone may be an unused setup or one person's. Configuration marked \"from template\" came from the template repository: it is listed, but doesn't count as the repository's own use.",
+        "limits": "It's a lower bound: \"No AI traces found\" doesn't mean no AI was used. Autocomplete leaves no mark, not every tool writes a co-author trailer, and personal agent bots (custom GitHub Apps) can't be classified: they count as maintenance bots. Co-authorship is recognized by the trailer's e-mail, not by the name, which anyone can type; a git name only identifies an agent when it ends in [bot]. Tools come from a fixed registry (version 2026-10-25): tools outside it don't show up. On the Dashboard, configuration is searched across the whole file tree (left unverified when the tree comes back truncated); in Classroom mode, only at the root and in known directories (.github, .claude, .cursor, .gemini, .junie…), so a CLAUDE.md or AGENTS.md in a subfolder doesn't show up. Template origin is only checked with a token.",
+        "chaossNote": "There's no equivalent CHAOSS metric for AI traces."
+      },
+      "ai-config-depth": {
+        "name": "Configuration depth",
+        "what": "For each configured tool: instructions only (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md, .cursor/rules/…) or instructions + extensions (skills, commands and subagents in .claude/, prompts in .github/prompts/, MCP servers in .mcp.json). With a token, it also shows ignored local use: .gitignore lines that hide AI artifacts (.claude/, CLAUDE.local.md, .cursor/, .cursorrules, .aider*).",
+        "read": "Instructions guide the agent; extensions point to a more elaborate workflow around it. Ignored local use is a trace of AI used on someone's machine without versioning the configuration.",
+        "limits": "Detects that the files exist, not what they say or whether they are followed. A line such as .claude/ in .gitignore may come from a copied .gitignore template. .gitignore is only read with a token (without one, it stays unverified), and negation lines (!) don't count. In Classroom mode, only the root and known directories are checked.",
+        "chaossNote": "There's no equivalent CHAOSS metric for AI tool configuration."
+      },
+      "ai-commits": {
+        "name": "Commits with AI traces",
+        "what": "Share of the analyzed commits with declared AI co-authorship (a Co-authored-by trailer with the e-mail of a tool in the registry) or authored by an agent (Copilot, claude[bot], Devin…), always with n (\"12 of 100 commits\"). Merges and maintenance bots (Dependabot, Renovate, github-actions) are left out; agent commits are included. It also shows the date of the first trace in the sample.",
+        "read": "Shows how much recent work was declared as done with AI. The first trace is the oldest in the sample, not in the repository: adoption may be earlier.",
+        "limits": "Lower bound: only what was declared counts. Autocomplete leaves no mark, not every tool writes the trailer, whoever commits can turn it off, and a squash merge can rewrite the messages. Co-authorship is matched by e-mail, case-insensitively, never by name alone; for generic e-mails (Gemini's noreply@google.com, opencode's ai@local), the name is required too. A git name only counts as an agent when it ends in [bot]; personal agent bots (custom GitHub Apps) count as maintenance and are left out. Dashboard: the latest 100 commits on the default branch. Classroom mode: default-branch commits in the period, up to the 300 most recent.",
+        "chaossNote": "There's no equivalent CHAOSS metric. Code Changes Commits counts commits, but not AI participation."
+      },
+      "ai-prs": {
+        "name": "PRs opened by agents",
+        "what": "Share of the sampled merged PRs whose author is a coding agent in the registry (Copilot, Claude, Devin, Jules, Codex), always with n. On the Dashboard, the sample is up to the latest 50 merged PRs, people and agents together, without maintenance bots: with a token, among the 100 most recently updated merged PRs; without one, among the 100 most recently updated closed PRs. In Classroom mode, every PR merged in the period (examined up to a limit).",
+        "read": "Shows how much of the merged work was proposed directly by an agent. Read it together with Safeguards: what matters most is whether those PRs went through human review.",
+        "limits": "Lower bound: an agent running on someone's machine opens the PR with that person's account, and the PR counts as human. Personal agent bots (custom GitHub Apps) can't be classified and are left out, like maintenance bots. The Review dynamics indicators still measure only PRs by people; agent PRs show up only here.",
+        "chaossNote": "There's no equivalent CHAOSS metric. Change Requests counts PRs, but doesn't tell who opened them."
+      },
+      "ai-review": {
+        "name": "PRs with AI review",
+        "what": "Share of the sampled merged PRs (the same sample as PRs opened by agents) with at least one review or comment by an AI review bot in the registry (CodeRabbit, Copilot, Gemini Code Assist, Cursor, Sourcery, Greptile, Codex, Claude), always with n.",
+        "read": "Shows whether the project uses AI as a reviewer. AI review complements human approval (Safeguards and Review coverage); it doesn't replace it.",
+        "limits": "Requires a token. Only reviewers that are bots count: an AI used through a person's account shows up as a human review. On the Dashboard, each PR's reviews and comments count; in Classroom mode, only reviews (comments aren't fetched).",
+        "chaossNote": "There's no equivalent CHAOSS metric. Change Request Reviews covers reviews in general, without separating those done by AI."
+      },
+      "ai-safeguards": {
+        "name": "Safeguards",
+        "what": "How many merged agent PRs in the sample had no human approval (an APPROVED review before the merge, by someone who is neither the author nor a bot; the same rule as Review coverage), always with n. And the median size (changed lines) of agent PRs compared with PRs by people, in the same sample.",
+        "read": "It's the indicator that matters most for teaching: did what the AI produced go through a person before getting in? Agent PRs much larger than people's are harder to review carefully.",
+        "limits": "Requires a token. The count of unapproved PRs is shown even with a small n; the size comparison only appears when both groups have at least 5 PRs of known size. Projects that approve by command or bot (/lgtm) show up as unapproved. It only sees agents that open PRs with their own account (see PRs opened by agents).",
+        "chaossNote": "There's no equivalent CHAOSS metric for human review of agent work."
+      },
+      "ai-coherence": {
+        "name": "Sources in disagreement",
+        "what": "Checks, at repository level, whether the trace sources tell the same story. The block shows up when (1) there is versioned AI configuration outside the template, but no commit in the sample declares AI co-authorship or is by an agent, and no PR is by an agent; or (2) .gitignore hides AI artifacts and nothing declares use. Configuration for one tool with declarations from another is shown only as information, not as disagreement (AGENTS.md doesn't count, being generic). If the versioned .claude/settings.json turns off the co-author trailer, that is shown as a fact.",
+        "read": "\"The sources disagree\" is a starting point for a conversation, not a conclusion. The block always lists the possible legitimate causes: a squash merge that rewrites the messages, configuration set up by another group member, a tool that doesn't write the trailer, declaration turned off in the configuration.",
+        "limits": "The GitHub API doesn't show whether a commit message was edited: what is detected is only the incoherence between what remains. Configuration from the template repository (the template; in Classroom mode, also GitHub Classroom's initial commit) doesn't count. The rules only fire when the sample has commits; with an empty sample, the cross-check stays unverified. .gitignore and template origin are only checked with a token; without one, configuration counts as the repository's own. It's always about the repository, never about a person.",
+        "chaossNote": "There's no equivalent CHAOSS metric for coherence between AI traces."
+      },
+      "ai-badge": {
+        "name": "Responsible AI use",
+        "what": "Repository badge with five criteria: versioned AI configuration (outside the template); commits with declared co-authorship (at least one in the sample); coherent sources (no disagreement); agent PRs with human approval (all of those in the sample); tests and CI detected (the same as Engineering maturity). It shows \"x of y\" and is complete when every verifiable criterion is met.",
+        "read": "Measures observable practices and coherence between traces, not actual AI use or anyone's character. Declared AI, reviewed by people, with tests and CI meets everything. Without any AI trace, the badge is \"not applicable\": not using AI is never penalized.",
+        "limits": "Criteria that don't apply (no agent PRs) or weren't verified (no token, truncated tree, empty sample) leave the denominator, so the total varies from one repository to another: read \"x of y\" together with the list of criteria. In Classroom mode, tests and CI are always unverified. Configuration that came only from the template doesn't make the badge apply. The badge isn't in the Ranking and is never computed per student.",
+        "chaossNote": "There's no equivalent CHAOSS metric. The badge follows the Health Score style (a list of items met), with its own criteria."
+      },
       "bus-factor": {
         "name": "Bus factor and concentration",
         "what": "Smallest number of people responsible for 70% of the commits of the last 12 months, or of the whole history when recent activity is low (bots excluded), and the top contributor's share.",
@@ -673,10 +730,10 @@
       },
       "classroom": {
         "name": "Classroom mode",
-        "what": "The Dashboard's process indicators computed for each repository of a class within the course period: commits, active authors, concentration on the top author, merged PRs, approval by someone else, time to first review, lead time, PR size, CI health, Conventional Commits and releases.",
+        "what": "The Dashboard's process indicators computed for each repository of a class within the course period: commits, active authors, concentration on the top author, merged PRs, approval by someone else, time to first review, lead time, PR size, CI health, Conventional Commits and releases. Each row can be expanded (+) to show the repository's AI in the Process section and the Per student view: for each commit author in the period, their commits, how many declare AI co-authorship, the declared tools and the AI configuration files that person added or changed.",
         "read": "Compare teams by process, not volume: a team with few commits and small, reviewed PRs may be working better than one with many direct commits to the default branch. High concentration means one person does almost everything; worth a conversation with the team.",
-        "limits": "Private repositories are analyzed only here, with the user's own token and nothing saved; the link and the CSV contain their names and numbers. Authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, and PRs are examined up to a limit (marked * and +). Teams working directly on the default branch show 0 PRs and no review data. Commits and PRs don't measure effort, learning or quality, and shouldn't become automatic grades.",
-        "chaossNote": "Each column follows the CHAOSS reference of the matching entry in this guide, computed over the chosen period. CHAOSS advises care with privacy when using per-person or per-team metrics; that's why concentration doesn't name the top author."
+        "limits": "Private repositories are analyzed only here, with the user's own token and nothing saved; the link and the CSV contain their names and numbers. Authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, and PRs are examined up to a limit (marked * and +). Teams working directly on the default branch show 0 PRs and no review data. Commits and PRs don't measure effort, learning or quality, and shouldn't become automatic grades. The Per student view shows only declared use and who configured: configuring isn't using (one person may set it up for the whole group), and those who don't declare don't show up. It's not a grade or proof. Commits made by an agent go to the agent's row, so students using cloud agents may show less declared AI. The view uses the same up to 300 commits of the period: someone whose commits all fall outside that sample doesn't appear. Configuration authorship looks at up to 50 commits per file, in up to 10 files. Nothing in the Per student view leaves the browser: it isn't in the CSV and isn't saved.",
+        "chaossNote": "Each column follows the CHAOSS reference of the matching entry in this guide, computed over the chosen period. CHAOSS advises care with privacy when using per-person or per-team metrics; that's why concentration doesn't name the top author. The AI Per student view names authors by the maintainer's decision, but stays on screen only."
       }
     }
   },

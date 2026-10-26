@@ -74,6 +74,20 @@ export const GUIDE_SECTIONS = [
     ],
   },
   {
+    // AI in the Process: traces left on GitHub (lower bound). No CHAOSS metric covers it.
+    id: 'ai',
+    items: [
+      { id: 'ai-tools', chaoss: [], relation: 'none' },
+      { id: 'ai-config-depth', chaoss: [], relation: 'none' },
+      { id: 'ai-commits', chaoss: [], relation: 'none' },
+      { id: 'ai-prs', chaoss: [], relation: 'none' },
+      { id: 'ai-review', chaoss: [], relation: 'none' },
+      { id: 'ai-safeguards', chaoss: [], relation: 'none' },
+      { id: 'ai-coherence', chaoss: [], relation: 'none' },
+      { id: 'ai-badge', chaoss: [], relation: 'none' },
+    ],
+  },
+  {
     id: 'classroom',
     items: [
       { id: 'classroom', chaoss: [], relation: 'none' },
