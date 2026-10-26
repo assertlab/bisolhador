@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import analytics from './services/analytics.js';
 import { ToastContainer } from './components/Toast.jsx';
+import { PageLoadingState } from './components/skeletons/PageLoadingState.jsx';
+import i18n from './i18n.js';
+import { loadLocale } from './lib/lazyLocales.js';
 
 // Lazy-loaded pages (Code Splitting) — same pattern already used for chart
 // components. Pages use named exports, so map the module to the { default }
@@ -11,8 +14,14 @@ const Dashboard = lazy(() => import('./pages/Dashboard.jsx').then((m) => ({ defa
 const Ranking = lazy(() => import('./pages/Ranking.jsx').then((m) => ({ default: m.Ranking })));
 const Timeline = lazy(() => import('./pages/Timeline.jsx').then((m) => ({ default: m.Timeline })));
 const Benchmark = lazy(() => import('./pages/Benchmark.jsx').then((m) => ({ default: m.Benchmark })));
-const Guide = lazy(() => import('./pages/Guide.jsx').then((m) => ({ default: m.Guide })));
-const AiGuide = lazy(() => import('./pages/AiGuide.jsx').then((m) => ({ default: m.AiGuide })));
+// The guide pages also need their texts (src/lib/lazyLocales.js): fetched in parallel with the
+// page chunk, fire-and-forget; useLazyLocale in the page waits for them and reports a failure.
+const withTexts = (name, page) => {
+  loadLocale(i18n, name).catch(() => {});
+  return page();
+};
+const Guide = lazy(() => withTexts('guide', () => import('./pages/Guide.jsx')).then((m) => ({ default: m.Guide })));
+const AiGuide = lazy(() => withTexts('aiGuide', () => import('./pages/AiGuide.jsx')).then((m) => ({ default: m.AiGuide })));
 const Classroom = lazy(() => import('./pages/Classroom.jsx').then((m) => ({ default: m.Classroom })));
 
 // Same full-page spinner already used by Ranking.jsx/Timeline.jsx for their
@@ -20,14 +29,7 @@ const Classroom = lazy(() => import('./pages/Classroom.jsx').then((m) => ({ defa
 // wait while a route's chunk downloads.
 function PageFallback() {
   const { t } = useTranslation();
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-shark mx-auto mb-4"></div>
-        <p className="text-gray-600 dark:text-slate-400">{t('app.loadingPage')}</p>
-      </div>
-    </div>
-  );
+  return <PageLoadingState message={t('app.loadingPage')} />;
 }
 
 // One pageview per route or query change (each search/class counts, as the

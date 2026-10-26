@@ -13,7 +13,7 @@ export function GuideLink({ id, className = '', newTab }) {
   const inNewTab = useNewTab(newTab);
   return (
     <Link to={guidePath(id)} {...linkTargetProps(inNewTab)} className={`text-xs text-ocean hover:underline ${className}`}>
-      {t('guide.link')} →
+      {t('guideLinks.indicator')} →
       {inNewTab && <NewTabHint />}
     </Link>
   );

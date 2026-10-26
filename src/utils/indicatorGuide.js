@@ -1,6 +1,6 @@
 // "Como interpretar": one entry per indicator, shown on /guia and linked from
-// each card (#id). Texts live in locales (guide.items.<id>.{name, what, read,
-// limits, chaossNote}); this file holds the structure and the CHAOSS mapping.
+// each card (#id). Texts live in src/locales/guide.{pt,en}.json (guide.items.<id>.{name, what, read,
+// limits, chaossNote}, loaded only by /guia); this file holds the structure and the CHAOSS mapping.
 //
 // CHAOSS (Community Health Analytics in Open Source Software, Linux
 // Foundation) defines community-health metrics. Each reference was checked

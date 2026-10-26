@@ -259,9 +259,9 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                       <th scope="col" className="sticky left-0 z-10 bg-gray-50 dark:bg-slate-700 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">{t('classroom.columns.repo')}</th>
                       {COLUMNS.map((col) => (
                         <th key={col.key} scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-slate-300 uppercase whitespace-nowrap">
-                          <Link to={guidePath(col.guide)} {...NEW_TAB_LINK_PROPS} className="hover:underline" title={t('guide.link')}>
+                          <Link to={guidePath(col.guide)} {...NEW_TAB_LINK_PROPS} className="hover:underline" title={t('guideLinks.indicator')}>
                             {t(`classroom.columns.${col.key}`)}
-                            <span className="sr-only"> — {t('guide.link')}</span>
+                            <span className="sr-only"> — {t('guideLinks.indicator')}</span>
                             <NewTabHint />
                           </Link>
                         </th>

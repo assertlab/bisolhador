@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.17.2 - Guias fora do bundle inicial
+- **⚡ Primeiro acesso mais leve** (chunk de entrada ~443 KB → ~355 KB, ~141 → ~115 KB gzip): os textos de Como interpretar e do Guia de IA no Processo só são baixados ao abrir essas páginas, e só no idioma ativo
+
 ### v3.17.1 - Links e celular no Modo Turma
 - **🔗 Links em nova aba no Modo Turma**: os links dos resultados (Como interpretar, card IA no Processo, visão Por estudante, repositórios) abrem em outra aba, para não perder a análise da turma, que fica só na memória
 - **📱 Linha expandida no celular**: o detalhe de IA no Processo cabe na tela, sem corte à direita e sem rolagem horizontal da página

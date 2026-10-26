@@ -4,6 +4,8 @@ import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
 import { toolLabel } from '../components/ai/toolLabel.js';
 import { useHashScroll } from '../hooks/useHashScroll.js';
+import { useLazyLocale } from '../hooks/useLazyLocale.js';
+import { LazyTextsState } from '../components/LazyTextsState.jsx';
 import { formatters } from '../utils/formatters.js';
 import { intlLocale } from '../i18n.js';
 import { guidePath } from '../utils/indicatorGuide.js';
@@ -280,8 +282,11 @@ function Limits({ numbers }) {
 // registry), guidance for teachers, FAQ and limits. Definitions stay in /guia (guide.items.ai-*).
 export function AiGuide({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
-  useHashScroll();
+  const texts = useLazyLocale('aiGuide');
+  useHashScroll(texts === 'ready');
   const numbers = useNumbers();
+
+  if (texts !== 'ready') return <LazyTextsState status={texts} isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">

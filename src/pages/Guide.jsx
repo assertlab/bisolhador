@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
 import { useHashScroll } from '../hooks/useHashScroll.js';
+import { useLazyLocale } from '../hooks/useLazyLocale.js';
+import { LazyTextsState } from '../components/LazyTextsState.jsx';
 import { GUIDE_SECTIONS, CHAOSS, DATA_ETHICS_URL, AI_GUIDE_PATH } from '../utils/indicatorGuide.js';
 
 const RELATION_STYLE = {
@@ -17,7 +19,10 @@ export function Guide({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
   // react-router doesn't scroll to #anchors, nor reset scroll on navigation;
   // focus moves to the entry for keyboard and screen-reader users.
-  const target = useHashScroll();
+  const texts = useLazyLocale('guide');
+  const target = useHashScroll(texts === 'ready');
+
+  if (texts !== 'ready') return <LazyTextsState status={texts} isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
@@ -39,8 +44,8 @@ export function Guide({ isSettingsOpen, setIsSettingsOpen }) {
             <h2 className="text-xl font-semibold text-shark dark:text-white">{t(`guide.sections.${section.id}`)}</h2>
             {section.id === 'ai' && (
               <p className="text-sm text-gray-700 dark:text-slate-300">
-                {t('aiGuide.guideIntro')}{' '}
-                <Link to={AI_GUIDE_PATH} className="font-medium text-ocean hover:underline">{t('aiGuide.link')} →</Link>
+                {t('guide.aiIntro')}{' '}
+                <Link to={AI_GUIDE_PATH} className="font-medium text-ocean hover:underline">{t('guideLinks.ai')} →</Link>
               </p>
             )}
             {section.items.map((item) => {

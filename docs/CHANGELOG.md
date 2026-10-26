@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.17.2] - 2026-10-26
+
+### ⚡ Performance
+
+- **Textos dos guias fora do bundle inicial.** Os textos de Como interpretar (`guide.*`) e do Guia de IA no Processo (`aiGuide.*`) eram cerca de metade de `pt.json`/`en.json`, e os dois idiomas iam no chunk de entrada de todo primeiro acesso. Agora ficam em `src/locales/guide.{pt,en}.json` e `src/locales/aiGuide.{pt,en}.json`, carregados por import dinâmico só por `/guia` e `/guia/ia`, e só no idioma ativo (`src/lib/lazyLocales.js`). Chunk de entrada: ~443 KB → ~355 KB (~141 → ~115 KB gzip); JS do primeiro acesso (entrada + modulepreloads): ~731 KB → ~644 KB. Sem `manualChunks`.
+- As páginas mostram o mesmo indicador de carregamento da troca de rota até os textos chegarem (nunca chaves cruas) e, se o chunk falhar, uma mensagem pedindo para recarregar. A rolagem para `#âncora` espera os textos. Ao trocar de idioma em `/guia` ou `/guia/ia`, os textos do outro idioma são baixados antes da troca, sem piscar.
+- Os rótulos de link usados fora dos guias (Como interpretar, Guia de IA no Processo, Como ler esta visão) passaram para `guideLinks.*` no locale principal. Um teste impede que `guide`/`aiGuide` voltem para `pt.json`/`en.json`, e a paridade de chaves pt/en dos dois namespaces continua testada.
+
+---
+
 ## [3.17.1] - 2026-10-26
 
 ### 🐛 Fixed
