@@ -756,5 +756,109 @@
       "orgNotFound": "Organization or user not found (or no access with your token).",
       "orgFailed": "Couldn't list the repositories (API failure or rate limit)."
     }
+  },
+  "aiProcess": {
+    "title": "AI in the Process",
+    "repoSubtitle": "Repository",
+    "tooltip": "Traces GitHub keeps: versioned AI agent configuration, co-authorship declared in commits, PRs opened by agents and reviews by AI bots. It does not measure how much code AI wrote.",
+    "noTraces": "No AI traces found",
+    "noTracesDetail": "No trace does not mean no AI: autocomplete leaves no mark, and commit co-authorship depends on the tool and on the committer's settings.",
+    "lowerBoundNote": "Everything here is a lower bound: only AI use that left a trace in the repository shows up. No trace does not mean no use. The review and PR indicators in the other sections still measure only PRs by people; agent PRs appear only here.",
+    "genericTool": "Agents (generic)",
+    "toolsTitle": "Detected tools",
+    "sources": {
+      "config": "config",
+      "commit": "commit",
+      "pr": "PR",
+      "review": "review",
+      "template": "from template",
+      "templateUnknown": "origin ?",
+      "tooltip": {
+        "config": "The tool's configuration file is versioned in the repository.",
+        "commit": "Commit with declared co-authorship (Co-authored-by trailer) or authored by an agent.",
+        "pr": "Merged PR opened by an agent.",
+        "review": "PR reviewed or commented on by an AI review bot.",
+        "template": "This tool's configuration came from the template repository: it is listed, but does not count as the repository's own use.",
+        "templateUnknown": "Could not confirm whether the configuration came from a template repository."
+      }
+    },
+    "depth": {
+      "title": "Configuration depth",
+      "instructions": "instructions",
+      "extensions": "instructions + extensions (skills, commands, subagents, MCP)",
+      "hiddenLocal": "Local use ignored in .gitignore: {{paths}}",
+      "none": "No versioned AI configuration.",
+      "treeTruncated": "? Configuration not fully verified: the file tree came truncated (very large repository).",
+      "treeUnavailable": "? Configuration not verified: the file tree could not be fetched."
+    },
+    "commitsLabel": "Commits with an AI trace",
+    "commits": "{{withAi}} of {{n}} commits",
+    "commitsTooltip": "Recent non-merge commits, without maintenance bots (Dependabot, Renovate…), with declared AI co-authorship or authored by an agent.",
+    "firstTrace": "First trace in the sample: {{date}}",
+    "prsLabel": "PRs opened by agents",
+    "prs": "{{count}} of {{n}} merged PRs",
+    "prsTooltip": "Latest merged PRs, without maintenance bots, authored by a coding agent (Copilot, Claude, Devin…).",
+    "aiReviewedLabel": "PRs reviewed by AI",
+    "aiReviewed": "{{count}} of {{n}} merged PRs",
+    "aiReviewedTooltip": "Merged PRs with at least one review or comment from an AI review bot (CodeRabbit, Copilot, Gemini…).",
+    "needsToken": "requires a token",
+    "fetchFailed": "fetch failed",
+    "emptySample": "none in the sample",
+    "notAvailable": "N/A",
+    "safeguards": {
+      "title": "Safeguards",
+      "agentUnapproved": "{{unapproved}} of {{agentPrs}} agent PRs merged without human approval",
+      "noAgentPrs": "No agent PRs in the sample: nothing to check.",
+      "size": "Median size: agents {{agent}} lines (n = {{agentN}}) × people {{human}} lines (n = {{humanN}})",
+      "sizeUnavailable": "The size comparison needs at least {{min}} PRs of known size in each group (agents: {{agentN}}, people: {{humanN}}).",
+      "tooltip": "Human approval: an APPROVED review before the merge, by someone who is not the author and not a bot (same rule as Code Review)."
+    },
+    "coherence": {
+      "title": "The sources disagree",
+      "intro": "This repository's trace sources tell different stories. That proves nothing: see the possible causes.",
+      "configWithoutDeclaration": "There is versioned AI configuration (outside the template), but no commit in the sample declares AI co-authorship or is authored by an agent.",
+      "hiddenWithoutDeclaration": ".gitignore ignores AI artifacts (unversioned local use), but no commit in the sample declares AI co-authorship.",
+      "toolMismatch": "The configuration is for one tool and the declarations are from another (informational, not a disagreement).",
+      "coauthorDisabled": "Declaration turned off in the configuration: the versioned .claude/settings.json turns off Claude Code's co-author trailer.",
+      "legitimateCausesTitle": "Possible legitimate causes:",
+      "legitimateCauses": {
+        "squash": "squash merges that rewrite commit messages;",
+        "otherMember": "configuration set up by another group member;",
+        "noTrailer": "a tool that does not write the co-author trailer;",
+        "disabled": "declaration turned off in the tool's configuration."
+      },
+      "unverifiedTitle": "Not verified:",
+      "commitsUnverified": "commits (recent commits could not be fetched)",
+      "configUnverified": "configuration (file tree truncated or unavailable)",
+      "gitignoreUnverified": ".gitignore and turned-off declaration (AI context query unavailable)",
+      "templateUnverified": "template origin (GitHub reports no template repository, or the query was unavailable)",
+      "prsUnverified": "PRs (merged PRs could not be fetched)"
+    },
+    "badge": {
+      "title": "Responsible AI use",
+      "notApplicable": "not applicable — no AI traces",
+      "score": "{{met}} of {{total}}",
+      "noCriteria": "no verifiable criteria",
+      "tooltip": "Checks observable practices and coherence between AI traces, not actual AI use nor anyone's character. Criteria that were not verified or do not apply are left out of the count. It does not penalize not using AI.",
+      "criteria": {
+        "config": "Versioned AI configuration",
+        "declared": "Commits with declared co-authorship",
+        "coherent": "Coherent sources",
+        "agentReviewed": "Agent PRs with human approval",
+        "testsCi": "Tests and CI detected"
+      },
+      "states": {
+        "met": "✓",
+        "unmet": "✗",
+        "na": "not applicable",
+        "unverified": "? not verified"
+      }
+    },
+    "unavailable": {
+      "noToken": "With a GitHub token, we also check .gitignore, configuration (turned-off declaration), template, AI review and safeguards.",
+      "error": "Part of the data could not be fetched (GitHub API failure or limit): items marked N/A or ? were not verified.",
+      "snapshot": "This historical snapshot did not record AI traces."
+    },
+    "notRecorded": "AI in the Process: not recorded in this analysis."
   }
 }

@@ -4,13 +4,14 @@ import { analyzers } from '../utils/analyzers.js';
 import { analyzeReviewMetrics, analyzeLeadTime } from '../utils/prReviewStats.js';
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
 import { analyzeBranches } from '../utils/branches.js';
-import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf } from '../utils/repoTree.js';
+import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf, treeStatusOf } from '../utils/repoTree.js';
+import { buildAiProcess, parseAiRepoContext, fromRestCommit } from '../utils/aiProcess.js';
 import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare } from '../utils/activityStats.js';
 import { analyzeCiRuns, analyzeConventionalCommits, analyzeReleases, RELEASES_PAGE } from '../utils/projectPractices.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
-import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE } from '../constants.js';
+import { RECENT_ITEMS_LIMIT, CACHE_STALE_TIME_MS, LANGUAGE_MIN_PERCENTAGE, MERGED_PR_SAMPLE } from '../constants.js';
 
 // A snapshot isn't persisted when any of these failed: it would become
 // permanent history (Timeline/Benchmark/Ranking) with fake values — e.g. the
@@ -117,7 +118,9 @@ async function fetchRepositoryData(repoName) {
         // GraphQL requires a token; without one, skip it (metrics → unavailable).
         hasToken ? githubService.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null),
         githubService.fetchPunchCard(owner, repo),
-        repoData.default_branch ? githubService.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] })
+        repoData.default_branch ? githubService.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
+        // AI in the Process: .gitignore, .claude/settings.json, template. Token only (zero new requests without one).
+        hasToken ? githubService.fetchAiRepoContext(owner, repo) : Promise.resolve(null)
     ]);
 
     // Map of result indices to human-readable endpoint names
@@ -126,14 +129,15 @@ async function fetchRepositoryData(repoName) {
         'openIssues', 'closedIssues', 'recentPRs', 'languages',
         'communityProfile', 'repositoryTree', 'releases',
         'commitActivity', 'prStats', 'codeFrequency', 'mergedPRs',
-        'prReviewStats', 'punchCard', 'actionRuns'
+        'prReviewStats', 'punchCard', 'actionRuns', 'aiContext'
     ];
 
     // Collect warnings from rejected promises. The REST PR list only feeds lead
     // time when the GraphQL sample is missing: its failure alone isn't partial
     // data. /stats/* (202 computing, 422 too large) are explained by their own
     // charts/cards; a 10k+ commit repo would otherwise always show the banner.
-    const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard', 'actionRuns']);
+    // aiContext: the AI in the Process section explains what it couldn't verify.
+    const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard', 'actionRuns', 'aiContext']);
     const warnings = results.reduce((acc, result, index) => {
         const unused = endpointNames[index] === 'prStats' && results[15]?.status === 'fulfilled' && results[15].value;
         if (result.status === 'rejected' && !unused && !SELF_EXPLAINED.has(endpointNames[index])) {
@@ -163,6 +167,8 @@ async function fetchRepositoryData(repoName) {
     const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : null;
     const mergedPRsCount = results[14]?.status === 'fulfilled' ? results[14].value : null;
     const prReviewStats = results[15]?.status === 'fulfilled' ? results[15].value : null;
+    // null = skipped (no token) or failed: the section shows those checks as not verified.
+    const aiContext = results[18]?.status === 'fulfilled' && results[18].value ? parseAiRepoContext(results[18].value) : null;
 
     // Get recent commits and PRs for activity logs
     const recentCommits = commits.slice(0, RECENT_ITEMS_LIMIT);
@@ -237,6 +243,23 @@ async function fetchRepositoryData(repoName) {
         releases: analyzeReleases(results[10]?.status === 'fulfilled' ? results[10].value.list : null),
     };
 
+    // AI in the Process: counts and tool ids only, nothing per person (spec §3).
+    // A failure here never blocks persistence (not in PERSIST_BLOCKERS).
+    // withToken lets the section tell "no token" from "request failed" for the
+    // token-only checks (context, AI review, safeguards).
+    const aiProcess = {
+      ...buildAiProcess({
+        treePaths: treePathsOf(repositoryTree),
+        treeStatus: treeStatusOf(repositoryTree),
+        ctx: aiContext,
+        commits: results[0]?.status === 'fulfilled' ? results[0].value.map(fromRestCommit) : null,
+        prs: prReviewStats ?? pullRequestsStats,
+        reviewsAvailable: Boolean(prReviewStats),
+        maturity,
+        prLimit: MERGED_PR_SAMPLE,
+      }),
+      withToken: hasToken,
+    };
 
     // One report object: shown on screen and persisted as the snapshot's full_report.
     const report = {
@@ -287,7 +310,8 @@ async function fetchRepositoryData(repoName) {
           weekdaysStatus: punchCardStats.status
       },
       codeChurn,
-      practices
+      practices,
+      aiProcess
     };
 
     // Don't persist a snapshot built on failed critical data: it would become

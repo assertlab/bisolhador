@@ -764,5 +764,109 @@
       "orgNotFound": "Organização ou usuário não encontrado (ou sem acesso com o seu token).",
       "orgFailed": "Não foi possível listar os repositórios (falha ou limite da API)."
     }
+  },
+  "aiProcess": {
+    "title": "IA no Processo",
+    "repoSubtitle": "Repositório",
+    "tooltip": "Rastros que o GitHub guarda: configuração de agentes de IA versionada, coautoria declarada em commits, PRs abertos por agentes e revisões de bots de IA. Não mede quanto código foi escrito por IA.",
+    "noTraces": "Nenhum rastro de IA encontrado",
+    "noTracesDetail": "Sem rastro não quer dizer sem IA: o autocomplete não deixa marca, e a coautoria nos commits depende da ferramenta e da configuração de quem commita.",
+    "lowerBoundNote": "Tudo aqui é limite inferior: só aparece o uso de IA que deixou rastro no repositório. Ausência de rastro não significa ausência de uso. Os indicadores de revisão e de PR das outras seções continuam medindo só PRs de pessoas; PRs de agentes aparecem só aqui.",
+    "genericTool": "Agentes (genérico)",
+    "toolsTitle": "Ferramentas detectadas",
+    "sources": {
+      "config": "config",
+      "commit": "commit",
+      "pr": "PR",
+      "review": "revisão",
+      "template": "do template",
+      "templateUnknown": "origem ?",
+      "tooltip": {
+        "config": "Arquivo de configuração da ferramenta versionado no repositório.",
+        "commit": "Commit com coautoria declarada (trailer Co-authored-by) ou de autoria de um agente.",
+        "pr": "PR mesclado aberto por um agente.",
+        "review": "PR com revisão ou comentário de um bot de revisão de IA.",
+        "template": "A configuração desta ferramenta veio do repositório-modelo: aparece na lista, mas não conta como uso do próprio repositório.",
+        "templateUnknown": "Não foi possível confirmar se a configuração veio de um repositório-modelo."
+      }
+    },
+    "depth": {
+      "title": "Profundidade da configuração",
+      "instructions": "instruções",
+      "extensions": "instruções + extensões (skills, comandos, subagentes, MCP)",
+      "hiddenLocal": "Uso local ignorado no .gitignore: {{paths}}",
+      "none": "Nenhuma configuração de IA versionada.",
+      "treeTruncated": "? Configuração não verificada por completo: a árvore de arquivos veio truncada (repositório muito grande).",
+      "treeUnavailable": "? Configuração não verificada: não foi possível obter a árvore de arquivos."
+    },
+    "commitsLabel": "Commits com rastro de IA",
+    "commits": "{{withAi}} de {{n}} commits",
+    "commitsTooltip": "Commits recentes sem merge, sem bots de manutenção (Dependabot, Renovate…), com coautoria de IA declarada ou de autoria de um agente.",
+    "firstTrace": "Primeiro rastro na amostra: {{date}}",
+    "prsLabel": "PRs abertos por agentes",
+    "prs": "{{count}} de {{n}} PRs mesclados",
+    "prsTooltip": "PRs mesclados mais recentes, sem bots de manutenção, cujo autor é um agente de código (Copilot, Claude, Devin…).",
+    "aiReviewedLabel": "PRs com revisão de IA",
+    "aiReviewed": "{{count}} de {{n}} PRs mesclados",
+    "aiReviewedTooltip": "PRs mesclados com pelo menos uma revisão ou comentário de um bot de revisão de IA (CodeRabbit, Copilot, Gemini…).",
+    "needsToken": "exige token",
+    "fetchFailed": "falha ao buscar",
+    "emptySample": "nenhum na amostra",
+    "notAvailable": "n/d",
+    "safeguards": {
+      "title": "Salvaguardas",
+      "agentUnapproved": "{{unapproved}} de {{agentPrs}} PRs de agentes mesclados sem aprovação humana",
+      "noAgentPrs": "Nenhum PR de agente na amostra: nada a verificar.",
+      "size": "Tamanho mediano: agentes {{agent}} linhas (n = {{agentN}}) × pessoas {{human}} linhas (n = {{humanN}})",
+      "sizeUnavailable": "Comparação de tamanho exige pelo menos {{min}} PRs com tamanho conhecido em cada grupo (agentes: {{agentN}}, pessoas: {{humanN}}).",
+      "tooltip": "Aprovação humana: review APPROVED antes do merge, de alguém que não é o autor e não é bot (mesma regra do Code Review)."
+    },
+    "coherence": {
+      "title": "As fontes não concordam",
+      "intro": "As fontes de rastro deste repositório contam histórias diferentes. Isso não é prova de nada: veja as causas possíveis.",
+      "configWithoutDeclaration": "Há configuração de IA versionada (fora do template), mas nenhum commit da amostra declara coautoria de IA nem é de autoria de um agente.",
+      "hiddenWithoutDeclaration": "O .gitignore ignora artefatos de IA (uso local não versionado), mas nenhum commit da amostra declara coautoria de IA.",
+      "toolMismatch": "A configuração é de uma ferramenta e as declarações são de outra (informativo, não é desacordo).",
+      "coauthorDisabled": "Declaração desligada na configuração: o .claude/settings.json versionado desliga o trailer de coautoria do Claude Code.",
+      "legitimateCausesTitle": "Causas legítimas possíveis:",
+      "legitimateCauses": {
+        "squash": "merge com squash que reescreve as mensagens dos commits;",
+        "otherMember": "configuração feita por outra pessoa do grupo;",
+        "noTrailer": "ferramenta que não grava o trailer de coautoria;",
+        "disabled": "declaração desligada na configuração da ferramenta."
+      },
+      "unverifiedTitle": "Não verificado:",
+      "commitsUnverified": "commits (não foi possível obter os commits recentes)",
+      "configUnverified": "configuração (árvore de arquivos truncada ou indisponível)",
+      "gitignoreUnverified": ".gitignore e declaração desligada (consulta de contexto de IA indisponível)",
+      "templateUnverified": "origem template (o GitHub não informa um repositório-modelo, ou a consulta não estava disponível)",
+      "prsUnverified": "PRs (não foi possível obter os PRs mesclados)"
+    },
+    "badge": {
+      "title": "Uso responsável de IA",
+      "notApplicable": "não se aplica — nenhum rastro de IA",
+      "score": "{{met}} de {{total}}",
+      "noCriteria": "nenhum critério verificável",
+      "tooltip": "Verifica práticas observáveis e a coerência entre os rastros de IA, não o uso real de IA nem o caráter de ninguém. Critérios não verificados ou que não se aplicam ficam fora da conta. Não penaliza quem não usa IA.",
+      "criteria": {
+        "config": "Configuração de IA versionada",
+        "declared": "Commits com coautoria declarada",
+        "coherent": "Fontes coerentes",
+        "agentReviewed": "PRs de agentes com aprovação humana",
+        "testsCi": "Testes e CI detectados"
+      },
+      "states": {
+        "met": "✓",
+        "unmet": "✗",
+        "na": "não se aplica",
+        "unverified": "? não verificado"
+      }
+    },
+    "unavailable": {
+      "noToken": "Com token do GitHub, também verificamos .gitignore, configuração (declaração desligada), template, revisão por IA e salvaguardas.",
+      "error": "Não foi possível obter parte dos dados (falha ou limite da API do GitHub): os itens marcados n/d ou ? não foram verificados.",
+      "snapshot": "Este snapshot histórico não registrou os rastros de IA."
+    },
+    "notRecorded": "IA no Processo: não registrado nesta análise."
   }
 }
