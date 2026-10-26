@@ -3,8 +3,8 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GUIDE_SECTIONS, GUIDE_IDS, CHAOSS, guidePath } from './indicatorGuide.js';
-import pt from '../locales/pt.json';
-import en from '../locales/en.json';
+import pt from '../locales/guide.pt.json';
+import en from '../locales/guide.en.json';
 
 const FIELDS = ['name', 'what', 'read', 'limits', 'chaossNote'];
 
@@ -22,6 +22,14 @@ describe('indicator guide integrity', () => {
         expect(locale.guide.items[item.id].name).not.toBe('');
       }
     }
+  });
+
+  it('pt and en have the same keys in the guide namespace', () => {
+    const keyPaths = (obj, prefix = '') => Object.entries(obj).flatMap(([k, v]) => (
+      v && typeof v === 'object' ? keyPaths(v, `${prefix}${k}.`) : [`${prefix}${k}`]
+    ));
+    expect(Object.keys(pt)).toEqual(['guide']);
+    expect(keyPaths(en.guide).sort()).toEqual(keyPaths(pt.guide).sort());
   });
 
   it('CHAOSS refs exist, point to the official knowledge base, and "related" entries explain the difference', () => {

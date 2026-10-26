@@ -1,4 +1,4 @@
-// "Guia de IA no Processo" (/guia/ia): structure and data. Texts live in locales (aiGuide.*);
+// "Guia de IA no Processo" (/guia/ia): structure and data. Texts live in src/locales/aiGuide.{pt,en}.json (aiGuide.*, loaded only by /guia/ia);
 // what the app detects is generated from the registry (aiRegistry.js), never copied into locales.
 import { AI_TOOLS, GITIGNORE_AI_EXAMPLES, REGISTRY_VERSION, CONTEXT_DIRS } from './aiRegistry.js';
 import { AI_PROCESS_METHOD } from './aiProcess.js';

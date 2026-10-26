@@ -1,0 +1,91 @@
+import { describe, it, expect } from 'vitest';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import i18next from 'i18next';
+import pt from '../locales/pt.json';
+import en from '../locales/en.json';
+import guidePt from '../locales/guide.pt.json';
+import guideEn from '../locales/guide.en.json';
+import aiGuideEn from '../locales/aiGuide.en.json';
+import { LAZY_LOCALE_NAMES, bundleLanguage, isLocaleLoaded, loadLocale, markLocaleInUse, changeLanguageWithLocales } from './lazyLocales.js';
+
+async function makeI18n(lng = 'pt') {
+  const instance = i18next.createInstance();
+  await instance.init({ lng, fallbackLng: 'pt', resources: structuredClone({ pt: { translation: pt }, en: { translation: en } }) });
+  return instance;
+}
+
+describe('lazy locale bundles', () => {
+  it('the main locales do not carry the page-only namespaces (they would go back into the entry bundle)', () => {
+    for (const name of LAZY_LOCALE_NAMES) {
+      expect(pt, name).not.toHaveProperty(name);
+      expect(en, name).not.toHaveProperty(name);
+    }
+  });
+
+  it('i18n.js does not import the page-only files statically', () => {
+    const source = readFileSync(new URL('../i18n.js', import.meta.url), 'utf8');
+    for (const name of LAZY_LOCALE_NAMES) expect(source).not.toContain(`${name}.`);
+  });
+
+  it('only the pages that load a bundle read its keys (anywhere else they would render raw)', () => {
+    const owners = { guide: 'pages/Guide.jsx', aiGuide: 'pages/AiGuide.jsx' };
+    const src = fileURLToPath(new URL('..', import.meta.url));
+    const files = [];
+    const walk = (dir) => readdirSync(dir).forEach((f) => {
+      const p = join(dir, f);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (/\.jsx?$/.test(p) && !p.endsWith('.test.js')) files.push(p);
+    });
+    walk(src);
+    for (const file of files) {
+      const text = readFileSync(file, 'utf8').replace(/^\s*(\/\/|\*|\/\*).*$/gm, ''); // code only
+      for (const [name, owner] of Object.entries(owners)) {
+        if (file.endsWith(owner)) continue;
+        expect(text, file).not.toMatch(new RegExp(`(?:t\\(|i18nKey=)\\s*['"\`]${name}\\.`));
+      }
+    }
+  });
+
+  it('maps UI languages to a bundle language like intlLocale does', () => {
+    expect(bundleLanguage('en')).toBe('en');
+    expect(bundleLanguage('en-US')).toBe('en');
+    expect(bundleLanguage('pt-BR')).toBe('pt');
+    expect(bundleLanguage('es')).toBe('pt');
+    expect(bundleLanguage(undefined)).toBe('pt');
+  });
+
+  it('registers the requested language only, merged into the translation namespace', async () => {
+    const i18n = await makeI18n('en');
+    expect(isLocaleLoaded(i18n, 'guide')).toBe(false);
+    expect(i18n.t('guide.title')).toBe('guide.title');
+
+    await loadLocale(i18n, 'guide');
+    expect(isLocaleLoaded(i18n, 'guide', 'en')).toBe(true);
+    expect(isLocaleLoaded(i18n, 'guide', 'pt')).toBe(false);
+    expect(i18n.t('guide.title')).toBe(guideEn.guide.title);
+    expect(i18n.t('header.title')).toBe(en.header.title); // main texts untouched
+
+    await loadLocale(i18n, 'guide', 'pt');
+    expect(i18n.t('guide.title', { lng: 'pt' })).toBe(guidePt.guide.title);
+  });
+
+  it('rejects an unknown bundle name', async () => {
+    await expect(loadLocale(await makeI18n(), 'nope')).rejects.toThrow('nope');
+  });
+
+  it('a language switch loads the bundles of mounted pages before changing language', async () => {
+    const i18n = await makeI18n('pt');
+    await loadLocale(i18n, 'aiGuide');
+    const release = markLocaleInUse('aiGuide');
+    let loadedWhenChanged = null;
+    i18n.on('languageChanged', () => { loadedWhenChanged = isLocaleLoaded(i18n, 'aiGuide', 'en'); });
+
+    await changeLanguageWithLocales(i18n, 'en');
+    release();
+    expect(loadedWhenChanged).toBe(true);
+    expect(i18n.t('aiGuide.title')).toBe(aiGuideEn.aiGuide.title);
+    expect(isLocaleLoaded(i18n, 'guide', 'en')).toBe(false); // not mounted, not fetched
+  });
+});

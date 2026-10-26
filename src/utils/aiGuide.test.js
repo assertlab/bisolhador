@@ -6,8 +6,8 @@ import { GUIDE_IDS, AI_GUIDE_PATH } from './indicatorGuide.js';
 import {
   AI_GUIDE_BLOCKS, DECLARATION_TOOLS, DECLARATION_EXCLUDED, AI_GUIDE_FAQ, AI_GUIDE_LIMITS, AI_GUIDE_NUMBERS, detectionRows,
 } from './aiGuide.js';
-import pt from '../locales/pt.json';
-import en from '../locales/en.json';
+import pt from '../locales/aiGuide.pt.json';
+import en from '../locales/aiGuide.en.json';
 
 // Every leaf key path of an object ("a.b.c").
 const keyPaths = (obj, prefix = '') => Object.entries(obj).flatMap(([k, v]) => (
@@ -114,7 +114,7 @@ describe('AI guide (/guia/ia)', () => {
 
   it('the page is a lazy route at AI_GUIDE_PATH', () => {
     const app = readFileSync(new URL('../App.jsx', import.meta.url), 'utf8');
-    expect(app).toMatch(/const AiGuide = lazy\(\(\) => import\('\.\/pages\/AiGuide\.jsx'\)/);
+    expect(app).toMatch(/const AiGuide = lazy\(\(\) => withTexts\('aiGuide', \(\) => import\('\.\/pages\/AiGuide\.jsx'\)\)/);
     expect(app).toContain(`path="${AI_GUIDE_PATH}"`);
   });
 });

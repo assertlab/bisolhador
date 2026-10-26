@@ -41,7 +41,7 @@ export function AiStudentTable({ students }) {
           {/* New tab: following it in place would lose the in-memory class analysis; noreferrer keeps
               /turma?repos=… out of the guide page's referrer (GA is on there). */}
           <Link to={`${AI_GUIDE_PATH}#teachers`} {...NEW_TAB_LINK_PROPS} className="font-medium text-ocean hover:underline">
-            {t('aiGuide.studentsLink')}: {t('aiGuide.link')} →
+            {t('guideLinks.aiStudents')}: {t('guideLinks.ai')} →
             <NewTabHint />
           </Link>
         </p>

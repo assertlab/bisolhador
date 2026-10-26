@@ -143,7 +143,7 @@ export function AiProcessSection({ aiProcess }) {
           {...linkTargetProps(newTab)}
           className="font-medium text-ocean hover:underline"
         >
-          {t('aiGuide.link')} →
+          {t('guideLinks.ai')} →
           {newTab && <NewTabHint />}
         </Link>
       </p>
