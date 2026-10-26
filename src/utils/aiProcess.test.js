@@ -244,6 +244,11 @@ describe('analyzeResponsibleBadge', () => {
     expect(stateOf(analyzeResponsibleBadge(badgeInput(cfg, noAiCommits, prs, { safeguards: with1 })), 'agentReviewed')).toBe('unmet');
     expect(stateOf(analyzeResponsibleBadge(badgeInput(cfg, noAiCommits, prs, { safeguards: { ...with1, agentUnapproved: 0 } })), 'agentReviewed')).toBe('met');
   });
+  it('empty commit sample (n = 0): declared is unverified, not unmet', () => {
+    const cfg = analyzeAiConfig(['CLAUDE.md'], 'complete', emptyCtx);
+    const empty = { ...noAiCommits, n: 0, percentage: null };
+    expect(stateOf(analyzeResponsibleBadge(badgeInput(cfg, empty, noAiPrs)), 'declared')).toBe('unverified');
+  });
   it('commits not measured: declared and coherent unverified; truncated tree: config unverified', () => {
     const cfg = analyzeAiConfig(['src/a.js'], 'truncated', null);
     const b = analyzeResponsibleBadge(badgeInput(cfg, analyzeAiCommits(null), { ...noAiPrs, aiReviewed: { available: true, count: 1, tools: ['coderabbit'] } }));

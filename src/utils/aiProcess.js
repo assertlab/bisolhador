@@ -220,8 +220,9 @@ function configState(config) {
   return config.status === 'complete' ? 'unmet' : 'unverified';
 }
 
+// An empty sample can't show a declaration either way (same rule as analyzeCoherence).
 function declaredState(commits) {
-  if (!commits.available) return 'unverified';
+  if (!commits.available || commits.n === 0) return 'unverified';
   return commits.withAi > 0 ? 'met' : 'unmet';
 }
 
