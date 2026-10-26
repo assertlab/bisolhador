@@ -41,7 +41,7 @@ describe('registry display fields', () => {
   it('one .gitignore example per pattern, each matched by its pattern and detected', () => {
     expect(GITIGNORE_AI_EXAMPLES).toHaveLength(GITIGNORE_AI_PATTERNS.length);
     GITIGNORE_AI_EXAMPLES.forEach((line, i) => {
-      const concrete = line.replace('*', '.conf.yml');
+      const concrete = line.replaceAll('*', '.conf.yml');
       expect(GITIGNORE_AI_PATTERNS[i].test(concrete), line).toBe(true);
       expect(gitignoreHidesAi(concrete), line).toEqual([concrete]);
     });
