@@ -14,6 +14,9 @@ import {
   GITHUB_PER_PAGE_CONTRIBUTORS,
   GITHUB_PER_PAGE_RELEASES,
   AUTHORSHIP_MAX_PATHS,
+  AUTHORSHIP_COMMITS_PER_PATH,
+  CLASSROOM_COMMIT_PAGES,
+  CLASSROOM_PR_SCAN,
 } from "../constants.js";
 
 const GITHUB_BASE_URL = "https://api.github.com";
@@ -524,7 +527,7 @@ export const githubService = {
     return { ...data, errors };
   },
 
-  // Who touched each AI-config path: the last 50 commits per path (max 10 paths).
+  // Who touched each AI-config path: the last AUTHORSHIP_COMMITS_PER_PATH commits per path (max AUTHORSHIP_MAX_PATHS).
   // Paths go in as variables ($p0..), never interpolated. A history that is
   // missing or has a partial error is incomplete (its origin stays unverified).
   async fetchAiConfigAuthorship(owner, repo, paths) {
@@ -535,7 +538,7 @@ export const githubService = {
     if (list.length === 0) return [];
     const vars = list.map((_, i) => `$p${i}: String!`).join(", ");
     const histories = list
-      .map((_, i) => `h${i}: history(path: $p${i}, first: 50) {
+      .map((_, i) => `h${i}: history(path: $p${i}, first: ${AUTHORSHIP_COMMITS_PER_PATH}) {
             pageInfo { hasNextPage }
             nodes { committedDate author { name email user { login } } }
           }`)
@@ -569,7 +572,7 @@ export const githubService = {
   },
 
   // Default-branch commits between since/until (ISO), up to maxPages × 100.
-  async fetchCommitHistoryInPeriod(owner, repo, since, until, maxPages = 3) {
+  async fetchCommitHistoryInPeriod(owner, repo, since, until, maxPages = CLASSROOM_COMMIT_PAGES) {
     const query = `query($owner: String!, $name: String!, $since: GitTimestamp!, $until: GitTimestamp!, $after: String) {
       repository(owner: $owner, name: $name) {
         defaultBranchRef { target { ... on Commit {
@@ -607,7 +610,7 @@ export const githubService = {
   // Lighter than the Dashboard query: no comments (divergence isn't shown
   // here) and the last 20 reviews — heavy pages on next.js-sized repos tripped
   // GitHub's secondary rate limit and blocked the rest of the class.
-  async fetchMergedPullRequestsInPeriod(owner, repo, since, until, { pageSize = 25, maxScanned = 200 } = {}) {
+  async fetchMergedPullRequestsInPeriod(owner, repo, since, until, { pageSize = 25, maxScanned = CLASSROOM_PR_SCAN } = {}) {
     const query = `query($owner: String!, $name: String!, $n: Int!, $after: String) {
       repository(owner: $owner, name: $name) {
         pullRequests(states: MERGED, first: $n, after: $after, orderBy: { field: UPDATED_AT, direction: DESC }) {
