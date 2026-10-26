@@ -33,7 +33,7 @@ Consequências:
 - Cruzamento entre fontes ("fontes em desacordo"), profundidade da configuração e o selo **"Uso responsável de IA"** (§5.5–§5.7).
 - Duas subseções: **IA no Processo › Repositório** (Dashboard e Modo Turma) e **IA no Processo › Por estudante** (só Modo Turma).
 - Guia "Como interpretar" com uma entrada por indicador novo.
-- **Custo:** sem token, zero requisições novas no Dashboard. Com token, campos a mais em consultas GraphQL que já existem, mais **uma** requisição GraphQL de autoria por repositório **que tenha configuração de IA** (§4.3).
+- **Custo:** sem token, zero requisições novas no Dashboard. Com token, **uma** consulta GraphQL leve de contexto de IA por análise (`fetchAiRepoContext`: `.gitignore`, `.claude/settings.json`, listagens de diretório e o template), a mesma no Dashboard e no Modo Turma; no Modo Turma, mais **uma** de autoria por repositório **que tenha configuração de IA** (§4.3). Ajustado no plano (2026-10-26): uma consulta dedicada e compartilhada é mais simples do que espalhar aliases pelas consultas existentes, e o custo continua de 1 requisição.
 
 **Não-objetivos (agora)**
 - Ler o conteúdo dos workflows de CI (item 5 da conversa). Pode voltar como fase 2, só com token, numa única consulta GraphQL com aliases.
@@ -59,9 +59,9 @@ Consequências:
 | Autoria de PR por agente | amostra GraphQL de PRs mesclados (com token) ou REST de PRs fechados (sem token) | PRs mesclados no período (`fetchMergedPullRequestsInPeriod`) | zero |
 | Revisão por IA | `reviews`/`comments` da amostra GraphQL (com token) | `reviews` da consulta do período | zero |
 
-| `.gitignore` e `.claude/settings.json` (conteúdo) | alias `object(expression: "HEAD:<arquivo>") { ... on Blob { text } }` na consulta GraphQL de PRs (só com token) | aliases na consulta de histórico | campos a mais |
-| Origem template | `repository.templateRepository` + o mesmo caminho no template (alias, só com token) | idem | campos a mais |
-| Autoria da configuração | histórico por caminho (`history(path:)`), só para descartar template quando `templateRepository` não resolver; **nada por pessoa** | histórico por caminho de cada arquivo de IA detectado, com autor (visão por estudante) | +1 requisição GraphQL por repositório com configuração |
+| `.gitignore` e `.claude/settings.json` (conteúdo) | `fetchAiRepoContext` (só com token) | `fetchAiRepoContext` | +1 GraphQL com token |
+| Origem template | `templateRepository` em `fetchAiRepoContext` | idem + fallback pelo commit inicial de `github-classroom[bot]` | (mesma consulta) |
+| Autoria da configuração | não buscada (origem template só via `templateRepository`; sem ele, "não verificada"); **nada por pessoa** | histórico por caminho de cada arquivo de IA detectado, com autor (visão por estudante) | +1 requisição GraphQL por repositório com configuração |
 
 Sem token, a revisão por IA fica "n/d" com a explicação que já existe para os outros indicadores de revisão. As demais fontes funcionam sem token.
 
