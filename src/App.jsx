@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import analytics from './services/analytics.js';
 import { ToastContainer } from './components/Toast.jsx';
+import { PageLoadingState } from './components/skeletons/PageLoadingState.jsx';
 import i18n from './i18n.js';
 import { loadLocale } from './lib/lazyLocales.js';
 
@@ -28,14 +29,7 @@ const Classroom = lazy(() => import('./pages/Classroom.jsx').then((m) => ({ defa
 // wait while a route's chunk downloads.
 function PageFallback() {
   const { t } = useTranslation();
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-shark mx-auto mb-4"></div>
-        <p className="text-gray-600 dark:text-slate-400">{t('app.loadingPage')}</p>
-      </div>
-    </div>
-  );
+  return <PageLoadingState message={t('app.loadingPage')} />;
 }
 
 // One pageview per route or query change (each search/class counts, as the
