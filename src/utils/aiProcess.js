@@ -144,8 +144,9 @@ export function analyzeAiConfig(paths, treeStatus, ctx) {
   return {
     status: Array.isArray(paths) ? treeStatus : 'unavailable',
     entries: detectConfig(paths).map((e) => ({ ...e, fromTemplate: templatePaths ? templatePaths.has(e.path) : null })),
-    hiddenLocal: gitignoreHidesAi(context?.gitignore ?? null),
-    coauthorDisabled: coauthorDisabled(context?.claudeSettings ?? null),
+    // With an available context, a missing file was verified: nothing hidden, trailer not turned off.
+    hiddenLocal: gitignoreHidesAi(context ? (context.gitignore ?? '') : null),
+    coauthorDisabled: context ? (context.claudeSettings == null ? false : coauthorDisabled(context.claudeSettings)) : null,
   };
 }
 
@@ -155,9 +156,10 @@ const declares = (commits, prs) => commits.withAi > 0 || prs.byAgents > 0;
 
 /**
  * Repository-level cross-check between sources (spec §5.6). Flags are neutral: "the sources do not agree",
- * always shown with the legitimate causes. Rules only fire when commits were measured.
+ * always shown with the legitimate causes. Rules only fire when commits were measured; unmeasured PRs
+ * count as no agent PR (agent work usually also leaves agent-authored commits) and are listed in unverified.
  * @returns {{ flags: Array<'configWithoutDeclaration'|'hiddenWithoutDeclaration'>,
- *   unverified: Array<'config'|'template'|'gitignore'|'commits'>, toolMismatch: boolean, coauthorDisabled: boolean }}
+ *   unverified: Array<'config'|'template'|'gitignore'|'commits'|'prs'>, toolMismatch: boolean, coauthorDisabled: boolean }}
  */
 export function analyzeCoherence(config, commits, prs) {
   const own = ownEntries(config);
@@ -168,6 +170,7 @@ export function analyzeCoherence(config, commits, prs) {
   if (own.some((e) => e.fromTemplate === null)) unverified.push('template');
   if (config.hiddenLocal === null) unverified.push('gitignore');
   if (!measured) unverified.push('commits');
+  if (!prs.available) unverified.push('prs');
 
   const flags = [];
   if (measured && !declared) {
@@ -247,6 +250,8 @@ const configKindOf = (entries) => {
 };
 
 // One row per tool with the sources that show it. Template-only tools are listed with no 'config' source.
+// `fromTemplate` describes only the config origin: true when every config entry of the tool came from the
+// template. A tool with a commit, PR or review source is still a real trace of the repository's own use.
 function mergeTools(config, commits, prs) {
   const own = ownEntries(config);
   const template = config.entries.filter((e) => e.fromTemplate === true);

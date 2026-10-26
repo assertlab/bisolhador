@@ -155,6 +155,16 @@ describe('analyzeAiConfig', () => {
     }
     expect(analyzeAiConfig(null, 'unavailable', null)).toMatchObject({ status: 'unavailable', entries: [] });
   });
+  it('available context without .gitignore or settings file → verified, nothing hidden, trailer not disabled', () => {
+    const cfg = analyzeAiConfig([], 'complete', { ...emptyCtx, gitignore: null, claudeSettings: null });
+    expect(cfg).toMatchObject({ hiddenLocal: [], coauthorDisabled: false });
+    expect(analyzeCoherence(cfg, noAiCommits, noAiPrs).unverified).not.toContain('gitignore');
+    for (const ctx of [null, { ...emptyCtx, available: false }]) {
+      const off = analyzeAiConfig([], 'complete', ctx);
+      expect(off).toMatchObject({ hiddenLocal: null, coauthorDisabled: null });
+      expect(analyzeCoherence(off, noAiCommits, noAiPrs).unverified).toContain('gitignore');
+    }
+  });
 });
 
 describe('analyzeCoherence', () => {
@@ -183,6 +193,11 @@ describe('analyzeCoherence', () => {
   it('an agent PR also counts as declaration; generic config never causes a tool mismatch', () => {
     const cfg = analyzeAiConfig(['AGENTS.md'], 'complete', emptyCtx);
     expect(analyzeCoherence(cfg, noAiCommits, { ...noAiPrs, byAgents: 1, agentTools: ['copilot'] })).toMatchObject({ flags: [], toolMismatch: false });
+  });
+  it('PRs not measured: rules still fire from commits, prs goes to unverified', () => {
+    const cfg = analyzeAiConfig(['CLAUDE.md'], 'complete', emptyCtx);
+    const r = analyzeCoherence(cfg, noAiCommits, analyzeAiPrs(null, { reviewsAvailable: true }));
+    expect(r).toMatchObject({ flags: ['configWithoutDeclaration'], unverified: ['prs'] });
   });
   it('commits not measured: no rule fires and commits go to unverified', () => {
     const cfg = analyzeAiConfig(['CLAUDE.md'], 'complete', { ...emptyCtx, gitignore: '.cursor/' });
