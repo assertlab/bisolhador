@@ -42,7 +42,9 @@ const BOT_NAME = /(\[bot\]|\bbot\b)/i;
 export function isMaintenanceBot(author) {
   if (!author) return false;
   const bot = isBot(author) || BOT_NAME.test(author.name ?? '');
-  return bot && !agentToolOf(author.login) && !reviewerToolOf(author.login);
+  // GraphQL bot authors have no login, only a name ("claude[bot]") and a noreply e-mail
+  const id = author.login ?? author.name;
+  return bot && !agentToolOf(id, author.email ?? null) && !reviewerToolOf(id);
 }
 
 // One entry per matching path, in path order; a path matches only the first tool of the registry.

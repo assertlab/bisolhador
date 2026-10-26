@@ -51,6 +51,10 @@ describe('analyzeAiCommits', () => {
     expect(analyzeAiCommits(null)).toMatchObject({ available: false, reason: 'error' });
     expect(analyzeAiCommits([])).toMatchObject({ available: true, n: 0, withAi: 0, percentage: null, firstTraceAt: null, tools: [] });
   });
+  it('GraphQL agent author (no login, [bot] name) counts as AI, not as a maintenance bot', () => {
+    const r = analyzeAiCommits([commit({ authorLogin: null, authorName: 'claude[bot]', authorEmail: '41898282+claude[bot]@users.noreply.github.com' }), commit({})]);
+    expect(r).toMatchObject({ n: 2, withAi: 1, tools: ['claude'] });
+  });
   it('firstTraceAt is the earliest date among AI commits', () => {
     const t = 'x\n\nCo-Authored-By: Claude <noreply@anthropic.com>';
     const r = analyzeAiCommits([commit({ message: t, date: '2026-05-01T00:00:00Z' }), commit({ message: t, date: '2026-02-01T00:00:00Z' }), commit({ message: t, date: null })]);
@@ -63,6 +67,16 @@ describe('analyzeAiPrs', () => {
     const prs = [pr({ user: { login: 'Copilot', type: 'Bot' }, aiParticipants: [] }), pr({ aiParticipants: ['coderabbitai'] }), pr({}), pr({ user: { login: 'dependabot[bot]', type: 'Bot' } })];
     expect(analyzeAiPrs(prs, { reviewsAvailable: true })).toMatchObject({ n: 3, byAgents: 1, percentage: 33, agentTools: ['copilot'], aiReviewed: { available: true, count: 1, percentage: 33, tools: ['coderabbit'] } });
     expect(analyzeAiPrs(prs, { reviewsAvailable: false }).aiReviewed).toMatchObject({ available: false, count: null });
+  });
+  it('limit Infinity keeps every merged PR', () => {
+    const prs = Array.from({ length: 60 }, () => pr({}));
+    expect(analyzeAiPrs(prs, { limit: Infinity, reviewsAvailable: true }).n).toBe(60);
+    expect(analyzeAiPrs(prs, { reviewsAvailable: true }).n).toBe(50);
+  });
+  it('REST-shaped PRs (no aiParticipants/approvedByOther/changedLines) work without reviews', () => {
+    const prs = [pr({ user: { login: 'Copilot', type: 'Bot' } }), pr({})];
+    const r = analyzeAiPrs(prs, { reviewsAvailable: false });
+    expect(r).toMatchObject({ n: 2, byAgents: 1, percentage: 50, aiReviewed: { available: false, count: null } });
   });
   it('null → unavailable; limit keeps the most recent merged', () => {
     expect(analyzeAiPrs(null, { reviewsAvailable: true })).toMatchObject({ available: false, reason: 'error' });

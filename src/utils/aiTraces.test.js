@@ -68,6 +68,9 @@ describe('logins', () => {
     expect(isMaintenanceBot({ login: 'alice', type: 'User' })).toBe(false);
     expect(isMaintenanceBot({ login: 'x', name: 'release bot' })).toBe(true);
     expect(isMaintenanceBot({})).toBe(false);
+    // GraphQL author without login: name and e-mail identify the agent
+    expect(isMaintenanceBot({ login: null, type: null, name: 'claude[bot]', email: '41898282+claude[bot]@users.noreply.github.com' })).toBe(false);
+    expect(isMaintenanceBot({ login: null, name: 'renovate[bot]' })).toBe(true);
   });
 });
 

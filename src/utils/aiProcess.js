@@ -47,7 +47,7 @@ export function commitAiTools(c) {
 export function analyzeAiCommits(commits) {
   if (!Array.isArray(commits)) return { available: false, reason: 'error', n: 0, withAi: 0, percentage: null, firstTraceAt: null, tools: [] };
   const base = commits.filter((c) => c.parents <= 1
-    && !isMaintenanceBot({ login: c.authorLogin, type: c.authorType, name: c.authorName }));
+    && !isMaintenanceBot({ login: c.authorLogin, type: c.authorType, name: c.authorName, email: c.authorEmail }));
   const traced = base.map((c) => ({ c, tools: commitAiTools(c) })).filter((x) => x.tools.length > 0);
   const dates = traced.map((x) => x.c.date).filter((d) => d && Number.isFinite(Date.parse(d)));
   const firstTraceAt = dates.length ? dates.reduce((a, b) => (Date.parse(b) < Date.parse(a) ? b : a)) : null;
@@ -96,6 +96,7 @@ export function analyzeAiPrs(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable }
 
 const medianOf = (values) => percentile([...values].sort((a, b) => a - b), 0.5);
 
+/** `reviewsAvailable` must be true only for the GraphQL sample (REST items have no approvedByOther). */
 /** Agent PRs merged without approval, and agent vs human PR size (needs AI_MIN_GROUP per side). */
 export function analyzeAiSafeguards(prs, { limit = MERGED_PR_SAMPLE, reviewsAvailable } = {}) {
   const emptySize = { available: false, agentMedian: null, humanMedian: null, agentN: 0, humanN: 0 };
