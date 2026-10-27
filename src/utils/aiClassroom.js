@@ -155,7 +155,9 @@ export function analyzeStudents(commits, authorship, period, templatePaths) {
 export function classroomMaturity(ctx, runs) {
   const listing = ctx?.available ? ctx : null;
   const root = listing?.rootPaths ?? [];
-  const hasRuns = runs ? (runs.total_count ?? 0) > 0 || (runs.workflow_runs?.length ?? 0) > 0 : null;
+  // A truncated sample (capped) with no kept run says nothing: older runs may be CI. Not "no CI".
+  const found = runs ? (runs.total_count ?? 0) > 0 || (runs.workflow_runs?.length ?? 0) > 0 : null;
+  const hasRuns = found === false && runs.capped === true ? null : found;
   const listingsRead = Boolean(listing) && !listing.unverified?.some((part) => part === 'listings' || part === 'workflows');
   let ciCdDetected = null;
   if (detectCi([...root, ...(listing?.workflowPaths ?? [])]) || hasRuns === true) ciCdDetected = true;

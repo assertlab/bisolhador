@@ -91,7 +91,7 @@
         "name": "CI health",
         "what": "Success rate and median duration of the latest 50 GitHub Actions runs triggered by pushes to the default branch.",
         "read": "High success and short duration mean CI is taken seriously. Frequent failures on the default branch mean broken code is being merged.",
-        "limits": "GitHub Actions only (Travis, CircleCI etc. aren't shown). The latest 50 completed runs triggered by pushes; cancelled and skipped ones are left out, so n can be under 50. Scheduled, Dependabot and pull request runs aren't counted; pushes made by bots to the default branch are.",
+        "limits": "GitHub Actions only (Travis, CircleCI etc. aren't shown). The latest 50 completed runs triggered by pushes; cancelled and skipped ones are left out, so n can be under 50. Scheduled, Dependabot and pull request runs aren't counted; pushes made by bots to the default branch are. Classroom Mode uses a different rule: pull-request runs from branches of the same repository and merge-queue runs count too (see the Classroom Mode guide).",
         "chaossNote": "There's no CHAOSS metric for CI health."
       },
       "conventional-commits": {

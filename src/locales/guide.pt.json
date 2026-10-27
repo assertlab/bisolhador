@@ -91,7 +91,7 @@
         "name": "Saúde do CI",
         "what": "Percentual de sucesso e duração mediana das últimas 50 execuções do GitHub Actions disparadas por push no branch principal.",
         "read": "Sucesso alto e duração curta indicam um CI levado a sério. Falhas frequentes no branch principal significam que código quebrado está sendo integrado.",
-        "limits": "Só GitHub Actions (Travis, CircleCI etc. não aparecem). Entram as últimas 50 execuções concluídas disparadas por push; canceladas e puladas saem da conta, então n pode ser menor que 50. Execuções agendadas, do Dependabot e de pull requests não entram; pushes feitos por bots no branch principal entram.",
+        "limits": "Só GitHub Actions (Travis, CircleCI etc. não aparecem). Entram as últimas 50 execuções concluídas disparadas por push; canceladas e puladas saem da conta, então n pode ser menor que 50. Execuções agendadas, do Dependabot e de pull requests não entram; pushes feitos por bots no branch principal entram. No Modo Turma a regra é outra: entram também as execuções de pull request de branches do próprio repositório e da fila de merge (veja o guia do Modo Turma).",
         "chaossNote": "Não há métrica CHAOSS para saúde do CI."
       },
       "conventional-commits": {

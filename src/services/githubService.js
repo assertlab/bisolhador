@@ -668,9 +668,16 @@ export const githubService = {
     const all = [];
     let total = 0;
     for (let page = 1; page <= CLASSROOM_CI_RUN_PAGES; page += 1) {
-      const response = await fetch(`${base}&page=${page}`, { headers: getHeaders() });
-      if (response.status === 404) return { total_count: 0, workflow_runs: [], capped: false };
-      if (!response.ok) throw new Error(`Actions runs failed: HTTP ${response.status}`);
+      const response = await fetch(`${base}&page=${page}`, { headers: getHeaders() }).catch((error) => {
+        if (page === 1) throw error;
+        return null; // a later page failing keeps what was read (marked capped below)
+      });
+      if (response?.status === 404 && page === 1) return { total_count: 0, workflow_runs: [], capped: false };
+      if (!response?.ok) {
+        if (page === 1) throw new Error(`Actions runs failed: HTTP ${response?.status}`);
+        total = Math.max(total, all.length + 1);
+        break;
+      }
       const data = await response.json();
       const runs = data.workflow_runs ?? [];
       total = data.total_count ?? total;

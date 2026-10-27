@@ -351,4 +351,43 @@ describe('githubService: failures are errors, not zeros', () => {
     fetchMock.mockReturnValue(json({ message: 'boom' }, { status: 500 }));
     await expect(githubService.fetchReleasesCount('react', 'react')).rejects.toThrow(/500/);
   });
+
+  describe('fetchCiRunsInPeriod (Classroom CI)', () => {
+    const run = (i, over = {}) => ({ id: i, event: 'push', head_branch: 'main', ...over });
+    const page = (n, start = 0) => Array.from({ length: n }, (_, i) => run(start + i));
+
+    it('stops at a short page, keeps only runs on the branch, and is not capped', async () => {
+      fetchMock.mockReturnValueOnce(json({ total_count: 3, workflow_runs: [run(1), run(2, { head_branch: 'x' }), run(3, { event: 'schedule' })] }));
+      const r = await githubService.fetchCiRunsInPeriod('o', 'r', 'main', '2026-06-28', '2026-10-26');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(r).toMatchObject({ total_count: 1, capped: false });
+      expect(fetchMock.mock.calls[0][0]).toContain('created=2026-06-28..2026-10-26');
+      expect(fetchMock.mock.calls[0][0]).not.toContain('event=push'); // PR runs would be missed
+    });
+
+    it('reads up to 3 pages and marks the sample capped when the period has more', async () => {
+      fetchMock.mockImplementation((url) => json({ total_count: 520, workflow_runs: page(100, Number(new URL(url).searchParams.get('page')) * 100) }));
+      const r = await githubService.fetchCiRunsInPeriod('o', 'r', 'main', 'a', 'b');
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(r).toMatchObject({ total_count: 300, capped: true });
+    });
+
+    it('exactly 300 runs in total is not capped', async () => {
+      fetchMock.mockImplementation((url) => json({ total_count: 300, workflow_runs: page(100, Number(new URL(url).searchParams.get('page')) * 100) }));
+      expect((await githubService.fetchCiRunsInPeriod('o', 'r', 'main', 'a', 'b')).capped).toBe(false);
+    });
+
+    it('a later page failing keeps the pages already read, marked capped', async () => {
+      fetchMock.mockReturnValueOnce(json({ total_count: 150, workflow_runs: page(100) })).mockReturnValueOnce(json({}, { status: 403 }));
+      const r = await githubService.fetchCiRunsInPeriod('o', 'r', 'main', 'a', 'b');
+      expect(r).toMatchObject({ total_count: 100, capped: true });
+    });
+
+    it('the first page failing is an error; 404 is "no runs"', async () => {
+      fetchMock.mockReturnValueOnce(json({}, { status: 500 }));
+      await expect(githubService.fetchCiRunsInPeriod('o', 'r', 'main', 'a', 'b')).rejects.toThrow(/HTTP 500/);
+      fetchMock.mockReturnValueOnce(json({}, { status: 404 }));
+      await expect(githubService.fetchCiRunsInPeriod('o', 'r', 'main', 'a', 'b')).resolves.toMatchObject({ total_count: 0, capped: false });
+    });
+  });
 });

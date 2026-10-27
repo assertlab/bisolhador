@@ -544,7 +544,7 @@
     "resultsTitle": "Resultados de {{from}} a {{to}}",
     "progress": "Analisando {{done}} de {{total}}…",
     "finished": "{{total}} analisados",
-    "notes": "Datas em UTC. \"Commits\" é o total do branch principal no período; autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, sem merges e sem bots. PRs: os mergeados no período em qualquer branch, sem bots. CI: até 100 execuções de push no branch principal. Releases: entre as 100 mais recentes. Concentração = participação do autor que mais fez commits, sem identificá-lo.",
+    "notes": "Datas em UTC. \"Commits\" é o total do branch principal no período; autores, concentração e Conventional Commits usam até os 300 commits mais recentes do período, sem merges e sem bots. PRs: os mergeados no período em qualquer branch, sem bots. CI: até 300 execuções concluídas do período, das quais contam as de push no branch principal, de pull request de branches do próprio repositório (sem forks nem Dependabot/Renovate) e da fila de merge; * = há mais execuções do que as lidas. Releases: entre as 100 mais recentes. Concentração = participação do autor que mais fez commits, sem identificá-lo.",
     "columns": {
       "repo": "Repositório",
       "status": "Situação",

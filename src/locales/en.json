@@ -536,7 +536,7 @@
     "resultsTitle": "Results from {{from}} to {{to}}",
     "progress": "Analyzing {{done}} of {{total}}…",
     "finished": "{{total}} analyzed",
-    "notes": "Dates in UTC. \"Commits\" is the default-branch total in the period; authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, without merges and bots. PRs: merged in the period into any branch, bots excluded. CI: up to 100 push runs on the default branch. Releases: among the latest 100. Concentration = share of the author with most commits, without naming them.",
+    "notes": "Dates in UTC. \"Commits\" is the default-branch total in the period; authors, concentration and Conventional Commits use up to the 300 most recent commits of the period, without merges and bots. PRs: merged in the period into any branch, bots excluded. CI: up to 300 completed runs of the period, of which push to the default branch, pull-request runs from branches of the same repository (no forks or Dependabot/Renovate) and merge-queue runs count; * = more runs exist than were read. Releases: among the latest 100. Concentration = share of the author with most commits, without naming them.",
     "columns": {
       "repo": "Repository",
       "status": "Status",
