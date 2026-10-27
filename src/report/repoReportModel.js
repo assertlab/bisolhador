@@ -13,7 +13,13 @@ import { AI_MIN_GROUP, BRANCH_SCAN_MAX, ZOMBIE_BRANCH_DAYS } from '../constants.
 
 const CONTRIBUTOR_ROWS = 15;
 const RECENT_ITEMS = 10;
-const stripTags = (text) => String(text).replace(/<\/?[a-z]+>/gi, '');
+const stripTags = (text) =>
+  String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 /**
  * @param {object} data - the report (live or snapshot-normalized)
