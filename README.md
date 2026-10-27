@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.18.1 - Logo no relatório PDF
+- **🖼️ Logo do Bisolhador no cabeçalho do relatório PDF da turma**, no lugar da lupa
+
 ### v3.18.0 - Relatório em PDF do Modo Turma
 - **📄 Relatório PDF da turma**: gráficos comparativos por indicador (com a mediana da turma), explicação de cada indicador tirada do guia, leitura por regras, seção de IA no Processo e metodologia, em PDF vetorial com a identidade visual do Compasso
 - **🕶️ Anonimização opcional** dos repositórios no PDF; nada por estudante vai para o arquivo
