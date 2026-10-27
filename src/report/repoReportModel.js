@@ -3,6 +3,7 @@ import { repoAgeText } from '../utils/repoAge.js';
 import { trimCommitSeries, PUNCH_CARD_MAX_COMMITS, WEEKDAYS_MIN_SAMPLE } from '../utils/activityStats.js';
 import { formatters } from '../utils/formatters.js';
 import { badgeScoreText } from '../utils/aiProcess.js';
+import { plainText } from './plainText.js';
 import { toolLabel } from '../components/ai/toolLabel.js';
 import { AI_MIN_GROUP, BRANCH_SCAN_MAX, ZOMBIE_BRANCH_DAYS } from '../constants.js';
 
@@ -24,10 +25,11 @@ export function buildRepoReportModel(data, t, locale, { isSnapshot = false, now 
   const state = (value) => t(`report.repo.state.${value === true ? 'yes' : value === false ? 'no' : 'unknown'}`);
   return {
     header: {
-      fullName: data.fullName,
+      fullName: plainText(data.fullName),
       url: data.url,
-      description: data.description || t('repo.noDescription'),
-      language: data.language ?? null,
+      // Text written by the repository's people (gitmoji, emoji in descriptions) is not in the report font either
+      description: plainText(data.description) || t('repo.noDescription'),
+      language: plainText(data.language) ?? null,
       age: repoAgeText(data.createdAt, t, now),
       since: t('repo.since', { createdAt: data.createdAt ? formatters.formatDate(data.createdAt, locale) : 'N/A' }),
       analysisDate: data.analysisDate ?? null,
@@ -50,15 +52,15 @@ export function buildRepoReportModel(data, t, locale, { isSnapshot = false, now 
     recent: {
       commits: Array.isArray(data.recentCommits)
         ? data.recentCommits.slice(0, RECENT_ITEMS).map((c) => ({
-            message: String(c.commit?.message ?? '').split('\n')[0],
-            by: t('activity.commitBy', { author: c.commit?.author?.name ?? '', date: c.commit?.author?.date ? formatters.formatDateLong(c.commit.author.date, locale) : '' }),
+            message: plainText(String(c.commit?.message ?? '').split('\n')[0]),
+            by: t('activity.commitBy', { author: plainText(c.commit?.author?.name ?? ''), date: c.commit?.author?.date ? formatters.formatDateLong(c.commit.author.date, locale) : '' }),
           }))
         : null,
       commitsNote: Array.isArray(data.recentCommits)
         ? (data.recentCommits.length === 0 ? t(isSnapshot ? 'activity.commitsNotRecorded' : 'activity.noCommits') : null)
         : t(isSnapshot ? 'activity.commitsNotRecorded' : 'activity.commitsUnavailable'),
       prs: (data.recentPRs ?? []).slice(0, RECENT_ITEMS).map((pr) => ({
-        title: pr.title,
+        title: plainText(pr.title),
         state: t(`activity.prStates.${pr.merged_at ? 'merged' : pr.state === 'open' ? 'open' : 'closed'}`),
         date: pr.created_at ? formatters.formatDate(pr.created_at, locale) : '',
       })),
@@ -133,7 +135,7 @@ function busSection(analysis, t) {
     risk: t(`busFactor.risk.${riskLevel}`, { defaultValue: t('busFactor.risk.critical') }),
     description: t('busFactor.description', { count: busFactor }),
     scope: scopeText(analysis, t),
-    developers: keyDevelopers.map((d) => ({ login: d.login, percentage: d.percentage })),
+    developers: keyDevelopers.map((d) => ({ login: plainText(d.login), percentage: d.percentage })),
     others: Math.max(0, Math.round((100 - keyTotal) * 10) / 10),
     othersLabel: t('busFactor.others'),
   };
@@ -145,9 +147,9 @@ function contributorsSection(data, t) {
   const level = busFactor?.level === 'notRecorded' ? 'notRecorded' : unavailable ? 'unavailable' : busFactor?.level;
   return {
     title: t(`contributors.busFactor.${level}.title`),
-    message: stripTags(t(`contributors.busFactor.${level}.message`, { contributor: busFactor?.topContributor, percentage: busFactor?.percentage })),
+    message: stripTags(t(`contributors.busFactor.${level}.message`, { contributor: plainText(busFactor?.topContributor), percentage: busFactor?.percentage })),
     scope: scopeText(busFactorAnalysis, t),
-    rows: unavailable ? [] : contributors.slice(0, CONTRIBUTOR_ROWS).map((c) => ({ login: c.login, commits: c.commits ?? c.contributions, percentage: c.percentage })),
+    rows: unavailable ? [] : contributors.slice(0, CONTRIBUTOR_ROWS).map((c) => ({ login: plainText(c.login), commits: c.commits ?? c.contributions, percentage: c.percentage })),
     more: unavailable ? 0 : Math.max(0, contributors.length - CONTRIBUTOR_ROWS),
   };
 }
@@ -158,7 +160,7 @@ function activitySection(data, t, now) {
     return { title: t('charts.commitActivity.titleNoData'), unavailable: t(`charts.statsUnavailable.${data.charts?.activityStatus ?? 'snapshot'}`, { defaultValue: t('charts.statsUnavailable.error') }) };
   }
   const { values, labels } = trimCommitSeries(raw, data.createdAt, now);
-  return { title: t('charts.commitActivity.title', { count: values.length }), values, labels, total: values.reduce((a, b) => a + b, 0) };
+  return { title: t('charts.commitActivity.title', { count: values.length }), values, labels };
 }
 
 function weekdaysSection(data, t, locale) {

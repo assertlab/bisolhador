@@ -146,12 +146,6 @@
       "title": "Repository report",
       "analysisLine": "analysis of {{date}}",
       "snapshotLine": "snapshot of {{date}}",
-      "pageTitle": {
-        "process": "Process",
-        "people": "People",
-        "activity": "Activity",
-        "recent": "Recent activity"
-      },
       "state": {
         "yes": "Yes",
         "no": "No",

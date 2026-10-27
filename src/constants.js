@@ -19,8 +19,6 @@ export const RECENT_ITEMS_LIMIT = 10;
 export const LANGUAGE_MIN_PERCENTAGE = 1;
 export const CACHE_STALE_TIME_MS = 1000 * 60 * 5; // 5 minutes
 
-// PDF export
-
 // Toast notifications
 export const TOAST_AUTO_DISMISS_MS = 1000 * 5; // 5 seconds
 

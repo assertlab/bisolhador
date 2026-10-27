@@ -51,6 +51,19 @@ describe('buildRepoReportModel', () => {
     expect(model({ ...full(), description: null }).header.description).toBe('repo.noDescription');
   });
 
+  it('text written by the repository (gitmoji commits, emoji in the description) is stripped too: the font has no emoji', () => {
+    const data = full();
+    data.description = '🚀 Fast router';
+    data.recentCommits = [{ commit: { message: '✨ feat: add thing', author: { name: 'Ana 🦈', date: '2026-10-01T00:00:00Z' } } }];
+    data.recentPRs = [{ title: '🐛 fix: crash', state: 'open', created_at: '2026-10-01T00:00:00Z' }];
+    const m = model(data);
+    expect(m.header.description).toBe('Fast router');
+    expect(m.recent.commits[0].message).toBe('feat: add thing');
+    expect(m.recent.commits[0].by).toContain('"author":"Ana"');
+    expect(m.recent.prs[0].title).toBe('fix: crash');
+    expect(model({ ...data, description: '🚀' }).header.description).toBe('repo.noDescription'); // nothing left: the fallback text
+  });
+
   it('health: checklist as words; an issue template the tree could not confirm is "unknown", not a miss', () => {
     const items = Object.fromEntries(model(full()).health.items.map((i) => [i.label, i.state]));
     expect(items['health.files.readme']).toBe('report.repo.state.yes');
@@ -110,7 +123,6 @@ describe('buildRepoReportModel', () => {
     const a = model(full()).activity;
     expect(a.values).toEqual([0, 2, 4]);
     expect(a.labels).toHaveLength(3);
-    expect(a.total).toBe(6);
     const off = model({ ...full(), charts: { ...full().charts, activity: null, activityStatus: 'computing' } }).activity;
     expect(off.unavailable).toContain('charts.statsUnavailable.computing');
     expect(off.values).toBeUndefined();

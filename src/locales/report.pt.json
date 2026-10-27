@@ -146,12 +146,6 @@
       "title": "Relatório do repositório",
       "analysisLine": "análise de {{date}}",
       "snapshotLine": "snapshot de {{date}}",
-      "pageTitle": {
-        "process": "Processo",
-        "people": "Pessoas",
-        "activity": "Atividade",
-        "recent": "Atividade recente"
-      },
       "state": {
         "yes": "Sim",
         "no": "Não",

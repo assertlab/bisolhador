@@ -69,13 +69,14 @@ export function RepoReportDocument({ model, t, locale, meta }) {
           {stat(cards.volume.find((c) => c.id === 'closedIssues'))}
           {stat(cards.volume.find((c) => c.id === 'codeChurn'))}
         </Section>
-        <Section title={t('app.governanceMaturity')} />
-        <Section title={t('health.title')} note={t('health.communityHealth')}>
-          <Text style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{model.health.score}</Text>
-          {model.health.notes.map((note, i) => <Text key={i} style={[s.muted, { fontSize: 8 }]}>{note}</Text>)}
-          {model.health.items && <Checklist items={model.health.items} />}
+        <Section title={t('app.governanceMaturity')}>
+          <Section title={t('health.title')} note={t('health.communityHealth')}>
+            <Text style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{model.health.score}</Text>
+            {model.health.notes.map((note, i) => <Text key={i} style={[s.muted, { fontSize: 8 }]}>{note}</Text>)}
+            {model.health.items && <Checklist items={model.health.items} />}
+          </Section>
+          <MaturityBlock />
         </Section>
-        <MaturityBlock />
       </View>
     );
   }

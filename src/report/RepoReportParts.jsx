@@ -1,7 +1,7 @@
 import { Text, View } from '@react-pdf/renderer';
 import { s } from './styles.js';
 import { theme as t } from './theme.js';
-import { axisTicks } from './chartScale.js';
+import { axisTicks, cleanSeries } from './chartScale.js';
 
 const PLOT_H = 100;
 const AXIS_W = 30;
@@ -61,7 +61,8 @@ export function Checklist({ items }) {
  * Vertical columns with gridlines and round axis ticks, always from zero. `labels` are printed under about
  * every (n / 10)th column so they never collide. Vector: text stays selectable.
  */
-export function ColumnChart({ values, labels, unit = '' }) {
+export function ColumnChart({ values: rawValues, labels }) {
+  const values = cleanSeries(rawValues);
   const ticks = axisTicks(Math.max(0, ...values));
   const top = ticks[ticks.length - 1] || 1;
   const every = Math.max(1, Math.ceil(values.length / 10));
@@ -70,7 +71,7 @@ export function ColumnChart({ values, labels, unit = '' }) {
       <View style={{ flexDirection: 'row' }}>
         <View style={{ width: AXIS_W, height: PLOT_H }}>
           {ticks.map((k) => (
-            <Text key={k} style={{ position: 'absolute', right: 4, bottom: (k / top) * PLOT_H - 4, fontSize: 7, color: t.muted }}>{`${k}${unit}`}</Text>
+            <Text key={k} style={{ position: 'absolute', right: 4, bottom: (k / top) * PLOT_H - 4, fontSize: 7, color: t.muted }}>{String(k)}</Text>
           ))}
         </View>
         <View style={{ flex: 1, height: PLOT_H }}>

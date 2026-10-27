@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { axisTicks } from './chartScale.js';
+import { axisTicks, cleanSeries } from './chartScale.js';
 
 describe('axisTicks', () => {
   it('round steps starting at zero, top at or above the max', () => {
@@ -12,5 +12,18 @@ describe('axisTicks', () => {
 
   it('never more than ~5 ticks, even for large values', () => {
     for (const max of [3, 99, 480, 5000, 20000, 73000]) expect(axisTicks(max).length).toBeLessThanOrEqual(6);
+  });
+
+  it('a stored snapshot cannot make it loop or build millions of ticks (NaN, Infinity, 1e12)', () => {
+    expect(axisTicks(NaN)).toEqual([0, 1]);
+    expect(axisTicks(Infinity)).toEqual([0, 1]);
+    expect(axisTicks(1e12).length).toBeLessThanOrEqual(8);
+    expect(axisTicks(-5)).toEqual([0, 1]);
+  });
+});
+
+describe('cleanSeries', () => {
+  it('keeps finite positive numbers, everything else becomes an empty column', () => {
+    expect(cleanSeries([3, NaN, -1, Infinity, null, undefined, '5', 0, 2.5])).toEqual([3, 0, 0, 0, 0, 0, 0, 0, 2.5]);
   });
 });

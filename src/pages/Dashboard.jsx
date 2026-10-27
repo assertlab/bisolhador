@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useMemo, useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '../components/Header';
@@ -82,7 +82,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const isSnapshotMode = isSnapshotUrl && !snapshotAlertDismissed;
   const locale = intlLocale(i18n.language);
   // The stat cards' text comes from utils/dashboardCards.js (shared with the PDF report)
-  const cards = displayData ? buildStatCards(displayData, t, locale) : null;
+  const cards = useMemo(() => (displayData ? buildStatCards(displayData, t, locale) : null), [displayData, t, locale]);
 
   // Sincroniza URL → estado durante o render, quando a query string muda (padrão
   // "ajustar estado quando um valor muda" da doc do React), em vez de setState
