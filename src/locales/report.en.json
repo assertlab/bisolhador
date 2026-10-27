@@ -114,8 +114,8 @@
         "what": "Median changed lines (added + removed) per PR merged in the period."
       },
       "ci-health": {
-        "what": "Success rate of GitHub Actions runs triggered by a push to the main branch within the period (up to 100 completed runs).",
-        "limits": "GitHub Actions only. Cancelled and skipped runs are not counted, so n can be smaller. n = 0 means no run in the period, not that CI failed."
+        "what": "Success rate of GitHub Actions runs that exercise the main branch in the period: triggered by a push to it, by pull requests from branches of the same repository (no forks or bots) or by its merge queue (up to {{ciRuns}} completed runs of the period).",
+        "limits": "GitHub Actions only. Cancelled and skipped runs are not counted, so n can be smaller. PR runs include attempts that failed before the merge. Scheduled and bot runs (Dependabot) are left out. n = 0 means no such run in the period, not that CI failed; CI on another tool (Vercel, CircleCI) does not appear."
       },
       "conventional-commits": {
         "what": "Share of the period's commits (up to {{commitCap}}, without merges and bots) whose first line follows type(scope)!: description."

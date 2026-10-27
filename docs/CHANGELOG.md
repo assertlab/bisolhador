@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.19.0] - 2026-10-27
+
+### 🐛 Fixed
+
+- **Modo Turma: o CI de projetos que só rodam em pull request agora é medido.** A coluna "CI ok" só olhava execuções do Actions disparadas por `push` no branch principal, então um repositório cujos workflows rodam apenas em `pull_request` (checks do PR, sem workflow em push) aparecia como "n/d" mesmo com uma bateria de testes. Caso real: um projeto da turma, com 157 execuções do Actions no período e nenhuma de push. Agora entram as execuções que exercitam o branch principal: push nele, execuções de pull request de branches do próprio repositório (sem PRs de fork nem de bots como o Dependabot) e a fila de merge. O destino do PR só é verificado quando o GitHub o informa: o campo `pull_requests` vem vazio em quase todas as execuções concluídas (1 de 20 num repositório real), então PRs para outros branches do mesmo repositório também entram. Agendadas e `dynamic` continuam fora.
+- A busca passa a ler até 3 páginas de 100 execuções concluídas do período (qualquer gatilho) e filtra no cliente, porque o filtro `branch` da API é o branch de origem e perde as execuções de PR. Se o período tem mais execuções do que as lidas, a coluna vem marcada com `*` (amostra das mais recentes). O Dashboard não muda (continua contando só push).
+- Execuções de PR incluem as tentativas que falharam antes do merge. O guia e o relatório PDF explicam isso e que CI em outra ferramenta (Vercel, CircleCI) não aparece.
+
+---
+
 ## [3.18.2] - 2026-10-27
 
 ### 📝 Documentation

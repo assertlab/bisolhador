@@ -35,7 +35,7 @@ async function analyzeRepository(name, period) {
   const [history, prs, runs, releases, aiContext] = await Promise.allSettled([
     githubService.fetchCommitHistoryInPeriod(o, r, period.since, period.until),
     githubService.fetchMergedPullRequestsInPeriod(o, r, period.since, period.until),
-    info.default_branch ? githubService.fetchActionRunsInPeriod(o, r, info.default_branch, period.from, period.to) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
+    info.default_branch ? githubService.fetchCiRunsInPeriod(o, r, info.default_branch, period.from, period.to) : Promise.resolve({ total_count: 0, workflow_runs: [], capped: false }),
     githubService.fetchReleases(o, r),
     githubService.fetchAiRepoContext(o, r),
   ]);

@@ -54,4 +54,5 @@ export const AUTHORSHIP_COMMITS_PER_PATH = 50; // Classroom: commits read per AI
 
 // Classroom period caps (githubService defaults; also quoted by the AI guide, /guia/ia)
 export const CLASSROOM_COMMIT_PAGES = 3; // × 100 commits of the period
+export const CLASSROOM_CI_RUN_PAGES = 3; // × 100 completed Actions runs of the period (any trigger), then narrowed to the default branch
 export const CLASSROOM_PR_SCAN = 200; // merged PRs scanned (by last update) to find the period's

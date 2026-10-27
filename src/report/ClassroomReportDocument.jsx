@@ -4,9 +4,9 @@ import { s } from './styles.js';
 import { formatValue } from './format.js';
 import { readingFor } from './reportReading.js';
 import { theme } from './theme.js';
-import { CLASSROOM_COMMIT_PAGES, CLASSROOM_PR_SCAN } from '../constants.js';
+import { CLASSROOM_CI_RUN_PAGES, CLASSROOM_COMMIT_PAGES, CLASSROOM_PR_SCAN } from '../constants.js';
 
-const SAMPLE_CAPS = { prScan: CLASSROOM_PR_SCAN, commitCap: CLASSROOM_COMMIT_PAGES * 100 };
+const SAMPLE_CAPS = { prScan: CLASSROOM_PR_SCAN, commitCap: CLASSROOM_COMMIT_PAGES * 100, ciRuns: CLASSROOM_CI_RUN_PAGES * 100 };
 const READING_VALUE_PARAMS = ['value', 'min', 'max', 'median'];
 
 /**

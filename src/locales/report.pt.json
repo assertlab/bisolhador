@@ -114,8 +114,8 @@
         "what": "Mediana de linhas alteradas (adicionadas + removidas) por PR mergeado no período."
       },
       "ci-health": {
-        "what": "Percentual de sucesso das execuções do GitHub Actions disparadas por push no branch principal dentro do período (até 100 execuções concluídas).",
-        "limits": "Só GitHub Actions. Canceladas e puladas saem da conta, então n pode ser menor. n = 0 significa que não houve execução no período, não que o CI falhou."
+        "what": "Percentual de sucesso das execuções do GitHub Actions que exercitam o branch principal no período: disparadas por push nele, por pull request de branches do próprio repositório (sem forks nem bots) ou pela fila de merge (até {{ciRuns}} execuções concluídas do período).",
+        "limits": "Só GitHub Actions. Canceladas e puladas saem da conta, então n pode ser menor. Execuções de PR incluem as tentativas que falharam antes do merge. Execuções agendadas e de bots (Dependabot) não entram. n = 0 significa que não houve execução assim no período, não que o CI falhou; CI em outra ferramenta (Vercel, CircleCI) não aparece."
       },
       "conventional-commits": {
         "what": "Percentual dos commits do período (até {{commitCap}}, sem merges e sem bots) cuja primeira linha segue tipo(escopo)!: descrição."
