@@ -32,6 +32,11 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.18.0 - Relatório em PDF do Modo Turma
+- **📄 Relatório PDF da turma**: gráficos comparativos por indicador (com a mediana da turma), explicação de cada indicador tirada do guia, leitura por regras, seção de IA no Processo e metodologia, em PDF vetorial com a identidade visual do Compasso
+- **🕶️ Anonimização opcional** dos repositórios no PDF; nada por estudante vai para o arquivo
+- **🔒 CSP**: `'wasm-unsafe-eval'` e `data:` para o layout do gerador de PDF (WebAssembly embutido)
+
 ### v3.17.2 - Guias fora do bundle inicial
 - **⚡ Primeiro acesso mais leve** (chunk de entrada ~443 KB → ~355 KB, ~141 → ~115 KB gzip): os textos de Como interpretar e do Guia de IA no Processo só são baixados ao abrir essas páginas, e só no idioma ativo
 

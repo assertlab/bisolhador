@@ -45,15 +45,20 @@ describe('lazy locale bundles: source guards', () => {
   it('only lazyLocales.js imports the page-only files (a static import would put them back in a shared chunk)', () => {
     for (const [file, text] of sourceFiles()) {
       if (file.endsWith(join('lib', 'lazyLocales.js'))) continue;
-      expect(text, file).not.toMatch(/locales\/(guide|aiGuide)\.(pt|en)\.json/);
+      expect(text, file).not.toMatch(/locales\/(guide|aiGuide|report)\.(pt|en)\.json/);
     }
   });
 
   it('only the pages that load a bundle read its keys (anywhere else they would render raw)', () => {
-    const owners = { guide: 'pages/Guide.jsx', aiGuide: 'pages/AiGuide.jsx' };
+    // The PDF report loads guide + report itself (generateReport.js) before rendering its document
+    const owners = {
+      guide: [join('pages', 'Guide.jsx'), join('report', 'ClassroomReportDocument.jsx')],
+      aiGuide: [join('pages', 'AiGuide.jsx')],
+      report: [join('report', 'ClassroomReportDocument.jsx'), join('report', 'generateReport.js')],
+    };
     for (const [file, text] of sourceFiles()) {
-      for (const [name, owner] of Object.entries(owners)) {
-        if (file.endsWith(owner)) continue;
+      for (const [name, ownerFiles] of Object.entries(owners)) {
+        if (ownerFiles.some((owner) => file.endsWith(owner))) continue;
         expect(text, file).not.toMatch(new RegExp(`(?:\\bt\\(|i18nKey=\\{?)\\s*['"\`]${name}\\.`));
       }
     }

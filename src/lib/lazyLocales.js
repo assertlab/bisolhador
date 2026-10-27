@@ -11,6 +11,11 @@ const BUNDLES = {
     pt: () => import('../locales/aiGuide.pt.json'),
     en: () => import('../locales/aiGuide.en.json'),
   },
+  // Classroom PDF report texts (report.*): only fetched when the report is generated
+  report: {
+    pt: () => import('../locales/report.pt.json'),
+    en: () => import('../locales/report.en.json'),
+  },
 };
 
 export const LAZY_LOCALE_NAMES = Object.keys(BUNDLES);

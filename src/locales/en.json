@@ -614,6 +614,12 @@
       "collapse": "Hide AI in the Process for {{repo}}",
       "coherenceTip": "The AI trace sources disagree. Expand the row to see why and the legitimate causes.",
       "note": "AI columns: a lower bound, only traces that are declared (co-authorship, an agent as author) or versioned (configuration). No trace does not mean no AI. Commits with AI and Agent PRs show (with AI/total). Badge: criteria met/verifiable. Expand the row (+) for the full section and the per-student detail, which does not go into the CSV."
+    },
+    "report": {
+      "button": "PDF report",
+      "busy": "Generating…",
+      "anonymize": "Anonymize repositories in the PDF",
+      "error": "Could not generate the report. Try again; if it persists, reload the page."
     }
   },
   "aiProcess": {

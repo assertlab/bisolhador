@@ -1,0 +1,98 @@
+{
+  "report": {
+    "title": "Relatório da turma",
+    "period": "Período: {{from}} a {{to}}",
+    "generated": "gerado em {{date}}",
+    "pageTitle": {
+      "summary": "Resumo",
+      "indicators": "Indicadores",
+      "ai": "IA no Processo",
+      "table": "Todos os repositórios",
+      "method": "Metodologia e limites"
+    },
+    "summary": {
+      "analyzed": "Repositórios analisados",
+      "partial": "Amostra parcial",
+      "failed": "Sem análise",
+      "private": "Privados",
+      "requested": "Repositórios informados: {{count}}",
+      "anonymized": "Nomes dos repositórios substituídos por letras.",
+      "howToTitle": "Como ler este relatório",
+      "howTo": "Cada indicador aparece num gráfico que compara os repositórios da turma, com a mediana da turma marcada em cada barra. A comparação descreve posição, não nota: o que é bom ou ruim depende do que a disciplina pediu.",
+      "soloTitle": "Projetos individuais",
+      "solo": "Todos os repositórios analisados têm um único autor. Aprovação por outra pessoa em 0% e concentração em 100% são efeito disso, não um problema de processo.",
+      "lowerBoundTitle": "Sobre IA",
+      "lowerBound": "Os indicadores de IA são um limite inferior: só contam o que deixou rastro (coautoria declarada, agentes, arquivos de configuração). Sem rastro não significa sem IA.",
+      "anonymousRepo": "Repositório {{letter}}"
+    },
+    "label": {
+      "what": "O que é",
+      "read": "Como ler",
+      "reading": "Leitura desta turma",
+      "limits": "Limites",
+      "median": "mediana {{value}}",
+      "n": "n = {{n}}",
+      "sampled": "amostra parcial",
+      "atLeast": "no mínimo",
+      "unavailable": "Sem medição: {{names}}",
+      "noData": "Nenhum repositório teve este indicador medido.",
+      "nd": "n/d"
+    },
+    "reading": {
+      "none": "Este indicador não pôde ser medido em nenhum dos {{count}} repositórios analisados.",
+      "single": "Só {{label}} teve este indicador medido: {{value}}.",
+      "range": "Em {{count}} repositórios medidos, os valores vão de {{min}} a {{max}}, com mediana {{median}}.",
+      "outlier": "{{label}} ({{value}}) está bem acima da mediana da turma ({{median}}).",
+      "solo": "Projetos de um único autor: este valor reflete isso.",
+      "lowerBound": "É um limite inferior: o valor real de uso de IA pode ser maior.",
+      "sampled_one": "{{count}} repositório foi medido numa amostra parcial.",
+      "sampled_other": "{{count}} repositórios foram medidos numa amostra parcial.",
+      "unavailable_one": "{{count}} repositório ficou sem medição (n/d).",
+      "unavailable_other": "{{count}} repositórios ficaram sem medição (n/d)."
+    },
+    "ai": {
+      "tools": "Ferramentas",
+      "badge": "Selo de uso responsável",
+      "coherence": "Fontes",
+      "noTrace": "sem rastro",
+      "badgeScore": "{{met}} de {{total}}",
+      "badgeUnassessed_one": "{{count}} critério não avaliado",
+      "badgeUnassessed_other": "{{count}} critérios não avaliados",
+      "badgeNone": "não se aplica",
+      "agree": "sem desacordo",
+      "disagree": "não concordam",
+      "unknown": "n/d"
+    },
+    "method": {
+      "items": {
+        "version": "Gerado pelo Bisolhador {{version}}.",
+        "registry": "Registro de ferramentas de IA: versão {{registry}}.",
+        "period": "Período analisado: {{from}} a {{to}}. Commits e PRs mergeados são os do período; releases e execuções de CI também.",
+        "privacy": "O relatório usa só dados por repositório. Nada por estudante é incluído.",
+        "samples": "Indicadores de PRs usam até 50 PRs mergeados do período; \"no mínimo\" e \"amostra parcial\" indicam esse corte.",
+        "nd": "n/d significa que o dado não pôde ser medido (falha de rede, permissão ou ausência de fonte), nunca zero.",
+        "ai": "Sem rastro não significa sem IA. Os indicadores de IA e o selo medem práticas observáveis, não o uso real."
+      }
+    },
+    "indicator": {
+      "commit-activity": {
+        "name": "Commits no período",
+        "what": "Total de commits do repositório dentro do período da turma, como o GitHub os conta (merges e bots incluídos).",
+        "read": "Mostra o volume de trabalho versionado no período. Compare o ritmo entre as equipes com cuidado: o tamanho do escopo muda de projeto para projeto.",
+        "limits": "Volume de commits não mede esforço nem relevância das mudanças. Um commit grande e um pequeno contam igual."
+      },
+      "contributors": {
+        "name": "Autores ativos",
+        "what": "Número de pessoas que fizeram commits no período da turma, sem bots e sem commits de merge.",
+        "read": "Ajuda a ver se a equipe toda contribuiu. Em projeto individual o valor é 1 por definição.",
+        "limits": "Conta quem assina commits: a mesma pessoa com contas ou nomes diferentes pode contar duas vezes, e quem contribuiu só com revisão ou issues não aparece."
+      },
+      "bus-factor": {
+        "name": "Concentração no autor principal",
+        "what": "Participação do autor com mais commits entre os commits humanos (sem bots nem merges) do período, sem citar o nome.",
+        "read": "Concentração alta indica que uma pessoa faz quase tudo e vale conversar com a equipe. Em projeto individual será 100%.",
+        "limits": "Conta commits, não revisões nem outras contribuições. Em histórico muito grande, usa a amostra mais recente de commits do período."
+      }
+    }
+  }
+}

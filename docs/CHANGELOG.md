@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.18.0] - 2026-10-27
+
+### ✨ Added
+
+- **Modo Turma: relatório em PDF.** Botão "Relatório PDF" ao lado do CSV. O arquivo é montado no navegador com `@react-pdf/renderer` (PDF vetorial, texto selecionável, IBM Plex Sans embutida), sem o `html2pdf.js`, e segue a identidade do relatório do Compasso: faixa azul-marinho com a marca e o período, rodapé com a data e `n / total`, retrato para texto e gráficos, paisagem para a tabela. Conteúdo: resumo da turma; uma seção por indicador (gráfico comparativo com a mediana da turma marcada em cada barra, "O que é", "Como ler", "Leitura desta turma" e limites); IA no Processo; tabela completa; metodologia e limites. A "Leitura desta turma" é montada por regras (faixa de valores, mediana, destaque acima de 2× a mediana, projetos individuais, limite inferior de IA, amostras parciais, n/d), sem nota nem ranking.
+- **Anonimizar repositórios no PDF** (opção, desligada por padrão): "Repositório A, B, C…".
+- Para commits, autores e concentração, o relatório usa textos próprios do período da turma (os do guia falam de 52 semanas e 12 meses, que não valem aqui).
+
+### 🔒 Security
+
+- **CSP: `'wasm-unsafe-eval'` em `script-src` e `data:` em `connect-src`.** O layout do react-pdf carrega o yoga em WebAssembly, buscado como data URI embutida no bundle; sem isso o relatório falha em produção ("WebAssembly.instantiate() violates … script-src"), como confirmado num build com a CSP real. A diretiva só permite compilar WebAssembly (não libera `eval()` nem `new Function()`), e `data:` não sai da página. Os dois valores estão justificados no comentário do `index.html`.
+- O relatório só recebe dados por repositório (a mesma fonte do CSV, `buildReportModel`): nada por estudante entra, e um teste garante.
+
+### ⚡ Performance
+
+- `@react-pdf/renderer` (~1,2 MB, ~445 KB gzip), o documento e os textos do relatório (`report.*`, pacote carregado por `lazyLocales`) só são baixados ao clicar. O carregamento inicial não muda.
+
+---
+
 ## [3.17.2] - 2026-10-26
 
 ### ⚡ Performance

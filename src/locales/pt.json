@@ -622,6 +622,12 @@
       "collapse": "Ocultar IA no Processo de {{repo}}",
       "coherenceTip": "As fontes de rastro de IA não concordam. Expanda a linha para ver o porquê e as causas legítimas.",
       "note": "Colunas de IA: limite inferior, só rastros declarados (coautoria, agente como autor) ou versionados (configuração). Sem rastro não significa sem IA. Commits com IA e PRs de agentes mostram (com IA/total). Selo: critérios atendidos/verificáveis. Expanda a linha (+) para ver a seção completa e o detalhe por estudante, que não vai para o CSV."
+    },
+    "report": {
+      "button": "Relatório PDF",
+      "busy": "Gerando…",
+      "anonymize": "Anonimizar repositórios no PDF",
+      "error": "Não foi possível gerar o relatório. Tente de novo; se persistir, recarregue a página."
     }
   },
   "aiProcess": {
