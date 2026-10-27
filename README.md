@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.19.1 - Selo de IA diz o que não foi avaliado
+- **🏅 "3 de 3 (2 não avaliados)"** na tabela do Modo Turma, no CSV e no card de IA, em vez de "3 de 3" que parecia nota máxima
+
 ### v3.19.0 - CI de projetos que rodam só em PR
 - **🧪 Modo Turma**: a coluna "CI ok" passa a medir também workflows que rodam só em pull request (antes aparecia como n/d)
 

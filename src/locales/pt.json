@@ -714,6 +714,8 @@
       "title": "Uso responsável de IA",
       "notApplicable": "não se aplica — nenhum rastro de IA",
       "score": "{{met}} de {{total}}",
+      "scoreUnassessed_one": "{{met}} de {{total}} ({{count}} não avaliado)",
+      "scoreUnassessed_other": "{{met}} de {{total}} ({{count}} não avaliados)",
       "noCriteria": "nenhum critério verificável",
       "tooltip": "Verifica práticas observáveis e a coerência entre os rastros de IA, não o uso real de IA nem o caráter de ninguém. Critérios não verificados ou que não se aplicam ficam fora da conta. Não penaliza quem não usa IA.",
       "criteria": {

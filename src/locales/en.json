@@ -706,6 +706,8 @@
       "title": "Responsible AI use",
       "notApplicable": "not applicable — no AI traces",
       "score": "{{met}} of {{total}}",
+      "scoreUnassessed_one": "{{met}} of {{total}} ({{count}} not assessed)",
+      "scoreUnassessed_other": "{{met}} of {{total}} ({{count}} not assessed)",
       "noCriteria": "no verifiable criteria",
       "tooltip": "Checks observable practices and coherence between AI traces, not actual AI use nor anyone's character. Criteria that were not verified or do not apply are left out of the count. It does not penalize not using AI.",
       "criteria": {

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { GuideLink } from '../GuideLink.jsx';
+import { badgeScoreText } from '../../utils/aiProcess.js';
 import { BlockTitle, Chip } from './AiParts.jsx';
 
 const STATE_TONE = { met: 'green', unmet: 'neutral', na: 'neutral', unverified: 'neutral' };
@@ -14,7 +15,7 @@ export function AiResponsibleBadge({ badge }) {
   let summary;
   if (!badge.applicable) summary = t('aiProcess.badge.notApplicable');
   else if (badge.total === 0) summary = t('aiProcess.badge.noCriteria');
-  else summary = t('aiProcess.badge.score', { met: badge.met, total: badge.total });
+  else summary = badgeScoreText(badge, t);
 
   return (
     <div>

@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.19.1] - 2026-10-27
+
+### 🐛 Fixed
+
+- **Selo "Uso responsável de IA": "3 de 3" não parece mais nota máxima.** Critérios não verificados saem do denominador, então "3 de 3" podia ser 3 dos 5 critérios, com 2 sem avaliação (testes e CI, por exemplo). A tabela do Modo Turma, o CSV, o card do Dashboard/Turma e o PDF agora dizem "3 de 3 (2 não avaliados)". Visto numa turma real em que os três projetos mostravam "3 de 3". Guia atualizado.
+
+---
+
 ## [3.19.0] - 2026-10-27
 
 ### 🐛 Fixed

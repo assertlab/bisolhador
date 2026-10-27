@@ -368,6 +368,15 @@ export function analyzeResponsibleBadge({ config, commits, prs, safeguards, cohe
   };
 }
 
+/**
+ * "3 de 3" alone reads as full marks, but unverified criteria leave the denominator: say how many
+ * weren't assessed ("3 de 3 (2 não avaliados)"). `na` criteria (don't apply) are not counted.
+ */
+export function badgeScoreText(badge, t) {
+  const count = badge.criteria.filter((c) => c.state === 'unverified').length;
+  return t(count > 0 ? 'aiProcess.badge.scoreUnassessed' : 'aiProcess.badge.score', { met: badge.met, total: badge.total, count });
+}
+
 const SOURCE_ORDER = ['config', 'commit', 'pr', 'review'];
 const configKindOf = (entries) => {
   if (entries.length === 0) return null;
