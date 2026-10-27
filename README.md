@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.22.0 - CSP sem estilo inline
+- **🔒 `style-src 'self'` e `img-src` sem `data:`**: as exceções vinham do `html2canvas`, já removido; provado pelo `smoke:csp` em todas as rotas e nos dois PDFs
+
 ### v3.21.0 - Relatório PDF do Dashboard
 - **📄 "Baixar Relatório" agora gera um PDF vetorial** com a identidade do relatório da turma (resumo, saúde e maturidade, revisão e práticas, pessoas, atividade, IA no Processo, metodologia), no lugar da foto da tela
 - **🗑️ `html2pdf.js` removido** (e `jspdf`, `html2canvas`, `dompurify`)

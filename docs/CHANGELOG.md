@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.22.0] - 2026-10-27
+
+### 🔒 Security
+
+- **CSP mais estrito: sem estilo inline e sem imagens `data:`.** `style-src` passa de `'self' 'unsafe-inline'` para `'self'` e `img-src` perde `data:`. As duas exceções vinham do `html2canvas`, removido do export de PDF na v3.21.0. Com o CSP estrito, uma injeção de HTML com `style=`/`<style>` deixa de funcionar e `data:` deixa de servir imagens. Os `style={{...}}` do React continuam valendo: usam a CSSOM, que a CSP não bloqueia.
+- Provado pelo `smoke:csp` no build de produção (`vite preview`): 0 violações carregando o Dashboard, todas as outras rotas (`/ranking`, `/benchmark`, `/timeline/…`, `/guia`, `/guia/ia`) e os dois relatórios PDF. O smoke agora visita essas rotas e reprova se alguma delas violar o CSP.
+- **Só o servidor de desenvolvimento** recebe `'unsafe-inline'` em `style-src`, por um plugin de `vite.config.js` (`apply: 'serve'`): o `@vite/client` injeta `<style>` para o HMR e sem isso o `npm run dev` perde o CSS. O build e o `vite preview` mantêm a política estrita.
+- O smoke também exercita estados que um carregamento frio não mostra (tooltips, modal de configurações, troca de tema) e exige que cada rota renderize um marco próprio (um título ou o `main`), para uma rota quebrada não contar como visitada. O toast do "Compartilhar" e a troca de idioma foram verificados só à mão (0 violações) e o smoke não os cobre. O código não tem `dangerouslySetInnerHTML`, `<style>`, `setAttribute('style')` nem `cssText`.
+
+---
+
 ## [3.21.0] - 2026-10-27
 
 ### ✨ Changed
