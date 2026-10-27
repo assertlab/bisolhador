@@ -1,11 +1,54 @@
 import { describe, it, expect } from 'vitest';
 import {
-  analyzeCiRuns, analyzeConventionalCommits, analyzeReleases, isConventionalCommit, isSemverTag, normalizeSnapshotPractices,
+  analyzeCiRuns, ciRunsForBranch, CLASSROOM_CI_EVENTS, analyzeConventionalCommits, analyzeReleases, isConventionalCommit, isSemverTag, normalizeSnapshotPractices,
 } from './projectPractices.js';
 
 const T0 = Date.UTC(2026, 9, 24);
 const iso = (ms) => new Date(ms).toISOString();
 const run = (conclusion, minutes = 2, { event = 'push', at = T0 } = {}) => ({ conclusion, event, run_started_at: iso(at), updated_at: iso(at + minutes * 60000) });
+
+describe('Classroom CI (push, PR runs, merge queue)', () => {
+  const REPO = 'o/r';
+  const pr = (conclusion = 'success', extra = {}) => ({
+    ...run(conclusion, 1, { event: 'pull_request' }), head_branch: 'feat/x', pull_requests: [], head_repository: { full_name: REPO }, repository: { full_name: REPO }, actor: { login: 'student', type: 'User' }, ...extra,
+  });
+  const push = (branch) => ({ ...run('success'), head_branch: branch });
+
+  it('keeps push to the branch, same-repo PR runs and its merge queue; drops the rest', () => {
+    const runs = [
+      push('main'), push('feat/x'),
+      pr(), // target unknown (the usual case): kept
+      pr('success', { pull_requests: [{ base: { ref: 'main' } }] }),
+      pr('success', { pull_requests: [{ base: { ref: 'develop' } }] }), // target known and elsewhere
+      pr('success', { head_repository: { full_name: 'fork/r' } }), // fork PR
+      pr('failure', { actor: { login: 'dependabot[bot]', type: 'Bot' } }), // Dependabot
+      pr('success', { actor: { login: 'copilot-swe-agent[bot]', type: 'Bot' } }), // a coding agent is the team's work
+      { ...run('success', 1, { event: 'merge_group' }), head_branch: 'gh-readonly-queue/main/pr-1-abc' },
+      { ...run('success', 1, { event: 'merge_group' }), head_branch: 'gh-readonly-queue/develop/pr-2-abc' },
+      { ...run('success', 1, { event: 'dynamic' }), head_branch: 'main' },
+      { ...run('success', 1, { event: 'schedule' }), head_branch: 'main' },
+    ];
+    expect(ciRunsForBranch(runs, 'main').map((r) => r.event)).toEqual(['push', 'pull_request', 'pull_request', 'pull_request', 'merge_group']);
+    expect(ciRunsForBranch(null, 'main')).toEqual([]);
+  });
+
+  it('a PR-only CI (no push runs) is measured, with the trigger breakdown', () => {
+    const kept = ciRunsForBranch([pr(), pr('failure'), pr(), pr()], 'main');
+    const r = analyzeCiRuns({ total_count: kept.length, workflow_runs: kept, capped: false }, { events: CLASSROOM_CI_EVENTS });
+    expect(r).toMatchObject({ available: true, successPercentage: 75, n: 4, capped: false });
+  });
+
+  it('the Dashboard default still counts push runs only', () => {
+    expect(analyzeCiRuns({ total_count: 1, workflow_runs: [pr()] })).toMatchObject({ available: false, reason: 'noConclusive' });
+  });
+
+  it('carries the cap flag, also when nothing could be counted; absent for the Dashboard', () => {
+    const opts = { events: CLASSROOM_CI_EVENTS };
+    expect(analyzeCiRuns({ total_count: 1, workflow_runs: [push('main')], capped: true }, opts).capped).toBe(true);
+    expect(analyzeCiRuns({ total_count: 0, workflow_runs: [], capped: true }, opts)).toMatchObject({ available: false, reason: 'noRuns', capped: true });
+    expect(analyzeCiRuns({ total_count: 1, workflow_runs: [push('main')] })).not.toHaveProperty('capped');
+  });
+});
 
 describe('analyzeCiRuns', () => {
   it('success rate over conclusive runs; cancelled/skipped ignored; median duration', () => {

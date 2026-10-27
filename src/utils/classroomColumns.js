@@ -37,7 +37,7 @@ export const CLASSROOM_COLUMNS = [
   { key: 'firstReview', guide: 'first-review', get: (r) => r.prs.firstReviewHours, hours: true, sampled: (r) => r.prs.capped },
   { key: 'leadTime', guide: 'lead-time', get: (r) => r.prs.leadTimeHours, hours: true, sampled: (r) => r.prs.capped },
   { key: 'prSize', guide: 'pr-size', get: (r) => r.prs.prSizeLines, sampled: (r) => r.prs.capped },
-  { key: 'ci', guide: 'ci-health', get: (r) => (r.ci.available ? r.ci.successPercentage : null), pct: true, n: (r) => r.ci.n ?? null },
+  { key: 'ci', guide: 'ci-health', get: (r) => (r.ci.available ? r.ci.successPercentage : null), pct: true, n: (r) => r.ci.n ?? null, sampled: (r) => r.ci.capped === true },
   { key: 'conventional', guide: 'conventional-commits', get: (r) => conventionalOf(r)?.percentage ?? null, pct: true, n: conventionalN, sampled: commitsCapped },
   { key: 'releases', guide: 'release-cadence', get: (r) => r.releases?.count ?? null, atLeast: (r) => r.releases?.capped },
   // AI in the Process (repository level only; per student stays in the expanded row, never in the CSV).

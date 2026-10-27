@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.19.0 - CI de projetos que rodam só em PR
+- **🧪 Modo Turma**: a coluna "CI ok" passa a medir também workflows que rodam só em pull request (antes aparecia como n/d)
+
 ### v3.18.2 - Nota sobre commits à mão no relatório
 - **📝 Relatório PDF**: a seção de IA explica por que commits feitos à mão a partir de código de agente não aparecem na contagem
 

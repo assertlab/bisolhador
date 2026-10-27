@@ -169,6 +169,11 @@ describe('classroomMaturity (badge "tests and CI" without a tree)', () => {
     expect(classroomMaturity(ctx(), runs(1)).ciCdDetected).toBe(true);
     expect(classroomMaturity(null, runs(1)).ciCdDetected).toBe(true);
   });
+  it('a truncated sample with no kept run is not "no CI"', () => {
+    const capped = { total_count: 0, workflow_runs: [], capped: true };
+    expect(classroomMaturity(ctx({ root: ['README.md'] }), capped).ciCdDetected).toBeNull();
+    expect(classroomMaturity(ctx({ workflows: ['ci.yml'] }), capped).ciCdDetected).toBe(true);
+  });
   it('listings loaded, no CI config and no runs → false', () => {
     expect(classroomMaturity(ctx({ root: ['README.md'] }), runs(0))).toEqual({ testsDetected: null, ciCdDetected: false });
   });

@@ -143,8 +143,8 @@ export function analyzeStudents(commits, authorship, period, templatePaths) {
 /**
  * Classroom stand-in for analyzeMaturity (badge criterion "tests and CI"), with no extra request:
  * Classroom has no tree, only the context listings and the period's Actions runs.
- * - CI: a CI config in the root listing or .github/workflows (repoTree's detectCi), or any completed push run
- *   in the period (fetchActionRunsInPeriod only returns those). false only when the listings were read and the
+ * - CI: a CI config in the root listing or .github/workflows (repoTree's detectCi), or any completed run that exercises
+ *   the default branch in the period (push, same-repo PR runs, merge queue: fetchCiRunsInPeriod only returns those). false only when the listings were read and the
  *   runs loaded and both are negative; null otherwise.
  * - Tests: a test directory at the root (test/, tests/, __tests__/…; spec/ excluded, as in repoTree). Never false:
  *   co-located *.test.js and src/test are invisible without the tree, so "not found" = not verified (null).
@@ -155,7 +155,9 @@ export function analyzeStudents(commits, authorship, period, templatePaths) {
 export function classroomMaturity(ctx, runs) {
   const listing = ctx?.available ? ctx : null;
   const root = listing?.rootPaths ?? [];
-  const hasRuns = runs ? (runs.total_count ?? 0) > 0 || (runs.workflow_runs?.length ?? 0) > 0 : null;
+  // A truncated sample (capped) with no kept run says nothing: older runs may be CI. Not "no CI".
+  const found = runs ? (runs.total_count ?? 0) > 0 || (runs.workflow_runs?.length ?? 0) > 0 : null;
+  const hasRuns = found === false && runs.capped === true ? null : found;
   const listingsRead = Boolean(listing) && !listing.unverified?.some((part) => part === 'listings' || part === 'workflows');
   let ciCdDetected = null;
   if (detectCi([...root, ...(listing?.workflowPaths ?? [])]) || hasRuns === true) ciCdDetected = true;

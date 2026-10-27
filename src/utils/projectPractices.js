@@ -25,12 +25,15 @@ const CI_FAIL = new Set(['failure', 'timed_out', 'startup_failure']);
  *
  * @param {{total_count: number, workflow_runs: Array}|null} response - null = request failed
  */
-export function analyzeCiRuns(response) {
+// Only Classroom reports `capped` (a sample of the period's runs); the Dashboard result keeps its shape.
+const cappedOf = (response) => (response.capped == null ? {} : { capped: response.capped === true });
+
+export function analyzeCiRuns(response, { events = ['push'] } = {}) {
   if (!response) return { available: false, reason: 'error' };
-  const runs = (response.workflow_runs ?? []).filter((r) => r.event === 'push'); // server filters too
+  const runs = (response.workflow_runs ?? []).filter((r) => events.includes(r.event)); // server filters too (Dashboard)
   const counted = runs.filter((r) => CI_PASS.has(r.conclusion) || CI_FAIL.has(r.conclusion));
   if (counted.length === 0) {
-    return { available: false, reason: (response.total_count ?? 0) === 0 ? 'noRuns' : 'noConclusive', n: 0, method: PRACTICES_METHOD };
+    return { available: false, reason: (response.total_count ?? 0) === 0 ? 'noRuns' : 'noConclusive', n: 0, ...cappedOf(response), method: PRACTICES_METHOD };
   }
   const durations = counted
     .map((r) => (Date.parse(r.updated_at) - Date.parse(r.run_started_at)) / 60000)
@@ -41,8 +44,42 @@ export function analyzeCiRuns(response) {
     successPercentage: Math.round((counted.filter((r) => CI_PASS.has(r.conclusion)).length / counted.length) * 100),
     medianMinutes: durations.length ? round1(percentile(durations, 0.5)) : null,
     n: counted.length,
+    ...cappedOf(response),
     method: PRACTICES_METHOD,
   };
+}
+
+/** Triggers the Classroom CI indicator counts (see ciRunsForBranch). */
+const DEPENDENCY_BOTS = /^(dependabot|renovate)/i;
+
+export const CLASSROOM_CI_EVENTS = ['push', 'pull_request', 'merge_group'];
+
+/**
+ * Classroom CI: runs that exercise the default branch, whatever the trigger. A repository whose
+ * required checks run only on `pull_request` (no `push` workflow) has no push runs on the branch
+ * at all, which made its CI look absent. Kept:
+ * - push to the branch;
+ * - pull_request from a branch of the same repository (fork PRs are left out) not opened by Dependabot or
+ *   Renovate (their runs lack secrets and fail for reasons unrelated to the project; other bots, such as
+ *   a coding agent, are the team's work and count). The target branch
+ *   is checked only when GitHub reports it: `pull_requests` is empty on nearly every completed run
+ *   (measured on a real repository: 1 of 20), so most PR runs can't be tied to a target. PRs to other
+ *   branches of the same repository therefore count too;
+ * - merge_group on the branch's queue.
+ * Schedules and Dependabot "dynamic" runs are not the project's build for that branch.
+ */
+export function ciRunsForBranch(runs, branch) {
+  return (runs ?? []).filter((r) => {
+    if (r.event === 'push') return r.head_branch === branch;
+    if (r.event === 'pull_request') {
+      const sameRepo = r.head_repository?.full_name != null && r.head_repository.full_name === r.repository?.full_name;
+      const targets = r.pull_requests ?? [];
+      const bases = targets.map((pr) => pr.base?.ref).filter(Boolean);
+      return sameRepo && !DEPENDENCY_BOTS.test(r.actor?.login ?? '') && (bases.length === 0 || bases.includes(branch));
+    }
+    if (r.event === 'merge_group') return String(r.head_branch ?? '').startsWith(`gh-readonly-queue/${branch}/`);
+    return false;
+  });
 }
 
 // --- Conventional Commits --------------------------------------------------

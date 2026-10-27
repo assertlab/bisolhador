@@ -4,6 +4,7 @@
 import { getItem } from "../utils/storage.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
+import { ciRunsForBranch } from "../utils/projectPractices.js";
 import { CONTEXT_DIRS, WORKFLOWS_DIR } from "../utils/aiRegistry.js";
 import {
   GITHUB_PER_PAGE_COMMITS,
@@ -17,6 +18,7 @@ import {
   AUTHORSHIP_COMMITS_PER_PATH,
   CLASSROOM_COMMIT_PAGES,
   CLASSROOM_PR_SCAN,
+  CLASSROOM_CI_RUN_PAGES,
 } from "../constants.js";
 
 const GITHUB_BASE_URL = "https://api.github.com";
@@ -657,13 +659,33 @@ export const githubService = {
     }
   },
 
-  // Push runs on the default branch created in the period (CI health).
-  async fetchActionRunsInPeriod(owner, repo, branch, fromDate, toDate) {
-    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/runs?branch=${encodeURIComponent(branch)}&event=push&status=completed&created=${encodeURIComponent(`${fromDate}..${toDate}`)}&exclude_pull_requests=true&per_page=100`;
-    const response = await fetch(url, { headers: getHeaders() });
-    if (response.status === 404) return { total_count: 0, workflow_runs: [] };
-    if (!response.ok) throw new Error(`Actions runs failed: HTTP ${response.status}`);
-    return response.json();
+  // Classroom CI health: completed runs created in the period, any trigger, up to CLASSROOM_CI_RUN_PAGES pages of 100,
+  // narrowed to the ones that exercise the default branch (push, same-repo PR runs, merge queue; see ciRunsForBranch).
+  // The branch/event filters of the API can't express that (`branch` is the head branch, so PR runs are
+  // missed). `capped` = the period has more runs than the pages read (a sample of the most recent).
+  async fetchCiRunsInPeriod(owner, repo, branch, fromDate, toDate) {
+    const base = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/runs?status=completed&created=${encodeURIComponent(`${fromDate}..${toDate}`)}&per_page=100`;
+    const all = [];
+    let total = 0;
+    for (let page = 1; page <= CLASSROOM_CI_RUN_PAGES; page += 1) {
+      const response = await fetch(`${base}&page=${page}`, { headers: getHeaders() }).catch((error) => {
+        if (page === 1) throw error;
+        return null; // a later page failing keeps what was read (marked capped below)
+      });
+      if (response?.status === 404 && page === 1) return { total_count: 0, workflow_runs: [], capped: false };
+      if (!response?.ok) {
+        if (page === 1) throw new Error(`Actions runs failed: HTTP ${response?.status}`);
+        total = Math.max(total, all.length + 1);
+        break;
+      }
+      const data = await response.json();
+      const runs = data.workflow_runs ?? [];
+      total = data.total_count ?? total;
+      all.push(...runs);
+      if (runs.length < 100) break;
+    }
+    const kept = ciRunsForBranch(all, branch);
+    return { total_count: kept.length, workflow_runs: kept, capped: total > all.length };
   },
 
   // Weekly additions/deletions. 422 = repo with ≥ 10k commits (GitHub doesn't

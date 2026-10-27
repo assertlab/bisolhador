@@ -1,7 +1,7 @@
 import { parseSafeRepoName } from './repoName.js';
 import { isBot, isBotName } from './contributors.js';
 import { analyzeReviewMetrics, analyzeLeadTime } from './prReviewStats.js';
-import { analyzeCiRuns, analyzeConventionalCommits, RELEASES_PAGE } from './projectPractices.js';
+import { analyzeCiRuns, analyzeConventionalCommits, CLASSROOM_CI_EVENTS, RELEASES_PAGE } from './projectPractices.js';
 import { buildAiProcess, fromGraphqlCommit } from './aiProcess.js';
 import { analyzeStudents, classroomAiContext, classroomMaturity } from './aiClassroom.js';
 
@@ -171,7 +171,7 @@ export function analyzeTeamRepo(results, period, { ctx = null, authorship = null
           leadTimeHours: leadTime?.n > 0 ? leadTime.medianHours : null,
         }
       : { available: false, reason: 'error' },
-    ci: analyzeCiRuns(settled(results.runs)),
+    ci: analyzeCiRuns(settled(results.runs), { events: CLASSROOM_CI_EVENTS }),
     releases: releasesInPeriod(settled(results.releases), period),
     ...analyzeTeamAi(settled(results.history), prs, settled(results.runs), ctx, authorship, period),
   };
