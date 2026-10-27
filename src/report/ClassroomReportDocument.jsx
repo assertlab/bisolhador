@@ -3,6 +3,7 @@ import { Banner, CompareBars, Footer, GridTable, Stats } from './ReportParts.jsx
 import { s } from './styles.js';
 import { formatValue } from './format.js';
 import { readingFor } from './reportReading.js';
+import { attentionPoints } from './reportAttention.js';
 import { theme } from './theme.js';
 import { CLASSROOM_CI_RUN_PAGES, CLASSROOM_COMMIT_PAGES, CLASSROOM_PR_SCAN } from '../constants.js';
 
@@ -49,6 +50,7 @@ export function ClassroomReportDocument({ model, t, locale, meta, i18nHas = () =
             ...(summary.private == null ? [] : [{ label: t('report.summary.private'), value: String(summary.private) }]),
           ]}
         />
+        <AttentionList />
         <Text style={s.h2}>{t('report.summary.howToTitle')}</Text>
         <Text style={s.p}>{t('report.summary.howTo')}</Text>
         {summary.allSolo && (
@@ -59,6 +61,33 @@ export function ClassroomReportDocument({ model, t, locale, meta, i18nHas = () =
         )}
         <Text style={s.h2}>{t('report.summary.lowerBoundTitle')}</Text>
         <Text style={s.p}>{t('report.summary.lowerBound')}</Text>
+      </View>
+    );
+  }
+
+  function AttentionList() {
+    const label = (key) => t(`classroom.columns.${key}`);
+    const lines = attentionPoints(model, (unit, value) => formatValue(unit, value, locale)).map((point) =>
+      t(`report.attention.${point.key}`, {
+        ...point.params,
+        indicators: point.indicators?.map(label).join(', '),
+        entries: point.entries?.map((e) => `${label(e.indicator)} (${e.names})`).join('; '),
+      }),
+    );
+    return (
+      <View>
+        <Text style={s.h2}>{t('report.attention.title')}</Text>
+        <Text style={[s.muted, { fontSize: 8, marginBottom: 4 }]}>{t('report.attention.intro')}</Text>
+        {lines.length === 0 ? (
+          <Text style={s.p}>{t('report.attention.none')}</Text>
+        ) : (
+          lines.map((line, i) => (
+            <View key={i} style={{ flexDirection: 'row', marginBottom: 3 }} wrap={false}>
+              <Text style={{ width: 10 }}>•</Text>
+              <Text style={[s.p, { flex: 1 }]}>{line}</Text>
+            </View>
+          ))
+        )}
       </View>
     );
   }

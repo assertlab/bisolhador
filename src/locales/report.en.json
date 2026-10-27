@@ -124,6 +124,23 @@
         "what": "Releases published on GitHub within the class period (dated by the tag, or by publication if the tag is later).",
         "limits": "Projects that only create tags, without GitHub releases, do not appear. Only the 100 most recent releases are read: if all fall in the period the value is a minimum. The ideal frequency depends on the kind of project."
       }
+    },
+    "attention": {
+      "title": "Points of attention",
+      "intro": "Picked by rules over the numbers, as topics to discuss with the teams. They are not an assessment or a ranking.",
+      "none": "No point of attention under the rules applied.",
+      "notAnalyzed_one": "{{count}} requested repository could not be analyzed or repeats another.",
+      "notAnalyzed_other": "{{count}} requested repositories could not be analyzed or repeat another.",
+      "partial": "Partial sample in {{names}}: the values of those repositories are minimums or medians of a sample.",
+      "aiDisagree": "AI trace sources disagree in {{names}}. This proves nothing: see the possible causes in the guide.",
+      "aiLowDeclared": "AI tool trace in the repository, but fewer than {{threshold}}% of commits declare co-authorship: {{names}}. This measures declaration, not use.",
+      "ciLow": "CI with less than {{threshold}}% success: {{names}}.",
+      "bigPrs": "Median PR size of {{threshold}} lines or more: {{names}}.",
+      "concentration": "Concentration above {{threshold}}% in a project with more than one author: {{names}}.",
+      "noPeerApproval": "No PR approved by someone else in a team with more than one author: {{names}}.",
+      "unmeasuredAll": "Not measured in any repository (n/a): {{indicators}}.",
+      "noMergedPrs": "No merged PR in the period: {{names}}.",
+      "unmeasuredSome": "Not measured (n/a) in some repositories: {{entries}}."
     }
   }
 }

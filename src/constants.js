@@ -29,6 +29,9 @@ export const TOAST_AUTO_DISMISS_MS = 1000 * 5; // 5 seconds
 
 // Contributor concentration (Dashboard table + Benchmark use the same thresholds)
 export const TOP_SHARE_CRITICAL_PERCENT = 60; // > 60% of commits from one person
+// Classroom PDF report, "Pontos de atenção": conversation starters from rules, not grades
+export const REPORT_CI_LOW_PERCENT = 80; // CI success below this is listed
+export const REPORT_AI_LOW_DECLARED_PERCENT = 25; // AI tool configured but fewer commits than this declare it
 export const TOP_SHARE_WARNING_PERCENT = 40;  // > 40%
 // Concentration is computed over the last 12 months when there is enough
 // recent activity; otherwise all-time (a long-gone maintainer is not today's risk).
