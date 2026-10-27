@@ -4,6 +4,7 @@ import { Line } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 import useChartTheme from '../../hooks/useChartTheme.js';
 import { GuideLink } from '../GuideLink.jsx';
+import { trimCommitSeries } from '../../utils/activityStats.js';
 
 // status: 'computing' (HTTP 202) / 'error' when GitHub didn't return the
 // series (data null); undefined for snapshots from before 2026-10.
@@ -11,70 +12,13 @@ export default function CommitActivityChart({ data, createdAt, status }) {
   const { t } = useTranslation();
   const { textColor, gridColor } = useChartTheme();
 
-  // Memoização do cálculo da idade do projeto
-  const weeksOld = useMemo(() => {
-    let weeks = 52; // Default to 52 weeks
-    if (createdAt) {
-      try {
-        const createdDate = new Date(createdAt);
-        const now = new Date();
-        if (!isNaN(createdDate.getTime())) {
-          const ageInMs = now - createdDate;
-          weeks = Math.ceil(ageInMs / (1000 * 60 * 60 * 24 * 7));
-        }
-      } catch {
-        weeks = 52;
-      }
-    }
-    return weeks;
-  }, [createdAt]);
-
-  // Memoização do processamento de dados (smart trimming)
+  // Smart trimming by project age (shared with the PDF report: utils/activityStats.js)
   const processedData = useMemo(() => {
-    let result = data;
-    if (data && data.datasets && data.datasets[0] && data.datasets[0].data) {
-      const rawData = data.datasets[0].data;
-
-      // For young projects, trim to actual age + small buffer
-      // For older projects, show full 52 weeks
-      const maxWeeksToShow = Math.min(weeksOld + 4, 52); // Small buffer for context
-      let itemsToShow = Math.min(rawData.length, maxWeeksToShow);
-
-      // Find first non-zero value to avoid showing too much empty data
-      const firstNonZeroIndex = rawData.findIndex(value => value > 0);
-      let startIndex = 0;
-
-      if (firstNonZeroIndex !== -1) {
-        // Found activity - show from a few weeks before first activity
-        startIndex = Math.max(0, firstNonZeroIndex - 2); // 2 weeks of context before activity
-        itemsToShow = Math.min(rawData.length - startIndex, itemsToShow);
-      } else if (weeksOld < 52) {
-        // No activity found but project is young - show only recent period
-        startIndex = Math.max(0, rawData.length - itemsToShow);
-      }
-
-      // Slice the data
-      const trimmedValues = rawData.slice(startIndex, startIndex + itemsToShow);
-
-      // Generate labels dynamically based on trimmed data length
-      const finalLabels = [];
-      for (let i = trimmedValues.length - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - (i * 7));
-        const label = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
-        finalLabels.push(label);
-      }
-
-      result = {
-        labels: finalLabels,
-        datasets: [{
-          ...data.datasets[0],
-          data: trimmedValues
-        }]
-      };
-    }
-    return result;
-  }, [data, weeksOld]);
+    const raw = data?.datasets?.[0]?.data;
+    if (!raw) return data;
+    const { values, labels } = trimCommitSeries(raw, createdAt);
+    return { labels, datasets: [{ ...data.datasets[0], data: values }] };
+  }, [data, createdAt]);
 
   // Check if we have any data at all (accepts arrays with zeros)
   const hasData = (processedData?.datasets?.[0]?.data?.length ?? 0) > 0;

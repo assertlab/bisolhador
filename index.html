@@ -24,16 +24,16 @@
         + data: (o mesmo yoga busca o próprio .wasm como data URI embutida no bundle; data: não
         sai da página, então não abre caminho de exfiltração como um host externo abriria).
       - img-src: 'self' + avatars.githubusercontent.com (contributor.avatar_url em
-        ContributorsTable.jsx, BusFactorCard.jsx e ActivityLogs.jsx) + data: (html2canvas, usado
-        pelo export de PDF em pdfExporter.js, lê/gera data URIs internamente)
+        ContributorsTable.jsx, BusFactorCard.jsx e ActivityLogs.jsx) + data: (herança do html2canvas, removido
+        do export de PDF na v3.21.0; candidato a sair, a provar com npm run smoke:csp)
         + *.google-analytics.com / www.googletagmanager.com (hits do gtag.js via <img>, conforme
         o guia de CSP do GA4: developers.google.com/tag-platform/security/guides/csp; o pixel
         googletagmanager.com/td já apareceu como violação no npm run smoke:csp).
       - style-src: 'self' 'unsafe-inline' — os style={{...}} inline do React usam a CSSOM
-        (propriedade por propriedade), o que é correto mas irrelevante aqui: o motivo real do
-        'unsafe-inline' é o html2canvas (usado no export de PDF, src/utils/pdfExporter.js), que
-        aplica estilo inline via setAttribute('style', ...)/cssText ao clonar o DOM pra renderizar
-        o canvas — isso cai sob style-src independente de nonce/hash. Em modo dev, o próprio
+        (propriedade por propriedade), o que é correto mas irrelevante aqui: o motivo original do
+        'unsafe-inline' era o html2canvas (export de PDF antigo, removido na v3.21.0), que
+        aplicava estilo inline via setAttribute('style', ...)/cssText ao clonar o DOM — isso cai
+        sob style-src independente de nonce/hash. Candidato a ser apertado, a provar com o smoke. Em modo dev, o próprio
         @vite/client também injeta estilo inline (provavelmente pro overlay de erro do HMR), então
         a mesma relaxação é necessária nos dois ambientes de qualquer forma. Confirmado via smoke
         test real com Playwright (scripts/csp-smoke-test.mjs, npm run smoke:csp), não suposição —

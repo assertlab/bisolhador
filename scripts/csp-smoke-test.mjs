@@ -18,8 +18,8 @@
 // WebAssembly layout (script-src 'wasm-unsafe-eval' + connect-src data:) and
 // the blob worker a PNG image would spawn (it hangs the report, silently).
 //
-// Exit code: 0 only if every mode navigated, loaded the dashboard, started
-// the PDF download, produced the Classroom report, and had zero CSP violations
+// Exit code: 0 only if every mode navigated, loaded the dashboard, produced the
+// Dashboard and the Classroom PDF reports (valid PDFs, report font embedded), and had zero CSP violations
 // and zero page errors. With
 // SMOKE_REQUIRE_GA=1 (set in CI), zero GA4 requests also fails: GA4's CSP
 // coverage would otherwise go untested silently (e.g. VITE_GA_ID missing).
@@ -52,7 +52,7 @@ const PDF_BUTTON_NAME = 'Baixar Relatório'; // src/locales/pt.json -> header.do
 const APP_BASE_PATH = '/';
 const NAV_TIMEOUT_MS = 30_000;
 const DASHBOARD_TIMEOUT_MS = 60_000; // ~16 sequential/parallel unauthenticated GitHub API calls
-const DOWNLOAD_TIMEOUT_MS = 30_000;
+const DOWNLOAD_TIMEOUT_MS = 60_000; // react-pdf (~1.2 MB) + fonts + layout on a CI runner
 const CLASSROOM_REPORT_BUTTON_NAME = 'Relatório PDF'; // src/locales/pt.json -> classroom.report.button
 const CLASSROOM_URL = '/turma?repos=smoke-org/smoke-repo&from=2026-08-01&to=2026-10-26';
 const CLASSROOM_REPORT_TIMEOUT_MS = 90_000; // react-pdf (~1.2 MB) + fonts + layout on a CI runner
@@ -60,7 +60,7 @@ const CLASSROOM_REPORT_TIMEOUT_MS = 90_000; // react-pdf (~1.2 MB) + fonts + lay
 // Optional escape hatch: when the unauthenticated GitHub rate limit (60/h) is
 // exhausted, set SMOKE_SNAPSHOT_ID to an existing analytics_searches id and
 // the flow loads that permalink (?id=...) instead of driving a live search.
-// This still exercises the exact same PDF export / html2canvas code path
+// This still exercises the exact same PDF report code path
 // (RepoInfoCard renders identically for repoData and snapshotData), it just
 // sources the data from Supabase instead of the GitHub API.
 const SNAPSHOT_ID = process.env.SMOKE_SNAPSHOT_ID || null;
@@ -165,6 +165,12 @@ async function runClassroomReportFlow(page, baseUrl) {
     page.waitForEvent('download', { timeout: CLASSROOM_REPORT_TIMEOUT_MS }),
     reportButton.click({ timeout: CLASSROOM_REPORT_TIMEOUT_MS }),
   ]);
+  return inspectPdfDownload(download);
+}
+
+// A report is only a report if it is a real PDF with the report font embedded (a failed font load
+// would fall back silently otherwise)
+async function inspectPdfDownload(download) {
   const bytes = readFileSync(await download.path());
   const text = bytes.toString('latin1');
   return {
@@ -320,6 +326,7 @@ async function runBrowserFlow(baseUrl, label) {
     downloadFilename: null,
     datePermalink: null, // snapshot mode: ?repo=&date= of the same record
     datePermalinkOk: usingSnapshot ? false : null,
+    dashboardReport: null, // { filename, bytes, pdf, fonts } of the Dashboard report download
     classroomReport: null, // { filename, bytes, pdf, fonts } once the report was generated
     error: null,
   };
@@ -365,6 +372,7 @@ async function runBrowserFlow(baseUrl, label) {
     flow.pdfClicked = true;
     flow.downloadStarted = true;
     flow.downloadFilename = download.suggestedFilename();
+    flow.dashboardReport = await inspectPdfDownload(download);
 
     if (usingSnapshot) {
       if (!snapshotRecord?.repo_name || !snapshotRecord?.created_at) throw new Error('obter_snapshot response not captured');
@@ -490,7 +498,7 @@ async function main() {
     console.log(
       `${r.flow.label}: navigationOk=${r.flow.navigationOk} searchSubmitted=${r.flow.searchSubmitted} ` +
         `dashboardLoaded=${r.flow.dashboardLoaded} pdfClicked=${r.flow.pdfClicked} downloadStarted=${r.flow.downloadStarted} datePermalinkOk=${r.flow.datePermalinkOk} ` +
-        `classroomReport=${r.flow.classroomReport ? `${r.flow.classroomReport.bytes}B` : 'none'} ` +
+        `dashboardReport=${r.flow.dashboardReport ? `${r.flow.dashboardReport.bytes}B` : 'none'} classroomReport=${r.flow.classroomReport ? `${r.flow.classroomReport.bytes}B` : 'none'} ` +
         `cspViolations=${r.cspViolations.length} gaRequests=${r.gaRequests.length} websockets=${r.websockets.length} ` +
         `pageErrors=${r.pageErrors.length} intercepted=${JSON.stringify(r.writesIntercepted)} ` +
         `flowError=${r.flow.error ?? 'none'}`,
@@ -511,9 +519,10 @@ async function main() {
     if (!f.dashboardLoaded) problems.push('dashboard did not load');
     if (!f.downloadStarted) problems.push('PDF download did not start');
     if (f.datePermalinkOk === false) problems.push(`date permalink ${f.datePermalink ?? '(not built)'} did not load (buscar_snapshot_por_data)`);
-    const report = f.classroomReport;
-    if (!report) problems.push('Classroom PDF report was not generated');
-    else if (!report.pdf || !report.fonts || report.bytes < 5000) problems.push(`Classroom PDF report is not a valid PDF with the embedded fonts (${JSON.stringify(report)})`);
+    for (const [name, report] of [['Dashboard', f.dashboardReport], ['Classroom', f.classroomReport]]) {
+      if (!report) problems.push(`${name} PDF report was not generated`);
+      else if (!report.pdf || !report.fonts || report.bytes < 5000) problems.push(`${name} PDF report is not a valid PDF with the embedded fonts (${JSON.stringify(report)})`);
+    }
     if (r.cspViolations.length) problems.push(`${r.cspViolations.length} CSP violation(s)`);
     if (r.pageErrors.length) problems.push(`${r.pageErrors.length} page error(s)`);
     return problems.map((p) => `${f.label}: ${p}`);

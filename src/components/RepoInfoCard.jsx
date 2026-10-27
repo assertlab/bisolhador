@@ -2,15 +2,17 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { formatters } from '../utils/formatters.js';
-import { exportToPDF } from '../utils/pdfExporter.js';
+import { downloadBlob } from '../utils/downloadBlob.js';
+import { isChunkLoadError } from '../lib/chunkErrors.js';
 import { exportJson } from '../utils/exportJson.js';
 import { exportToCsv } from '../utils/csvExporter.js';
 import { showToast } from '../hooks/useToast.js';
 import { intlLocale } from '../i18n.js';
 import { parseSafeRepoName } from '../utils/repoName.js';
+import { repoAgeText } from '../utils/repoAge.js';
 import { GuideLink } from './GuideLink.jsx';
 
-export function RepoInfoCard({ data, onShareSuccess }) {
+export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
   const { t, i18n } = useTranslation();
   const locale = intlLocale(i18n.language);
   const navigate = useNavigate();
@@ -20,40 +22,17 @@ export function RepoInfoCard({ data, onShareSuccess }) {
   const timelineRoute = parseSafeRepoName(data.fullName);
   const isTimelineRouteSafe = timelineRoute !== null;
 
-  const calculateAgeText = (createdAt) => {
-    if (!createdAt) return 'N/A';
-    const now = new Date();
-    const created = new Date(createdAt);
-    const diffMs = now - created;
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (days < 7) {
-      if (days === 0) return t('repo.ageLessThanDay');
-      if (days === 1) return t('repo.ageOneDay');
-      return t('repo.ageDays', { count: days });
-    }
-
-    const weeks = Math.floor(days / 7);
-    if (weeks < 4) {
-      if (weeks === 1) return t('repo.ageOneWeek');
-      return t('repo.ageWeeks', { count: weeks });
-    }
-
-    const months = Math.floor(days / 30);
-    if (days < 365) {
-      if (months === 1) return t('repo.ageOneMonth');
-      return t('repo.ageMonths', { count: months });
-    }
-
-    const years = Math.floor(days / 365);
-    if (years === 1) return t('repo.ageOneYear');
-    return t('repo.ageYears', { count: years });
-  };
-
   const handleDownloadPDF = async () => {
     setIsExportingPdf(true);
     try {
-      await exportToPDF();
+      // react-pdf and the report texts load on click (never at page load)
+      const { generateRepoReport } = await import('../report/generateRepoReport.js');
+      const blob = await generateRepoReport(data, { isSnapshot });
+      downloadBlob(blob, `bisolhador-${data.fullName.replace('/', '-')}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (error) {
+      console.error('Erro ao gerar o relatório PDF:', error);
+      // A tab that predates a deploy asks for a chunk that no longer exists: reloading fixes it, retrying can't
+      showToast(t(isChunkLoadError(error) ? 'errors.pdfModuleLoad' : 'errors.pdfExport'), 'error');
     } finally {
       setIsExportingPdf(false);
     }
@@ -225,7 +204,7 @@ export function RepoInfoCard({ data, onShareSuccess }) {
             {t('repo.projectAge')}
           </h3>
           <p className="text-lg font-medium text-gray-900 dark:text-white">
-            {calculateAgeText(data.createdAt)}
+            {repoAgeText(data.createdAt, t)}
           </p>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
             {/* Formatted here, in the UI language: createdAtFormatted (kept in the data for

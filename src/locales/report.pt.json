@@ -141,6 +141,32 @@
       "unmeasuredAll": "Não medidos em nenhum repositório (n/d): {{indicators}}.",
       "noMergedPrs": "Nenhum PR mergeado no período: {{names}}.",
       "unmeasuredSome": "Sem medição (n/d) em alguns repositórios: {{entries}}."
+    },
+    "repo": {
+      "title": "Relatório do repositório",
+      "analysisLine": "análise de {{date}}",
+      "snapshotLine": "snapshot de {{date}}",
+      "state": {
+        "yes": "Sim",
+        "no": "Não",
+        "unknown": "Não verificado"
+      },
+      "criterion": {
+        "met": "cumprido",
+        "unmet": "não cumprido",
+        "na": "não se aplica",
+        "unverified": "não verificado"
+      },
+      "moreContributors": "e mais {{count}} contribuidores fora desta lista.",
+      "method": {
+        "version": "Gerado pelo Bisolhador {{version}}.",
+        "registry": "Registro de ferramentas de IA: versão {{registry}}.",
+        "live": "Dados lidos do GitHub no momento da análise ({{date}}). Os números mudam com o tempo.",
+        "snapshot": "Registro salvo em {{date}}: são os números daquele dia, não o estado atual do GitHub. Itens que a versão da época não media aparecem como não registrados.",
+        "nd": "N/A e n/d significam que o dado não pôde ser medido (falha da API, falta de token ou fonte ausente), nunca zero. \"Não verificado\" significa que a checagem não pôde ser feita.",
+        "samples": "Indicadores de PRs usam amostras limitadas dos PRs mergeados mais recentes e dependem de token do GitHub; commits, contribuidores e atividade seguem as janelas descritas em cada seção.",
+        "ai": "Sem rastro não significa sem IA. A seção de IA e o selo medem práticas observáveis, não o uso real, e não identificam pessoas."
+      }
     }
   }
 }

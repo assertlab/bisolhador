@@ -1,4 +1,4 @@
-import { Image, Text, View } from '@react-pdf/renderer';
+import { Image, Page, Text, View } from '@react-pdf/renderer';
 import logoUrl from './logo.jpg';
 import { s } from './styles.js';
 import { theme as t } from './theme.js';
@@ -30,6 +30,17 @@ export function Footer({ text }) {
       <Text>{text}</Text>
       <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
     </View>
+  );
+}
+
+/** One A4 page of any report: the banner and footer repeat on every page the content flows onto. */
+export function ReportPage({ title, subtitle, footer, landscape = false, children }) {
+  return (
+    <Page size="A4" orientation={landscape ? 'landscape' : 'portrait'} style={s.page}>
+      <Banner title={title} subtitle={subtitle} />
+      {children}
+      <Footer text={footer} />
+    </Page>
   );
 }
 

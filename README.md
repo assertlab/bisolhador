@@ -32,6 +32,10 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.21.0 - Relatório PDF do Dashboard
+- **📄 "Baixar Relatório" agora gera um PDF vetorial** com a identidade do relatório da turma (resumo, saúde e maturidade, revisão e práticas, pessoas, atividade, IA no Processo, metodologia), no lugar da foto da tela
+- **🗑️ `html2pdf.js` removido** (e `jspdf`, `html2canvas`, `dompurify`)
+
 ### v3.20.1 - Cursor como agente
 - **🤖 PRs e commits do agente do Cursor** (`cursor[bot]`, conta `cursoragent`) passam a contar em "PRs de agentes" e nos commits com rastro de IA
 
