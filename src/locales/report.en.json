@@ -132,14 +132,15 @@
       "notAnalyzed_one": "{{count}} requested repository could not be analyzed or repeats another.",
       "notAnalyzed_other": "{{count}} requested repositories could not be analyzed or repeat another.",
       "partial": "Partial sample in {{names}}: the values of those repositories are minimums or medians of a sample.",
-      "unmeasured": "{{indicator}} not measured (n/a) in {{names}}.",
       "aiDisagree": "AI trace sources disagree in {{names}}. This proves nothing: see the possible causes in the guide.",
-      "aiLowDeclared": "AI tool configured, but fewer than {{threshold}}% of commits declare co-authorship: {{names}}. This measures declaration, not use.",
+      "aiLowDeclared": "AI tool trace in the repository, but fewer than {{threshold}}% of commits declare co-authorship: {{names}}. This measures declaration, not use.",
       "ciLow": "CI with less than {{threshold}}% success: {{names}}.",
-      "bigPrs": "Median PR size above {{threshold}} lines: {{names}}.",
+      "bigPrs": "Median PR size of {{threshold}} lines or more: {{names}}.",
       "concentration": "Concentration above {{threshold}}% in a project with more than one author: {{names}}.",
       "noPeerApproval": "No PR approved by someone else in a team with more than one author: {{names}}.",
-      "unmeasuredAll": "{{indicator}} was not measured in any repository (n/a)."
+      "unmeasuredAll": "Not measured in any repository (n/a): {{indicators}}.",
+      "noMergedPrs": "No merged PR in the period: {{names}}.",
+      "unmeasuredSome": "Not measured (n/a) in some repositories: {{entries}}."
     }
   }
 }

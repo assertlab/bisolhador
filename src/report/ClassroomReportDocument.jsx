@@ -66,8 +66,13 @@ export function ClassroomReportDocument({ model, t, locale, meta, i18nHas = () =
   }
 
   function AttentionList() {
+    const label = (key) => t(`classroom.columns.${key}`);
     const lines = attentionPoints(model, (unit, value) => formatValue(unit, value, locale)).map((point) =>
-      t(`report.attention.${point.key}`, { ...point.params, ...(point.indicator ? { indicator: t(`classroom.columns.${point.indicator}`) } : {}) }),
+      t(`report.attention.${point.key}`, {
+        ...point.params,
+        indicators: point.indicators?.map(label).join(', '),
+        entries: point.entries?.map((e) => `${label(e.indicator)} (${e.names})`).join('; '),
+      }),
     );
     return (
       <View>

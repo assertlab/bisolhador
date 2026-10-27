@@ -31,7 +31,14 @@ describe('attentionPoints', () => {
     expect(find(points, 'ciLow').params).toMatchObject({ names: 'b (60%)', threshold: 80 });
     expect(find(points, 'bigPrs').params).toMatchObject({ names: 'b (500)', threshold: 400 });
     expect(find(points, 'aiDisagree').params.names).toBe('b');
-    expect(find(points, 'aiLowDeclared').params).toMatchObject({ names: 'b (10%)', threshold: 25 });
+  });
+
+  it('low declared share: a trace and under 25%, rounded, and 400 lines counts as "not small"', () => {
+    const model = base();
+    model.ai[1] = { label: 'b', tools: ['claude'], flags: [] };
+    expect(find(attentionPoints(model, fmt), 'aiLowDeclared').params).toMatchObject({ names: 'b (10%)', threshold: 25 });
+    model.indicators = model.indicators.map((i) => (i.key === 'prSize' ? ind('prSize', [['a', 400]]) : i));
+    expect(find(attentionPoints(model, fmt), 'bigPrs').params.names).toBe('a (400)');
   });
 
   it('concentration and peer approval only count for teams of more than one author', () => {
@@ -50,20 +57,40 @@ describe('attentionPoints', () => {
     const ks = keys(attentionPoints(solo, fmt));
     expect(ks).not.toContain('concentration');
     expect(ks).not.toContain('noPeerApproval');
-    expect(attentionPoints(solo, fmt).some((p) => p.key === 'unmeasured' && p.indicator === 'firstReview')).toBe(false);
+    expect(find(attentionPoints(solo, fmt), 'unmeasuredAll')).toBeUndefined(); // first review n/d is expected
   });
 
-  it('an unmeasured indicator is listed with its repositories (n/d), never as zero', () => {
+  it('n/d goes in two lines at most: missing everywhere, and missing in some (with the repositories)', () => {
     const model = base();
     model.indicators.find((i) => i.key === 'ci').unavailable = ['x'];
-    const p = attentionPoints(model, fmt).find((q) => q.key === 'unmeasured' && q.indicator === 'ci');
-    expect(p.params).toMatchObject({ names: 'x', count: 1 });
+    const points = attentionPoints(model, fmt);
+    expect(points.filter((p) => p.key.startsWith('unmeasured'))).toHaveLength(2);
+    expect(find(points, 'unmeasuredAll').indicators).toEqual(['firstReview']);
+    expect(find(points, 'unmeasuredSome').entries).toEqual([{ indicator: 'ci', names: 'x' }]);
   });
 
-  it('an indicator unmeasured in every repository is one line, not a list of names', () => {
-    const p = attentionPoints(base(), fmt).find((q) => q.indicator === 'firstReview');
-    expect(p).toMatchObject({ key: 'unmeasuredAll', params: { count: 3 } });
-    expect(p.params.names).toBeUndefined();
+  it('a repository with no merged PR is the signal, not four "not measured" lines', () => {
+    const model = base();
+    model.indicators.push(ind('mergedPrs', [['a', 5], ['b', 0]]));
+    model.indicators.find((i) => i.key === 'prSize').unavailable = ['b'];
+    const points = attentionPoints(model, fmt);
+    expect(find(points, 'noMergedPrs').params.names).toBe('b');
+    // prSize is n/d only for b (no PRs): not repeated as "not measured"
+    expect((find(points, 'unmeasuredSome')?.entries ?? []).some((e) => e.indicator === 'prSize')).toBe(false);
+  });
+
+  it('a repository already listed as "sources disagree" is not listed again as low declared', () => {
+    const points = attentionPoints(base(), fmt);
+    expect(find(points, 'aiDisagree').params.names).toBe('b');
+    expect(find(points, 'aiLowDeclared')).toBeUndefined(); // b was the only one under 25% with a trace
+  });
+
+  it('thresholds compare the printed (rounded) value: 79.6% prints as 80% and is not "below 80%"', () => {
+    const model = base();
+    model.indicators = model.indicators.map((i) => (i.key === 'ci' ? ind('ci', [['a', 79.6]], [], 'percent') : i));
+    expect(find(attentionPoints(model, fmt), 'ciLow')).toBeUndefined();
+    model.indicators = model.indicators.map((i) => (i.key === 'ci' ? ind('ci', [['a', 79.4]], [], 'percent') : i));
+    expect(find(attentionPoints(model, fmt), 'ciLow').params.names).toBe('a (79.4%)');
   });
 
   it('partial samples and unanalyzed repositories are reported', () => {
@@ -73,9 +100,12 @@ describe('attentionPoints', () => {
   });
 
   it('a tool with a high declared share, or without AI traces, is not listed', () => {
-    const points = attentionPoints(base(), fmt);
-    expect(find(points, 'aiLowDeclared').params.names).not.toContain('a');
-    expect(find(points, 'aiLowDeclared').params.names).not.toContain('s');
+    const model = base();
+    model.ai[1] = { label: 'b', tools: ['claude'], flags: [] }; // b under 25% and with a trace: listed
+    const names = find(attentionPoints(model, fmt), 'aiLowDeclared').params.names;
+    expect(names).toContain('b');
+    expect(names).not.toContain('a'); // 40%: above the threshold
+    expect(names).not.toContain('s'); // 0% but no AI trace at all
   });
 
   it('nothing to report gives an empty list', () => {
