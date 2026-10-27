@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.20.1 - Cursor como agente
+- **🤖 PRs e commits do agente do Cursor** (`cursor[bot]`, conta `cursoragent`) passam a contar em "PRs de agentes" e nos commits com rastro de IA
+
 ### v3.20.0 - Pontos de atenção no relatório PDF
 - **📌 "Pontos de atenção"** na página de resumo do relatório da turma, escolhidos por regras (sem nota nem ranking)
 

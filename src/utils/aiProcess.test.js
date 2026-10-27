@@ -291,7 +291,7 @@ describe('analyzeResponsibleBadge', () => {
 describe('buildAiProcess', () => {
   it('buildAiProcess has no person logins and the method/version', () => {
     const ai = buildAiProcess(fullFixture);
-    expect(ai).toMatchObject({ method: 'ai-traces-v1', registryVersion: '2026-10-25' });
+    expect(ai).toMatchObject({ method: 'ai-traces-v1', registryVersion: '2026-10-27' });
     expect(JSON.stringify(ai)).not.toContain('alice');
   });
   it('merges sources per tool; template-only tools are flagged fromTemplate and have no config source', () => {

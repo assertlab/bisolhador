@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.20.1] - 2026-10-27
+
+### 🐛 Fixed
+
+- **Cursor passa a ser reconhecido como autor de PR e de commits de agente** (pendência de v3.15.0, que ficou de fora por falha de rede na verificação). Confirmado em dados públicos reais: `is:pr author:app/cursor` encontra PRs do `cursor[bot]` (conta Bot, cerca de 179 mil PRs, 32 mil mergeados), abertos pelo agente na nuvem. Os commits dentro desses PRs vêm da conta `cursoragent` (tipo **User**, "Cursor Agent", `cursoragent@cursor.com`) e levam a pessoa como `Co-authored-by`, não o Cursor; como um autor do tipo User nunca era agente, o Dashboard não os via. O registro ganhou `agentLogins: ['cursor']` e `agentAccounts: ['cursoragent']` (a única conta de pessoa aceita como agente; outras, mesmo com nome parecido, seguem sendo pessoas). No Modo Turma os commits já eram pegos pelo e-mail. `REGISTRY_VERSION` 2026-10-27: snapshots novos gravam o registro novo, os antigos seguem como estavam. A tabela de detecção do guia de IA mostra os dois logins na coluna de agente.
+- Efeito esperado: PRs do Cursor aparecem em "PRs de agentes" e fora das métricas de revisão de humanos (como os de Copilot ou Claude), e o selo "revisados por humanos" passa a enxergá-los.
+
+---
+
 ## [3.20.0] - 2026-10-27
 
 ### ✨ Added

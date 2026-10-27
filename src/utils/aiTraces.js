@@ -51,6 +51,12 @@ export function agentToolOf(login, email = null) {
   return email ? toolFromEmail(email, null) : null;
 }
 
+// A person-type account that is the agent itself (Cursor's `cursoragent`): the only User-type author allowed.
+const agentAccountToolOf = (login) => {
+  const l = normalizeLogin(login);
+  return l ? AI_TOOLS.find((t) => t.agentAccounts?.includes(l))?.id ?? null : null;
+};
+
 export function reviewerToolOf(login) {
   const l = normalizeLogin(login);
   return l ? AI_TOOLS.find((t) => t.reviewerLogins.includes(l))?.id ?? null : null;
@@ -66,7 +72,7 @@ const loginOrBotName = ({ login, name }) => login ?? (/\[bot\]$/i.test(name ?? '
 // name or the e-mail identify an agent.
 export function authorAgentTool(author) {
   const { login, type, name } = author;
-  if (login && type === 'User') return null;
+  if (login && type === 'User') return agentAccountToolOf(login);
   let identity = null;
   if (login && isBot({ login, type })) identity = login;
   else if (/\[bot\]$/i.test(name ?? '')) identity = name;

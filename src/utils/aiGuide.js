@@ -28,6 +28,7 @@ export const AI_GUIDE_BLOCKS = ['overview', 'declare', 'detect', 'teachers', 'fa
  * - cursor: cursor.com/help/integrations/git.md — agent commits get a "Made with Cursor" trailer (on by default,
  *   Settings > Agent > Attribution; from Cursor 3.11, Settings > Git & PRs > Attribution). That is not a Co-authored-by trailer, so Bisolhador doesn't count it; the
  *   cursoragent@cursor.com co-author was seen in real commits (spec §4.2), not in the docs.
+ *   As a PR author: `cursor[bot]` (confirmed 2026-10-27, search `is:pr author:app/cursor`); its commits come from the `cursoragent` account (type User).
  * - email only (no official doc found on 2026-10-26): codex (the trailer "Co-authored-by: Codex <noreply@openai.com>"
  *   is in openai/codex source tests, but how it is turned on is not documented), gemini, junie, amp, kiro, cline,
  *   windsurf, opencode.
@@ -79,7 +80,7 @@ export function detectionRows() {
     id: tool.id,
     config: tool.config.map((c) => ({ show: c.show, kind: c.kind })),
     coauthors: coauthorExamples(tool.id),
-    agentLogins: tool.agentLogins,
+    agentLogins: [...tool.agentLogins, ...(tool.agentAccounts ?? [])],
     reviewerLogins: tool.reviewerLogins,
   }));
 }
