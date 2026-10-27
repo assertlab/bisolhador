@@ -6,6 +6,8 @@
     "snapshotUnavailable": "Não foi possível carregar este snapshot: ele não existe, o link está incorreto ou o histórico está temporariamente indisponível. Confira o link ou tente novamente em instantes.",
     "pdfExport": "Não foi possível gerar o relatório PDF. Tente novamente em instantes.",
     "pdfModuleLoad": "Não foi possível carregar o gerador de PDF, provavelmente porque o Bisolhador foi atualizado depois que esta página foi aberta. Recarregue a página e tente de novo.",
+    "chunkLoad": "Não foi possível carregar esta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página para tentar de novo.",
+    "pageCrash": "Algo deu errado ao mostrar esta página. Recarregue para tentar de novo; se persistir, use o menu para ir a outra página.",
     "lazyTexts": "Não foi possível carregar os textos desta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página e tente de novo."
   },
   "header": {
@@ -59,6 +61,7 @@
     "divergenceHigh": "Muita discussão"
   },
   "app": {
+    "reload": "Recarregar a página",
     "loadingPage": "Carregando...",
     "subtitle": "Analise repositórios como um Tech Lead",
     "errorTitle": "Erro na busca",

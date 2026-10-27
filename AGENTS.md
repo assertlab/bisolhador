@@ -57,6 +57,7 @@ src/
 │   │   ├── AiStudentTable.jsx      # Per-student view, Classroom Mode only (in memory: never CSV, Supabase or GA)
 │   │   ├── AiParts.jsx             # Shared bits (InfoTip, Chip, BlockTitle)
 │   │   └── toolLabel.js            # Registry tool id → display name
+│   ├── RouteErrorBoundary.jsx  # Error page around the routes (chunk load failure: one auto reload; render crash); the one class component
 │   └── skeletons/              # Skeleton loading screens
 ├── hooks/
 │   ├── useRepository.js        # Main data hook (15+ GitHub endpoints, Promise.allSettled)
@@ -96,6 +97,7 @@ src/
 │   ├── downloadBlob.js         # Blob → file download (Classroom PDF)
 │   ├── exportJson.js           # JSON data export with provenance metadata
 │   └── csvExporter.js          # CSV export (native, no dependencies)
+├── lib/chunkErrors.js          # isChunkLoadError, claimAutoReload (one reload per 60 s; not offline, not without storage)
 ├── report/                     # Classroom PDF report (react-pdf, vector): reportModel.js (repository-level whitelist from the Classroom rows), reportReading.js (rule-based "Leitura desta turma"), ClassroomReportDocument.jsx + ReportParts.jsx + styles.js + theme.js (Compasso identity), fonts.js (IBM Plex Sans .woff), generateReport.js (lazy entry point)
 └── locales/                    # i18n: pt.json / en.json (main, in the entry bundle);
                                 #   guide.{pt,en}.json (/guia), aiGuide.{pt,en}.json (/guia/ia) and report.{pt,en}.json (PDF report), loaded on demand only
@@ -130,6 +132,7 @@ Score = (items present / 7) × 100%. Colors (`HealthScoreCard.jsx`): Green (≥7
 - All GitHub calls after the initial `/repos/{o}/{r}` use the **canonical** `repoData.full_name` (renamed repos: the Search API does not follow renames).
 - Dashboard renders a single generic error banner (`{error}` as plain text) — there is no differentiated UI per error type today; 403 (rate limit), 404, and "private repo unsupported" all look identical to the user. Prior versions of this file claimed 403/404 got distinct treatment; that was never true in the code. See `docs/ROADMAP.md` for the pending UX item to fix this.
 - Render UI even with partial data (graceful degradation)
+- A route whose chunk fails to load (hash gone after a deploy, network) or whose render crashes shows an error page, never a blank screen: `RouteErrorBoundary` (`src/components/RouteErrorBoundary.jsx`, reset by `resetKey` = path, the one class component, boundaries require it; reports `analytics.trackRouteError(kind)`, kind only, no path or message) around the routes in `App.jsx`. A chunk error (`isChunkLoadError`, `src/lib/chunkErrors.js`) reloads once on its own (`claimAutoReload`: one per 60 s, sessionStorage; no storage = no auto reload, no loop); a second failure shows the error with the header, its own settings modal and a reload button. `React.lazy` keeps a rejected import rejected, so returning to the same broken page fails until a reload. There is deliberately no global `vite:preloadError` reload: it would throw away a class analysis held only in memory on `/turma` when the PDF chunk fails (that failure keeps showing the button's toast).
 
 ### Performance Patterns
 - Charts use `React.lazy` + `Suspense` (code splitting); the 4 pages (Dashboard, Ranking, Timeline, Benchmark) are lazy-loaded in `App.jsx` the same way

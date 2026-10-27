@@ -6,6 +6,8 @@
     "snapshotUnavailable": "Couldn't load this snapshot: it doesn't exist, the link is wrong, or history is temporarily unavailable. Check the link or try again in a moment.",
     "pdfExport": "Couldn't generate the PDF report. Try again in a moment.",
     "pdfModuleLoad": "Couldn't load the PDF generator, probably because Bisolhador was updated after this page was opened. Reload the page and try again.",
+    "chunkLoad": "This page could not be loaded, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page to try again.",
+    "pageCrash": "Something went wrong showing this page. Reload to try again; if it persists, use the menu to go to another page.",
     "lazyTexts": "Could not load the texts of this page, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page and try again."
   },
   "header": {
@@ -59,6 +61,7 @@
     "divergenceHigh": "Lots of discussion"
   },
   "app": {
+    "reload": "Reload the page",
     "loadingPage": "Loading...",
     "subtitle": "Analyze repositories like a Tech Lead",
     "errorTitle": "Search error",
