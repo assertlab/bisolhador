@@ -29,6 +29,29 @@ const fullRow = () => {
   };
 };
 
+describe('badge score text', () => {
+  const badge = (criteria, met, total) => ({ applicable: true, met, total, criteria: criteria.map((state) => ({ state })) });
+  const col = CLASSROOM_COLUMNS.find((c) => c.key === 'aiBadge');
+
+  it('says how many criteria were not assessed, so "3 of 3" does not read as full marks', () => {
+    const b = badge(['met', 'met', 'met', 'unverified', 'unverified'], 3, 3);
+    expect(col.show(b, t)).toBe('aiProcess.badge.scoreUnassessed:{"met":3,"total":3,"count":2}');
+    expect(col.csv(b, t)).toBe(col.show(b, t));
+  });
+
+  it('plain score when every criterion was assessed; "not applicable" criteria are not counted as unassessed', () => {
+    const b = badge(['met', 'unmet', 'na'], 1, 2);
+    expect(col.show(b, t)).toBe('aiProcess.badge.score:{"met":1,"total":2,"count":0}');
+  });
+
+  it('has plural forms in both languages', () => {
+    for (const lang of [pt, en]) {
+      expect(lang.aiProcess.badge.scoreUnassessed_one).toContain('{{count}}');
+      expect(lang.aiProcess.badge.scoreUnassessed_other).toContain('{{count}}');
+    }
+  });
+});
+
 describe('classroomCsvRows', () => {
   it('every percentage column is followed by its n', () => {
     const [row] = classroomCsvRows(['org/team-1'], { 'org/team-1': fullRow() }, () => null, t);

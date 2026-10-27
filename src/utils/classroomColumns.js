@@ -1,4 +1,4 @@
-import { configChecked } from './aiProcess.js';
+import { badgeScoreText, configChecked } from './aiProcess.js';
 import { toolLabel } from '../components/ai/toolLabel.js';
 
 // Classroom table/CSV columns: header key, guide entry, raw value, and whether the
@@ -46,7 +46,7 @@ export const CLASSROOM_COLUMNS = [
   { key: 'aiCommits', guide: 'ai-commits', get: (r) => r.ai.commits.percentage, pct: true, count: (r) => [r.ai.commits.withAi, r.ai.commits.n], n: (r) => (r.ai.commits.available ? r.ai.commits.n : null), sampled: commitsCapped },
   { key: 'aiPrs', guide: 'ai-prs', get: (r) => r.ai.prs.percentage, pct: true, count: (r) => [r.ai.prs.byAgents, r.ai.prs.n], n: (r) => (r.ai.prs.available ? r.ai.prs.n : null), sampled: (r) => r.prs.capped },
   { key: 'aiCoherence', guide: 'ai-coherence', get: coherenceFlags, csv: (flags, t) => flags.map((f) => t(`aiProcess.coherence.${f}`)).join(' ') },
-  { key: 'aiBadge', guide: 'ai-badge', get: (r) => (r.ai.badge.applicable && r.ai.badge.total > 0 ? r.ai.badge : null), show: (b) => `${b.met}/${b.total}`, csv: (b, t) => t('aiProcess.badge.score', { met: b.met, total: b.total }), na: '—' },
+  { key: 'aiBadge', guide: 'ai-badge', get: (r) => (r.ai.badge.applicable && r.ai.badge.total > 0 ? r.ai.badge : null), show: badgeScoreText, csv: badgeScoreText, na: '—' },
 ];
 
 export const isPartialRow = (row) => CLASSROOM_COLUMNS.some((c) => c.sampled?.(row) || c.atLeast?.(row));
