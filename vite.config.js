@@ -8,7 +8,9 @@ const devInlineStyles = {
   name: 'dev-csp-inline-styles',
   apply: 'serve',
   transformIndexHtml(html) {
-    return html.replace("style-src 'self';", "style-src 'self' 'unsafe-inline';")
+    const relaxed = html.replace(/style-src 'self'(?=;)/, "style-src 'self' 'unsafe-inline'")
+    if (relaxed === html) throw new Error("dev-csp-inline-styles: `style-src 'self'` not found in index.html; update this plugin")
+    return relaxed
   },
 }
 

@@ -57,8 +57,17 @@ const CLASSROOM_REPORT_BUTTON_NAME = 'Relatório PDF'; // src/locales/pt.json ->
 const CLASSROOM_URL = '/turma?repos=smoke-org/smoke-repo&from=2026-08-01&to=2026-10-26';
 // Pages the strict policy (no inline styles, no data: images) has to survive besides the two PDF flows:
 // every route, loaded cold, so a library injecting <style> or a data: image shows up as a violation.
-const OTHER_ROUTES = ['/ranking', '/benchmark', '/timeline/facebook/react', '/guia', '/guia/ia'];
-const OTHER_ROUTE_SETTLE_MS = 4_000;
+// Each route has a landmark that must render (a crash into the error page or a chunk failure raises no
+// pageerror, so without it a broken route would count as visited); benchmark has no heading before a repo is added.
+const OTHER_ROUTES = [
+  ['/ranking', 'h1'],
+  ['/benchmark', 'main'],
+  ['/timeline/facebook/react', 'h1'],
+  ['/guia', 'main h1'],
+  ['/guia/ia', 'main h1'],
+];
+const OTHER_ROUTE_SETTLE_MS = 1_500; // after the landmark: lets lazy charts and tooltips mount
+const OTHER_ROUTE_LANDMARK_TIMEOUT_MS = 20_000;
 const CLASSROOM_REPORT_TIMEOUT_MS = 90_000; // react-pdf (~1.2 MB) + fonts + layout on a CI runner
 
 // Optional escape hatch: when the unauthenticated GitHub rate limit (60/h) is
@@ -160,10 +169,12 @@ async function mockGithubApi(page) {
 // States a cold page load never shows: tooltips, the settings modal, the theme switch. Strict style-src
 // (no inline styles) must hold there too; a violation is caught by the console listener. Every step is
 // required: a selector that stops matching fails the run instead of silently skipping the check.
-async function exerciseInteractiveStates(page, baseUrl) {
-  await page.goto(baseUrl + APP_BASE_PATH + (SNAPSHOT_ID ? `?id=${SNAPSHOT_ID}` : ''), { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+// Runs on the Dashboard the flow already loaded (live search or snapshot), so it works in both modes.
+async function exerciseInteractiveStates(page) {
   await page.getByRole('button', { name: PDF_BUTTON_NAME }).waitFor({ state: 'visible', timeout: DASHBOARD_TIMEOUT_MS });
-  for (const tip of (await page.locator('svg.cursor-help').all()).slice(0, 6)) {
+  const tips = (await page.locator('svg.cursor-help').all()).slice(0, 6);
+  if (tips.length === 0) throw new Error('no tooltip icon (svg.cursor-help) on the Dashboard: selector out of date');
+  for (const tip of tips) {
     await tip.hover({ timeout: 5_000 });
     await page.waitForTimeout(150);
   }
@@ -410,14 +421,15 @@ async function runBrowserFlow(baseUrl, label) {
     }
 
     flow.routesVisited = [];
-    for (const route of OTHER_ROUTES) {
+    await exerciseInteractiveStates(page); // before leaving the Dashboard page
+    flow.interactiveStates = true;
+
+    for (const [route, landmark] of OTHER_ROUTES) {
       await page.goto(baseUrl + route, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+      await page.locator(landmark).first().waitFor({ state: 'visible', timeout: OTHER_ROUTE_LANDMARK_TIMEOUT_MS });
       await page.waitForTimeout(OTHER_ROUTE_SETTLE_MS);
       flow.routesVisited.push(route);
     }
-
-    await exerciseInteractiveStates(page, baseUrl);
-    flow.interactiveStates = true;
 
     flow.classroomReport = await runClassroomReportFlow(page, baseUrl);
   } catch (err) {
@@ -516,7 +528,7 @@ async function main() {
   const dev = spawnServer('node_modules/.bin/vite', ['--port', '5173', '--strictPort'], { label: 'dev' });
   try {
     await waitForServer('http://localhost:5173' + APP_BASE_PATH, 20_000);
-    const result = await runBrowserFlow('http://localhost:5173', 'DEV SERVER (vite, mesma CSP de index.html, checando HMR/websocket)');
+    const result = await runBrowserFlow('http://localhost:5173', 'DEV SERVER (vite, style-src relaxado so no dev, checando HMR/websocket)');
     reports.push({ ...result, serverOutput: dev.output });
   } finally {
     await killServer(dev.child);
