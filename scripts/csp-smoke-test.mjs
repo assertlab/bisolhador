@@ -11,8 +11,16 @@
 // Playwright's route handler, so a blocked origin still shows up as a
 // violation and an allowed one is still recorded in gaRequests.
 //
+// Second flow (Classroom report, since v3.18): /turma with a mocked GitHub API
+// (one repository; every other call fails, which the page shows as n/d) and a
+// fake token that never leaves the page, then the "Relatório PDF" button. It
+// guards what only a real browser under the real CSP shows: react-pdf's
+// WebAssembly layout (script-src 'wasm-unsafe-eval' + connect-src data:) and
+// the blob worker a PNG image would spawn (it hangs the report, silently).
+//
 // Exit code: 0 only if every mode navigated, loaded the dashboard, started
-// the PDF download, and had zero CSP violations and zero page errors. With
+// the PDF download, produced the Classroom report, and had zero CSP violations
+// and zero page errors. With
 // SMOKE_REQUIRE_GA=1 (set in CI), zero GA4 requests also fails: GA4's CSP
 // coverage would otherwise go untested silently (e.g. VITE_GA_ID missing).
 // Runs in CI (.github/workflows/ci.yml, job "smoke") in snapshot mode; it
@@ -36,6 +44,7 @@
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import http from 'node:http';
+import { readFileSync } from 'node:fs';
 
 const REPO_TO_SEARCH = 'facebook/react';
 const SEARCH_INPUT_SELECTOR = '#search';
@@ -44,6 +53,9 @@ const APP_BASE_PATH = '/';
 const NAV_TIMEOUT_MS = 30_000;
 const DASHBOARD_TIMEOUT_MS = 60_000; // ~16 sequential/parallel unauthenticated GitHub API calls
 const DOWNLOAD_TIMEOUT_MS = 30_000;
+const CLASSROOM_REPORT_BUTTON_NAME = 'Relatório PDF'; // src/locales/pt.json -> classroom.report.button
+const CLASSROOM_URL = '/turma?repos=smoke-org/smoke-repo&from=2026-08-01&to=2026-10-26';
+const CLASSROOM_REPORT_TIMEOUT_MS = 90_000; // react-pdf (~1.2 MB) + fonts + layout on a CI runner
 
 // Optional escape hatch: when the unauthenticated GitHub rate limit (60/h) is
 // exhausted, set SMOKE_SNAPSHOT_ID to an existing analytics_searches id and
@@ -116,6 +128,51 @@ async function killServer(child) {
   });
   child.stdout?.destroy();
   child.stderr?.destroy();
+}
+
+// GitHub API stand-in for the Classroom flow. One repository (public, so the privacy gate passes);
+// empty runs and releases; everything else (GraphQL, search) answers 500, so those parts show n/d.
+// api.github.com is cross-origin from localhost: answer the preflight, echoing the requested headers
+// (a '*' wildcard does not cover Authorization).
+async function mockGithubApi(page) {
+  await page.route('https://api.github.com/**', (route) => {
+    const request = route.request();
+    const cors = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': request.headers()['access-control-request-headers'] ?? '*',
+    };
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+    const { pathname } = new URL(request.url());
+    let body = null;
+    if (pathname === '/repos/smoke-org/smoke-repo') body = { full_name: 'smoke-org/smoke-repo', private: false, default_branch: 'main' };
+    else if (pathname.endsWith('/actions/runs')) body = { total_count: 0, workflow_runs: [] };
+    else if (pathname.endsWith('/releases')) body = [];
+    if (!body) return route.fulfill({ status: 500, contentType: 'application/json', headers: cors, body: '{"message":"smoke: not mocked"}' });
+    return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
+  });
+}
+
+async function runClassroomReportFlow(page, baseUrl) {
+  await mockGithubApi(page);
+  // Classroom only runs with a token. A fake one: every api.github.com request is answered above, none leaves the page.
+  await page.evaluate(() => window.localStorage.setItem('github_token', 'smoke-fake-token'));
+  await page.goto(baseUrl + CLASSROOM_URL, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+  const reportButton = page.getByRole('button', { name: CLASSROOM_REPORT_BUTTON_NAME });
+  await reportButton.waitFor({ state: 'visible', timeout: DASHBOARD_TIMEOUT_MS });
+  // click() waits for the button to be enabled (disabled while the analysis runs)
+  const [download] = await Promise.all([
+    page.waitForEvent('download', { timeout: CLASSROOM_REPORT_TIMEOUT_MS }),
+    reportButton.click({ timeout: CLASSROOM_REPORT_TIMEOUT_MS }),
+  ]);
+  const bytes = readFileSync(await download.path());
+  const text = bytes.toString('latin1');
+  return {
+    filename: download.suggestedFilename(),
+    bytes: bytes.length,
+    pdf: text.startsWith('%PDF'),
+    fonts: ['IBMPlexSans-Regular', 'IBMPlexSans-SemiBold'].every((name) => text.includes(name)),
+  };
 }
 
 async function runBrowserFlow(baseUrl, label) {
@@ -263,6 +320,7 @@ async function runBrowserFlow(baseUrl, label) {
     downloadFilename: null,
     datePermalink: null, // snapshot mode: ?repo=&date= of the same record
     datePermalinkOk: usingSnapshot ? false : null,
+    classroomReport: null, // { filename, bytes, pdf, fonts } once the report was generated
     error: null,
   };
 
@@ -317,6 +375,8 @@ async function runBrowserFlow(baseUrl, label) {
       await page.getByRole('button', { name: PDF_BUTTON_NAME }).waitFor({ state: 'visible', timeout: DASHBOARD_TIMEOUT_MS });
       flow.datePermalinkOk = true;
     }
+
+    flow.classroomReport = await runClassroomReportFlow(page, baseUrl);
   } catch (err) {
     flow.error = String(err && err.message ? err.message : err);
   }
@@ -430,6 +490,7 @@ async function main() {
     console.log(
       `${r.flow.label}: navigationOk=${r.flow.navigationOk} searchSubmitted=${r.flow.searchSubmitted} ` +
         `dashboardLoaded=${r.flow.dashboardLoaded} pdfClicked=${r.flow.pdfClicked} downloadStarted=${r.flow.downloadStarted} datePermalinkOk=${r.flow.datePermalinkOk} ` +
+        `classroomReport=${r.flow.classroomReport ? `${r.flow.classroomReport.bytes}B` : 'none'} ` +
         `cspViolations=${r.cspViolations.length} gaRequests=${r.gaRequests.length} websockets=${r.websockets.length} ` +
         `pageErrors=${r.pageErrors.length} intercepted=${JSON.stringify(r.writesIntercepted)} ` +
         `flowError=${r.flow.error ?? 'none'}`,
@@ -450,6 +511,9 @@ async function main() {
     if (!f.dashboardLoaded) problems.push('dashboard did not load');
     if (!f.downloadStarted) problems.push('PDF download did not start');
     if (f.datePermalinkOk === false) problems.push(`date permalink ${f.datePermalink ?? '(not built)'} did not load (buscar_snapshot_por_data)`);
+    const report = f.classroomReport;
+    if (!report) problems.push('Classroom PDF report was not generated');
+    else if (!report.pdf || !report.fonts || report.bytes < 5000) problems.push(`Classroom PDF report is not a valid PDF with the embedded fonts (${JSON.stringify(report)})`);
     if (r.cspViolations.length) problems.push(`${r.cspViolations.length} CSP violation(s)`);
     if (r.pageErrors.length) problems.push(`${r.pageErrors.length} page error(s)`);
     return problems.map((p) => `${f.label}: ${p}`);
