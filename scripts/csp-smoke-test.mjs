@@ -55,6 +55,10 @@ const DASHBOARD_TIMEOUT_MS = 60_000; // ~16 sequential/parallel unauthenticated 
 const DOWNLOAD_TIMEOUT_MS = 60_000; // react-pdf (~1.2 MB) + fonts + layout on a CI runner
 const CLASSROOM_REPORT_BUTTON_NAME = 'Relatório PDF'; // src/locales/pt.json -> classroom.report.button
 const CLASSROOM_URL = '/turma?repos=smoke-org/smoke-repo&from=2026-08-01&to=2026-10-26';
+// Pages the strict policy (no inline styles, no data: images) has to survive besides the two PDF flows:
+// every route, loaded cold, so a library injecting <style> or a data: image shows up as a violation.
+const OTHER_ROUTES = ['/ranking', '/benchmark', '/timeline/facebook/react', '/guia', '/guia/ia'];
+const OTHER_ROUTE_SETTLE_MS = 4_000;
 const CLASSROOM_REPORT_TIMEOUT_MS = 90_000; // react-pdf (~1.2 MB) + fonts + layout on a CI runner
 
 // Optional escape hatch: when the unauthenticated GitHub rate limit (60/h) is
@@ -151,6 +155,25 @@ async function mockGithubApi(page) {
     if (!body) return route.fulfill({ status: 500, contentType: 'application/json', headers: cors, body: '{"message":"smoke: not mocked"}' });
     return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
   });
+}
+
+// States a cold page load never shows: tooltips, the settings modal, the theme switch. Strict style-src
+// (no inline styles) must hold there too; a violation is caught by the console listener. Every step is
+// required: a selector that stops matching fails the run instead of silently skipping the check.
+async function exerciseInteractiveStates(page, baseUrl) {
+  await page.goto(baseUrl + APP_BASE_PATH + (SNAPSHOT_ID ? `?id=${SNAPSHOT_ID}` : ''), { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+  await page.getByRole('button', { name: PDF_BUTTON_NAME }).waitFor({ state: 'visible', timeout: DASHBOARD_TIMEOUT_MS });
+  for (const tip of (await page.locator('svg.cursor-help').all()).slice(0, 6)) {
+    await tip.hover({ timeout: 5_000 });
+    await page.waitForTimeout(150);
+  }
+  await page.getByRole('button', { name: /configura/i }).first().click({ timeout: 5_000 }); // pt-BR: header settings button
+  await page.waitForTimeout(800);
+  await page.keyboard.press('Escape');
+  const themeToggle = page.locator('button[title*="tema"]').first(); // pt-BR: "Mudar para tema escuro/claro"
+  await themeToggle.click({ timeout: 5_000 });
+  await page.waitForTimeout(500);
+  await page.locator('button[title*="tema"]').first().click({ timeout: 5_000 }); // back to the original theme
 }
 
 async function runClassroomReportFlow(page, baseUrl) {
@@ -326,6 +349,8 @@ async function runBrowserFlow(baseUrl, label) {
     downloadFilename: null,
     datePermalink: null, // snapshot mode: ?repo=&date= of the same record
     datePermalinkOk: usingSnapshot ? false : null,
+    routesVisited: [],
+    interactiveStates: false,
     dashboardReport: null, // { filename, bytes, pdf, fonts } of the Dashboard report download
     classroomReport: null, // { filename, bytes, pdf, fonts } once the report was generated
     error: null,
@@ -383,6 +408,16 @@ async function runBrowserFlow(baseUrl, label) {
       await page.getByRole('button', { name: PDF_BUTTON_NAME }).waitFor({ state: 'visible', timeout: DASHBOARD_TIMEOUT_MS });
       flow.datePermalinkOk = true;
     }
+
+    flow.routesVisited = [];
+    for (const route of OTHER_ROUTES) {
+      await page.goto(baseUrl + route, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+      await page.waitForTimeout(OTHER_ROUTE_SETTLE_MS);
+      flow.routesVisited.push(route);
+    }
+
+    await exerciseInteractiveStates(page, baseUrl);
+    flow.interactiveStates = true;
 
     flow.classroomReport = await runClassroomReportFlow(page, baseUrl);
   } catch (err) {
@@ -498,6 +533,7 @@ async function main() {
     console.log(
       `${r.flow.label}: navigationOk=${r.flow.navigationOk} searchSubmitted=${r.flow.searchSubmitted} ` +
         `dashboardLoaded=${r.flow.dashboardLoaded} pdfClicked=${r.flow.pdfClicked} downloadStarted=${r.flow.downloadStarted} datePermalinkOk=${r.flow.datePermalinkOk} ` +
+        `routes=${r.flow.routesVisited.length}/${OTHER_ROUTES.length} interactive=${r.flow.interactiveStates} ` +
         `dashboardReport=${r.flow.dashboardReport ? `${r.flow.dashboardReport.bytes}B` : 'none'} classroomReport=${r.flow.classroomReport ? `${r.flow.classroomReport.bytes}B` : 'none'} ` +
         `cspViolations=${r.cspViolations.length} gaRequests=${r.gaRequests.length} websockets=${r.websockets.length} ` +
         `pageErrors=${r.pageErrors.length} intercepted=${JSON.stringify(r.writesIntercepted)} ` +
@@ -523,6 +559,8 @@ async function main() {
       if (!report) problems.push(`${name} PDF report was not generated`);
       else if (!report.pdf || !report.fonts || report.bytes < 5000) problems.push(`${name} PDF report is not a valid PDF with the embedded fonts (${JSON.stringify(report)})`);
     }
+    if (!f.interactiveStates) problems.push('interactive states (tooltips, settings modal, theme) were not exercised');
+    if (f.routesVisited.length !== OTHER_ROUTES.length) problems.push(`only ${f.routesVisited.length} of ${OTHER_ROUTES.length} extra routes were visited`);
     if (r.cspViolations.length) problems.push(`${r.cspViolations.length} CSP violation(s)`);
     if (r.pageErrors.length) problems.push(`${r.pageErrors.length} page error(s)`);
     return problems.map((p) => `${f.label}: ${p}`);
