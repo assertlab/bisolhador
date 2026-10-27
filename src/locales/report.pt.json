@@ -124,6 +124,22 @@
         "what": "Releases publicadas no GitHub dentro do período da turma (datadas pela tag, ou pela publicação se a tag for posterior).",
         "limits": "Projetos que só criam tags, sem releases no GitHub, não aparecem. Só as 100 releases mais recentes são lidas: se todas caem no período, o valor é um mínimo. Frequência ideal depende do tipo de projeto."
       }
+    },
+    "attention": {
+      "title": "Pontos de atenção",
+      "intro": "Escolhidos por regras sobre os números, como assuntos para conversar com as equipes. Não são avaliação nem ranking.",
+      "none": "Nenhum ponto de atenção pelas regras aplicadas.",
+      "notAnalyzed_one": "{{count}} repositório informado não pôde ser analisado ou repete outro.",
+      "notAnalyzed_other": "{{count}} repositórios informados não puderam ser analisados ou repetem outro.",
+      "partial": "Amostra parcial em {{names}}: os valores desses repositórios são mínimos ou medianas de uma amostra.",
+      "unmeasured": "{{indicator}} sem medição (n/d) em {{names}}.",
+      "aiDisagree": "As fontes de IA não concordam em {{names}}. Isso não prova nada: veja as causas possíveis no guia.",
+      "aiLowDeclared": "Ferramenta de IA configurada, mas menos de {{threshold}}% dos commits declaram coautoria: {{names}}. Isso mede declaração, não uso.",
+      "ciLow": "CI com menos de {{threshold}}% de sucesso: {{names}}.",
+      "bigPrs": "Mediana de tamanho de PR acima de {{threshold}} linhas: {{names}}.",
+      "concentration": "Concentração acima de {{threshold}}% em projeto com mais de um autor: {{names}}.",
+      "noPeerApproval": "Nenhum PR aprovado por outra pessoa em equipe com mais de um autor: {{names}}.",
+      "unmeasuredAll": "{{indicator}} não foi medido em nenhum repositório (n/d)."
     }
   }
 }

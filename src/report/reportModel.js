@@ -72,6 +72,7 @@ export function buildReportModel({ repos, rows, duplicateOf, period, anonymize =
       duplicates: repos.filter((name) => duplicateOf(name)).length,
       analyzed: entries.length,
       partial: entries.filter((e) => isPartialRow(e.row)).length,
+      partialLabels: entries.filter((e) => isPartialRow(e.row)).map((e) => e.label),
       private: anonymize ? null : entries.filter((e) => e.row.isPrivate).length,
       allSolo: entries.length > 0 && entries.every((e) => e.row.commits.available && e.row.commits.authors === 1),
       failed: repos.filter((name) => !duplicateOf(name) && rows[name] && rows[name].status !== 'ok').length,

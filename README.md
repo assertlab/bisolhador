@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.20.0 - Pontos de atenção no relatório PDF
+- **📌 "Pontos de atenção"** na página de resumo do relatório da turma, escolhidos por regras (sem nota nem ranking)
+
 ### v3.19.2 - Sem tela em branco quando uma página não carrega
 - **🛟 Erro tratado em vez de tela branca**: uma aba aberta antes de um deploy recarrega sozinha uma vez; se não resolver, mostra o erro com botão de recarregar
 

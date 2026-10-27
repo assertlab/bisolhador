@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.20.0] - 2026-10-28
+
+### ✨ Added
+
+- **Relatório PDF da turma: "Pontos de atenção" na página de resumo.** Lista, por regras sobre os números por repositório (`src/report/reportAttention.js`), assuntos para conversar com as equipes: repositórios não analisados ou repetidos, amostra parcial, indicadores sem medição (n/d, uma linha só quando falta em todos), fontes de IA em desacordo, ferramenta de IA configurada com menos de 25% dos commits declarando (com a ressalva "mede declaração, não uso"), CI abaixo de 80% de sucesso, mediana de PR acima de 400 linhas e, só em projetos com mais de um autor, concentração acima de 60% e nenhum PR aprovado por outra pessoa (em projeto individual isso é o arranjo, não um problema). Tom neutro, sem nota nem ranking; sem pontos, o relatório diz isso. Os limiares são constantes (`REPORT_*` em `constants.js`; 60% e 400 linhas reaproveitam os do Dashboard). Guia do Modo Turma atualizado.
+
+---
+
 ## [3.19.2] - 2026-10-27
 
 ### 🐛 Fixed

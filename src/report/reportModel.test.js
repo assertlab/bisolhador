@@ -44,7 +44,7 @@ describe('median', () => {
 describe('buildReportModel', () => {
   it('counts analyzed, partial, private and failed repositories, skipping duplicates', () => {
     const { summary } = buildReportModel(input());
-    expect(summary).toEqual({ requested: 4, duplicates: 1, analyzed: 2, partial: 1, private: 2, allSolo: true, failed: 1 });
+    expect(summary).toEqual({ requested: 4, duplicates: 1, analyzed: 2, partial: 1, partialLabels: ['a/two'], private: 2, allSolo: true, failed: 1 });
   });
 
   it('builds one entry per indicator with median, max and unit', () => {
