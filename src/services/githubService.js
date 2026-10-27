@@ -210,10 +210,12 @@ export const githubService = {
 
   // Top contributors with weekly commit counts (all-time AND recent windows,
   // bots flagged as type "Bot"). GitHub answers 202 while it computes the stats:
-  // one retry after CONTRIBUTOR_STATS_RETRY_DELAY_MS (this runs inside
-  // useRepository's allSettled, beside the slower fetches, so the wait is mostly
-  // hidden), no more: a longer wait would hold the whole dashboard. Still 202 →
-  // it throws and the caller falls back to /contributors.
+  // one retry after CONTRIBUTOR_STATS_RETRY_DELAY_MS, no more: this runs inside
+  // useRepository's allSettled, so the wait adds to the dashboard's load time
+  // (fully, when nothing slower runs beside it, e.g. without a token). The delay
+  // is a guess, not measured; if it is still 202 this throws and the caller
+  // falls back to /contributors (partial, no snapshot). Not in fetchStats: the
+  // other /stats/* charts explain COMPUTING instead of falling back to anything.
   async fetchContributorStats(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/contributors`;
     let response = await fetch(url, { headers: getHeaders() });

@@ -56,6 +56,6 @@ export const CLASSROOM_CI_RUN_PAGES = 3; // × 100 completed Actions runs of the
 export const CLASSROOM_PR_SCAN = 200; // merged PRs scanned (by last update) to find the period's
 
 // GitHub answers 202 on /stats/contributors while it computes them (first request after a quiet spell).
-// One retry after this wait, in parallel with the dashboard's other fetches, turns most of those into the
-// real stats; if it is still 202 the caller falls back to /contributors (partial, not persisted).
+// One retry after this wait; still 202 → the caller falls back to /contributors (partial, not persisted).
+// The value is a guess (not measured), and the wait adds to the Dashboard's load time on a cold repository.
 export const CONTRIBUTOR_STATS_RETRY_DELAY_MS = 3000;

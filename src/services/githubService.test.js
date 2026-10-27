@@ -265,14 +265,16 @@ describe('githubService: failures are errors, not zeros', () => {
       await expect(githubService.fetchContributorStats('o', 'r')).resolves.toHaveLength(1);
     });
 
-    it('202 (GitHub still computing): one retry after the wait returns the stats', async () => {
+    it('202 (GitHub still computing): one retry after the full wait returns the stats', async () => {
       vi.useFakeTimers();
       try {
         fetchMock
           .mockReturnValueOnce(json({}, { status: 202 }))
           .mockReturnValueOnce(json([{ author: { login: 'a' }, total: 3, weeks: [] }]));
         const result = githubService.fetchContributorStats('o', 'r');
-        await vi.advanceTimersByTimeAsync(CONTRIBUTOR_STATS_RETRY_DELAY_MS);
+        await vi.advanceTimersByTimeAsync(CONTRIBUTOR_STATS_RETRY_DELAY_MS - 1);
+        expect(fetchMock).toHaveBeenCalledOnce(); // still waiting
+        await vi.advanceTimersByTimeAsync(1);
         await expect(result).resolves.toHaveLength(1);
         expect(fetchMock).toHaveBeenCalledTimes(2);
       } finally {
@@ -283,9 +285,8 @@ describe('githubService: failures are errors, not zeros', () => {
     it('still 202 after the retry throws (the caller falls back), without a third request', async () => {
       vi.useFakeTimers();
       try {
-        fetchMock.mockReturnValue(json({}, { status: 202 }));
-        const result = githubService.fetchContributorStats('o', 'r');
-        const assertion = expect(result).rejects.toThrow(/202/);
+        fetchMock.mockImplementation(() => json({}, { status: 202 }));
+        const assertion = expect(githubService.fetchContributorStats('o', 'r')).rejects.toThrow(/202/);
         await vi.advanceTimersByTimeAsync(CONTRIBUTOR_STATS_RETRY_DELAY_MS * 3);
         await assertion;
         expect(fetchMock).toHaveBeenCalledTimes(2);
