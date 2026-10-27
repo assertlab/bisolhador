@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.19.2] - 2026-10-27
+
+### 🐛 Fixed
+
+- **Tela em branco quando o chunk de uma página não carrega.** Uma aba aberta antes de um deploy pede um arquivo cujo hash não existe mais (ou a rede cai) e a rota ficava em branco, sem mensagem. Agora há um `RouteErrorBoundary` em volta das rotas: se o erro for de chunk, a página recarrega uma vez sozinha (busca o `index.html` novo com os hashes novos); uma segunda falha na janela de 60 s (rede fora do ar, arquivo realmente ausente) mostra o erro com o cabeçalho e um botão "Recarregar a página", sem laço de recarregamento. Qualquer outro erro de renderização também mostra essa tela em vez de branco. O erro é limpo ao sair da rota. Sem armazenamento de sessão disponível não há recarga automática (nada protegeria do laço).
+- Decisão: não há listener global de `vite:preloadError`. Um reload automático para qualquer import falho descartaria uma turma analisada em `/turma` (só existe em memória) quando falhasse o chunk do relatório PDF; esse caso continua mostrando o aviso no botão. Conferido num build de produção: falha única recupera sozinha, falha permanente recarrega uma vez e para no erro.
+
+---
+
 ## [3.19.1] - 2026-10-27
 
 ### 🐛 Fixed

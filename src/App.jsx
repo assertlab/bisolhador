@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import analytics from './services/analytics.js';
 import { ToastContainer } from './components/Toast.jsx';
 import { PageLoadingState } from './components/skeletons/PageLoadingState.jsx';
+import { RouteErrorBoundary } from './components/RouteErrorBoundary.jsx';
 import i18n from './i18n.js';
 import { loadLocale } from './lib/lazyLocales.js';
 
@@ -42,12 +43,19 @@ function RouteTracker() {
   return null;
 }
 
+// Keyed by path: leaving a broken page clears its error
+function RoutesBoundary({ onSettingsClick, children }) {
+  const { pathname } = useLocation();
+  return <RouteErrorBoundary key={pathname} onSettingsClick={onSettingsClick}>{children}</RouteErrorBoundary>;
+}
+
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
     <Router basename={import.meta.env.BASE_URL}>
       <RouteTracker />
+      <RoutesBoundary onSettingsClick={() => setIsSettingsOpen(true)}>
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<Dashboard isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
@@ -59,6 +67,7 @@ function App() {
           <Route path="/turma" element={<Classroom isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
         </Routes>
       </Suspense>
+      </RoutesBoundary>
       <ToastContainer />
     </Router>
   );
