@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.22.1] - 2026-10-27
+
+### 🐛 Fixed
+
+- **`/stats/contributors` ganha uma nova tentativa quando a GitHub responde `202`.** Enquanto a GitHub calcula as estatísticas, o app caía logo no fallback `/contributors` (histórico inteiro, marcado como parcial) e não gravava o snapshot, então a busca ficava fora do histórico e do Ranking até alguém repetir. Agora há **uma** nova tentativa depois de 3 s (`CONTRIBUTOR_STATS_RETRY_DELAY_MS`). O valor é um palpite, **não medido**: se a GitHub ainda não terminou, o resultado é o de antes (fallback parcial, sem snapshot) e a busca levou 3 s a mais; sem token, nada mais lento corre ao lado, então esses 3 s somam inteiros ao carregamento. Falhas que não são `202` não esperam nem repetem. As outras `/stats/*` (gráficos) não mudam: continuam explicando "calculando".
+
+---
+
 ## [3.22.0] - 2026-10-27
 
 ### 🔒 Security
