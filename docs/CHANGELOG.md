@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.18.2] - 2026-10-27
+
+### 📝 Documentation
+
+- **Relatório PDF da turma: nota sobre commits feitos à mão.** A seção de IA explica que commits feitos manualmente a partir de código escrito por um agente não levam o trailer de coautoria e não entram na contagem (o percentual mostra o declarado, não o uso), e que a ferramenta aparece pela configuração versionada. Surgiu de uma turma real em que os projetos foram feitos com Claude Code mas só 14% a 85% dos commits declaravam.
+
+---
+
 ## [3.18.1] - 2026-10-27
 
 ### 🎨 Changed

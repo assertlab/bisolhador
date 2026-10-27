@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.18.2 - Nota sobre commits à mão no relatório
+- **📝 Relatório PDF**: a seção de IA explica por que commits feitos à mão a partir de código de agente não aparecem na contagem
+
 ### v3.18.1 - Logo no relatório PDF
 - **🖼️ Logo do Bisolhador no cabeçalho do relatório PDF da turma**, no lugar da lupa
 
