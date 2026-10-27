@@ -20,7 +20,7 @@ describe('registry shape', () => {
     const ids = AI_TOOLS.map((t) => t.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toEqual(expect.arrayContaining(['claude', 'copilot', 'cursor', 'codex', 'gemini', 'aider', 'devin', 'jules', 'windsurf', 'junie', 'amp', 'kiro', 'cline', 'opencode', 'coderabbit', 'sourcery', 'generic']));
-    expect(REGISTRY_VERSION).toBe('2026-10-25');
+    expect(REGISTRY_VERSION).toBe('2026-10-27');
     expect(CLASSROOM_BOT).toBe('github-classroom');
     expect(CONTEXT_DIRS).toContain('.claude/skills');
   });
@@ -91,6 +91,26 @@ describe('logins', () => {
     // GraphQL author without login: name and e-mail identify the agent
     expect(isMaintenanceBot({ login: null, type: null, name: 'claude[bot]', email: '41898282+claude[bot]@users.noreply.github.com' })).toBe(false);
     expect(isMaintenanceBot({ login: null, name: 'renovate[bot]' })).toBe(true);
+  });
+});
+
+describe('Cursor agent (confirmed on real public data, 2026-10-27)', () => {
+  it('PRs by cursor[bot] are agent PRs, on a bot account only', () => {
+    expect(agentToolOf('cursor[bot]')).toBe('cursor');
+    expect(authorAgentTool({ login: 'cursor[bot]', type: 'Bot', name: 'cursor[bot]' })).toBe('cursor');
+    expect(authorAgentTool({ login: 'cursor', type: 'User', name: 'Cursor' })).toBeNull(); // a person called "cursor"
+  });
+
+  it('REST commits of the agent come from the User-type account cursoragent, the only User the registry allows', () => {
+    expect(authorAgentTool({ login: 'cursoragent', type: 'User', name: 'Cursor Agent', email: 'cursoragent@cursor.com' })).toBe('cursor');
+    expect(authorAgentTool({ login: 'CursorAgent', type: 'User', name: 'x' })).toBe('cursor'); // GitHub logins are case-insensitive
+    // not a wildcard: other User accounts stay people, even with a look-alike name
+    expect(authorAgentTool({ login: 'cursoragent2', type: 'User', name: 'Cursor Agent' })).toBeNull();
+    expect(authorAgentTool({ login: 'claude', type: 'User', name: 'Claude' })).toBeNull();
+  });
+
+  it('GraphQL commits (Classroom) already match by the agent e-mail, whoever the linked user is', () => {
+    expect(authorAgentTool({ login: 'someone', name: 'Cursor Agent', email: 'cursoragent@cursor.com' })).toBe('cursor');
   });
 });
 

@@ -29,7 +29,7 @@ describe('AI guide (/guia/ia)', () => {
       const tool = AI_TOOLS.find((x) => x.id === row.id);
       expect(row.config).toHaveLength(tool.config.length);
       expect(row.coauthors).toHaveLength(tool.coauthors.length);
-      expect(row.agentLogins).toBe(tool.agentLogins);
+      expect(row.agentLogins).toEqual([...tool.agentLogins, ...(tool.agentAccounts ?? [])]); // agent PR logins + person-type agent accounts
       expect(row.reviewerLogins).toBe(tool.reviewerLogins);
     }
   });

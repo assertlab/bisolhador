@@ -12,9 +12,13 @@
 //   .github/{instructions,prompts}, .cursor/rules, .windsurf/rules, .kiro/steering, .gemini. These are
 //   well-established paths of each tool's docs; code search cannot match directories.
 // - Greptile as reviewer: confirmed (`reviewed-by:app/greptile-apps` finds PRs; PR reviews show `greptile-apps[bot]`).
-// - Cursor as PR author: NOT confirmed (search kept failing with TLS timeouts), so it stays out (agentLogins empty).
+// - Cursor as PR author: confirmed on 2026-10-27 against real public data. `is:pr author:app/cursor` finds PRs
+//   by `cursor[bot]` (type Bot, ~179k PRs, ~32k merged); Cursor's cloud agent opens them. The commits inside are authored by
+//   the account `cursoragent` (type **User**, name "Cursor Agent", cursoragent@cursor.com) and carry the person as
+//   `Co-authored-by`, not Cursor: so REST commits need `agentAccounts` (a person-type account that is the agent),
+//   because a User-type author is otherwise never an agent. GraphQL commits (Classroom) already match by e-mail.
 
-export const REGISTRY_VERSION = '2026-10-25';
+export const REGISTRY_VERSION = '2026-10-27'; // 2026-10-27: Cursor as PR author (`cursor[bot]`) and agent commits (`cursoragent` account)
 
 // GitHub Classroom's bot creates the template-derived initial commit.
 export const CLASSROOM_BOT = 'github-classroom';
@@ -90,7 +94,9 @@ export const AI_TOOLS = [
       { re: dir('.cursor/rules'), show: '.cursor/rules/', kind: 'instructions' },
     ],
     coauthors: [{ email: /^cursoragent@cursor\.com$/i, examples: ['cursoragent@cursor.com'] }],
-    agentLogins: [],
+    agentLogins: ['cursor'],
+    // Person-type accounts that are the agent itself (REST says type User): its commits inside the agent's PRs
+    agentAccounts: ['cursoragent'],
     reviewerLogins: ['cursor'],
   },
   {
