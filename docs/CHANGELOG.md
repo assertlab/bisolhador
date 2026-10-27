@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.18.1] - 2026-10-27
+
+### 🎨 Changed
+
+- **Relatório PDF da turma: o cabeçalho usa o logo do Bisolhador** (o mesmo do site) no lugar da lupa desenhada. O logo é um JPEG (`src/report/logo.jpg`) achatado sobre o azul-marinho da faixa: o react-pdf decodifica PNG num worker `blob:`, que a CSP bloqueia (`worker-src` cai em `script-src`), e o relatório travava sem erro visível. JPEG não usa worker, então a CSP não precisou de nenhuma exceção nova. Verificado num build de produção sob a CSP real.
+
+---
+
 ## [3.18.0] - 2026-10-27
 
 ### ✨ Added
