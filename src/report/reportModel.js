@@ -69,6 +69,7 @@ export function buildReportModel({ repos, rows, duplicateOf, period, anonymize =
     period,
     summary: {
       requested: repos.length,
+      duplicates: repos.filter((name) => duplicateOf(name)).length,
       analyzed: entries.length,
       partial: entries.filter((e) => isPartialRow(e.row)).length,
       private: anonymize ? null : entries.filter((e) => e.row.isPrivate).length,

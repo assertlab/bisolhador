@@ -618,7 +618,7 @@
     "report": {
       "button": "PDF report",
       "busy": "Generating…",
-      "anonymize": "Anonymize repositories in the PDF",
+      "anonymize": "Anonymize repositories in the PDF (the CSV is not anonymized)",
       "error": "Could not generate the report. Try again; if it persists, reload the page."
     }
   },

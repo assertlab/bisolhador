@@ -4,7 +4,9 @@ import { s } from './styles.js';
 import { formatValue } from './format.js';
 import { readingFor } from './reportReading.js';
 import { theme } from './theme.js';
+import { CLASSROOM_COMMIT_PAGES, CLASSROOM_PR_SCAN } from '../constants.js';
 
+const SAMPLE_CAPS = { prScan: CLASSROOM_PR_SCAN, commitCap: CLASSROOM_COMMIT_PAGES * 100 };
 const READING_VALUE_PARAMS = ['value', 'min', 'max', 'median'];
 
 /**
@@ -37,6 +39,7 @@ export function ClassroomReportDocument({ model, t, locale, meta, i18nHas = () =
     return (
       <View>
         <Text style={s.muted}>{t('report.summary.requested', { count: summary.requested })}</Text>
+        {summary.duplicates > 0 && <Text style={s.muted}>{t('report.summary.duplicates', { count: summary.duplicates })}</Text>}
         {meta.anonymized && <Text style={s.muted}>{t('report.summary.anonymized')}</Text>}
         <Stats
           items={[
@@ -61,11 +64,14 @@ export function ClassroomReportDocument({ model, t, locale, meta, i18nHas = () =
   }
 
   function IndicatorBlock({ ind }) {
-    // Classroom measures commits over the course period, which the Dashboard guide texts (52 weeks, 12 months) don't describe
-    const base = i18nHas(`report.indicator.${ind.guide}.what`) ? `report.indicator.${ind.guide}` : `guide.items.${ind.guide}`;
-    const bars = [...ind.items]
-      .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, locale))
-      .map((i) => ({
+    // Classroom measures the course period; the Dashboard guide texts (52 weeks, 12 months, last 50…)
+    // don't describe that, so `report.indicator.<id>.<field>` overrides the guide field by field.
+    const text = (field) => {
+      const override = `report.indicator.${ind.guide}.${field}`;
+      return t(i18nHas(override) ? override : `guide.items.${ind.guide}.${field}`, SAMPLE_CAPS);
+    };
+    // Requested order, not by value: the report describes position, it doesn't rank teams
+    const bars = ind.items.map((i) => ({
         key: i.label,
         label: i.label,
         value: i.value,
@@ -80,22 +86,22 @@ export function ClassroomReportDocument({ model, t, locale, meta, i18nHas = () =
     return (
       <View style={{ marginBottom: 14 }}>
         <View wrap={false}>
-          <Text style={s.h2}>{t(`${base}.name`)}</Text>
+          <Text style={s.h2}>{text('name')}</Text>
           {ind.items.length === 0 ? (
             <Text style={s.muted}>{t('report.label.noData')}</Text>
           ) : (
             <Text style={[s.muted, { marginBottom: 4, fontSize: 8 }]}>{t('report.label.median', { value: formatValue(ind.unit, ind.median, locale) })}</Text>
           )}
         </View>
-        {bars.length > 0 && <CompareBars items={bars} max={ind.max} median={ind.median} />}
+        {bars.length > 0 && <CompareBars items={bars} max={ind.unit === 'percent' ? 100 : ind.max} median={ind.median} />}
         {ind.unavailable.length > 0 && <Text style={[s.muted, { fontSize: 8 }]}>{t('report.label.unavailable', { names: ind.unavailable.join(', ') })}</Text>}
-        <Block title={t('report.label.what')} text={t(`${base}.what`)} />
-        <Block title={t('report.label.read')} text={t(`${base}.read`)} />
+        <Block title={t('report.label.what')} text={text('what')} />
+        <Block title={t('report.label.read')} text={text('read')} />
         <View wrap={false}>
           <Text style={s.h3}>{t('report.label.reading')}</Text>
           {reading.map((line, i) => <Text key={i} style={s.p}>{line}</Text>)}
         </View>
-        <Block title={t('report.label.limits')} text={t(`${base}.limits`)} />
+        <Block title={t('report.label.limits')} text={text('limits')} />
       </View>
     );
   }
@@ -151,7 +157,7 @@ export function ClassroomReportDocument({ model, t, locale, meta, i18nHas = () =
   }
 
   function MethodPage() {
-    const common = { from: fmtDate(period.from, locale), to: fmtDate(period.to, locale) };
+    const common = { from: fmtDate(period.from, locale), to: fmtDate(period.to, locale), ...SAMPLE_CAPS };
     return (
       <View>
         <Text style={s.p}>{t('report.method.items.version', { version: meta.appVersion })}</Text>

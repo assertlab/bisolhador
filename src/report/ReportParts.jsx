@@ -71,7 +71,7 @@ export function CompareBars({ items, max, median }) {
             </Text>
           </View>
           <View style={{ height: 5, borderRadius: 2.5, backgroundColor: t.track }}>
-            <View style={{ height: 5, borderRadius: 2.5, width: `${Math.max(1, (i.value / scale) * 100)}%`, backgroundColor: t.bar }} />
+            <View style={{ height: 5, borderRadius: 2.5, width: `${i.value > 0 ? Math.max(1, (i.value / scale) * 100) : 0}%`, backgroundColor: t.bar }} />
             {medianAt != null && <View style={{ position: 'absolute', top: -2, bottom: -2, left: `${medianAt}%`, width: 1, backgroundColor: t.muted }} />}
           </View>
         </View>

@@ -626,7 +626,7 @@
     "report": {
       "button": "Relatório PDF",
       "busy": "Gerando…",
-      "anonymize": "Anonimizar repositórios no PDF",
+      "anonymize": "Anonimizar repositórios no PDF (o CSV não é anonimizado)",
       "error": "Não foi possível gerar o relatório. Tente de novo; se persistir, recarregue a página."
     }
   },

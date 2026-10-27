@@ -23,7 +23,8 @@
       "solo": "Todos os repositórios analisados têm um único autor. Aprovação por outra pessoa em 0% e concentração em 100% são efeito disso, não um problema de processo.",
       "lowerBoundTitle": "Sobre IA",
       "lowerBound": "Os indicadores de IA são um limite inferior: só contam o que deixou rastro (coautoria declarada, agentes, arquivos de configuração). Sem rastro não significa sem IA.",
-      "anonymousRepo": "Repositório {{letter}}"
+      "anonymousRepo": "Repositório {{letter}}",
+      "duplicates": "Repetidos (mesmo repositório informado mais de uma vez): {{count}}"
     },
     "label": {
       "what": "O que é",
@@ -69,7 +70,7 @@
         "registry": "Registro de ferramentas de IA: versão {{registry}}.",
         "period": "Período analisado: {{from}} a {{to}}. Commits e PRs mergeados são os do período; releases e execuções de CI também.",
         "privacy": "O relatório usa só dados por repositório. Nada por estudante é incluído.",
-        "samples": "Indicadores de PRs usam até 50 PRs mergeados do período; \"no mínimo\" e \"amostra parcial\" indicam esse corte.",
+        "samples": "Commits: até {{commitCap}} do período. PRs: procurados entre os até {{prScan}} PRs mergeados atualizados mais recentemente. \"No mínimo\" e \"amostra parcial\" indicam esse corte.",
         "nd": "n/d significa que o dado não pôde ser medido (falha de rede, permissão ou ausência de fonte), nunca zero.",
         "ai": "Sem rastro não significa sem IA. Os indicadores de IA e o selo medem práticas observáveis, não o uso real."
       }
@@ -92,6 +93,35 @@
         "what": "Participação do autor com mais commits entre os commits humanos (sem bots nem merges) do período, sem citar o nome.",
         "read": "Concentração alta indica que uma pessoa faz quase tudo e vale conversar com a equipe. Em projeto individual será 100%.",
         "limits": "Conta commits, não revisões nem outras contribuições. Em histórico muito grande, usa a amostra mais recente de commits do período."
+      },
+      "prs-merges": {
+        "name": "PRs mergeados",
+        "what": "PRs mergeados dentro do período da turma, procurados entre os até {{prScan}} PRs mergeados atualizados mais recentemente.",
+        "limits": "Se o limite de busca é atingido, o valor é um mínimo (aparece como \"no mínimo\"). Volume não diz nada sobre a qualidade das contribuições."
+      },
+      "lead-time": {
+        "what": "Tempo mediano entre abrir um PR e mergeá-lo, entre os PRs mergeados no período, sem bots. PRs abertos por agentes de IA ficam de fora e aparecem em \"IA no Processo\".",
+        "limits": "Só PRs mergeados no período (fechados sem merge não entram), numa amostra limitada: \"amostra parcial\" indica o corte. PRs pequenos de manutenção puxam a mediana para baixo."
+      },
+      "review-coverage": {
+        "what": "Percentual dos PRs mergeados no período aprovados por outra pessoa antes do merge, sem bots e sem PRs de agentes de IA."
+      },
+      "first-review": {
+        "what": "Tempo mediano entre o PR ficar pronto para revisão e a primeira revisão de outra pessoa antes do merge, nos PRs mergeados no período."
+      },
+      "pr-size": {
+        "what": "Mediana de linhas alteradas (adicionadas + removidas) por PR mergeado no período."
+      },
+      "ci-health": {
+        "what": "Percentual de sucesso das execuções do GitHub Actions disparadas por push no branch principal dentro do período (até 100 execuções concluídas).",
+        "limits": "Só GitHub Actions. Canceladas e puladas saem da conta, então n pode ser menor. n = 0 significa que não houve execução no período, não que o CI falhou."
+      },
+      "conventional-commits": {
+        "what": "Percentual dos commits do período (até {{commitCap}}, sem merges e sem bots) cuja primeira linha segue tipo(escopo)!: descrição."
+      },
+      "release-cadence": {
+        "what": "Releases publicadas no GitHub dentro do período da turma (datadas pela tag, ou pela publicação se a tag for posterior).",
+        "limits": "Projetos que só criam tags, sem releases no GitHub, não aparecem. Só as 100 releases mais recentes são lidas: se todas caem no período, o valor é um mínimo. Frequência ideal depende do tipo de projeto."
       }
     }
   }

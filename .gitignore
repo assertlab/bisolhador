@@ -46,3 +46,6 @@ coverage
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .github/instructions/snyk_rules.instructions.md
+
+# Real class data used as report references (private repository names)
+docs/reports/

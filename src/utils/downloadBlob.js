@@ -7,5 +7,6 @@ export function downloadBlob(blob, filename) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Revoked later: some browsers start the download asynchronously and would lose a revoked URL
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

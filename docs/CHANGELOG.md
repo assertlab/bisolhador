@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Modo Turma: relatório em PDF.** Botão "Relatório PDF" ao lado do CSV. O arquivo é montado no navegador com `@react-pdf/renderer` (PDF vetorial, texto selecionável, IBM Plex Sans embutida), sem o `html2pdf.js`, e segue a identidade do relatório do Compasso: faixa azul-marinho com a marca e o período, rodapé com a data e `n / total`, retrato para texto e gráficos, paisagem para a tabela. Conteúdo: resumo da turma; uma seção por indicador (gráfico comparativo com a mediana da turma marcada em cada barra, "O que é", "Como ler", "Leitura desta turma" e limites); IA no Processo; tabela completa; metodologia e limites. A "Leitura desta turma" é montada por regras (faixa de valores, mediana, destaque acima de 2× a mediana, projetos individuais, limite inferior de IA, amostras parciais, n/d), sem nota nem ranking.
 - **Anonimizar repositórios no PDF** (opção, desligada por padrão): "Repositório A, B, C…".
-- Para commits, autores e concentração, o relatório usa textos próprios do período da turma (os do guia falam de 52 semanas e 12 meses, que não valem aqui).
+- O relatório usa textos próprios do período da turma para commits, autores, concentração, PRs, lead time, revisão, tamanho de PR, CI, Conventional Commits e releases (os do guia falam de 52 semanas, 12 meses e "últimos 50", que não valem no Modo Turma). As barras seguem a ordem informada (sem ranking); percentuais usam escala de 0 a 100%.
 
 ### 🔒 Security
 

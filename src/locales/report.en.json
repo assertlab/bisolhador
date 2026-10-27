@@ -23,7 +23,8 @@
       "solo": "Every analyzed repository has a single author. Approval by someone else at 0% and concentration at 100% follow from that, not from a process problem.",
       "lowerBoundTitle": "About AI",
       "lowerBound": "AI indicators are a lower bound: they only count what left a trace (declared co-authorship, agents, configuration files). No trace does not mean no AI.",
-      "anonymousRepo": "Repository {{letter}}"
+      "anonymousRepo": "Repository {{letter}}",
+      "duplicates": "Duplicates (same repository listed more than once): {{count}}"
     },
     "label": {
       "what": "What it is",
@@ -69,7 +70,7 @@
         "registry": "AI tool registry: version {{registry}}.",
         "period": "Analyzed period: {{from}} to {{to}}. Commits and merged PRs are those of the period; so are releases and CI runs.",
         "privacy": "The report uses repository-level data only. Nothing per student is included.",
-        "samples": "PR indicators use up to 50 merged PRs of the period; \"at least\" and \"partial sample\" mark that cut.",
+        "samples": "Commits: up to {{commitCap}} of the period. PRs: searched among the {{prScan}} most recently updated merged PRs. \"At least\" and \"partial sample\" mark that cut.",
         "nd": "n/a means the data could not be measured (network failure, permission or missing source), never zero.",
         "ai": "No trace does not mean no AI. AI indicators and the badge measure observable practices, not actual use."
       }
@@ -92,6 +93,35 @@
         "what": "Share of the author with the most commits among human commits (no bots or merges) in the period, without naming them.",
         "read": "High concentration means one person does almost everything and is worth a conversation with the team. In an individual project it will be 100%.",
         "limits": "Counts commits, not reviews or other contributions. On a very large history it uses the most recent sample of commits in the period."
+      },
+      "prs-merges": {
+        "name": "Merged PRs",
+        "what": "PRs merged within the class period, searched among the {{prScan}} most recently updated merged PRs.",
+        "limits": "If the search limit is reached the value is a minimum (shown as \"at least\"). Volume says nothing about the quality of contributions."
+      },
+      "lead-time": {
+        "what": "Median time between opening a PR and merging it, among PRs merged in the period, without bots. PRs opened by AI agents are left out and appear in \"AI in the Process\".",
+        "limits": "Only PRs merged in the period (closed without merge do not count), over a limited sample: \"partial sample\" marks the cut. Small maintenance PRs pull the median down."
+      },
+      "review-coverage": {
+        "what": "Share of PRs merged in the period approved by someone other than the author before merging, without bots and without AI agent PRs."
+      },
+      "first-review": {
+        "what": "Median time between a PR becoming ready for review and the first review by someone else before merging, over PRs merged in the period."
+      },
+      "pr-size": {
+        "what": "Median changed lines (added + removed) per PR merged in the period."
+      },
+      "ci-health": {
+        "what": "Success rate of GitHub Actions runs triggered by a push to the main branch within the period (up to 100 completed runs).",
+        "limits": "GitHub Actions only. Cancelled and skipped runs are not counted, so n can be smaller. n = 0 means no run in the period, not that CI failed."
+      },
+      "conventional-commits": {
+        "what": "Share of the period's commits (up to {{commitCap}}, without merges and bots) whose first line follows type(scope)!: description."
+      },
+      "release-cadence": {
+        "what": "Releases published on GitHub within the class period (dated by the tag, or by publication if the tag is later).",
+        "limits": "Projects that only create tags, without GitHub releases, do not appear. Only the 100 most recent releases are read: if all fall in the period the value is a minimum. The ideal frequency depends on the kind of project."
       }
     }
   }
