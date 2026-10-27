@@ -9,14 +9,20 @@
       Content-Security-Policy — domínios liberados com base no que o código realmente chama,
       não uma lista genérica de tutorial:
       - script-src: 'self' (bundle Vite) + googletagmanager.com, de onde o react-ga4 injeta o
-        gtag.js (ver node_modules/react-ga4/src/ga4.js, gtagUrl default).
+        gtag.js (ver node_modules/react-ga4/src/ga4.js, gtagUrl default) + 'wasm-unsafe-eval':
+        o layout do @react-pdf/renderer (relatório PDF do Modo Turma, src/report/) carrega o
+        yoga em WebAssembly. A diretiva só permite compilar WebAssembly; NÃO libera eval() nem
+        new Function() de JavaScript. Confirmado no navegador: sem ela o relatório falha com
+        "WebAssembly.instantiate() violates ... script-src".
       - connect-src: 'self' + api.github.com (src/services/githubService.js, único host chamado)
         + %VITE_SUPABASE_URL% (src/services/supabase.js — usa a env var real da build via o
         "HTML env replacement" nativo do Vite, em vez de hardcodar o domínio ou usar um wildcard
         *.supabase.co, que permitiria exfiltração para QUALQUER projeto Supabase de terceiros)
         + google-analytics.com / *.google-analytics.com / *.analytics.google.com /
         googletagmanager.com (destinos documentados de coleta do gtag.js — não são chamados
-        diretamente pelo nosso código, então não dá pra confirmar por grep, só pela doc do GA4).
+        diretamente pelo nosso código, então não dá pra confirmar por grep, só pela doc do GA4)
+        + data: (o mesmo yoga busca o próprio .wasm como data URI embutida no bundle; data: não
+        sai da página, então não abre caminho de exfiltração como um host externo abriria).
       - img-src: 'self' + avatars.githubusercontent.com (contributor.avatar_url em
         ContributorsTable.jsx, BusFactorCard.jsx e ActivityLogs.jsx) + data: (html2canvas, usado
         pelo export de PDF em pdfExporter.js, lê/gera data URIs internamente)
@@ -42,7 +48,7 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' https://avatars.githubusercontent.com https://*.google-analytics.com https://www.googletagmanager.com data:; font-src 'self'; connect-src 'self' https://api.github.com %VITE_SUPABASE_URL% https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self';"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' https://avatars.githubusercontent.com https://*.google-analytics.com https://www.googletagmanager.com data:; font-src 'self'; connect-src 'self' https://api.github.com %VITE_SUPABASE_URL% https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com data:; object-src 'none'; base-uri 'self';"
     />
   </head>
   <body>

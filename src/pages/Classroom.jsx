@@ -11,6 +11,8 @@ import { parseRepoList, parsePeriod, CLASSROOM_MAX_REPOS } from '../utils/classr
 import { formatDuration } from '../utils/prReviewStats.js';
 import { formatters } from '../utils/formatters.js';
 import { exportToCsv } from '../utils/csvExporter.js';
+import { downloadBlob } from '../utils/downloadBlob.js';
+import { showToast } from '../hooks/useToast.js';
 import { CLASSROOM_COLUMNS, classroomCsvRows, isPartialRow } from '../utils/classroomColumns.js';
 import { intlLocale } from '../i18n.js';
 import { guidePath } from '../utils/indicatorGuide.js';
@@ -152,6 +154,23 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
     exportToCsv(`bisolhador-turma-${period.from}_${period.to}.csv`, classroomCsvRows(requested.repos, rows, duplicateOf, t));
   };
 
+  // PDF report: react-pdf and the report texts load on click. Repository level only (never per student).
+  const [anonymize, setAnonymize] = useState(false);
+  const [reportBusy, setReportBusy] = useState(false);
+  const exportReport = async () => {
+    setReportBusy(true);
+    try {
+      const { generateClassroomReport } = await import('../report/generateReport.js');
+      const blob = await generateClassroomReport({ repos: requested.repos, rows, duplicateOf, period, anonymize });
+      downloadBlob(blob, `bisolhador-turma-${period.from}_${period.to}.pdf`);
+    } catch (error) {
+      console.warn('[classroom] report failed:', error);
+      showToast(t('classroom.report.error'));
+    } finally {
+      setReportBusy(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
       <Header onSettingsClick={() => setIsSettingsOpen(true)} />
@@ -247,6 +266,13 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                   </span>
                   <button type="button" onClick={exportCsv} disabled={running} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg disabled:opacity-50">
                     {t('button.csvExport')}
+                  </button>
+                  <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-slate-300">
+                    <input type="checkbox" checked={anonymize} onChange={(e) => setAnonymize(e.target.checked)} />
+                    {t('classroom.report.anonymize')}
+                  </label>
+                  <button type="button" onClick={exportReport} disabled={running || reportBusy} className="px-3 py-1.5 bg-ocean text-white text-xs font-medium rounded-lg disabled:opacity-50">
+                    {reportBusy ? t('classroom.report.busy') : t('classroom.report.button')}
                   </button>
                 </div>
               </div>
