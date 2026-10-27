@@ -19,11 +19,15 @@ export const RELOAD_WINDOW_MS = 60_000;
 /**
  * One automatic reload per window for a chunk that no longer exists (a tab opened before a deploy):
  * the reload fetches the new index.html with the new hashes. A second failure inside the window
- * means the reload didn't fix it (network down, chunk really missing): no loop, the user sees the
- * error. Without usable storage there is no loop guard, so no automatic reload either.
+ * means the reload didn't fix it (chunk really missing): no loop, the user sees the error. Without
+ * usable storage there is no loop guard, so no automatic reload either; offline there is nothing to
+ * reload into (the browser would swap the app for its own offline page).
+ * `storage` is resolved inside the try: the sessionStorage getter itself throws when site data is blocked.
  */
-export function claimAutoReload(storage = globalThis.sessionStorage, now = Date.now()) {
+export function claimAutoReload(storage, now = Date.now(), online = globalThis.navigator?.onLine) {
+  if (online === false) return false;
   try {
+    storage ??= globalThis.sessionStorage;
     const last = Number(storage.getItem(RELOAD_KEY));
     if (Number.isFinite(last) && last > 0 && now - last < RELOAD_WINDOW_MS) return false;
     storage.setItem(RELOAD_KEY, String(now));

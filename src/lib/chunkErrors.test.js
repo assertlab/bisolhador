@@ -40,9 +40,22 @@ describe('claimAutoReload', () => {
     expect(claimAutoReload(storage, 1_000_000 + RELOAD_WINDOW_MS)).toBe(true);
   });
 
+  it('never reloads offline: the browser would show its own offline page instead of the app', () => {
+    expect(claimAutoReload(memory(), 1_000_000, false)).toBe(false);
+  });
+
+  it('a throwing sessionStorage getter (blocked site data) is "no storage", not an exception', () => {
+    Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, get() { throw new Error('SecurityError'); } });
+    try {
+      expect(claimAutoReload()).toBe(false);
+    } finally {
+      delete globalThis.sessionStorage;
+    }
+  });
+
   it('never reloads without usable storage: nothing guards the loop', () => {
     const broken = { getItem: () => { throw new Error('denied'); }, setItem: () => {} };
-    expect(claimAutoReload(broken)).toBe(false);
-    expect(claimAutoReload(null)).toBe(false);
+    expect(claimAutoReload(broken, 1_000_000, true)).toBe(false);
+    expect(claimAutoReload(null, 1_000_000, true)).toBe(false);
   });
 });

@@ -43,10 +43,10 @@ function RouteTracker() {
   return null;
 }
 
-// Keyed by path: leaving a broken page clears its error
-function RoutesBoundary({ onSettingsClick, children }) {
+// Resets by path: leaving a broken page clears its error without remounting the routes
+function RoutesBoundary({ children }) {
   const { pathname } = useLocation();
-  return <RouteErrorBoundary key={pathname} onSettingsClick={onSettingsClick}>{children}</RouteErrorBoundary>;
+  return <RouteErrorBoundary resetKey={pathname}>{children}</RouteErrorBoundary>;
 }
 
 function App() {
@@ -55,18 +55,18 @@ function App() {
   return (
     <Router basename={import.meta.env.BASE_URL}>
       <RouteTracker />
-      <RoutesBoundary onSettingsClick={() => setIsSettingsOpen(true)}>
-      <Suspense fallback={<PageFallback />}>
-        <Routes>
-          <Route path="/" element={<Dashboard isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
-          <Route path="/ranking" element={<Ranking isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
-          <Route path="/timeline/:owner/:repo" element={<Timeline isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
-          <Route path="/benchmark" element={<Benchmark isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
-          <Route path="/guia" element={<Guide isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
-          <Route path="/guia/ia" element={<AiGuide isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
-          <Route path="/turma" element={<Classroom isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
-        </Routes>
-      </Suspense>
+      <RoutesBoundary>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/" element={<Dashboard isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+            <Route path="/ranking" element={<Ranking isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+            <Route path="/timeline/:owner/:repo" element={<Timeline isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+            <Route path="/benchmark" element={<Benchmark isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+            <Route path="/guia" element={<Guide isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+            <Route path="/guia/ia" element={<AiGuide isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+            <Route path="/turma" element={<Classroom isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />} />
+          </Routes>
+        </Suspense>
       </RoutesBoundary>
       <ToastContainer />
     </Router>

@@ -189,6 +189,15 @@ const analytics = {
     }
   },
 
+  // Route that failed to load or render. Only the kind: no path, no message (the URL can hold a class).
+  trackRouteError(kind) {
+    try {
+      ReactGA.event({ category: "Error", action: `Route ${kind}` });
+    } catch {
+      // monitoring must never break the error page
+    }
+  },
+
   trackExport() {
     ReactGA.event({ category: "Engagement", action: "Download PDF" });
   },
