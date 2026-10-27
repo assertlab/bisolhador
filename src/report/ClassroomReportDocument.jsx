@@ -130,6 +130,7 @@ export function ClassroomReportDocument({ model, t, locale, meta, i18nHas = () =
         <Block title={t('guide.items.ai-badge.name')} text={t('guide.items.ai-badge.what')} />
         <Block title={t('guide.items.ai-coherence.name')} text={t('guide.items.ai-coherence.what')} />
         <Text style={[s.p, { marginTop: 8 }]}>{t('report.summary.lowerBound')}</Text>
+        <Text style={[s.p, { marginTop: 6 }]}>{t('report.ai.manualCommits')}</Text>
       </View>
     );
   }

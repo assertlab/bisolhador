@@ -62,7 +62,8 @@
       "badgeNone": "não se aplica",
       "agree": "sem desacordo",
       "disagree": "não concordam",
-      "unknown": "n/d"
+      "unknown": "n/d",
+      "manualCommits": "Commits feitos à mão a partir de código escrito por um agente não levam o trailer de coautoria e por isso não entram na contagem: o percentual mostra o que foi declarado, não o quanto de IA foi usada. A ferramenta aparece na lista quando há arquivos de configuração (por exemplo CLAUDE.md ou .claude/)."
     },
     "method": {
       "items": {

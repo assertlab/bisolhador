@@ -62,7 +62,8 @@
       "badgeNone": "not applicable",
       "agree": "no disagreement",
       "disagree": "disagree",
-      "unknown": "n/a"
+      "unknown": "n/a",
+      "manualCommits": "Commits made by hand from code an agent wrote do not carry the co-author trailer and so are not counted: the percentage shows what was declared, not how much AI was used. A tool still appears in the list when its configuration files exist (for example CLAUDE.md or .claude/)."
     },
     "method": {
       "items": {
