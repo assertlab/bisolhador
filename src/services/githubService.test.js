@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { githubService } from './githubService.js';
+import { CONTRIBUTOR_STATS_RETRY_DELAY_MS } from '../constants.js';
 
 const json = (body, { status = 200, headers = {} } = {}) =>
   Promise.resolve(new Response(JSON.stringify(body), { status, headers }));
@@ -264,9 +265,38 @@ describe('githubService: failures are errors, not zeros', () => {
       await expect(githubService.fetchContributorStats('o', 'r')).resolves.toHaveLength(1);
     });
 
-    it('202 (GitHub still computing) throws at once, no waiting: the caller falls back', async () => {
-      fetchMock.mockReturnValue(json({}, { status: 202 }));
-      await expect(githubService.fetchContributorStats('o', 'r')).rejects.toThrow(/202/);
+    it('202 (GitHub still computing): one retry after the wait returns the stats', async () => {
+      vi.useFakeTimers();
+      try {
+        fetchMock
+          .mockReturnValueOnce(json({}, { status: 202 }))
+          .mockReturnValueOnce(json([{ author: { login: 'a' }, total: 3, weeks: [] }]));
+        const result = githubService.fetchContributorStats('o', 'r');
+        await vi.advanceTimersByTimeAsync(CONTRIBUTOR_STATS_RETRY_DELAY_MS);
+        await expect(result).resolves.toHaveLength(1);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('still 202 after the retry throws (the caller falls back), without a third request', async () => {
+      vi.useFakeTimers();
+      try {
+        fetchMock.mockReturnValue(json({}, { status: 202 }));
+        const result = githubService.fetchContributorStats('o', 'r');
+        const assertion = expect(result).rejects.toThrow(/202/);
+        await vi.advanceTimersByTimeAsync(CONTRIBUTOR_STATS_RETRY_DELAY_MS * 3);
+        await assertion;
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('a failure other than 202 does not wait or retry', async () => {
+      fetchMock.mockReturnValue(json({}, { status: 403 }));
+      await expect(githubService.fetchContributorStats('o', 'r')).rejects.toThrow(/403/);
       expect(fetchMock).toHaveBeenCalledOnce();
     });
 

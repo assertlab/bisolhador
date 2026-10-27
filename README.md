@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.22.1 - Estatísticas de contribuidores com nova tentativa
+- **🐛 Primeira busca de um repositório sem cache da GitHub**: uma nova tentativa após 3 s em `/stats/contributors` (`202`) evita, na maioria dos casos, o fallback parcial que impedia salvar o snapshot
+
 ### v3.22.0 - CSP sem estilo inline
 - **🔒 `style-src 'self'` e `img-src` sem `data:`**: as exceções vinham do `html2canvas`, já removido; provado pelo `smoke:csp` em todas as rotas e nos dois PDFs
 

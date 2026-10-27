@@ -19,6 +19,7 @@ import {
   CLASSROOM_COMMIT_PAGES,
   CLASSROOM_PR_SCAN,
   CLASSROOM_CI_RUN_PAGES,
+  CONTRIBUTOR_STATS_RETRY_DELAY_MS,
 } from "../constants.js";
 
 const GITHUB_BASE_URL = "https://api.github.com";
@@ -208,13 +209,18 @@ export const githubService = {
   },
 
   // Top contributors with weekly commit counts (all-time AND recent windows,
-  // bots flagged as type "Bot"). One request, no retry: GitHub answers 202
-  // while it computes the stats, and waiting for it held the whole dashboard
-  // (this runs inside useRepository's allSettled) — the caller falls back to
-  // /contributors instead; the next search usually finds the stats ready.
+  // bots flagged as type "Bot"). GitHub answers 202 while it computes the stats:
+  // one retry after CONTRIBUTOR_STATS_RETRY_DELAY_MS (this runs inside
+  // useRepository's allSettled, beside the slower fetches, so the wait is mostly
+  // hidden), no more: a longer wait would hold the whole dashboard. Still 202 →
+  // it throws and the caller falls back to /contributors.
   async fetchContributorStats(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/contributors`;
-    const response = await fetch(url, { headers: getHeaders() });
+    let response = await fetch(url, { headers: getHeaders() });
+    if (response.status === 202) {
+      await new Promise((resolve) => setTimeout(resolve, CONTRIBUTOR_STATS_RETRY_DELAY_MS));
+      response = await fetch(url, { headers: getHeaders() });
+    }
     if (response.status === 202) {
       throw new Error("Contributor stats still being computed by GitHub (HTTP 202)");
     }

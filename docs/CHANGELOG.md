@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.22.1] - 2026-10-27
+
+### 🐛 Fixed
+
+- **A primeira busca de um repositório "frio" agora costuma ser salva.** A GitHub responde `202` em `/stats/contributors` enquanto calcula as estatísticas; o app caía logo no fallback `/contributors` (histórico inteiro, marcado como parcial) e não gravava o snapshot, então a busca ficava fora do histórico e do Ranking até alguém repetir. Agora há **uma** nova tentativa depois de 3 s (`CONTRIBUTOR_STATS_RETRY_DELAY_MS`), em paralelo com as outras requisições do Dashboard, cuja espera longa já cobre a maior parte desse tempo. Se ainda vier `202`, o comportamento é o de antes: fallback parcial, sem snapshot. Falhas que não são `202` não esperam nem repetem.
+
+---
+
 ## [3.22.0] - 2026-10-27
 
 ### 🔒 Security
