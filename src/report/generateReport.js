@@ -4,6 +4,7 @@ import { toolLabel } from '../components/ai/toolLabel.js';
 import { REGISTRY_VERSION } from '../utils/aiRegistry.js';
 import { version } from '../../package.json';
 import { buildReportModel } from './reportModel.js';
+import { plainText } from './plainText.js';
 
 /**
  * Classroom PDF report. react-pdf, the document and the report texts are imported on click, not at
@@ -20,7 +21,7 @@ export async function generateClassroomReport({ repos, rows, duplicateOf, period
   ]);
   registerFonts();
   const locale = intlLocale(i18n.language);
-  const t = i18n.t.bind(i18n);
+  const t = (key, options) => plainText(i18n.t(key, options));
   const model = buildReportModel({
     repos, rows, duplicateOf, period, anonymize,
     anonymousLabel: (letter) => t('report.summary.anonymousRepo', { letter }),

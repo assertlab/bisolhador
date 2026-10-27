@@ -3,12 +3,11 @@ import { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 import useChartTheme from '../../hooks/useChartTheme.js';
-import { PUNCH_CARD_MAX_COMMITS } from '../../utils/activityStats.js';
+import { PUNCH_CARD_MAX_COMMITS, WEEKDAYS_MIN_SAMPLE } from '../../utils/activityStats.js';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
 import { GuideLink } from '../GuideLink.jsx';
 
-const WEEKDAYS_MIN_SAMPLE = 50; // fewer commits: shown, with a small-sample note
 
 // weekdays: { counts[7], total } from /stats/punch_card (whole history, each
 // commit's own time zone) — see utils/activityStats.js. null with a status when

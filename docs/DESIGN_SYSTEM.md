@@ -133,7 +133,7 @@ src/
 - **Componentes:** `PascalCase` (ex: `StatCard`, `Header`)
 - **Hooks:** `camelCase` com prefixo `use` (ex: `useRepository`)
 - **Services:** `camelCase` (ex: `githubService`)
-- **Utils:** `camelCase` (ex: `pdfExporter`, `analyzers`)
+- **Utils:** `camelCase` (ex: `dashboardCards`, `analyzers`)
 
 ## 8. Performance
 
@@ -141,7 +141,7 @@ src/
 - **Vite HMR** para desenvolvimento rápido
 - **React.lazy() + Suspense** para code splitting de charts (CommitActivityChart, TechStackChart, BenchmarkEvolutionChart, BenchmarkComparisonChart)
 - **useMemo** para filtragem de dados temporais (Timeline, Benchmark)
-- **Sem manual chunks** (Vite 8): a divisão segue os imports dinâmicos — `chart.js` via `ensureChartSetup()` e `html2pdf.js` só no clique de exportar (`exportToPDF`)
+- **Sem manual chunks** (Vite 8): a divisão segue os imports dinâmicos — `chart.js` via `ensureChartSetup()` e `@react-pdf/renderer` só no clique de baixar o relatório (`generateRepoReport`)
 
 ### Build
 - **ESLint** integrado para qualidade de código

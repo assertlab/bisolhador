@@ -1,5 +1,5 @@
-import { Document, Page, Text, View } from '@react-pdf/renderer';
-import { Banner, CompareBars, Footer, GridTable, Stats } from './ReportParts.jsx';
+import { Document, Text, View } from '@react-pdf/renderer';
+import { CompareBars, GridTable, ReportPage, Stats } from './ReportParts.jsx';
 import { s } from './styles.js';
 import { formatValue } from './format.js';
 import { readingFor } from './reportReading.js';
@@ -19,11 +19,7 @@ export function ClassroomReportDocument({ model, t, locale, meta, i18nHas = () =
   const subtitle = t('report.period', { from: fmtDate(period.from, locale), to: fmtDate(period.to, locale) });
   const footer = `${theme.productName} · ${t('report.generated', { date: meta.generatedAt })}`;
   const page = (title, children, landscape = false) => (
-    <Page size="A4" orientation={landscape ? 'landscape' : 'portrait'} style={s.page}>
-      <Banner title={title} subtitle={subtitle} />
-      {children}
-      <Footer text={footer} />
-    </Page>
+    <ReportPage title={title} subtitle={subtitle} footer={footer} landscape={landscape}>{children}</ReportPage>
   );
 
   return (

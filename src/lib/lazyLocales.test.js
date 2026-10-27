@@ -50,15 +50,16 @@ describe('lazy locale bundles: source guards', () => {
   });
 
   it('only the pages that load a bundle read its keys (anywhere else they would render raw)', () => {
-    // The PDF report loads guide + report itself (generateReport.js) before rendering its document
+    // The PDF reports (src/report/) load guide + report themselves (generateReport.js, generateRepoReport.js)
+    // before rendering, so everything under src/report/ may read those keys
     const owners = {
-      guide: [join('pages', 'Guide.jsx'), join('report', 'ClassroomReportDocument.jsx')],
+      guide: [join('pages', 'Guide.jsx'), `${join('src', 'report')}/`],
       aiGuide: [join('pages', 'AiGuide.jsx')],
-      report: [join('report', 'ClassroomReportDocument.jsx'), join('report', 'generateReport.js')],
+      report: [`${join('src', 'report')}/`],
     };
     for (const [file, text] of sourceFiles()) {
       for (const [name, ownerFiles] of Object.entries(owners)) {
-        if (ownerFiles.some((owner) => file.endsWith(owner))) continue;
+        if (ownerFiles.some((owner) => file.includes(owner))) continue;
         expect(text, file).not.toMatch(new RegExp(`(?:\\bt\\(|i18nKey=\\{?)\\s*['"\`]${name}\\.`));
       }
     }

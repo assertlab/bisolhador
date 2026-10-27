@@ -15,6 +15,7 @@ export function statsStatus(settled) {
   return { status: STATUS_BY_CODE[settled?.reason?.code] ?? 'error', data: null };
 }
 
+export const WEEKDAYS_MIN_SAMPLE = 50; // fewer commits: shown, with a small-sample note
 export const PUNCH_CARD_MAX_COMMITS = 20000; // GitHub caps the statistic (linux, vscode: exactly 20,000)
 
 /**
@@ -126,4 +127,37 @@ export function addDeleteRatioOf(report) {
  */
 export function recentCommitsOf(settled, limit) {
   return settled?.status === 'fulfilled' ? settled.value.slice(0, limit) : null;
+}
+
+/**
+ * The weekly commit series as the Dashboard chart shows it (and the PDF report draws it): young
+ * projects are trimmed to their age plus a small buffer, then to start two weeks before the first
+ * commit; older ones show up to 52 weeks. Labels are dd/mm, one per week, the last being `now`.
+ * @param {number[]} raw - GitHub's `all` series (oldest first, up to 52)
+ * @param {string|undefined} createdAt - repository creation date (ISO)
+ * @param {Date} [now]
+ * @returns {{ values: number[], labels: string[], weeksOld: number }}
+ */
+export function trimCommitSeries(raw, createdAt, now = new Date()) {
+  let weeksOld = 52;
+  const created = createdAt ? new Date(createdAt) : null;
+  if (created && !Number.isNaN(created.getTime())) weeksOld = Math.ceil((now - created) / (1000 * 60 * 60 * 24 * 7));
+  const maxWeeksToShow = Math.min(weeksOld + 4, 52); // small buffer for context
+  let itemsToShow = Math.min(raw.length, maxWeeksToShow);
+  const firstNonZeroIndex = raw.findIndex((value) => value > 0);
+  let startIndex = 0;
+  if (firstNonZeroIndex !== -1) {
+    startIndex = Math.max(0, firstNonZeroIndex - 2); // 2 weeks of context before the activity
+    itemsToShow = Math.min(raw.length - startIndex, itemsToShow);
+  } else if (weeksOld < 52) {
+    startIndex = Math.max(0, raw.length - itemsToShow); // young and silent: only the recent period
+  }
+  const values = raw.slice(startIndex, startIndex + itemsToShow);
+  const labels = [];
+  for (let i = values.length - 1; i >= 0; i -= 1) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i * 7);
+    labels.push(`${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`);
+  }
+  return { values, labels, weeksOld };
 }

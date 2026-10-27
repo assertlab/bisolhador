@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.21.0] - 2026-10-27
+
+### ✨ Changed
+
+- **O botão "Baixar Relatório" do Dashboard gera um PDF vetorial com a identidade do relatório da turma**, no lugar da "foto" da tela feita pelo `html2pdf.js` (que cortava cards, rasterizava o texto e saía feia). Mesmo gerador (`@react-pdf/renderer`, IBM Plex Sans, faixa com o logo, rodapé com `n / total`), carregado só no clique. Funciona igual na busca ao vivo e no snapshot (a faixa diz "análise de" ou "snapshot de", com a data). Arquivo: `bisolhador-<dono>-<repo>-<data>.pdf`.
+- **Conteúdo:** nome, descrição, linguagem, idade e link; estrelas, forks, issues e saúde; aviso de dados parciais; estatísticas extras; critérios de saúde e maturidade (testes, CI, Docker, linter, revisão de código, branches zumbis) em palavras (a fonte não tem ✓/✗ nem emoji, que são removidos dos textos); dinâmica de revisão e práticas do projeto, cada cartão com valor, amostra e a explicação do tooltip; bus factor e contribuidores (barras de participação, até 15, sem avatares); commits por semana e por dia da semana (colunas vetoriais) e linguagens; **IA no Processo** (ferramentas e fontes, profundidade da configuração, contagens com n, salvaguardas, fontes em desacordo com as causas legítimas, selo com "não avaliados"); últimos commits e PRs; metodologia e limites. Tudo que não pôde ser medido continua "N/A"/"não verificado"/"não registrado neste snapshot", nunca zero.
+- **Os textos vêm da mesma fonte da tela:** os cartões foram extraídos para `src/utils/dashboardCards.js` e o Dashboard passou a renderizá-los a partir dali (conferido que o texto da página é idêntico antes e depois, em PT e EN, num snapshot real). A série semanal de commits (`trimCommitSeries`), a idade do projeto (`repoAge.js`) e a constante de amostra mínima dos dias da semana também são compartilhadas.
+
+### 🗑️ Removed
+
+- **`html2pdf.js`** e, com ele, `jspdf`, `html2canvas` e `dompurify` (cerca de 950 KB, num chunk carregado só no clique). A análise de vulnerabilidades dessas bibliotecas (AGENTS.md, 2026-08) fica sem objeto. A justificativa de `'unsafe-inline'` em `style-src` e de `data:` em `img-src` no CSP vinha do `html2canvas`; os dois seguem como estão e podem ser apertados num passo próprio, provado pelo `smoke:csp`. Também **destrava a migração para o Tailwind v4** (ROADMAP), que o `html2canvas` bloqueava por não entender `oklch()`.
+- `smoke:csp` agora confere que o PDF do Dashboard também é um PDF válido com a IBM Plex embutida (como o da turma), nos modos build e dev.
+
+---
+
 ## [3.20.1] - 2026-10-27
 
 ### 🐛 Fixed

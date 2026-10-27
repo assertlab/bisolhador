@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { TOAST_AUTO_DISMISS_MS } from '../constants.js';
 
 // Module-level store (not React Context) so showToast() can be called from
-// plain utility modules like pdfExporter.js, which aren't components and
+// plain utility modules (exporters, services), which aren't components and
 // have no access to a Provider tree.
 let toasts = [];
 let idCounter = 0;
