@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🧪 Tests
+
+- **`smoke:csp` cobre o relatório PDF do Modo Turma.** Depois do fluxo do Dashboard, o teste abre `/turma` com a API do GitHub simulada (um repositório; o resto responde 500, que a tela mostra como n/d; token falso que não sai da página), clica em "Relatório PDF" e confere que o arquivo baixado é um PDF com a IBM Plex embutida, nos modos build e dev. Protege o que só o navegador real sob o CSP real mostra: o WebAssembly do layout do react-pdf (`'wasm-unsafe-eval'` + `data:`) e o worker `blob:` que um PNG dispararia (travava o relatório sem erro visível). Conferido que falha sem o `'wasm-unsafe-eval'`.
+
 ---
 
 ## [3.19.1] - 2026-10-27
