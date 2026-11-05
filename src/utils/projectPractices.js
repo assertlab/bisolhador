@@ -189,13 +189,14 @@ export const TAGS_PAGE = 100; // githubService.fetchTagDates `first`
  * stable tags only (pre-releases out), dated by the tagger date of annotated
  * tags, else the tagged commit's date (fetchTagDates). Without a token there
  * are no dates (the REST tag list has none): unavailable, reason
- * 'tagsNoToken', with the tag count. `tagsTotal` = every tag on GitHub.
+ * 'tagsNoToken', with the tag count; with a token whose date query failed,
+ * reason 'tagDatesFailed'. `tagsTotal` = every tag on GitHub.
  *
- * @param {{ total: number, dates: Array<{name: string, date: string}>|null, fullPage?: boolean }} tags
+ * @param {{ total: number, dates: Array<{name: string, date: string}>|null, fullPage?: boolean, datesFailed?: boolean }} tags
  */
 export function analyzeTagCadence(tags, nowMs = Date.now()) {
   const tagsTotal = tags.total;
-  if (!tags.dates) return { available: false, reason: 'tagsNoToken', source: 'tags', tagsTotal, method: PRACTICES_METHOD };
+  if (!tags.dates) return { available: false, reason: tags.datesFailed ? 'tagDatesFailed' : 'tagsNoToken', source: 'tags', tagsTotal, method: PRACTICES_METHOD };
   const stable = tags.dates.filter((t) => !isPrereleaseTag(t.name)).map((t) => ({ tag: t.name, at: Date.parse(t.date) }));
   const result = cadence(stable, { fullPage: Boolean(tags.fullPage), nowMs });
   if (!result.available) return { ...result, reason: 'noStableTags', source: 'tags', tagsTotal };

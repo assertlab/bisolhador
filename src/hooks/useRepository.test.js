@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // The whole data pipeline with the GitHub layer mocked: which requests are
 // made, what the report says and whether the snapshot is saved.
-const { github, saveSearch } = vi.hoisted(() => ({ github: {}, saveSearch: vi.fn() }));
-vi.mock('../services/githubService.js', () => ({ githubService: github, hasGithubToken: () => false }));
+const { github, saveSearch, hasToken } = vi.hoisted(() => ({ github: {}, saveSearch: vi.fn(), hasToken: { value: false } }));
+vi.mock('../services/githubService.js', () => ({ githubService: github, hasGithubToken: () => hasToken.value }));
 vi.mock('../services/analytics.js', () => ({ default: { saveSearch } }));
 vi.mock('../i18n.js', () => ({ default: { t: (key) => key } }));
 vi.mock('../lib/chartSetup.js', () => ({ ensureChartSetup: () => Promise.resolve() }));
@@ -105,6 +105,19 @@ describe('fetchRepositoryData: read-only mirrors and contributors GitHub won\'t 
     expect(failed.stats.tags).toBeUndefined();
     expect(failed.practices.releases).toMatchObject({ available: false, reason: 'noReleases' });
     expect(failed._warnings).toBeUndefined();
+  });
+
+  it('with a token, failed tag dates fall back to the count (not "no releases")', async () => {
+    hasToken.value = true;
+    try {
+      mockLinux({ fetchPullRequestReviewStats: vi.fn(async () => null), fetchBranchActivity: vi.fn(async () => ({ totalCount: 1, branches: [], capped: false })), fetchAiRepoContext: vi.fn(async () => null) });
+      const report = await fetchRepositoryData('torvalds/linux');
+      expect(github.fetchTagDates).toHaveBeenCalledOnce();
+      expect(report.stats.tags).toBe(952);
+      expect(report.practices.releases).toMatchObject({ available: false, reason: 'tagDatesFailed', tagsTotal: 952 });
+    } finally {
+      hasToken.value = false;
+    }
   });
 
   it('with releases, tags are not requested', async () => {

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [3.24.0] - 2026-11-05
+
+### 🐛 Fixed
+
+- **Falha nas datas das tags não vira "nenhuma release".** Com token, se a consulta GraphQL das datas das tags falhar (erro ou tempo esgotado), o app ainda conta as tags pela API REST e o card diz "Sem releases; N tags no GitHub (não foi possível obter as datas das tags)", com o motivo no console (`[useRepository] Tag dates unavailable…`). Antes caía em "Nenhuma release publicada no GitHub".
+
 ### ✨ Changed
 
 - **Cadência de releases pelas tags quando o projeto não publica releases.** Com 0 releases no GitHub (torvalds/linux: 0 releases, 952 tags), o app passa a ler as tags. Com token, a cadência vem das até 100 tags mais recentes, sem pré-versões (`-rc`, `-beta`, `a1`, `.dev2`…: o kernel cria uma `-rc` por semana, o que faria parecer "uma release a cada 7 dias"), datadas pela tag anotada ou pelo commit, e o card diz "medido pelas tags". Sem token, a lista REST de tags não tem datas: o card mostra quantas tags existem e que a cadência pelas tags precisa de token. "Total de Releases" continua contando releases e mostra as tags ao lado ("0 · 952 tags"). O resultado guarda `source: 'tags'`, para não ser confundido com releases. Uma falha nas tags mantém o "nenhuma release" de antes, sem alerta.

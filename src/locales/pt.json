@@ -151,7 +151,8 @@
       "error": "Não foi possível obter os dados",
       "snapshot": "Não registrado neste snapshot",
       "tagsNoToken": "Sem releases; {{count}} tags no GitHub (a cadência pelas tags requer token)",
-      "noStableTags": "Sem releases nem tags estáveis ({{count}} tags no GitHub)"
+      "noStableTags": "Sem releases nem tags estáveis ({{count}} tags no GitHub)",
+      "tagDatesFailed": "Sem releases; {{count}} tags no GitHub (não foi possível obter as datas das tags)"
     },
     "releasesLast12_one": "{{count}} release em 12 meses",
     "releasesLast12_other": "{{count}} releases em 12 meses",

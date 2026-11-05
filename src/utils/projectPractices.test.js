@@ -177,6 +177,10 @@ describe('release cadence from tags (no GitHub releases)', () => {
     expect(analyzeTagCadence({ total: 952, dates: null }, T0)).toMatchObject({ available: false, reason: 'tagsNoToken', source: 'tags', tagsTotal: 952 });
   });
 
+  it('with a token whose date query failed: unavailable, says so, keeps the count', () => {
+    expect(analyzeTagCadence({ total: 952, dates: null, datesFailed: true }, T0)).toMatchObject({ available: false, reason: 'tagDatesFailed', tagsTotal: 952 });
+  });
+
   it('only pre-release tags: no stable tags', () => {
     expect(analyzeTagCadence({ total: 2, dates: [tag('v1.0.0-rc.1', 5), tag('v1.0.0-rc.2', 1)] }, T0)).toMatchObject({ available: false, reason: 'noStableTags', tagsTotal: 2 });
   });
