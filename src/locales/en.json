@@ -151,7 +151,8 @@
       "error": "Couldn't load the data",
       "snapshot": "Not recorded in this snapshot",
       "tagsNoToken": "No releases; {{count}} tags on GitHub (cadence from tags needs a token)",
-      "noStableTags": "No releases or stable tags ({{count}} tags on GitHub)"
+      "noStableTags": "No releases or stable tags ({{count}} tags on GitHub)",
+      "tagDatesFailed": "No releases; {{count}} tags on GitHub (couldn't read the tag dates)"
     },
     "releasesLast12_one": "{{count}} release in 12 months",
     "releasesLast12_other": "{{count}} releases in 12 months",

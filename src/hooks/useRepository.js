@@ -58,15 +58,21 @@ async function fetchContributorAnalysis(owner, repo) {
 // releases the list is complete; only a full page needs the per_page=1 count.
 // No releases: the project may publish tags only (torvalds/linux: 0 releases,
 // 950+ tags). Then the tags: with a token their dates (cadence), without one
-// the count only. A tag failure leaves `tags` null (cadence says "no
-// releases", as before) and doesn't fail the releases.
+// the count only. If the dates fail (GraphQL error or timeout), the REST
+// count still goes out (datesFailed: the card says the dates couldn't be
+// read, not "no releases"). Only when the count fails too is `tags` null
+// ("no releases", as before); a tag failure never fails the releases.
 async function fetchReleaseData(owner, repo, hasToken) {
     const list = await githubService.fetchReleases(owner, repo);
     const count = list.length < RELEASES_PAGE ? list.length : await githubService.fetchReleasesCount(owner, repo);
     if (list.length > 0) return { list, count, tags: null };
+    const countOnly = (extra = {}) => githubService.fetchTagsCount(owner, repo).then((total) => ({ total, dates: null, ...extra }));
     const tags = await (hasToken
-        ? githubService.fetchTagDates(owner, repo)
-        : githubService.fetchTagsCount(owner, repo).then((total) => ({ total, dates: null }))
+        ? githubService.fetchTagDates(owner, repo).catch((error) => {
+            console.warn('[useRepository] Tag dates unavailable, counting tags only:', error.message);
+            return countOnly({ datesFailed: true });
+        })
+        : countOnly()
     ).catch((error) => {
         console.warn('[useRepository] Tags unavailable:', error.message);
         return null;

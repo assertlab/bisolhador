@@ -32,6 +32,10 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.24.0 - Cadência por tags e outra convenção de commits
+- **✨ Projetos sem releases são medidos pelas tags** (sem pré-versões; datas com token) e "Total de Releases" mostra as tags ao lado
+- **✨ Conventional Commits mostra quando a maioria segue outra convenção** ("prefixo: resumo", como o kernel Linux)
+
 ### v3.23.0 - Repositórios espelho e históricos gigantes
 - **🐛 torvalds/linux e afins voltam a ter histórico**: quando a GitHub se recusa a listar os contribuidores (histórico grande demais), o card explica o limite e o snapshot é gravado; nova tentativa também em `5xx`
 - **✨ PRs e issues desativados no GitHub** aparecem como "desativados", não como zero ou "Sem PRs mergeados"
