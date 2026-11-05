@@ -240,6 +240,24 @@ export function analyzeReviewMetrics(prStats, reason, { limit } = {}) {
 }
 
 /**
+ * Pull requests turned off on GitHub (repoData.has_pull_requests === false,
+ * e.g. torvalds/linux): lead time and every review metric are unavailable
+ * with reason 'disabled', not "no merged PRs" (which reads as a team that
+ * doesn't review). The current `method` goes along so a saved snapshot keeps
+ * saying "disabled" (normalizeSnapshotProcessMetrics would turn it into
+ * "not recorded"); medianHours stays null, so comparisons skip it.
+ */
+export function pullRequestsDisabled() {
+  const reason = 'disabled';
+  return {
+    leadTime: leadTimeUnavailable(reason, { method: LEAD_TIME_METHOD }),
+    codeReview: { unapprovedPercentage: null, selfMergePercentage: null, color: 'gray', available: false, reason, method: REVIEW_METHOD },
+    divergence: { avg: null, categoryKey: 'repo.divergencePrsDisabled', method: REVIEW_METHOD },
+    reviewProcess: { available: false, reason, method: REVIEW_PROCESS_METHOD },
+  };
+}
+
+/**
  * Applied when a persisted full_report is shown. Values without the current
  * `method` were measured over recently *created* PRs (mean lead time, self-merge
  * rate, bots included; before v3.6.4 review metrics were always 0) and aren't

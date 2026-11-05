@@ -42,14 +42,14 @@
         "name": "Open, closed and % closed issues",
         "what": "Total open and closed issues (GitHub search) and the closed share of all issues.",
         "read": "A high closed share suggests a cared-for backlog; many open issues may just mean a popular project.",
-        "limits": "Whole history, including issues closed as \"not planned\" or duplicates: it's a closing rate, not a resolution rate.",
+        "limits": "Whole history, including issues closed as \"not planned\" or duplicates: it's a closing rate, not a resolution rate. Projects that turn issues off on GitHub (they use another tracker) show \"Issues disabled on GitHub\".",
         "chaossNote": "CHAOSS (Issues Closed) also proposes the closed/total ratio, but per period; here it covers the whole history."
       },
       "prs-merges": {
         "name": "PRs and merges",
         "what": "Total pull requests and accepted (merged) PRs.",
         "read": "Shows the volume of proposed and accepted contributions.",
-        "limits": "Volume says nothing about contribution quality.",
+        "limits": "Volume says nothing about contribution quality. When the project turns pull requests off on GitHub (mirrors like torvalds/linux, which review by e-mail), it shows \"Disabled\", and lead time and review are unavailable for that reason too.",
         "chaossNote": "Whole-history totals; CHAOSS (Change Requests, Change Requests Accepted) counts per period."
       },
       "lead-time": {
@@ -189,7 +189,7 @@
         "name": "Bus factor and concentration",
         "what": "Smallest number of people responsible for 70% of the commits of the last 12 months, or of the whole history when recent activity is low (bots excluded), and the top contributor's share.",
         "read": "A bus factor of 1 or 2 means the project depends on very few people. Over 60% from the top contributor is critical.",
-        "limits": "Counts commits, not reviews, issues or other contributions. Uses the whole history when GitHub's 12-month statistic is unavailable, and considers at most the top 100 contributors.",
+        "limits": "Counts commits, not reviews, issues or other contributions. Uses the whole history when GitHub's 12-month statistic is unavailable, and considers at most the top 100 contributors. For repositories with a huge history (torvalds/linux), GitHub may deliver neither list; the indicator is then unavailable and says it is a platform limit.",
         "chaossNote": "CHAOSS calls this metric Contributor Absence Factor (formerly \"Bus Factor\") and uses a 50% threshold; here it is 70%, so the number tends to be higher than CHAOSS's."
       },
       "contributors": {

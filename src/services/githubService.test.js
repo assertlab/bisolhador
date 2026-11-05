@@ -295,7 +295,38 @@ describe('githubService: failures are errors, not zeros', () => {
       }
     });
 
-    it('a failure other than 202 does not wait or retry', async () => {
+    it.each([
+      ['504 (torvalds/linux)', () => json({}, { status: 504 })],
+      ['a network error (a 504 without CORS headers, in the browser)', () => Promise.reject(new TypeError('Failed to fetch'))],
+    ])('%s: one retry after the wait returns the stats', async (_label, failure) => {
+      vi.useFakeTimers();
+      try {
+        fetchMock
+          .mockImplementationOnce(failure)
+          .mockReturnValueOnce(json([{ author: { login: 'a' }, total: 3, weeks: [] }]));
+        const result = githubService.fetchContributorStats('o', 'r');
+        await vi.advanceTimersByTimeAsync(CONTRIBUTOR_STATS_RETRY_DELAY_MS);
+        await expect(result).resolves.toHaveLength(1);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('still failing after the retry throws, without a third request', async () => {
+      vi.useFakeTimers();
+      try {
+        fetchMock.mockImplementation(() => json({}, { status: 504 }));
+        const assertion = expect(githubService.fetchContributorStats('o', 'r')).rejects.toThrow(/504/);
+        await vi.advanceTimersByTimeAsync(CONTRIBUTOR_STATS_RETRY_DELAY_MS * 3);
+        await assertion;
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('a failure other than 202/5xx does not wait or retry', async () => {
       fetchMock.mockReturnValue(json({}, { status: 403 }));
       await expect(githubService.fetchContributorStats('o', 'r')).rejects.toThrow(/403/);
       expect(fetchMock).toHaveBeenCalledOnce();
@@ -308,9 +339,16 @@ describe('githubService: failures are errors, not zeros', () => {
   });
 
   it('fetchContributors asks for 100 per page and throws on failure', async () => {
-    fetchMock.mockReturnValue(json({ message: 'rate limited' }, { status: 403 }));
-    await expect(githubService.fetchContributors('o', 'r')).rejects.toThrow(/403/);
+    fetchMock.mockReturnValue(json({ message: 'API rate limit exceeded' }, { status: 403 }));
+    const error = await githubService.fetchContributors('o', 'r').catch((e) => e);
+    expect(error.message).toMatch(/403/);
+    expect(error.code).toBeUndefined(); // a rate limit is a plain failure: a later search may work
     expect(fetchMock.mock.calls[0][0]).toContain('per_page=100');
+  });
+
+  it('fetchContributors: GitHub refusing a huge history (torvalds/linux) → code TOO_LARGE', async () => {
+    fetchMock.mockReturnValue(json({ message: 'The history or contributor list is too large to list contributors for this repository via the API.' }, { status: 403 }));
+    await expect(githubService.fetchContributors('torvalds', 'linux')).rejects.toMatchObject({ code: 'TOO_LARGE', message: expect.stringMatching(/403/) });
   });
 
   describe('fetchAiRepoContext (token, GraphQL)', () => {

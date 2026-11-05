@@ -58,7 +58,9 @@
     "divergenceNone": "Sem PRs mergeados",
     "divergenceLow": "Pouca discussão",
     "divergenceMedium": "Discussão moderada",
-    "divergenceHigh": "Muita discussão"
+    "divergenceHigh": "Muita discussão",
+    "prsDisabled": "Desativados",
+    "divergencePrsDisabled": "PRs desativados no GitHub"
   },
   "app": {
     "reload": "Recarregar a página",
@@ -92,7 +94,8 @@
     "leadTimeUnavailable": {
       "noMerged": "Nenhum PR mergeado recentemente",
       "error": "Não foi possível obter os PRs",
-      "snapshot": "Não registrado neste snapshot"
+      "snapshot": "Não registrado neste snapshot",
+      "disabled": "PRs desativados no GitHub: a revisão acontece fora da plataforma"
     },
     "prSample": "{{n}} PRs",
     "addDelete": {
@@ -127,7 +130,8 @@
       "noToken": "Requer token do GitHub",
       "error": "Indisponível",
       "snapshot": "Não registrado neste snapshot",
-      "noMerged": "Sem PRs mergeados"
+      "noMerged": "Sem PRs mergeados",
+      "disabled": "PRs desativados no GitHub"
     },
     "ciHealth": "Saúde do CI",
     "ciHealthTooltip": "Percentual de sucesso das últimas execuções do GitHub Actions disparadas por push no branch principal (até 50). Contam sucesso contra falha, timeout e falha de inicialização; canceladas e puladas ficam de fora. Execuções agendadas, do Dependabot e de pull requests não entram; pushes feitos por bots entram. CI fora do GitHub Actions (Travis, CircleCI…) não aparece aqui.",
@@ -156,7 +160,8 @@
     "ciHealthSample_other": "execuções com sucesso · mediana {{minutes}} min · {{count}} execuções",
     "conventionalCommitsSample_one": "das mensagens · {{count}} commit recente",
     "conventionalCommitsSample_other": "das mensagens · {{count}} commits recentes",
-    "releasesLast12_zero": "nenhuma release em 12 meses"
+    "releasesLast12_zero": "nenhuma release em 12 meses",
+    "issuesDisabled": "Issues desativadas no GitHub"
   },
   "language": {
     "pt": "PT",
@@ -219,7 +224,8 @@
       "noToken": "Code Review, Divergência e Branches Zumbis exigem um token do GitHub (ícone de configurações no topo): sem token, a API do GitHub não informa as aprovações e os comentários de cada PR, nem a data do último commit de cada branch.",
       "error": "Não foi possível obter os dados de revisão dos PRs (falha ou limite da API GraphQL do GitHub). Tente novamente em instantes.",
       "snapshot": "Este snapshot histórico não registrou os dados de revisão dos PRs.",
-      "noMerged": "Nenhum PR mergeado recentemente (sem contar bots): não há revisão nem discussão para medir."
+      "noMerged": "Nenhum PR mergeado recentemente (sem contar bots): não há revisão nem discussão para medir.",
+      "disabled": "Os pull requests estão desativados no GitHub: o projeto revisa código fora da plataforma (por exemplo, por e-mail), então não há revisão nem discussão para medir aqui."
     },
     "detectors": {
       "tests": "Procura pastas test/, tests/, __tests__/ e arquivos *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/.",
@@ -266,6 +272,10 @@
       "critical": {
         "title": "Concentração Alta",
         "message": "<bold>{{contributor}}</bold> concentra <bold>{{percentage}}%</bold> dos commits. Alto risco de dependência de uma pessoa."
+      },
+      "tooLarge": {
+        "title": "Contribuidores Indisponíveis no GitHub",
+        "message": "O GitHub não lista os contribuidores deste repositório pela API: o histórico é grande demais. É um limite da plataforma, não uma falha temporária."
       }
     },
     "scope": {

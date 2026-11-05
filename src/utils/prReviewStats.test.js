@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  percentile, formatDuration, analyzeLeadTime, leadTimeDays, toPullRequestStats, analyzeReviewMetrics, normalizeSnapshotProcessMetrics,
+  percentile, formatDuration, analyzeLeadTime, leadTimeDays, toPullRequestStats, analyzeReviewMetrics, normalizeSnapshotProcessMetrics, pullRequestsDisabled,
 } from './prReviewStats.js';
 
 const HOUR = 60 * 60 * 1000;
@@ -272,5 +272,22 @@ describe('reviewProcess: coverage, time to first review, PR size', () => {
 
   it('old snapshots (no reviewProcess) → not recorded', () => {
     expect(normalizeSnapshotProcessMetrics({ metrics: {} }).reviewProcess).toEqual({ available: false, reason: 'snapshot' });
+  });
+});
+
+describe('pullRequestsDisabled (PRs turned off on GitHub)', () => {
+  it('every PR metric is unavailable with reason "disabled", never "no merged PRs"', () => {
+    const { leadTime, codeReview, divergence, reviewProcess } = pullRequestsDisabled();
+    expect(leadTime).toMatchObject({ value: 'N/A', n: 0, reason: 'disabled' });
+    expect(codeReview).toMatchObject({ available: false, unapprovedPercentage: null, reason: 'disabled' });
+    expect(divergence).toMatchObject({ avg: null, categoryKey: 'repo.divergencePrsDisabled' });
+    expect(reviewProcess).toMatchObject({ available: false, reason: 'disabled' });
+    expect(leadTimeDays(leadTime)).toBeNull(); // comparisons skip it
+  });
+
+  it('a saved snapshot keeps saying "disabled" (not "not recorded")', () => {
+    const { leadTime, codeReview, divergence, reviewProcess } = pullRequestsDisabled();
+    const saved = { codeReview, reviewProcess, metrics: { leadTime, divergence } };
+    expect(normalizeSnapshotProcessMetrics(saved)).toEqual(saved);
   });
 });

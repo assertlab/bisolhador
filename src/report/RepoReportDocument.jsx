@@ -61,8 +61,8 @@ export function RepoReportDocument({ model, t, locale, meta }) {
           <Stats
             items={[
               { label: t('repo.totalBranches').replace(/:$/, ''), value: fmtNumber(header.branches, locale) },
-              { label: t('repo.totalPRs').replace(/:$/, ''), value: fmtNumber(header.prs, locale) },
-              { label: t('repo.totalMerges').replace(/:$/, ''), value: fmtNumber(header.merges, locale) },
+              { label: t('repo.totalPRs').replace(/:$/, ''), value: header.prsDisabled ? t('repo.prsDisabled') : fmtNumber(header.prs, locale) },
+              { label: t('repo.totalMerges').replace(/:$/, ''), value: header.prsDisabled ? t('repo.prsDisabled') : fmtNumber(header.merges, locale) },
               { label: t('repo.totalReleases').replace(/:$/, ''), value: fmtNumber(header.releases, locale) },
             ]}
           />

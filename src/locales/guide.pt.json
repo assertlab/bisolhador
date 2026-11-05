@@ -42,14 +42,14 @@
         "name": "Issues abertas, fechadas e % fechadas",
         "what": "Total de issues abertas e fechadas (busca do GitHub) e a fatia fechada do total.",
         "read": "Uma fatia fechada alta sugere backlog cuidado; muitas abertas podem ser só um projeto popular.",
-        "limits": "Conta todo o histórico e inclui issues fechadas como \"não planejadas\" ou duplicadas: é uma taxa de fechamento, não de resolução.",
+        "limits": "Conta todo o histórico e inclui issues fechadas como \"não planejadas\" ou duplicadas: é uma taxa de fechamento, não de resolução. Projetos que desativam as issues no GitHub (usam outro rastreador) aparecem como \"Issues desativadas no GitHub\".",
         "chaossNote": "A CHAOSS (Issues Closed) também propõe a razão fechadas/total, mas por período; aqui é sobre todo o histórico."
       },
       "prs-merges": {
         "name": "PRs e merges",
         "what": "Total de pull requests e de PRs aceitos (mergeados).",
         "read": "Mostra o volume de contribuições propostas e aceitas.",
-        "limits": "Volume não diz nada sobre a qualidade das contribuições.",
+        "limits": "Volume não diz nada sobre a qualidade das contribuições. Quando o projeto desativa os pull requests no GitHub (espelhos como torvalds/linux, que revisam por e-mail), aparece \"Desativados\", e lead time e revisão também ficam indisponíveis com esse motivo.",
         "chaossNote": "Contagens totais do histórico; a CHAOSS (Change Requests, Change Requests Accepted) conta por período."
       },
       "lead-time": {
@@ -189,7 +189,7 @@
         "name": "Bus factor e concentração",
         "what": "Menor número de pessoas que respondem por 70% dos commits dos últimos 12 meses, ou de todo o histórico quando há pouca atividade recente (bots fora), e a participação do principal contribuidor.",
         "read": "Bus factor 1 ou 2 significa que o projeto depende de pouquíssimas pessoas. Concentração acima de 60% no principal contribuidor é crítica.",
-        "limits": "Conta commits, não revisões, issues ou outras contribuições. Usa o histórico inteiro quando a estatística de 12 meses do GitHub está indisponível, e considera no máximo os 100 maiores contribuidores.",
+        "limits": "Conta commits, não revisões, issues ou outras contribuições. Usa o histórico inteiro quando a estatística de 12 meses do GitHub está indisponível, e considera no máximo os 100 maiores contribuidores. Em repositórios com histórico enorme (torvalds/linux), o GitHub pode não entregar nenhuma das duas listas; o indicador fica indisponível e diz que é um limite da plataforma.",
         "chaossNote": "A CHAOSS chama essa métrica de Contributor Absence Factor (antes \"Bus Factor\") e usa o limiar de 50% das contribuições; aqui o limiar é 70%, então o número tende a ser maior que o da CHAOSS."
       },
       "contributors": {

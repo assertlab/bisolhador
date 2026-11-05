@@ -198,31 +198,46 @@ export const githubService = {
 
   // Fallback for contributor analysis when /stats/contributors isn't ready:
   // the top 100 contributors, all-time only. Throws on failure (used to return
-  // [] → "no contributors" and a persisted empty bus factor).
+  // [] → "no contributors" and a persisted empty bus factor). GitHub refuses
+  // this list for repositories with a huge history (torvalds/linux: 403 "The
+  // history or contributor list is too large…"): that error gets code
+  // TOO_LARGE, a limit of the API that a later search won't lift. A 403 for
+  // any other reason (rate limit) stays a plain failure.
   async fetchContributors(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors?per_page=${GITHUB_PER_PAGE_CONTRIBUTORS}`;
     const response = await fetch(url, { headers: getHeaders() });
     if (!response.ok) {
-      throw new Error(`Contributors failed: HTTP ${response.status}`);
+      const error = new Error(`Contributors failed: HTTP ${response.status}`);
+      if (response.status === 403) {
+        const body = await response.json().catch(() => null);
+        if (/too large/i.test(body?.message ?? '')) error.code = 'TOO_LARGE';
+      }
+      throw error;
     }
     return response.json();
   },
 
   // Top contributors with weekly commit counts (all-time AND recent windows,
-  // bots flagged as type "Bot"). GitHub answers 202 while it computes the stats:
-  // one retry after CONTRIBUTOR_STATS_RETRY_DELAY_MS, no more: this runs inside
-  // useRepository's allSettled, so the wait adds to the dashboard's load time
-  // (fully, when nothing slower runs beside it, e.g. without a token). The delay
-  // is a guess, not measured; if it is still 202 this throws and the caller
-  // falls back to /contributors (partial, no snapshot). Not in fetchStats: the
-  // other /stats/* charts explain COMPUTING instead of falling back to anything.
+  // bots flagged as type "Bot"). GitHub answers 202 while it computes the stats,
+  // and on very large repositories also 5xx (torvalds/linux: 504 without CORS
+  // headers, so in the browser fetch rejects with "Failed to fetch"). Any of
+  // those gets one retry after CONTRIBUTOR_STATS_RETRY_DELAY_MS, no more: this
+  // runs inside useRepository's allSettled, so the wait adds to the dashboard's
+  // load time (fully, when nothing slower runs beside it, e.g. without a
+  // token). The delay is a guess, not measured; if it fails again this throws
+  // and the caller falls back to /contributors (partial, no snapshot). Not in
+  // fetchStats: the other /stats/* charts explain COMPUTING instead of falling
+  // back to anything.
   async fetchContributorStats(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/contributors`;
-    let response = await fetch(url, { headers: getHeaders() });
-    if (response.status === 202) {
+    const attempt = () => fetch(url, { headers: getHeaders() }).catch((error) => ({ networkError: error }));
+    const retriable = (res) => res.networkError || res.status === 202 || res.status >= 500;
+    let response = await attempt();
+    if (retriable(response)) {
       await new Promise((resolve) => setTimeout(resolve, CONTRIBUTOR_STATS_RETRY_DELAY_MS));
-      response = await fetch(url, { headers: getHeaders() });
+      response = await attempt();
     }
+    if (response.networkError) throw response.networkError;
     if (response.status === 202) {
       throw new Error("Contributor stats still being computed by GitHub (HTTP 202)");
     }

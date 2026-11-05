@@ -2,6 +2,7 @@ import { useTranslation, Trans } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 import { ContributorsScope } from './ContributorsScope.jsx';
 import { GuideLink } from './GuideLink.jsx';
+import { contributorsTextKey } from '../utils/contributors.js';
 
 export function ContributorsTable({ contributors, busFactor, analysis }) {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ export function ContributorsTable({ contributors, busFactor, analysis }) {
     textColor = 'text-green-800 dark:text-green-200';
   }
 
-  const level = busFactor?.level === 'notRecorded' ? 'notRecorded' : unavailable ? 'unavailable' : busFactor.level;
+  const level = contributorsTextKey(contributors, busFactor);
   const busFactorTitle = t(`contributors.busFactor.${level}.title`);
 
   return (

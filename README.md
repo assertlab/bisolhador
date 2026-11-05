@@ -32,6 +32,10 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.23.0 - Repositórios espelho e históricos gigantes
+- **🐛 torvalds/linux e afins voltam a ter histórico**: quando a GitHub se recusa a listar os contribuidores (histórico grande demais), o card explica o limite e o snapshot é gravado; nova tentativa também em `5xx`
+- **✨ PRs e issues desativados no GitHub** aparecem como "desativados", não como zero ou "Sem PRs mergeados"
+
 ### v3.22.1 - Estatísticas de contribuidores com nova tentativa
 - **🐛 Primeira busca de um repositório sem cache da GitHub**: `/stats/contributors` (`202`) ganha uma nova tentativa após 3 s antes do fallback parcial que impede salvar o snapshot (valor não medido)
 

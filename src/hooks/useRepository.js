@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { githubService, hasGithubToken } from '../services/githubService.js';
 import { analyzers } from '../utils/analyzers.js';
-import { analyzeReviewMetrics, analyzeLeadTime } from '../utils/prReviewStats.js';
+import { analyzeReviewMetrics, analyzeLeadTime, pullRequestsDisabled } from '../utils/prReviewStats.js';
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
 import { analyzeBranches } from '../utils/branches.js';
 import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf, treeStatusOf } from '../utils/repoTree.js';
@@ -39,7 +39,9 @@ async function fetchBranchAnalysis(owner, repo, defaultBranch, hasToken) {
 
 // Contributor analysis: /stats/contributors (weekly data → recent window, bots
 // flagged); if GitHub is still computing it (202) or it fails, the top-100
-// /contributors list (all-time, marked partial). Throws only if both fail.
+// /contributors list (all-time, marked partial). Throws only if both fail;
+// the error keeps the fallback's code (TOO_LARGE: GitHub won't list the
+// contributors of this repository, see fetchContributors).
 async function fetchContributorAnalysis(owner, repo) {
     try {
         const stats = await githubService.fetchContributorStats(owner, repo);
@@ -60,7 +62,8 @@ async function fetchReleaseData(owner, repo) {
     return { list, count };
 }
 
-async function fetchRepositoryData(repoName) {
+// Exported for tests (useRepository.test.js); the app goes through useRepository.
+export async function fetchRepositoryData(repoName) {
     if (!repoName || !repoName.includes('/')) {
         throw new Error('Formato inválido. Use owner/repo');
     }
@@ -98,25 +101,35 @@ async function fetchRepositoryData(repoName) {
 
     const hasToken = hasGithubToken();
 
+    // Features the owner turned off on GitHub (torvalds/linux, a read-only
+    // mirror: pull requests and issues disabled). Their counts are not zero,
+    // they don't exist on GitHub: nothing is requested (two to four fewer
+    // Search API calls) and the indicators say "disabled" instead of N/A or 0.
+    // Strict `=== false`: a response without the field counts as enabled.
+    const prsDisabled = repoData.has_pull_requests === false;
+    const issuesDisabled = repoData.has_issues === false;
+    const skipped = (value) => Promise.resolve(value);
+
     // Fetch all other data in parallel
     const results = await Promise.allSettled([
         githubService.fetchCommits(owner, repo),
         fetchBranchAnalysis(owner, repo, repoData.default_branch, hasToken),
         fetchContributorAnalysis(owner, repo),
-        githubService.fetchPullRequests(owner, repo),
-        githubService.fetchOpenIssuesCount(owner, repo),
-        githubService.fetchClosedIssuesCount(owner, repo),
-        githubService.fetchRecentPullRequests(owner, repo),
+        prsDisabled ? skipped(null) : githubService.fetchPullRequests(owner, repo),
+        issuesDisabled ? skipped(null) : githubService.fetchOpenIssuesCount(owner, repo),
+        issuesDisabled ? skipped(null) : githubService.fetchClosedIssuesCount(owner, repo),
+        prsDisabled ? skipped([]) : githubService.fetchRecentPullRequests(owner, repo),
         githubService.fetchLanguages(owner, repo),
         githubService.fetchCommunityProfile(owner, repo),
         githubService.fetchRepositoryTree(owner, repo, repoData.default_branch),
         fetchReleaseData(owner, repo),
         githubService.fetchCommitActivity(owner, repo),
-        githubService.fetchPullRequestStats(owner, repo),
+        // [] when disabled: the AI section reads "no PRs in the sample", as when the list was empty
+        prsDisabled ? skipped([]) : githubService.fetchPullRequestStats(owner, repo),
         githubService.fetchCodeFrequency(owner, repo),
-        githubService.fetchMergedPRsCount(owner, repo),
+        prsDisabled ? skipped(null) : githubService.fetchMergedPRsCount(owner, repo),
         // GraphQL requires a token; without one, skip it (metrics → unavailable).
-        hasToken ? githubService.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null),
+        hasToken && !prsDisabled ? githubService.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null),
         githubService.fetchPunchCard(owner, repo),
         repoData.default_branch ? githubService.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
         // AI in the Process: .gitignore, .claude/settings.json, template. Token only (zero new requests without one).
@@ -137,7 +150,11 @@ async function fetchRepositoryData(repoName) {
     // data. /stats/* (202 computing, 422 too large) are explained by their own
     // charts/cards; a 10k+ commit repo would otherwise always show the banner.
     // aiContext: the AI in the Process section explains what it couldn't verify.
-    const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard', 'actionRuns', 'aiContext']);
+    // contributors: when GitHub refuses to list them for this repository
+    // (TOO_LARGE), the contributors card explains it; a later search won't
+    // change it, so it is not "partial data" either (and doesn't block the snapshot).
+    const contributorsTooLarge = results[2]?.status === 'rejected' && results[2].reason?.code === 'TOO_LARGE';
+    const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard', 'actionRuns', 'aiContext', ...(contributorsTooLarge ? ['contributors'] : [])]);
     const warnings = results.reduce((acc, result, index) => {
         const unused = endpointNames[index] === 'prStats' && results[15]?.status === 'fulfilled' && results[15].value;
         if (result.status === 'rejected' && !unused && !SELF_EXPLAINED.has(endpointNames[index])) {
@@ -207,20 +224,25 @@ async function fetchRepositoryData(repoName) {
     // Analyze maturity (zombies null = branch data unavailable)
     const maturity = analyzeMaturity(repositoryTree, branches?.zombies ?? null);
 
-    // Merged-without-approval rate and divergence: GraphQL-backed, unavailable without a token
-    const { codeReview, divergence, reviewProcess } = analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken');
-
+    // Merged-without-approval rate and divergence: GraphQL-backed, unavailable without a token.
     // Lead time: median over the latest merged PRs. With a token, the same
     // merged sample as review/divergence (GraphQL); otherwise REST closed PRs,
     // where unmerged ones shrink the sample.
-    const leadTime = prReviewStats ? analyzeLeadTime(prReviewStats, 'graphql') : analyzeLeadTime(pullRequestsStats, 'rest');
+    // PRs disabled on GitHub: all of them "disabled", with or without a token.
+    const { codeReview, divergence, reviewProcess, leadTime } = prsDisabled
+        ? pullRequestsDisabled()
+        : {
+            ...analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken'),
+            leadTime: prReviewStats ? analyzeLeadTime(prReviewStats, 'graphql') : analyzeLeadTime(pullRequestsStats, 'rest'),
+        };
 
     // Contributors: one analysis (same people, window and denominator) feeds the
     // Pareto bus factor card, the top-contributor concentration and the table.
     // busFactor keeps the {level, topContributor, percentage} shape Benchmark reads.
+    // reason 'tooLarge': unavailable because GitHub won't list them (persisted, see blockers below).
     const busFactor = contributorAnalysis?.top
         ? { level: contributorAnalysis.top.level, topContributor: contributorAnalysis.top.login, percentage: contributorAnalysis.top.percentage }
-        : { level: contributorAnalysis ? 'none' : 'unavailable' };
+        : { level: contributorAnalysis ? 'none' : 'unavailable', ...(contributorsTooLarge && { reason: 'tooLarge' }) };
     // table/top already go out as `contributors` and `busFactor`; not stored twice.
     const { table: _table, top: _top, ...busFactorAnalysis } = contributorAnalysis ?? {};
 
@@ -276,6 +298,8 @@ async function fetchRepositoryData(repoName) {
       createdAt: repoData.created_at, // ISO string for calculations
       createdAtFormatted: formattedDate, // Formatted string for display
       analysisDate: new Date().toISOString(),
+      // false = turned off on GitHub: their counts are null ("disabled"), not 0
+      features: { pullRequests: !prsDisabled, issues: !issuesDisabled },
       stats: {
           branches: branches?.count ?? null,
           branchAnalysis: branches, // count, zombies, checked, exclusions, capped / zombiesReason
@@ -317,7 +341,10 @@ async function fetchRepositoryData(repoName) {
     // Don't persist a snapshot built on failed critical data: it would become
     // permanent history (Timeline/Benchmark/Ranking) with fake zeros — e.g. the
     // health-14 snapshots found in the 2026-10 audit. The live view still
-    // renders, with the partial-data warning.
+    // renders, with the partial-data warning. Contributors that GitHub refuses
+    // to list (TOO_LARGE) don't block it: no later search would get them, and
+    // blocking kept repositories like torvalds/linux out of the history for good.
+    // They are saved as unavailable (busFactor.reason 'tooLarge'), never as zero.
     const blockers = warnings.filter((w) => PERSIST_BLOCKERS.includes(w));
     // Fallback contributor data (all-time, no window) is a different method:
     // persisting it would mix methods in Timeline/Benchmark history.

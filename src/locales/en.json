@@ -58,7 +58,9 @@
     "divergenceNone": "No merged PRs",
     "divergenceLow": "Little discussion",
     "divergenceMedium": "Moderate discussion",
-    "divergenceHigh": "Lots of discussion"
+    "divergenceHigh": "Lots of discussion",
+    "prsDisabled": "Disabled",
+    "divergencePrsDisabled": "PRs disabled on GitHub"
   },
   "app": {
     "reload": "Reload the page",
@@ -92,7 +94,8 @@
     "leadTimeUnavailable": {
       "noMerged": "No recently merged PRs",
       "error": "Couldn't load the PRs",
-      "snapshot": "Not recorded in this snapshot"
+      "snapshot": "Not recorded in this snapshot",
+      "disabled": "PRs disabled on GitHub: review happens outside the platform"
     },
     "prSample": "{{n}} PRs",
     "addDelete": {
@@ -127,7 +130,8 @@
       "noToken": "Requires a GitHub token",
       "error": "Unavailable",
       "snapshot": "Not recorded in this snapshot",
-      "noMerged": "No merged PRs"
+      "noMerged": "No merged PRs",
+      "disabled": "PRs disabled on GitHub"
     },
     "ciHealth": "CI Health",
     "ciHealthTooltip": "Success rate of the latest GitHub Actions runs triggered by pushes to the default branch (up to 50). Success counts against failure, timeout and startup failure; cancelled and skipped runs are left out. Scheduled, Dependabot and pull request runs aren't counted; pushes made by bots are. CI outside GitHub Actions (Travis, CircleCI…) isn't shown here.",
@@ -156,7 +160,8 @@
     "ciHealthSample_other": "successful runs · median {{minutes}} min · {{count}} runs",
     "conventionalCommitsSample_one": "of messages · {{count}} recent commit",
     "conventionalCommitsSample_other": "of messages · {{count}} recent commits",
-    "releasesLast12_zero": "no releases in 12 months"
+    "releasesLast12_zero": "no releases in 12 months",
+    "issuesDisabled": "Issues disabled on GitHub"
   },
   "language": {
     "pt": "PT",
@@ -219,7 +224,8 @@
       "noToken": "Code Review, Divergence and Zombie Branches need a GitHub token (settings icon at the top): without one, the GitHub API doesn't provide each PR's approvals and comments, or each branch's last commit date.",
       "error": "Couldn't load PR review data (GitHub GraphQL API failure or rate limit). Try again in a moment.",
       "snapshot": "This historical snapshot didn't record PR review data.",
-      "noMerged": "No recently merged PRs (bots excluded): there's no review or discussion to measure."
+      "noMerged": "No recently merged PRs (bots excluded): there's no review or discussion to measure.",
+      "disabled": "Pull requests are disabled on GitHub: the project reviews code outside the platform (by e-mail, for example), so there is no review or discussion to measure here."
     },
     "detectors": {
       "tests": "Looks for test/, tests/, __tests__/ folders and *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/ files.",
@@ -266,6 +272,10 @@
       "critical": {
         "title": "High Concentration",
         "message": "<bold>{{contributor}}</bold> accounts for <bold>{{percentage}}%</bold> of the commits. High risk of depending on one person."
+      },
+      "tooLarge": {
+        "title": "Contributors Unavailable on GitHub",
+        "message": "GitHub doesn't list this repository's contributors through its API: the history is too large. It's a platform limit, not a temporary failure."
       }
     },
     "scope": {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isBot, peopleFromStats, peopleFromContributors, analyzeContributors, topShareLevel, normalizeSnapshotContributors } from './contributors.js';
+import { isBot, peopleFromStats, peopleFromContributors, analyzeContributors, topShareLevel, normalizeSnapshotContributors, contributorsTextKey } from './contributors.js';
 
 const WEEK = 7 * 24 * 3600;
 const NOW = Date.UTC(2026, 9, 23) / 1000; // 2026-10-23, in seconds like the API
@@ -114,5 +114,24 @@ describe('normalizeSnapshotContributors (reading persisted full_report)', () => 
   it('current-method data is kept', () => {
     const current = { busFactor: { level: 'healthy', percentage: 20 }, busFactorAnalysis: { window: 'recent' }, contributors: [] };
     expect(normalizeSnapshotContributors(current)).toBe(current);
+  });
+});
+
+describe('contributorsTextKey', () => {
+  it('tells "GitHub won\'t list them" from a failure and from an old snapshot', () => {
+    expect(contributorsTextKey(null, { level: 'unavailable', reason: 'tooLarge' })).toBe('tooLarge');
+    expect(contributorsTextKey(null, { level: 'unavailable' })).toBe('unavailable');
+    expect(contributorsTextKey(null, { level: 'notRecorded' })).toBe('notRecorded');
+    expect(contributorsTextKey(null, undefined)).toBe('unavailable');
+  });
+
+  it('with data, the concentration level', () => {
+    expect(contributorsTextKey([{ login: 'a' }], { level: 'critical' })).toBe('critical');
+    expect(contributorsTextKey([], { level: 'none' })).toBe('none');
+  });
+
+  it('a saved "tooLarge" snapshot keeps its reason', () => {
+    const saved = { busFactor: { level: 'unavailable', reason: 'tooLarge' }, busFactorAnalysis: {}, contributors: null };
+    expect(normalizeSnapshotContributors(saved)).toBe(saved);
   });
 });

@@ -15,6 +15,8 @@ import { GuideLink } from './GuideLink.jsx';
 export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
   const { t, i18n } = useTranslation();
   const locale = intlLocale(i18n.language);
+  // Pull requests turned off on GitHub (read-only mirrors like torvalds/linux): "disabled", not N/A or 0
+  const prsDisabled = data.features?.pullRequests === false;
   const navigate = useNavigate();
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   if (!data) return null;
@@ -225,18 +227,18 @@ export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
             </li>
             <li className="flex justify-between text-sm">
               <span className="text-gray-600 dark:text-slate-400">{t('repo.totalPRs')}</span>
-              <span className="font-medium text-gray-900 dark:text-white">{formatters.formatNumber(data.stats.prs, locale)}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{prsDisabled ? t('repo.prsDisabled') : formatters.formatNumber(data.stats.prs, locale)}</span>
             </li>
             <li className="flex justify-between text-sm">
               <span className="text-gray-600 dark:text-slate-400">{t('repo.totalMerges')}</span>
-              <span className="font-medium text-gray-900 dark:text-white">{formatters.formatNumber(data.stats.merges, locale)}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{prsDisabled ? t('repo.prsDisabled') : formatters.formatNumber(data.stats.merges, locale)}</span>
             </li>
             <li className="text-right">
               <GuideLink id="prs-merges" />
             </li>
             <li className="flex justify-between text-sm border-t border-gray-100 dark:border-slate-700 pt-1 mt-1">
               <span className="text-gray-600 dark:text-slate-400">{t('repo.prsPerBranch')}</span>
-              <span className="font-medium text-gray-900 dark:text-white">{data.stats.prsPerBranch}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{prsDisabled ? t('repo.prsDisabled') : data.stats.prsPerBranch}</span>
             </li>
             <li className="flex justify-between text-sm font-semibold text-ocean dark:text-blue-400">
               <span>{t('repo.totalReleases')}</span>
