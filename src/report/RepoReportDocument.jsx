@@ -63,7 +63,7 @@ export function RepoReportDocument({ model, t, locale, meta }) {
               { label: t('repo.totalBranches').replace(/:$/, ''), value: fmtNumber(header.branches, locale) },
               { label: t('repo.totalPRs').replace(/:$/, ''), value: header.prsDisabled ? t('repo.prsDisabled') : fmtNumber(header.prs, locale) },
               { label: t('repo.totalMerges').replace(/:$/, ''), value: header.prsDisabled ? t('repo.prsDisabled') : fmtNumber(header.merges, locale) },
-              { label: t('repo.totalReleases').replace(/:$/, ''), value: fmtNumber(header.releases, locale) },
+              { label: t('repo.totalReleases').replace(/:$/, ''), value: header.tags > 0 ? `${fmtNumber(header.releases, locale)} · ${t('repo.tagsCount', { count: header.tags, formatted: fmtNumber(header.tags, locale) })}` : fmtNumber(header.releases, locale) },
             ]}
           />
           {stat(cards.volume.find((c) => c.id === 'closedIssues'))}

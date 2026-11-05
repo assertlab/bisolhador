@@ -60,7 +60,9 @@
     "divergenceMedium": "Moderate discussion",
     "divergenceHigh": "Lots of discussion",
     "prsDisabled": "Disabled",
-    "divergencePrsDisabled": "PRs disabled on GitHub"
+    "divergencePrsDisabled": "PRs disabled on GitHub",
+    "tagsCount_one": "{{formatted}} tag",
+    "tagsCount_other": "{{formatted}} tags"
   },
   "app": {
     "reload": "Reload the page",
@@ -136,18 +138,20 @@
     "ciHealth": "CI Health",
     "ciHealthTooltip": "Success rate of the latest GitHub Actions runs triggered by pushes to the default branch (up to 50). Success counts against failure, timeout and startup failure; cancelled and skipped runs are left out. Scheduled, Dependabot and pull request runs aren't counted; pushes made by bots are. CI outside GitHub Actions (Travis, CircleCI…) isn't shown here.",
     "conventionalCommits": "Conventional Commits",
-    "conventionalCommitsTooltip": "Share of recent default-branch commits (up to 100, no merges, no bots) whose first line follows Conventional Commits: type(scope)!: description, with the types feat, fix, docs, style, refactor, perf, test, build, ci, chore and revert.",
+    "conventionalCommitsTooltip": "Share of recent default-branch commits (up to 100, no merges, no bots) whose first line follows Conventional Commits: type(scope)!: description, with the types feat, fix, docs, style, refactor, perf, test, build, ci, chore and revert. When most commits follow another \"prefix: summary\" convention (like the Linux kernel's \"subsystem: summary\"), the card also shows that share.",
     "releaseCadence": "Release Cadence",
     "releaseEvery_one": "every {{days}} day",
     "releaseEvery_other": "every {{days}} days",
-    "releaseCadenceTooltip": "Releases published on GitHub in the last 12 months (dated by the tag, or by publication if the tag is later), median interval between days with a release in that period (two lines released the same day count as one day), days since the latest, and share of SemVer tags (e.g. v1.2.3, package@1.2.3) among the latest 100. Projects that only push tags, without releases, aren't shown here.",
+    "releaseCadenceTooltip": "Releases published on GitHub in the last 12 months (dated by the tag, or by publication if the tag is later), median interval between days with a release in that period (two lines released the same day count as one day), days since the latest, and share of SemVer tags (e.g. v1.2.3, package@1.2.3) among the latest 100. With no releases at all, it uses tags: the latest 100 at most, pre-releases out (-rc, -beta, -alpha…), dated by the annotated tag or the commit; it needs a token, since the REST tag list has no dates.",
     "practiceUnavailable": {
       "noRuns": "No GitHub Actions runs on the default branch",
       "noConclusive": "No run completed with success or failure",
       "noCommits": "No commits by people in the period",
       "noReleases": "No releases published on GitHub",
       "error": "Couldn't load the data",
-      "snapshot": "Not recorded in this snapshot"
+      "snapshot": "Not recorded in this snapshot",
+      "tagsNoToken": "No releases; {{count}} tags on GitHub (cadence from tags needs a token)",
+      "noStableTags": "No releases or stable tags ({{count}} tags on GitHub)"
     },
     "releasesLast12_one": "{{count}} release in 12 months",
     "releasesLast12_other": "{{count}} releases in 12 months",
@@ -161,7 +165,13 @@
     "conventionalCommitsSample_one": "of messages · {{count}} recent commit",
     "conventionalCommitsSample_other": "of messages · {{count}} recent commits",
     "releasesLast12_zero": "no releases in 12 months",
-    "issuesDisabled": "Issues disabled on GitHub"
+    "issuesDisabled": "Issues disabled on GitHub",
+    "tagReleasesLast12_zero": "no versions (tags) in 12 months",
+    "tagReleasesLast12_one": "{{count}} version (tag) in 12 months",
+    "tagReleasesLast12_other": "{{count}} versions (tags) in 12 months",
+    "tagReleasesLast12Capped": "{{count}}+ versions (tags) in 12 months",
+    "releasesFromTags": "no releases: measured by tags, pre-releases out",
+    "conventionalCommitsOther": "{{pct}}% follow another convention (prefix: summary)"
   },
   "language": {
     "pt": "PT",

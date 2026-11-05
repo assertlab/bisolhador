@@ -4,7 +4,7 @@
 import { getItem } from "../utils/storage.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
-import { ciRunsForBranch } from "../utils/projectPractices.js";
+import { ciRunsForBranch, TAGS_PAGE } from "../utils/projectPractices.js";
 import { CONTEXT_DIRS, WORKFLOWS_DIR } from "../utils/aiRegistry.js";
 import {
   GITHUB_PER_PAGE_COMMITS,
@@ -357,6 +357,49 @@ export const githubService = {
     // No Link header = single page: the first response already has the full list.
     const data = await response.json();
     return data.length;
+  },
+
+  // Tag count for projects without GitHub releases, one request: per_page=1,
+  // so the Link header's rel="last" page number IS the count. Throws on failure.
+  async fetchTagsCount(owner, repo) {
+    const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/tags?per_page=1`;
+    const response = await fetch(url, { headers: getHeaders() });
+    if (!response.ok) throw new Error(`Tags failed: HTTP ${response.status}`);
+    const lastPage = lastPageFromLink(response.headers.get("link"));
+    if (lastPage !== null) return lastPage;
+    return (await response.json()).length;
+  },
+
+  // The TAGS_PAGE most recent tags (by the tagged commit's date) with a date
+  // each: the tagger date of an annotated tag, else the commit's (the REST
+  // tag list has no dates). Requires a token (GraphQL; callers check).
+  // Returns { total, dates: [{ name, date }], fullPage }. Throws on failure.
+  async fetchTagDates(owner, repo) {
+    const query = `query($owner: String!, $name: String!, $n: Int!) {
+      repository(owner: $owner, name: $name) {
+        refs(refPrefix: "refs/tags/", first: $n, orderBy: { field: TAG_COMMIT_DATE, direction: DESC }) {
+          totalCount
+          nodes {
+            name
+            target {
+              ... on Tag { tagger { date } target { ... on Commit { committedDate } } }
+              ... on Commit { committedDate }
+            }
+          }
+        }
+      }
+    }`;
+    const data = await graphql(query, { owner, name: repo, n: TAGS_PAGE }, "tags");
+    const refs = data.repository?.refs;
+    if (!refs) throw new Error("GraphQL tags failed: no refs");
+    const nodes = (refs.nodes ?? []).filter(Boolean);
+    return {
+      total: refs.totalCount,
+      dates: nodes
+        .map((n) => ({ name: n.name, date: n.target?.tagger?.date ?? n.target?.committedDate ?? n.target?.target?.committedDate ?? null }))
+        .filter((t) => t.date),
+      fullPage: nodes.length >= TAGS_PAGE,
+    };
   },
 
   // Weekly commits of the last 52 weeks. Throws (code COMPUTING on 202) instead

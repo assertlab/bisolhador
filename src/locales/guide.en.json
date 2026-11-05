@@ -98,14 +98,14 @@
         "name": "Conventional Commits",
         "what": "Share of recent default-branch commits (no merges, no bots) whose first line follows type(scope)!: description.",
         "read": "Shows commit message discipline, which enables a readable history, automatic changelogs and versioning.",
-        "limits": "Only the common types (feat, fix, docs…) count. Projects with their own convention (e.g. \"subsystem: message\", like the Linux kernel) show a low share, close to 0%.",
+        "limits": "Only the common types (feat, fix, docs…) count. Projects with their own convention (e.g. \"subsystem: message\", like the Linux kernel) show a low share, close to 0%; when most commits follow some \"prefix: summary\", the card shows that share, so another convention isn't mistaken for none.",
         "chaossNote": "There's no CHAOSS metric for message conventions; Code Changes Commits mentions consistently structured messages as a prerequisite for filtering commits by type."
       },
       "release-cadence": {
         "name": "Release cadence",
         "what": "Releases published on GitHub in the last 12 months (dated by the tag, or by publication if the tag is later), median interval between release days, days since the latest and share of SemVer tags among the latest 100.",
         "read": "Regular releases suggest a live, predictable project; SemVer tells users the impact of each version.",
-        "limits": "Projects that only push tags, without GitHub releases, aren't shown. The right frequency depends on the kind of project.",
+        "limits": "Projects with no GitHub releases at all are measured by their tags (the latest 100 at most, pre-releases such as -rc and -beta out, dated by the annotated tag or the commit); that needs a token, since the REST tag list has no dates. Without a token the card only shows how many tags exist. A tag isn't a release with notes: counting tags measures marked versions, not publications. The right frequency depends on the kind of project.",
         "chaossNote": "CHAOSS (Release Frequency) counts releases per period (week, month, year); here it is 12 months, with the median interval between release days."
       },
       "health-score": {

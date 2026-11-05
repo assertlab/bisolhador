@@ -90,6 +90,14 @@ const CONVENTIONAL = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|re
 
 export const isConventionalCommit = (message) => CONVENTIONAL.test(String(message ?? '').split('\n')[0]);
 
+// Any "prefix: summary" subject: the Linux kernel's "subsystem: summary"
+// ("vfs: fix …", "net/mlx5, bpf: …"), and Conventional Commits too (a subset).
+// Measured next to CC so a project with another convention doesn't read as
+// one without any (torvalds/linux: 0% CC, 92% "prefix: summary").
+const PREFIXED = /^[\w./+-]+(?:,\s*[\w./+-]+)*(\([^)\n]+\))?!?: \S/;
+
+export const isPrefixedCommit = (message) => PREFIXED.test(String(message ?? '').split('\n')[0]);
+
 /**
  * Share of commit subjects following Conventional Commits, over the recent
  * commits of the default branch (GET /commits), without merges and bots.
@@ -100,8 +108,15 @@ export function analyzeConventionalCommits(commits) {
   // Unlinked authors (author null): fall back to the name ("renovate[bot]", "Renovate Bot")
   const human = commits.filter((c) => (c.parents?.length ?? 1) <= 1 && !isBot(c.author) && !/(\[bot\]|\bbot\b)/i.test(c.commit?.author?.name ?? ''));
   if (human.length === 0) return { available: false, reason: 'noCommits', n: 0, method: PRACTICES_METHOD };
-  const conventional = human.filter((c) => isConventionalCommit(c.commit?.message)).length;
-  return { available: true, percentage: Math.round((conventional / human.length) * 100), n: human.length, method: PRACTICES_METHOD };
+  const share = (test) => Math.round((human.filter((c) => test(c.commit?.message)).length / human.length) * 100);
+  return {
+    available: true,
+    percentage: share(isConventionalCommit),
+    // Same commits, any "prefix: summary" subject (CC included). Absent in snapshots before v3.24.0.
+    prefixedPercentage: share(isPrefixedCommit),
+    n: human.length,
+    method: PRACTICES_METHOD,
+  };
 }
 
 // --- Release cadence -------------------------------------------------------
@@ -134,24 +149,57 @@ export function analyzeReleases(releases, nowMs = Date.now()) {
   if (!Array.isArray(releases)) return { available: false, reason: 'error' };
   const published = releases
     .filter((r) => !r.draft)
-    .map((r) => ({ tag: r.tag_name, at: Math.min(...[r.created_at, r.published_at].map(Date.parse).filter(Number.isFinite)) }))
-    .filter((r) => Number.isFinite(r.at))
-    .sort((a, b) => a.at - b.at);
-  if (published.length === 0) return { available: false, reason: 'noReleases', method: PRACTICES_METHOD };
-  const recent = published.filter((r) => r.at >= nowMs - RELEASE_WINDOW_DAYS * DAY_MS);
+    .map((r) => ({ tag: r.tag_name, at: Math.min(...[r.created_at, r.published_at].map(Date.parse).filter(Number.isFinite)) }));
+  return cadence(published, { fullPage: releases.length >= RELEASES_PAGE, nowMs });
+}
+
+// Shared by releases and tags. items: [{ tag, at }]. fullPage: the source
+// returned a full page, so a page entirely inside the window means "N+".
+function cadence(items, { fullPage, nowMs }) {
+  const dated = items.filter((r) => Number.isFinite(r.at)).sort((a, b) => a.at - b.at);
+  if (dated.length === 0) return { available: false, reason: 'noReleases', method: PRACTICES_METHOD };
+  const recent = dated.filter((r) => r.at >= nowMs - RELEASE_WINDOW_DAYS * DAY_MS);
   const days = [...new Set(recent.map((r) => dayOf(r.at)))].sort((a, b) => a - b);
   const gaps = days.slice(1).map((d, i) => d - days[i]).sort((a, b) => a - b);
   return {
     available: true,
     last12Months: recent.length,
     // Full page (100) all inside the window: there are more ("100+")
-    capped: releases.length >= RELEASES_PAGE && recent.length === published.length,
+    capped: fullPage && recent.length === dated.length,
     medianIntervalDays: gaps.length ? round1(percentile(gaps, 0.5)) : null,
-    daysSinceLast: Math.floor((nowMs - published[published.length - 1].at) / DAY_MS),
-    semverPercentage: Math.round((published.filter((r) => isSemverTag(r.tag)).length / published.length) * 100),
-    n: published.length,
+    daysSinceLast: Math.floor((nowMs - dated[dated.length - 1].at) / DAY_MS),
+    semverPercentage: Math.round((dated.filter((r) => isSemverTag(r.tag)).length / dated.length) * 100),
+    n: dated.length,
     method: PRACTICES_METHOD,
   };
+}
+
+// --- Release cadence from tags (projects without GitHub releases) ----------
+
+// Pre-release tags: v7.3-rc7, 1.0.0-beta.1, v2.0a1, 3.1.0.dev2, nightly…
+// Left out of the tag cadence: torvalds/linux tags every -rc weekly, which
+// would read "a release every 7 days" instead of one per ~9 weeks.
+const PRERELEASE_TAG = /(?:^|[-._\d])(?:rc|alpha|beta|pre|preview|dev|snapshot|nightly|canary|next)(?=$|[-._+\d])|\d[ab]\d+$/i;
+export const isPrereleaseTag = (tag) => PRERELEASE_TAG.test(String(tag ?? ''));
+export const TAGS_PAGE = 100; // githubService.fetchTagDates `first`
+
+/**
+ * Release cadence for projects that only push tags (0 GitHub releases), when
+ * the project has tags. Same fields as analyzeReleases plus source 'tags':
+ * stable tags only (pre-releases out), dated by the tagger date of annotated
+ * tags, else the tagged commit's date (fetchTagDates). Without a token there
+ * are no dates (the REST tag list has none): unavailable, reason
+ * 'tagsNoToken', with the tag count. `tagsTotal` = every tag on GitHub.
+ *
+ * @param {{ total: number, dates: Array<{name: string, date: string}>|null, fullPage?: boolean }} tags
+ */
+export function analyzeTagCadence(tags, nowMs = Date.now()) {
+  const tagsTotal = tags.total;
+  if (!tags.dates) return { available: false, reason: 'tagsNoToken', source: 'tags', tagsTotal, method: PRACTICES_METHOD };
+  const stable = tags.dates.filter((t) => !isPrereleaseTag(t.name)).map((t) => ({ tag: t.name, at: Date.parse(t.date) }));
+  const result = cadence(stable, { fullPage: Boolean(tags.fullPage), nowMs });
+  if (!result.available) return { ...result, reason: 'noStableTags', source: 'tags', tagsTotal };
+  return { ...result, source: 'tags', tagsTotal, prereleasesExcluded: tags.dates.length - stable.length };
 }
 
 /**

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ Changed
+
+- **Cadência de releases pelas tags quando o projeto não publica releases.** Com 0 releases no GitHub (torvalds/linux: 0 releases, 952 tags), o app passa a ler as tags. Com token, a cadência vem das até 100 tags mais recentes, sem pré-versões (`-rc`, `-beta`, `a1`, `.dev2`…: o kernel cria uma `-rc` por semana, o que faria parecer "uma release a cada 7 dias"), datadas pela tag anotada ou pelo commit, e o card diz "medido pelas tags". Sem token, a lista REST de tags não tem datas: o card mostra quantas tags existem e que a cadência pelas tags precisa de token. "Total de Releases" continua contando releases e mostra as tags ao lado ("0 · 952 tags"). O resultado guarda `source: 'tags'`, para não ser confundido com releases. Uma falha nas tags mantém o "nenhuma release" de antes, sem alerta.
+- **Conventional Commits reconhece outra convenção.** O indicador continua medindo Conventional Commits, mas também registra a fatia de commits com qualquer "prefixo: resumo" (`prefixedPercentage`, os mesmos commits). Quando o CC fica abaixo de 50% e essa fatia chega a 50% ou mais, o card mostra "92% seguem outra convenção (prefixo: resumo)", em vez de deixar um 0% que soava como ausência de padrão (torvalds/linux usa "subsistema: resumo"). Snapshots antigos não têm o campo e não mostram a frase.
+- Guia "Como interpretar" e tooltips dos dois indicadores atualizados.
+
+### 🧪 Tests
+
+- Cadência por tags (filtro de pré-versões, `tagsNoToken`, `noStableTags`, "100+", normalizador de snapshot), contagem e datas das tags no `githubService` (variáveis GraphQL, tag anotada × leve), cards e o fluxo do `useRepository` (tags só sem releases; falha nas tags sem alerta). Verificado contra a API real sem token em 2026-11-05 (torvalds/linux: 952 tags, 0% CC e 92% "prefixo: resumo"). **A consulta GraphQL das datas das tags não foi verificada contra a API real** (sem token no ambiente).
+
 ## [3.23.0] - 2026-11-05
 
 ### 🐛 Fixed

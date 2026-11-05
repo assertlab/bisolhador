@@ -34,6 +34,8 @@ function mockLinux(overrides = {}) {
     fetchCommunityProfile: vi.fn(async () => ({ files: { readme: {}, license: {} } })),
     fetchRepositoryTree: vi.fn(async () => ({ tree: [{ path: 'README', type: 'blob' }], truncated: false })),
     fetchReleases: vi.fn(async () => []),
+    fetchTagsCount: vi.fn(async () => 952),
+    fetchTagDates: vi.fn(async () => { throw new Error('token only'); }),
     fetchCommitActivity: vi.fn(async () => ({ all: [] })),
     fetchCodeFrequency: vi.fn(async () => { throw statsError('TOO_LARGE'); }),
     fetchPunchCard: vi.fn(async () => []),
@@ -89,5 +91,27 @@ describe('fetchRepositoryData: read-only mirrors and contributors GitHub won\'t 
     expect(report.features).toEqual({ pullRequests: true, issues: true });
     expect(report.stats).toMatchObject({ prs: 7, merges: 7 });
     expect(report.metrics.leadTime.reason).toBe('noMerged');
+  });
+
+  it('no releases but tags (no token): tag count recorded, cadence asks for a token; a tag failure changes nothing else', async () => {
+    mockLinux();
+    const report = await fetchRepositoryData('torvalds/linux');
+    expect(github.fetchTagDates).not.toHaveBeenCalled();
+    expect(report.stats).toMatchObject({ releases: 0, tags: 952 });
+    expect(report.practices.releases).toMatchObject({ available: false, reason: 'tagsNoToken', tagsTotal: 952 });
+
+    mockLinux({ fetchTagsCount: vi.fn(async () => { throw new Error('Tags failed: HTTP 500'); }) });
+    const failed = await fetchRepositoryData('torvalds/linux');
+    expect(failed.stats.tags).toBeUndefined();
+    expect(failed.practices.releases).toMatchObject({ available: false, reason: 'noReleases' });
+    expect(failed._warnings).toBeUndefined();
+  });
+
+  it('with releases, tags are not requested', async () => {
+    mockLinux({ fetchReleases: vi.fn(async () => [{ tag_name: 'v1.0.0', created_at: '2026-10-01T00:00:00Z', published_at: '2026-10-01T00:00:00Z' }]) });
+    const report = await fetchRepositoryData('torvalds/linux');
+    expect(github.fetchTagsCount).not.toHaveBeenCalled();
+    expect(report.stats.tags).toBeUndefined();
+    expect(report.practices.releases.source).toBeUndefined();
   });
 });

@@ -7,7 +7,7 @@ import { analyzeBranches } from '../utils/branches.js';
 import { analyzeMaturity, mergeProfileWithTree, hasIssueTemplate, treePathsOf, treeStatusOf } from '../utils/repoTree.js';
 import { buildAiProcess, parseAiRepoContext, fromRestCommit } from '../utils/aiProcess.js';
 import { statsStatus, weekdaysFromPunchCard, addDeleteRatio, closedShare, recentCommitsOf } from '../utils/activityStats.js';
-import { analyzeCiRuns, analyzeConventionalCommits, analyzeReleases, RELEASES_PAGE } from '../utils/projectPractices.js';
+import { analyzeCiRuns, analyzeConventionalCommits, analyzeReleases, analyzeTagCadence, RELEASES_PAGE } from '../utils/projectPractices.js';
 import analytics from '../services/analytics.js';
 import i18n from '../i18n.js';
 import { ensureChartSetup } from '../lib/chartSetup.js';
@@ -56,10 +56,22 @@ async function fetchContributorAnalysis(owner, repo) {
 // Repository data fetching function for TanStack Query
 // One /releases request for both the count and the cadence: under 100
 // releases the list is complete; only a full page needs the per_page=1 count.
-async function fetchReleaseData(owner, repo) {
+// No releases: the project may publish tags only (torvalds/linux: 0 releases,
+// 950+ tags). Then the tags: with a token their dates (cadence), without one
+// the count only. A tag failure leaves `tags` null (cadence says "no
+// releases", as before) and doesn't fail the releases.
+async function fetchReleaseData(owner, repo, hasToken) {
     const list = await githubService.fetchReleases(owner, repo);
     const count = list.length < RELEASES_PAGE ? list.length : await githubService.fetchReleasesCount(owner, repo);
-    return { list, count };
+    if (list.length > 0) return { list, count, tags: null };
+    const tags = await (hasToken
+        ? githubService.fetchTagDates(owner, repo)
+        : githubService.fetchTagsCount(owner, repo).then((total) => ({ total, dates: null }))
+    ).catch((error) => {
+        console.warn('[useRepository] Tags unavailable:', error.message);
+        return null;
+    });
+    return { list, count, tags };
 }
 
 // Exported for tests (useRepository.test.js); the app goes through useRepository.
@@ -122,7 +134,7 @@ export async function fetchRepositoryData(repoName) {
         githubService.fetchLanguages(owner, repo),
         githubService.fetchCommunityProfile(owner, repo),
         githubService.fetchRepositoryTree(owner, repo, repoData.default_branch),
-        fetchReleaseData(owner, repo),
+        fetchReleaseData(owner, repo, hasToken),
         githubService.fetchCommitActivity(owner, repo),
         // [] when disabled: the AI section reads "no PRs in the sample", as when the list was empty
         prsDisabled ? skipped([]) : githubService.fetchPullRequestStats(owner, repo),
@@ -175,6 +187,8 @@ export async function fetchRepositoryData(repoName) {
     const communityProfile = results[8]?.status === 'fulfilled' ? results[8].value : null;
     const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : null;
     const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value.count : null;
+    // Tags on GitHub when there are no releases (null otherwise, or when the tag request failed)
+    const releaseTags = results[10]?.status === 'fulfilled' ? results[10].value.tags : null;
     // /stats/*: 'computing' (202) / 'tooLarge' (422) / 'error' are shown as such,
     // never as an all-zero chart (see utils/activityStats.js)
     const activityStats = statsStatus(results[11]);
@@ -262,7 +276,10 @@ export async function fetchRepositoryData(repoName) {
     const practices = {
         ci: analyzeCiRuns(results[17]?.status === 'fulfilled' ? results[17].value : null),
         commits: analyzeConventionalCommits(results[0]?.status === 'fulfilled' ? results[0].value : null),
-        releases: analyzeReleases(results[10]?.status === 'fulfilled' ? results[10].value.list : null),
+        // No releases but tags: cadence from the stable tags (source 'tags')
+        releases: releaseTags?.total > 0
+            ? analyzeTagCadence(releaseTags)
+            : analyzeReleases(results[10]?.status === 'fulfilled' ? results[10].value.list : null),
     };
 
     // AI in the Process: counts and tool ids only, nothing per person (spec §3).
@@ -306,7 +323,8 @@ export async function fetchRepositoryData(repoName) {
           prs: pulls,
           merges: mergedPRsCount,
           prsPerBranch,
-          releases: releasesCount
+          releases: releasesCount,
+          ...(releaseTags && { tags: releaseTags.total })
       },
       metrics: {
           stars: repoData.stargazers_count || 0,

@@ -177,6 +177,39 @@ describe('githubService: failures are errors, not zeros', () => {
     });
   });
 
+  describe('tags (projects without releases)', () => {
+    it('fetchTagsCount: one request, the count from the Link header', async () => {
+      fetchMock.mockReturnValue(json([{ name: 'v7.4-rc1' }], { headers: { link: '<https://api.github.com/repositories/2325298/tags?per_page=1&page=2>; rel="next", <https://api.github.com/repositories/2325298/tags?per_page=1&page=952>; rel="last"' } }));
+      await expect(githubService.fetchTagsCount('torvalds', 'linux')).resolves.toBe(952);
+      expect(fetchMock.mock.calls[0][0]).toContain('/repos/torvalds/linux/tags?per_page=1');
+    });
+
+    it('fetchTagsCount: no Link header = the page is the whole list; failure throws', async () => {
+      fetchMock.mockReturnValueOnce(json([])).mockReturnValueOnce(json({}, { status: 500 }));
+      await expect(githubService.fetchTagsCount('o', 'r')).resolves.toBe(0);
+      await expect(githubService.fetchTagsCount('o', 'r')).rejects.toThrow(/500/);
+    });
+
+    it('fetchTagDates: tagger date of annotated tags, else the commit date; owner/repo as variables', async () => {
+      fetchMock.mockReturnValue(json({ data: { repository: { refs: { totalCount: 952, nodes: [
+        { name: 'v7.3', target: { tagger: { date: '2026-10-22T00:00:00Z' }, target: { committedDate: '2026-10-21T00:00:00Z' } } },
+        { name: 'light', target: { committedDate: '2026-09-01T00:00:00Z' } },
+        { name: 'odd', target: {} },
+        null,
+      ] } } } }));
+      const result = await githubService.fetchTagDates('torvalds', 'linux');
+      expect(result).toEqual({ total: 952, fullPage: false, dates: [{ name: 'v7.3', date: '2026-10-22T00:00:00Z' }, { name: 'light', date: '2026-09-01T00:00:00Z' }] });
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(body.variables).toEqual({ owner: 'torvalds', name: 'linux', n: 100 });
+      expect(body.query).not.toContain('torvalds');
+    });
+
+    it('fetchTagDates throws when GraphQL returns no data', async () => {
+      fetchMock.mockReturnValue(json({ errors: [{ message: 'Could not resolve' }] }));
+      await expect(githubService.fetchTagDates('o', 'r')).rejects.toThrow(/Could not resolve/);
+    });
+  });
+
   describe('stats endpoints (202 / 422 are not zeros)', () => {
     it.each([
       [202, 'COMPUTING'],
