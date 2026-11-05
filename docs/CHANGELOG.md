@@ -9,7 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.23.0] - 2026-11-05
+
+### 🐛 Fixed
+
+- **Repositórios com histórico enorme (torvalds/linux) voltam a ter histórico.** O `/stats/contributors` desses repositórios oscila entre `200`, `202` e `504` (no navegador, um `504` sem cabeçalhos CORS vira "Failed to fetch"), e o fallback `/contributors` sempre responde `403` "The history or contributor list is too large…". Com as duas fontes falhando, a busca mostrava "Dados parciais: contributors" e o snapshot nunca era gravado. Agora: (1) `fetchContributorStats` faz a nova tentativa também em `5xx` e em erro de rede, não só em `202`; (2) o `403` "too large" do fallback ganha o código `TOO_LARGE` (um `403` de limite de taxa continua sendo falha comum); (3) nesse caso o card de contribuidores explica que é um limite da plataforma, o alerta de dados parciais não aparece e o snapshot é gravado com os contribuidores indisponíveis (`busFactor.reason: 'tooLarge'`), nunca como zero. Qualquer outra falha de contribuidores continua bloqueando a gravação.
+
+### ✨ Changed
+
+- **PRs e issues desativados no GitHub aparecem como "desativados", não como zero ou N/A sem motivo.** Quando a API informa `has_pull_requests: false` ou `has_issues: false` (espelhos somente leitura como o torvalds/linux, que revisa código por e-mail), o app não faz as buscas de contagem (até quatro requisições a menos na Search API, que tem limite baixo sem token), "Total de PRs", "Total de Merges" e "PRs por Branch" mostram "Desativados", os cards de issues dizem "Issues desativadas no GitHub" e lead time, divergência, cobertura de revisão, 1ª revisão e tamanho dos PRs explicam que os PRs estão desativados, em vez de "Sem PRs mergeados" (que sugeria um projeto sem revisão). O relatório guarda `features: { pullRequests, issues }` e um snapshot gravado continua dizendo "desativados". O guia "Como interpretar" (PRs e merges, Issues, Bus factor) menciona os dois casos.
+
 ### 🧪 Tests
+
+- `useRepository.test.js`: o pipeline inteiro com a GitHub simulada no formato do torvalds/linux (nenhuma busca de PR/issue, contagens nulas com motivo, snapshot gravado com `tooLarge`, e qualquer outra falha de contribuidores ainda bloqueando). Verificado também contra a API real em 2026-11-05: com `/stats/contributors` em `200` e simulando o `504`, sem alerta e com o snapshot gravado nos dois casos.
 
 - **Testes de componente do `AiStudentTable`** (visão "Por estudante" do Modo Turma), sem dependência nova: renderização no servidor (`react-dom/server`) com `I18nextProvider` e `MemoryRouter`, em Vitest/Node. Cobrem: período sem commits e commits indisponíveis (sem tabela), linhas de pessoa/agente/autor não identificado, "n/d" quando não se sabe quem alterou a configuração, nota de amostra só quando truncada, aviso de "declarado, não uso real" e rodapé de "nada é salvo", tom neutro (sem `role="alert"` nem cores de alerta), link do guia em nova aba com `noopener noreferrer` e dica para leitores de tela, e os dois idiomas. Conferido que falham ao quebrar o tom neutro ou o link.
 

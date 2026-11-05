@@ -29,14 +29,16 @@ export function buildStatCards(data, t, locale) {
     ? t(`stats.addDelete.${churn.categoryKey}`)
     : churn?.reason && t(`stats.addDeleteUnavailable.${churn.reason}`, { defaultValue: t('stats.addDeleteUnavailable.error') });
   const divergence = data?.metrics?.divergence ?? {};
+  // Issues turned off on GitHub: the counts are null and say why (N/A alone reads as a failure)
+  const issuesDisabled = data?.features?.issues === false ? t('stats.issuesDisabled') : undefined;
 
   const volume = [
     { id: 'stars', guideId: 'stars-forks', title: t('stats.stars'), value: data.metrics.stars, tooltip: t('stats.starsTooltip') },
     { id: 'forks', guideId: 'stars-forks', title: t('stats.forks'), value: data.metrics.forks, tooltip: t('stats.forksTooltip') },
-    { id: 'openIssues', guideId: 'issues', title: t('stats.openIssues'), value: data.metrics.openIssues, tooltip: t('stats.openIssuesTooltip') },
+    { id: 'openIssues', guideId: 'issues', title: t('stats.openIssues'), value: data.metrics.openIssues, subValue: issuesDisabled, tooltip: t('stats.openIssuesTooltip') },
     {
       id: 'closedIssues', guideId: 'issues', title: t('stats.closedIssues'), value: data.metrics.closedIssues,
-      subValue: closedPct == null ? undefined : t('stats.closedShare', { pct: closedPct }), tooltip: t('stats.closedIssuesTooltip'),
+      subValue: closedPct == null ? issuesDisabled : t('stats.closedShare', { pct: closedPct }), tooltip: t('stats.closedIssuesTooltip'),
     },
     {
       id: 'codeChurn', guideId: 'add-delete', title: t('stats.codeChurn'),

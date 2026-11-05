@@ -3,6 +3,7 @@ import { repoAgeText } from '../utils/repoAge.js';
 import { trimCommitSeries, PUNCH_CARD_MAX_COMMITS, WEEKDAYS_MIN_SAMPLE } from '../utils/activityStats.js';
 import { formatters } from '../utils/formatters.js';
 import { badgeScoreText } from '../utils/aiProcess.js';
+import { contributorsTextKey } from '../utils/contributors.js';
 import { plainText } from './plainText.js';
 import { toolLabel } from '../components/ai/toolLabel.js';
 import { AI_MIN_GROUP, BRANCH_SCAN_MAX, ZOMBIE_BRANCH_DAYS } from '../constants.js';
@@ -41,6 +42,7 @@ export function buildRepoReportModel(data, t, locale, { isSnapshot = false, now 
       analysisDate: data.analysisDate ?? null,
       isSnapshot,
       branches: data.stats?.branches ?? null,
+      prsDisabled: data.features?.pullRequests === false,
       prs: data.stats?.prs ?? null,
       merges: data.stats?.merges ?? null,
       releases: data.stats?.releases ?? null,
@@ -150,7 +152,7 @@ function busSection(analysis, t) {
 function contributorsSection(data, t) {
   const { contributors, busFactor, busFactorAnalysis } = data;
   const unavailable = !contributors || ['unavailable', 'notRecorded'].includes(busFactor?.level);
-  const level = busFactor?.level === 'notRecorded' ? 'notRecorded' : unavailable ? 'unavailable' : busFactor?.level;
+  const level = contributorsTextKey(contributors, busFactor);
   return {
     title: t(`contributors.busFactor.${level}.title`),
     message: stripTags(t(`contributors.busFactor.${level}.message`, { contributor: plainText(busFactor?.topContributor), percentage: busFactor?.percentage })),

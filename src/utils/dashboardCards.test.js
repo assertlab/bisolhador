@@ -59,6 +59,23 @@ describe('buildStatCards', () => {
     expect(byId.ci.subValue).toContain('stats.practiceUnavailable.noRuns');
   });
 
+  it('features turned off on GitHub say "disabled" instead of a bare N/A', () => {
+    const data = live();
+    data.features = { pullRequests: false, issues: false };
+    data.metrics.openIssues = null;
+    data.metrics.closedIssues = null;
+    data.metrics.leadTime = { n: 0, reason: 'disabled' };
+    data.metrics.divergence = { avg: null, categoryKey: 'repo.divergencePrsDisabled' };
+    data.reviewProcess = { available: false, reason: 'disabled' };
+    const cards = buildStatCards(data, t, 'pt');
+    const byId = Object.fromEntries([...cards.volume, ...cards.review].map((c) => [c.id, c]));
+    expect(byId.openIssues).toMatchObject({ value: null, subValue: 'stats.issuesDisabled' });
+    expect(byId.closedIssues).toMatchObject({ value: null, subValue: 'stats.issuesDisabled' });
+    expect(byId.leadTime.subValue).toBe('stats.leadTimeUnavailable.disabled');
+    expect(byId.divergence.subValue).toBe('repo.divergencePrsDisabled');
+    expect(byId.reviewCoverage.subValue).toContain('stats.reviewProcessUnavailable.disabled');
+  });
+
   it('an old snapshot (no review process, no practices) says "not recorded" per card', () => {
     const data = live();
     delete data.reviewProcess;

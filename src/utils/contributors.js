@@ -109,6 +109,18 @@ export function analyzeContributors(people, { source }) {
 }
 
 /**
+ * Which `contributors.busFactor.<key>` text describes the contributor data:
+ * 'notRecorded' (old snapshot), 'tooLarge' (GitHub won't list them for this
+ * repository), 'unavailable' (failed), or the concentration level. Shared by
+ * the Dashboard table and the PDF report.
+ */
+export function contributorsTextKey(contributors, busFactor) {
+  if (busFactor?.level === 'notRecorded') return 'notRecorded';
+  if (!contributors || busFactor?.level === 'unavailable') return busFactor?.reason === 'tooLarge' ? 'tooLarge' : 'unavailable';
+  return busFactor?.level;
+}
+
+/**
  * Applied when a persisted full_report is shown. Contributor data saved before
  * v3.8.0 (first 30 contributors, all-time, bots included — no
  * `busFactorAnalysis.window`) becomes "not recorded" instead of being shown
