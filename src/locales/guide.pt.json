@@ -98,14 +98,14 @@
         "name": "Conventional Commits",
         "what": "Percentual dos commits recentes do branch principal (sem merges e sem bots) cuja primeira linha segue tipo(escopo)!: descrição.",
         "read": "Mostra disciplina nas mensagens de commit, que facilita histórico legível, changelog automático e versionamento.",
-        "limits": "Só os tipos mais comuns (feat, fix, docs…) contam. Projetos com convenção própria (ex.: \"subsistema: mensagem\", como o kernel Linux) aparecem com percentual baixo, perto de 0%.",
+        "limits": "Só os tipos mais comuns (feat, fix, docs…) contam. Projetos com convenção própria (ex.: \"subsistema: mensagem\", como o kernel Linux) aparecem com percentual baixo, perto de 0%; quando a maioria dos commits segue algum \"prefixo: resumo\", o card mostra essa fatia, para não confundir outra convenção com ausência de convenção.",
         "chaossNote": "Não há métrica CHAOSS para convenção de mensagens; Code Changes Commits cita mensagens com estrutura consistente como pré-requisito para filtrar commits por tipo."
       },
       "release-cadence": {
         "name": "Cadência de releases",
         "what": "Releases publicadas no GitHub nos últimos 12 meses (datadas pela tag, ou pela publicação se a tag for posterior), intervalo mediano entre os dias com release, dias desde a última e percentual de tags em SemVer entre as até 100 mais recentes.",
         "read": "Releases regulares indicam um projeto vivo e previsível; SemVer ajuda quem usa a entender o impacto de cada versão.",
-        "limits": "Projetos que só criam tags, sem releases no GitHub, não aparecem. Frequência ideal depende do tipo de projeto.",
+        "limits": "Projetos sem nenhuma release no GitHub são medidos pelas tags (até as 100 mais recentes, sem pré-versões como -rc e -beta, datadas pela tag anotada ou pelo commit); isso exige token, porque a lista de tags da API REST não tem datas. Sem token, o card mostra só quantas tags existem. Uma tag não é uma release com notas: contar tags mede versões marcadas, não publicações. Frequência ideal depende do tipo de projeto.",
         "chaossNote": "A CHAOSS (Release Frequency) conta releases por período (semana, mês, ano); aqui são 12 meses, com o intervalo mediano entre dias com release."
       },
       "health-score": {

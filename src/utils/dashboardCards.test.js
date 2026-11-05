@@ -76,6 +76,29 @@ describe('buildStatCards', () => {
     expect(byId.reviewCoverage.subValue).toContain('stats.reviewProcessUnavailable.disabled');
   });
 
+  it('release cadence from tags says so; without a token, the tag count', () => {
+    const data = live();
+    data.practices.releases = { available: true, source: 'tags', tagsTotal: 952, last12Months: 6, capped: false, medianIntervalDays: 63, daysSinceLast: 14, semverPercentage: 0 };
+    const byTags = buildStatCards(data, t, 'pt').practices.find((c) => c.id === 'releases');
+    expect(byTags.value).toBe('stats.tagReleasesLast12:{"count":6}');
+    expect(byTags.subValue.startsWith('stats.releasesFromTags · ')).toBe(true);
+    data.practices.releases = { available: false, reason: 'tagsNoToken', source: 'tags', tagsTotal: 952 };
+    const noToken = buildStatCards(data, t, 'pt').practices.find((c) => c.id === 'releases');
+    expect(noToken.value).toBe('N/A');
+    expect(noToken.subValue).toMatch(/^stats\.practiceUnavailable\.tagsNoToken:\{"count":952,/);
+  });
+
+  it('Conventional Commits: another majority convention is shown next to the sample, not otherwise', () => {
+    const data = live();
+    data.practices.commits = { available: true, percentage: 0, prefixedPercentage: 92, n: 77 };
+    const other = buildStatCards(data, t, 'pt').practices.find((c) => c.id === 'conventional');
+    expect(other.subValue).toBe('stats.conventionalCommitsSample:{"count":77} · stats.conventionalCommitsOther:{"pct":92}');
+    for (const commits of [{ percentage: 80, prefixedPercentage: 90 }, { percentage: 0, prefixedPercentage: 30 }, { percentage: 0 }]) {
+      data.practices.commits = { available: true, n: 10, ...commits };
+      expect(buildStatCards(data, t, 'pt').practices.find((c) => c.id === 'conventional').subValue).toBe('stats.conventionalCommitsSample:{"count":10}');
+    }
+  });
+
   it('an old snapshot (no review process, no practices) says "not recorded" per card', () => {
     const data = live();
     delete data.reviewProcess;

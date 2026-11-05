@@ -242,7 +242,7 @@ export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
             </li>
             <li className="flex justify-between text-sm font-semibold text-ocean dark:text-blue-400">
               <span>{t('repo.totalReleases')}</span>
-              <span>{data.stats.releases ?? 'N/A'}</span>
+              <span>{data.stats.releases ?? 'N/A'}{data.stats.tags > 0 && ` · ${t('repo.tagsCount', { count: data.stats.tags, formatted: formatters.formatNumber(data.stats.tags, locale) })}`}</span>
             </li>
           </ul>
         </div>

@@ -60,7 +60,9 @@
     "divergenceMedium": "Discussão moderada",
     "divergenceHigh": "Muita discussão",
     "prsDisabled": "Desativados",
-    "divergencePrsDisabled": "PRs desativados no GitHub"
+    "divergencePrsDisabled": "PRs desativados no GitHub",
+    "tagsCount_one": "{{formatted}} tag",
+    "tagsCount_other": "{{formatted}} tags"
   },
   "app": {
     "reload": "Recarregar a página",
@@ -136,18 +138,20 @@
     "ciHealth": "Saúde do CI",
     "ciHealthTooltip": "Percentual de sucesso das últimas execuções do GitHub Actions disparadas por push no branch principal (até 50). Contam sucesso contra falha, timeout e falha de inicialização; canceladas e puladas ficam de fora. Execuções agendadas, do Dependabot e de pull requests não entram; pushes feitos por bots entram. CI fora do GitHub Actions (Travis, CircleCI…) não aparece aqui.",
     "conventionalCommits": "Conventional Commits",
-    "conventionalCommitsTooltip": "Percentual dos commits recentes do branch principal (até 100, sem merges e sem bots) cuja primeira linha segue o padrão Conventional Commits: tipo(escopo)!: descrição, com os tipos feat, fix, docs, style, refactor, perf, test, build, ci, chore e revert.",
+    "conventionalCommitsTooltip": "Percentual dos commits recentes do branch principal (até 100, sem merges e sem bots) cuja primeira linha segue o padrão Conventional Commits: tipo(escopo)!: descrição, com os tipos feat, fix, docs, style, refactor, perf, test, build, ci, chore e revert. Quando a maioria dos commits segue outra convenção \"prefixo: resumo\" (como o \"subsistema: resumo\" do kernel Linux), o card mostra também essa fatia.",
     "releaseCadence": "Cadência de Releases",
     "releaseEvery_one": "a cada {{days}} dia",
     "releaseEvery_other": "a cada {{days}} dias",
-    "releaseCadenceTooltip": "Releases publicadas no GitHub nos últimos 12 meses (datadas pela tag, ou pela publicação se a tag for posterior), intervalo mediano entre os dias com release nesse período (releases de duas linhas no mesmo dia contam como um dia), dias desde a última e percentual de tags no formato SemVer (ex: v1.2.3, pacote@1.2.3) entre as até 100 mais recentes. Projetos que só criam tags, sem releases, não aparecem aqui.",
+    "releaseCadenceTooltip": "Releases publicadas no GitHub nos últimos 12 meses (datadas pela tag, ou pela publicação se a tag for posterior), intervalo mediano entre os dias com release nesse período (releases de duas linhas no mesmo dia contam como um dia), dias desde a última e percentual de tags no formato SemVer (ex: v1.2.3, pacote@1.2.3) entre as até 100 mais recentes. Sem nenhuma release, usa as tags: as até 100 mais recentes, sem pré-versões (-rc, -beta, -alpha…), datadas pela tag anotada ou pelo commit; exige token, porque a lista de tags da API REST não tem datas.",
     "practiceUnavailable": {
       "noRuns": "Sem execuções do GitHub Actions no branch principal",
       "noConclusive": "Nenhuma execução concluída com sucesso ou falha",
       "noCommits": "Sem commits de pessoas no período",
       "noReleases": "Nenhuma release publicada no GitHub",
       "error": "Não foi possível obter os dados",
-      "snapshot": "Não registrado neste snapshot"
+      "snapshot": "Não registrado neste snapshot",
+      "tagsNoToken": "Sem releases; {{count}} tags no GitHub (a cadência pelas tags requer token)",
+      "noStableTags": "Sem releases nem tags estáveis ({{count}} tags no GitHub)"
     },
     "releasesLast12_one": "{{count}} release em 12 meses",
     "releasesLast12_other": "{{count}} releases em 12 meses",
@@ -161,7 +165,13 @@
     "conventionalCommitsSample_one": "das mensagens · {{count}} commit recente",
     "conventionalCommitsSample_other": "das mensagens · {{count}} commits recentes",
     "releasesLast12_zero": "nenhuma release em 12 meses",
-    "issuesDisabled": "Issues desativadas no GitHub"
+    "issuesDisabled": "Issues desativadas no GitHub",
+    "tagReleasesLast12_zero": "nenhuma versão (tag) em 12 meses",
+    "tagReleasesLast12_one": "{{count}} versão (tag) em 12 meses",
+    "tagReleasesLast12_other": "{{count}} versões (tags) em 12 meses",
+    "tagReleasesLast12Capped": "{{count}}+ versões (tags) em 12 meses",
+    "releasesFromTags": "sem releases: medido pelas tags, sem pré-versões",
+    "conventionalCommitsOther": "{{pct}}% seguem outra convenção (prefixo: resumo)"
   },
   "language": {
     "pt": "PT",

@@ -46,6 +46,7 @@ export function buildRepoReportModel(data, t, locale, { isSnapshot = false, now 
       prs: data.stats?.prs ?? null,
       merges: data.stats?.merges ?? null,
       releases: data.stats?.releases ?? null,
+      tags: data.stats?.tags ?? null,
     },
     warnings: data._warnings ?? [],
     cards: buildStatCards(data, t, locale),

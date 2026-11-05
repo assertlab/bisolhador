@@ -1,4 +1,7 @@
 import { MERGED_PR_SAMPLE } from '../constants.js';
+
+// "Most commits": the share above which another convention is mentioned on the Conventional Commits card
+const CONVENTION_MAJORITY = 50;
 import { formatDuration, SMALL_PR_LINES } from './prReviewStats.js';
 import { formatters } from './formatters.js';
 import { closedShareOf, ADD_DELETE_WEEKS, ADD_DELETE_MIN_ACTIVE_WEEKS } from './activityStats.js';
@@ -23,7 +26,11 @@ export function buildStatCards(data, t, locale) {
   const review = data?.reviewProcess ?? { available: false, reason: 'snapshot' };
   const reviewUnavailable = review.available ? undefined : t(`stats.reviewProcessUnavailable.${review.reason}`, { defaultValue: t('stats.reviewProcessUnavailable.error') });
   const practices = data?.practices ?? { ci: {}, commits: {}, releases: {} };
-  const practiceUnavailable = (p) => t(`stats.practiceUnavailable.${p.reason ?? 'snapshot'}`, { defaultValue: t('stats.practiceUnavailable.error') });
+  // count: tags on GitHub, for the tag-based release reasons (tagsNoToken, noStableTags)
+  const practiceUnavailable = (p) => t(`stats.practiceUnavailable.${p.reason ?? 'snapshot'}`, { ...(p.tagsTotal != null && { count: p.tagsTotal }), defaultValue: t('stats.practiceUnavailable.error') });
+  const byTags = practices.releases.source === 'tags';
+  // Conventional Commits low but most subjects follow another "prefix: summary" convention (torvalds/linux)
+  const otherConvention = practices.commits.available && practices.commits.percentage < CONVENTION_MAJORITY && practices.commits.prefixedPercentage >= CONVENTION_MAJORITY;
   const churn = data?.codeChurn;
   const churnNote = churn?.categoryKey
     ? t(`stats.addDelete.${churn.categoryKey}`)
@@ -106,16 +113,19 @@ export function buildStatCards(data, t, locale) {
     {
       id: 'conventional', guideId: 'conventional-commits', title: t('stats.conventionalCommits'),
       value: practices.commits.available ? formatters.formatPercent(practices.commits.percentage, locale) : 'N/A',
-      subValue: practices.commits.available ? t('stats.conventionalCommitsSample', { count: practices.commits.n }) : practiceUnavailable(practices.commits),
+      subValue: practices.commits.available
+        ? [t('stats.conventionalCommitsSample', { count: practices.commits.n }), otherConvention && t('stats.conventionalCommitsOther', { pct: practices.commits.prefixedPercentage })].filter(Boolean).join(' · ')
+        : practiceUnavailable(practices.commits),
       tooltip: t('stats.conventionalCommitsTooltip'),
     },
     {
       id: 'releases', guideId: 'release-cadence', title: t('stats.releaseCadence'),
       value: practices.releases.available
-        ? t(practices.releases.capped ? 'stats.releasesLast12Capped' : 'stats.releasesLast12', { count: practices.releases.last12Months })
+        ? t(`stats.${byTags ? 'tagReleases' : 'releases'}Last12${practices.releases.capped ? 'Capped' : ''}`, { count: practices.releases.last12Months })
         : 'N/A',
       subValue: practices.releases.available
         ? [
+            byTags && t('stats.releasesFromTags'),
             practices.releases.medianIntervalDays != null && t('stats.releaseEvery', { days: practices.releases.medianIntervalDays.toLocaleString(locale), count: practices.releases.medianIntervalDays }),
             t('stats.releaseLast', { count: practices.releases.daysSinceLast }),
             t('stats.releaseSemver', { semver: practices.releases.semverPercentage }),

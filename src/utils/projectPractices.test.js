@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   analyzeCiRuns, ciRunsForBranch, CLASSROOM_CI_EVENTS, analyzeConventionalCommits, analyzeReleases, isConventionalCommit, isSemverTag, normalizeSnapshotPractices,
+  isPrefixedCommit, isPrereleaseTag, analyzeTagCadence,
 } from './projectPractices.js';
 
 const T0 = Date.UTC(2026, 9, 24);
@@ -94,6 +95,19 @@ describe('Conventional Commits', () => {
     expect(r).toMatchObject({ available: true, percentage: 67, n: 3 });
   });
 
+  it.each([
+    ['vfs: fix take_dentry_name_snapshot() semantics', true], ['net/mlx5e: fix leak', true], ['bpf, sockmap: fix race', true],
+    ['feat(api): x', true], ['docs: y', true], ['Merge tag \'for-linus\' of git://…', false], ['Revert "x"', false],
+    ['update readme', false], ['Linux 7.3', false], ['nospace:x', false],
+  ])('"prefix: summary" %j → %s', (msg, ok) => {
+    expect(isPrefixedCommit(msg)).toBe(ok);
+  });
+
+  it('another convention (torvalds/linux): low CC, high "prefix: summary", same commits', () => {
+    const r = analyzeConventionalCommits([commit('vfs: fix a'), commit('net: fix b'), commit('feat: c'), commit('Linux 7.3')]);
+    expect(r).toMatchObject({ available: true, percentage: 25, prefixedPercentage: 75, n: 4 });
+  });
+
   it('failed request vs no commits', () => {
     expect(analyzeConventionalCommits(null)).toEqual({ available: false, reason: 'error' });
     expect(analyzeConventionalCommits([])).toMatchObject({ available: false, reason: 'noCommits', n: 0 });
@@ -137,6 +151,45 @@ describe('analyzeReleases', () => {
 
   it.each([['v1.2.3', true], ['1.0.0-rc.1+build.5', true], ['create-vite@7.0.0', true], ['@vitejs/plugin-legacy@5.1.0', true], ['v1.2', false], ['release-1.2.3', false], ['01.2.3', false], ['pkg@1.2', false]])('SemVer %s → %s', (tag, ok) => {
     expect(isSemverTag(tag)).toBe(ok);
+  });
+});
+
+describe('release cadence from tags (no GitHub releases)', () => {
+  const tag = (name, daysAgo) => ({ name, date: iso(T0 - daysAgo * 86400000) });
+
+  it.each([
+    ['v7.3-rc7', true], ['1.0.0-beta.1', true], ['v1.0.0-rc.1', true], ['v2.0a1', true], ['v3.11.0rc1', true], ['3.1.0.dev2', true],
+    ['v4.0.0-next.3', true], ['v19.0.0-canary-abc', true], ['nightly', true],
+    ['v7.3', false], ['v1.2.3', false], ['2.6.11', false], ['release-2024', false], ['v1-devtools', false], ['v1.2.3+build', false],
+  ])('pre-release %s → %s', (name, ok) => {
+    expect(isPrereleaseTag(name)).toBe(ok);
+  });
+
+  it('torvalds/linux: -rc tags out, cadence over the stable ones', () => {
+    const tags = [tag('v7.4-rc1', 1), tag('v7.3', 14), tag('v7.3-rc7', 21), tag('v7.3-rc1', 63), tag('v7.2', 77), tag('v7.1', 140), tag('v6.0', 900)];
+    const r = analyzeTagCadence({ total: 952, dates: tags, fullPage: true }, T0);
+    expect(r).toMatchObject({
+      available: true, source: 'tags', tagsTotal: 952, last12Months: 3, medianIntervalDays: 63, daysSinceLast: 14, prereleasesExcluded: 3, capped: false,
+    });
+  });
+
+  it('without a token there are no dates: unavailable, with the tag count', () => {
+    expect(analyzeTagCadence({ total: 952, dates: null }, T0)).toMatchObject({ available: false, reason: 'tagsNoToken', source: 'tags', tagsTotal: 952 });
+  });
+
+  it('only pre-release tags: no stable tags', () => {
+    expect(analyzeTagCadence({ total: 2, dates: [tag('v1.0.0-rc.1', 5), tag('v1.0.0-rc.2', 1)] }, T0)).toMatchObject({ available: false, reason: 'noStableTags', tagsTotal: 2 });
+  });
+
+  it('a full page of tags inside the window is capped ("100+")', () => {
+    const many = Array.from({ length: 100 }, (_, i) => tag(`v1.0.${i}`, i));
+    expect(analyzeTagCadence({ total: 300, dates: many, fullPage: true }, T0)).toMatchObject({ last12Months: 100, capped: true });
+  });
+
+  it('a saved tag-based result survives the snapshot normalizer', () => {
+    const releases = analyzeTagCadence({ total: 3, dates: [tag('v1.0', 30), tag('v1.1', 10)] }, T0);
+    const report = { practices: { ci: { method: releases.method }, commits: { method: releases.method }, releases } };
+    expect(normalizeSnapshotPractices(report).practices.releases).toBe(releases);
   });
 });
 
