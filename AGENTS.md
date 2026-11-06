@@ -190,6 +190,8 @@ Production is published only by pushing a version tag — never from a local mac
 
 Repo setup this depends on: Settings → Pages → Source = "GitHub Actions"; Actions variables `VITE_SUPABASE_URL`, `VITE_GA_ID` and secret `VITE_SUPABASE_ANON_KEY` (names: see `### Environment Variables`).
 
+Forgotten tag alarm: `release-guard.yml` (daily, `workflow_dispatch`) opens an issue when `package.json` on `main` is at a version with no `v*` tag (2 h grace after the bump). It never creates the tag. Added after v3.23.0 was merged but never tagged, leaving production on v3.22.1.
+
 Rollback/redeploy: run `deploy.yml` via `workflow_dispatch` **from `main`**, passing the tag. Workflow logic then comes from `main`; only the app code comes from the tag. Floor: `v3.6.2` — older tags have no `.nvmrc`, so `setup-node` fails on them.
 
 ### Environment Variables

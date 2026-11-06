@@ -1,0 +1,63 @@
+name: release guard
+
+# O deploy só sai por tag (deploy.yml). Quando um PR de release entra em main
+# e ninguém cria a tag, nada vai ao ar e nada avisa: foi o caso da v3.23.0
+# (corrigia o Linux, nunca foi publicada; a produção ficou na v3.22.1).
+# Este alarme compara a versão do package.json em main com as tags e abre uma
+# issue quando falta a tag. Não cria a tag: publicar continua decisão humana.
+on:
+  schedule:
+    - cron: '0 12 * * *' # diário, 09:00 BRT
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  # Folga entre o merge do release e a tag, para não alarmar quem ainda vai taguear.
+  GRACE_HOURS: 2
+
+jobs:
+  guard:
+    name: tag exists for main's version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: open an issue when the tag is missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          title="Falta a tag $tag (a versão de main não foi publicada)"
+
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "Tag $tag existe."
+            exit 0
+          fi
+
+          age_hours=$(( ( $(date +%s) - $(git log -1 --format=%ct -- package.json) ) / 3600 ))
+          if [ "$age_hours" -lt "$GRACE_HOURS" ]; then
+            echo "package.json mudou há ${age_hours}h: dentro da folga de ${GRACE_HOURS}h."
+            exit 0
+          fi
+
+          if [ -n "$(gh issue list --state open --search "\"$tag\" in:title" --json number --jq '.[].number')" ]; then
+            echo "Já existe issue aberta para $tag."
+            exit 0
+          fi
+
+          gh issue create --title "$title" --body "O \`package.json\` em \`main\` está na versão \`${tag#v}\`, mas a tag \`$tag\` não existe. O deploy só sai por tag, então a produção não tem essas mudanças.
+
+          Passos (ver \`AGENTS.md\` > Release / Deploy):
+          1. \`git checkout main && git pull origin main\`
+          2. Confirme que o commit do PR de release está em \`HEAD\`.
+          3. \`git tag $tag <commit> && git push origin $tag\`
+
+          Se a versão não é para publicar, reverta o bump em \`package.json\`."
