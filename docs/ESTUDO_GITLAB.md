@@ -150,7 +150,28 @@ Testado em 2026-11-11 com chamadas anônimas a gitlab.com, enviando `Origin` de 
 | Turma: origem do template | Não há equivalente ao `github-classroom[bot]` nem ao `templateRepository` | ❌ "Origem não verificada" |
 | Total de commits | `statistics` exige papel Reporter ou acima **[verificado]** | ❌ Indisponível sem membership |
 
-### 2.3 Conclusão
+### 2.3 Instância institucional: `gitlab.cin.ufpe.br` (Fase 0, testado em 2026-11-11)
+
+Primeira instância da allow-list, indicada pelo mantenedor. Testada sem token, com `Origin: https://assertlab.github.io`:
+
+| Teste | Resultado |
+|---|---|
+| CORS REST e GraphQL | ✅ `Access-Control-Allow-Origin: *`; o nginx na frente **não remove** os headers |
+| Preflight com `PRIVATE-TOKEN` | ✅ Aceito (`access-control-allow-headers: private-token`) |
+| Headers expostos | ✅ `Link`, `X-Total`, `X-Total-Pages`, `X-Next-Page` etc., os mesmos do gitlab.com |
+| Endpoints REST sem token (`/projects/:id`, `/languages`, `/issues_statistics`, `/merge_requests`, `/repository/branches`, `tags`, `releases`, `commits?with_stats=true`, `tree?recursive=true`, `pipelines`, `contributors`, `/groups`) | ✅ 200 em projeto público |
+| Search API sem token | ❌ 401, como no gitlab.com |
+| GraphQL: `archived`, `issuesEnabled`, `mergeRequestsEnabled`, `openIssuesCount`, `mergeRequests{mergedAt diffStatsSummary approvedBy{bot} author{bot}}`, `repository.blobs` | ✅ O schema aceita todos os campos (versão nova o bastante para as queries do plano) |
+| Versão do GitLab | Não exposta sem token (`/api/v4/version` → 401) |
+| Rate limit | Nenhum header `ratelimit-*` nas respostas: os limites da instância são desconhecidos e precisam ser confirmados com quem administra o servidor |
+| Tamanho | 193 projetos públicos e 23 grupos visíveis sem token. A maioria dos projetos de disciplina deve ser **privada**, então a Turma vai depender de token na prática |
+
+Observações:
+- `/pipelines` devolveu `X-Total` aqui, ao contrário do gitlab.com. O código não deve depender nem da presença nem da ausência desse header.
+- Um projeto público testado (`lgpss-in1054/ns3_code`) tem árvore de 4.373 itens, o que equivale a cerca de 44 páginas na listagem recursiva. Isso confirma que o health score não pode depender da árvore completa (seção 2.2).
+- Pendente na Fase 0: medir o custo em requisições com um projeto real de aluno, que exige token, e confirmar com o CIn os limites de taxa.
+
+### 2.4 Conclusão
 
 É viável sem backend. A maioria dos indicadores tem equivalente direto ou pode ser calculada no cliente. Os pontos caros são:
 
@@ -234,7 +255,7 @@ Fontes:
 
 ### Fase 0: validação (spike, sem merge de código)
 
-- Confirmar quais instâncias institucionais entram na allow-list e se o CORS delas funciona.
+- ✅ Instância institucional: `gitlab.cin.ufpe.br`. CORS e endpoints validados (seção 2.3). Falta confirmar os limites de taxa com a administração do servidor.
 - Medir quantas requisições custa analisar 3 projetos reais de alunos e 1 projeto grande (`gitlab-org/gitlab-runner`), com e sem token.
 - Testar se o GraphQL anônimo devolve `notes` de MR.
 - **Saída:** os números neste documento e os tetos de paginação em `src/constants.js`.
