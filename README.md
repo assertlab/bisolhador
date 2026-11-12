@@ -45,6 +45,9 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 
 ## 🔄 Últimas Atualizações
 
+### v3.27.2 - Token recusado e repositório não encontrado
+- **🐛 Mensagens próprias** quando o GitHub ou o GitLab recusa o token salvo (com o host) e quando o repositório não é encontrado (no GitLab, lembra que internos e privados exigem login)
+
 ### v3.27.1 - Como usar com GitLab
 - **📝 Ajuda, README e guias** explicam como informar repositórios do GitHub e do GitLab, a Turma com as duas plataformas e o token do GitLab
 

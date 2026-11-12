@@ -185,3 +185,14 @@ describe('analyzeCommitHistory: a count that is a minimum (GitLab)', () => {
     expect(analyzeCommitHistory({ totalCount: 3, capped: false, nodes: [node('ana')] }).commitsAtLeast).toBeUndefined();
   });
 });
+
+describe('classroomStatusText (table and CSV)', () => {
+  it('host for a refused token; GitLab wording for not found; duplicate name', async () => {
+    const { classroomStatusText } = await import('./classroomColumns.js');
+    const t = (key, opts) => `${key}${opts.context ? '_' + opts.context : ''}|${opts.host ?? ''}|${opts.name ?? ''}`;
+    expect(classroomStatusText({ status: 'tokenRejected', host: 'gitlab.cin.ufpe.br' }, null, t)).toBe('classroom.status.tokenRejected|gitlab.cin.ufpe.br|');
+    expect(classroomStatusText({ status: 'notFound', host: 'gitlab.com' }, null, t)).toBe('classroom.status.notFound_gitlab|gitlab.com|');
+    expect(classroomStatusText({ status: 'notFound', host: 'github.com' }, null, t)).toBe('classroom.status.notFound|github.com|');
+    expect(classroomStatusText({ status: 'ok' }, 'a/b', t)).toBe('classroom.status.duplicate||a/b');
+  });
+});

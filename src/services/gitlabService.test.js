@@ -173,6 +173,24 @@ describe('createGitlabService: requests', () => {
   });
 });
 
+describe('createGitlabService: refused token', () => {
+  it('401 with this host\'s token → TOKEN_REJECTED with the host (REST and GraphQL); without a token, a plain 401', async () => {
+    store['gitlab_token:gitlab.cin.ufpe.br'] = 'expired';
+    routes = [['/api/graphql', reply({}, { status: 401 })], ['/projects/', reply({ message: '401 Unauthorized' }, { status: 401 })]];
+    const cin = createGitlabService('gitlab.cin.ufpe.br');
+    await expect(cin.fetchRepository('g', 'p')).rejects.toMatchObject({ code: 'TOKEN_REJECTED', host: 'gitlab.cin.ufpe.br' });
+    await expect(cin.fetchPullRequestReviewStats('g', 'p')).rejects.toMatchObject({ code: 'TOKEN_REJECTED' });
+    const anon = await createGitlabService('gitlab.com').fetchRepository('g', 'p').catch((e) => e);
+    expect(anon.code).toBeUndefined();
+    expect(anon.status).toBe(401);
+  });
+
+  it('404 → NOT_FOUND, message keeps the status (Classroom reads it)', async () => {
+    routes = [['/api/graphql', reply({ data: { project: null } })], ['/projects/', reply({ message: '404 Project Not Found' }, { status: 404 })]];
+    await expect(createGitlabService('gitlab.com').fetchRepository('g', 'p')).rejects.toMatchObject({ code: 'NOT_FOUND', message: expect.stringMatching(/404/) });
+  });
+});
+
 describe('createGitlabService: Classroom', () => {
   it('commit history of the period: since/until sent, history nodes, capped at the page limit', async () => {
     routes = [['/repository/commits?since=', () => reply(page(100).map((_, i) => ({ id: String(i), author_name: 'Ana', message: 'feat: x', parent_ids: ['p'] })))]];

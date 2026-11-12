@@ -109,10 +109,8 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
     // baseDelay is shortened from the util's 1000ms default to keep the worst
     // case around ~3s instead of ~10s (isCheckingRepo below keeps the button
     // disabled with a spinner for the duration either way).
-    // Known limitation: fetchRepository doesn't attach the HTTP status to the
-    // error it throws, so a 404 (repo genuinely doesn't exist) gets retried
-    // 3x same as a transient failure would — wasteful but not incorrect.
-    // Fixing that cleanly requires attaching a status code in githubService.js.
+    // A refused token or a missing repository (codes from githubService) isn't
+    // retried (withExponentialBackoff) and gets its own message; both still refuse.
     setIsCheckingRepo(true);
     let canonicalName = repoName;
     try {
@@ -128,10 +126,10 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
       // Snapshots are saved under the canonical name (renames: facebook/react
       // → react/react); looking history up by the typed name finds stale rows.
       canonicalName = repoInfo?.full_name || repoName;
-    } catch {
-      // All retries exhausted — fail closed. We can't confirm this repo is
-      // public, so we refuse to add it rather than risk processing a private one.
-      showToast(t('errors.privacyCheckFailed'), 'error');
+    } catch (error) {
+      // Fail closed: we can't confirm this repo is public, so we refuse to add it.
+      const key = error?.code === 'TOKEN_REJECTED' ? 'errors.tokenRejected' : error?.code === 'NOT_FOUND' ? 'errors.repoNotFound' : 'errors.privacyCheckFailed';
+      showToast(t(key, { host: error?.host }), 'error');
       return;
     } finally {
       setIsCheckingRepo(false);

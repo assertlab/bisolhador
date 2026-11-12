@@ -75,12 +75,12 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const snapshotParams = getSnapshotParams(searchParams);
   const isSnapshotUrl = Boolean(snapshotParams);
   const snapshot = useSnapshot(snapshotParams);
-  const { data: repoData, loading, error } = useRepository(isSnapshotUrl ? null : searchParams.get('q'));
+  const { data: repoData, loading, error, errorI18n } = useRepository(isSnapshotUrl ? null : searchParams.get('q'));
   const displayData = isSnapshotUrl ? snapshot.data : repoData;
   const displayLoading = isSnapshotUrl ? snapshot.loading : loading;
   const displayError = isSnapshotUrl
     ? (snapshot.failed ? t('errors.snapshotUnavailable') : null)
-    : error;
+    : errorI18n ? t(errorI18n.key, errorI18n.options) : error;
   const isSnapshotMode = isSnapshotUrl && !snapshotAlertDismissed;
   const locale = intlLocale(i18n.language);
   // The stat cards' text comes from utils/dashboardCards.js (shared with the PDF report)

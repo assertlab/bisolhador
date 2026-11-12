@@ -16,7 +16,7 @@ import { formatters } from '../utils/formatters.js';
 import { exportToCsv } from '../utils/csvExporter.js';
 import { downloadBlob } from '../utils/downloadBlob.js';
 import { showToast } from '../hooks/useToast.js';
-import { CLASSROOM_COLUMNS, classroomCsvRows, isPartialRow } from '../utils/classroomColumns.js';
+import { CLASSROOM_COLUMNS, classroomCsvRows, classroomStatusText, isPartialRow } from '../utils/classroomColumns.js';
 import { intlLocale } from '../i18n.js';
 import { guidePath } from '../utils/indicatorGuide.js';
 import { AiProcessSection } from '../components/ai/AiProcessSection.jsx';
@@ -116,7 +116,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
       setImportState({ found: repos.length, matched: matched.length, capped });
     } catch (error) {
       if (requestId !== importRequest.current) return;
-      setImportState({ error: /\b404\b/.test(error.message) ? 'orgNotFound' : 'orgFailed' });
+      setImportState({ error: error.code === 'TOKEN_REJECTED' ? 'tokenRejected' : error.code === 'NOT_FOUND' ? 'orgNotFound' : 'orgFailed', host: error.host });
     }
   };
 
@@ -246,7 +246,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
             {importState && !importState.loading && (
               <span role="status" className={`text-xs ${importState.error ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-slate-400'}`}>
                 {importState.error
-                  ? t(`classroom.import.${importState.error}`)
+                  ? t(`classroom.import.${importState.error}`, { host: importState.host })
                   : t('classroom.import.result', { found: importState.found, matched: importState.matched }) + (importState.capped ? ` ${t('classroom.import.capped')}` : '')}
               </span>
             )}
@@ -361,7 +361,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                                 ))
                               : (
                                 <td colSpan={COLUMNS.length} className="px-3 py-2 text-gray-500 dark:text-slate-400">
-                                  {t(`classroom.status.${dup ? 'duplicate' : row?.status ?? 'pending'}`, { name: dup })}
+                                  {classroomStatusText(row, dup, t)}
                                 </td>
                               )}
                           </tr>

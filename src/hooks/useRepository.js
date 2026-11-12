@@ -87,7 +87,8 @@ async function fetchReleaseData(service, owner, repo, hasToken) {
 // already translated (errors.*). `final`: the same input or repository gives
 // the same answer, so the query doesn't retry it.
 function inputError(code, key, options) {
-    return Object.assign(new Error(i18n.t(key, options)), { code, final: true });
+    // i18n key/options too, so the page re-translates the message when the language changes
+    return Object.assign(new Error(i18n.t(key, options)), { code, final: true, i18nKey: key, i18nOptions: options });
 }
 
 const INPUT_ERRORS = {
@@ -112,7 +113,16 @@ export async function fetchRepositoryData(repoName) {
     });
 
     // First fetch repository data to get default branch
-    const repoData = await service.fetchRepository(...ownerAndRepo(requested));
+    const repoData = await service.fetchRepository(...ownerAndRepo(requested)).catch((error) => {
+        // Said in words: which token was refused, or a project GitLab hides without login
+        if (error.code === 'TOKEN_REJECTED') throw inputError('TOKEN_REJECTED', 'errors.tokenRejected', { host: error.host });
+        if (error.code === 'NOT_FOUND') {
+            // GitLab: with a token, the project is missing or that token can't see it; without one, it may need login
+            const key = requested.provider !== 'gitlab' ? 'errors.repoNotFound' : hasTokenFor(requested) ? 'errors.repoNotFoundGitlabToken' : 'errors.repoNotFoundGitlab';
+            throw inputError('REPO_NOT_FOUND', key, { host: requested.host });
+        }
+        throw error;
+    });
     if (!repoData) {
         throw new Error('Não foi possível buscar informações do repositório');
     }
@@ -462,6 +472,8 @@ export function useRepository(repoName) {
         loading: isLoading,
         error: error?.message || null,
         errorCode: error?.code || null,
+        // Translated messages: the key, so the page shows them in the current language
+        errorI18n: error?.i18nKey ? { key: error.i18nKey, options: error.i18nOptions } : null,
     };
 }
 

@@ -493,3 +493,23 @@ describe('githubService: failures are errors, not zeros', () => {
     });
   });
 });
+
+describe('githubService.fetchRepository: refused token and missing repository are named', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('401 with a token → TOKEN_REJECTED (github.com); without a token it stays a plain HTTP error', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => json({ message: 'Bad credentials' }, { status: 401 })));
+    vi.stubGlobal('localStorage', { getItem: () => 'ghp_old' });
+    await expect(githubService.fetchRepository('o', 'r')).rejects.toMatchObject({ code: 'TOKEN_REJECTED', host: 'github.com' });
+    vi.stubGlobal('localStorage', { getItem: () => null });
+    const error = await githubService.fetchRepository('o', 'r').catch((e) => e);
+    expect(error.code).toBeUndefined();
+    expect(error.message).toMatch(/401/);
+  });
+
+  it('404 → NOT_FOUND, message still says 404 (Classroom reads it)', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => json({ message: 'Not Found' }, { status: 404 })));
+    vi.stubGlobal('localStorage', { getItem: () => null });
+    await expect(githubService.fetchRepository('o', 'r')).rejects.toMatchObject({ code: 'NOT_FOUND', message: expect.stringMatching(/404/) });
+  });
+});

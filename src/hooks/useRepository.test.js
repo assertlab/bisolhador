@@ -245,7 +245,18 @@ describe('fetchRepositoryData: GitLab', () => {
     expect(report._warnings).toEqual(['prReviewStats']);
   });
 
-    it('an unknown visibility is refused too, as "couldn\'t confirm" (retryable), not "not public"', async () => {
+  it.each([
+    [{ code: 'TOKEN_REJECTED', host: 'gitlab.com' }, 'TOKEN_REJECTED', 'errors.tokenRejected'],
+    [{ code: 'NOT_FOUND', status: 404 }, 'REPO_NOT_FOUND', 'errors.repoNotFoundGitlab'],
+    [{ code: 'NOT_FOUND', status: 404, withToken: true }, 'REPO_NOT_FOUND', 'errors.repoNotFoundGitlabToken'],
+  ])('fetchRepository failing with %j → %s, final (not retried)', async ({ withToken, ...failure }, code, message) => {
+    hasToken.value = Boolean(withToken);
+    mockGitlab({ fetchRepository: vi.fn(async () => { throw Object.assign(new Error('x'), failure); }) });
+    await expect(fetchRepositoryData('gitlab.com/g/p')).rejects.toMatchObject({ code, message, final: true, i18nKey: message });
+    expect(gitlab.fetchCommits).not.toHaveBeenCalled();
+  });
+
+  it('an unknown visibility is refused too, as "couldn\'t confirm" (retryable), not "not public"', async () => {
     mockGitlab({ fetchRepository: vi.fn(async () => ({ full_name: 'g/p', private: null, visibility: null })) });
     await expect(fetchRepositoryData('gitlab.com/g/p')).rejects.toMatchObject({ code: 'VISIBILITY_UNKNOWN', message: 'errors.visibilityUnknown' });
     expect(gitlab.fetchCommits).not.toHaveBeenCalled();
@@ -266,5 +277,12 @@ describe('fetchRepositoryData: GitHub reports carry the provider', () => {
     mockLinux();
     const report = await fetchRepositoryData('torvalds/linux');
     expect(report).toMatchObject({ provider: 'github', host: 'github.com', subscribers: 8000 });
+  });
+});
+
+describe('fetchRepositoryData: GitHub repository not found', () => {
+  it('404 → REPO_NOT_FOUND with the GitHub text', async () => {
+    mockLinux({ fetchRepository: vi.fn(async () => { throw Object.assign(new Error('HTTP error! status: 404'), { code: 'NOT_FOUND', status: 404 }); }) });
+    await expect(fetchRepositoryData('o/r')).rejects.toMatchObject({ code: 'REPO_NOT_FOUND', message: 'errors.repoNotFound' });
   });
 });
