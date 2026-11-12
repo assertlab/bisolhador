@@ -16,6 +16,7 @@ Decisões do mantenedor (2026-11-11):
 Decisão de 2026-11-12:
 
 - **Token:** só token **legado** com `read_api`. Tokens fine-grained (beta) ficam fora da 1ª entrega (seção 2.1).
+- **Visibilidade `internal` = privado.** Um projeto GitLab só conta como público com `visibility: public`. `internal` e `private` seguem a regra dos repositórios privados do GitHub: o Dashboard recusa, só a Turma analisa (ao vivo, com o token de quem usa) e nada vai para o Supabase. Visibilidade ausente ou desconhecida bloqueia a análise (fail-closed). Motivo: `internal` restringe o conteúdo a quem tem login na instância, e gravar as métricas desses projetos num banco público expõe o que a instância protege. A análise de um projeto só de aluno é feita pela Turma com uma lista de 1 projeto.
 
 ---
 
@@ -232,7 +233,7 @@ Achados:
 1. **Visibilidade `internal`.** Os 3 projetos de aluno são `internal`: qualquer usuário logado na instância os vê, mas sem token a API responde **404, igual a um projeto inexistente**. O GitHub não tem esse nível de visibilidade. Consequências:
    - Na prática, projeto de disciplina exige token.
    - A mensagem de erro do 404 sem token precisa dizer "não encontrado ou exige login nesta instância".
-   - **Decisão pendente do mantenedor:** a regra de privacidade (Dashboard recusa repositório privado; só a Turma analisa) trata `internal` como privado? Se tratar, o Dashboard não abre projetos de disciplina do CIn.
+   - **Decidido em 2026-11-12:** `internal` é tratado como privado (ver "Contexto e decisões"). O Dashboard recusa esses projetos e explica que a análise é feita na Turma.
 2. **Notas de MR via GraphQL.** Trocar as chamadas REST por MR (que, sem token, dão 401) por uma consulta GraphQL. A consulta funciona sem token e economiza até 50 chamadas por análise.
 3. **CI rodando só em MRs.** O projeto A não tem pipeline de push na `main`: todos rodam com `ref = refs/merge-requests/<iid>/head` e `source = merge_request_event`. Para saber a branch de destino, é preciso cruzar o iid com o MR. Se o indicador de CI do Dashboard contar só pipelines da branch padrão (como faz hoje com o GitHub), esse projeto aparece "sem CI". A Turma precisa do equivalente ao `ciRunsForBranch`.
 4. **Configuração de IA não registrada.** Os 3 projetos de aluno têm `.agent/` e `.pi/` na raiz, que parecem configuração de agentes de IA. A ferramenta de cada um ainda não está identificada, e nenhum dos dois está no `aiRegistry`. Verificar antes de registrar, como manda a política do guia de IA.
@@ -292,7 +293,7 @@ O custo base cabe com folga nos limites atuais do gitlab.com e, ao que tudo indi
    - Valor calculado a partir de amostra de commits leva `source: 'commits'`/`capped` e `method` próprio (`gitlab-v1`), para não se misturar com a metodologia do GitHub.
 
 4. **Token por host**
-   - `localStorage['gitlab_token:<host>']`, com escopo `read_api`.
+   - `localStorage['gitlab_token:<host>']`, com escopo `read_api`, pelo mesmo wrapper de storage seguro do `github_token`. O risco é o mesmo do token do GitHub: qualquer script na origem lê o `localStorage`, e a mitigação é a CSP restrita (sem `'unsafe-inline'` em `script-src`). Por isso o texto de ajuda pede só `read_api` e validade curta.
    - Uma seção GitLab no `SettingsModal`.
    - `hasToken(ref)` substitui `hasGithubToken` nos chamadores (`useRepository`, `Classroom`).
    - O token só é enviado para o próprio host.
@@ -327,7 +328,6 @@ O custo base cabe com folga nos limites atuais do gitlab.com e, ao que tudo indi
 - Medições com token usam **token legado com `read_api`** no `gitlab.cin.ufpe.br`, com validade curta e guardado fora do repositório (no Keychain do macOS, lido para a variável de ambiente `SMOKE_GITLAB_TOKEN` só durante a execução). Tokens fine-grained ficam fora da Fase 0 (seção 2.1).
 - Pendente:
   - a confirmação dos limites de taxa pela administração do CIn (a página pública indica que não há limite ativado, seção 2.3);
-  - a decisão sobre a visibilidade `internal` (seção 2.5, achado 1).
 - **Saída:** os números da seção 2.5. Os tetos propostos entram em `src/constants.js` na Fase 2.
 
 ### Fase 1: fundação, sem mudança visível no GitHub
@@ -358,7 +358,7 @@ O custo base cabe com folga nos limites atuais do gitlab.com e, ao que tudo indi
 - `parseRepoList` aceita URLs e paths do GitLab.
 - Importação de grupo com `include_subgroups`.
 - `analyzeTeamRepo` com fontes GitLab: commits, MRs merged e pipelines no período.
-- Checagem de visibilidade fail-closed (projeto privado exige token do host).
+- Checagem de visibilidade fail-closed: `internal` e `private` exigem o token do host, e visibilidade ausente bloqueia.
 - Visão por aluno agrupada por e-mail.
 - CSV e PDF com coluna de plataforma.
 - **Teste:** com um grupo real de disciplina.
