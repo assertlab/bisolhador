@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { Tooltip } from './Tooltip.jsx';
 import { ContributorsScope } from './ContributorsScope.jsx';
 import { GuideLink } from './GuideLink.jsx';
@@ -18,7 +18,7 @@ const RISK_STYLES = {
 };
 
 export function BusFactorCard({ busFactorAnalysis }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
 
   const othersPercentage = useMemo(() => {
     if (!busFactorAnalysis?.keyDevelopers) return 0;

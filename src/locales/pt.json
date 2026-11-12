@@ -20,7 +20,7 @@
   "header": {
     "title": "Bisolhador",
     "helpTitle": "Como usar",
-    "settingsTitle": "Configurar Token GitHub",
+    "settingsTitle": "Configurar tokens de acesso",
     "downloadTitle": "Baixar relatório em PDF",
     "downloadButton": "Baixar Relatório",
     "nav": {
@@ -69,7 +69,8 @@
     "prsDisabled": "Desativados",
     "divergencePrsDisabled": "PRs desativados no GitHub",
     "tagsCount_one": "{{formatted}} tag",
-    "tagsCount_other": "{{formatted}} tags"
+    "tagsCount_other": "{{formatted}} tags",
+    "divergencePrsDisabled_gitlab": "MRs desativados no GitLab"
   },
   "app": {
     "reload": "Recarregar a página",
@@ -104,7 +105,8 @@
       "noMerged": "Nenhum PR mergeado recentemente",
       "error": "Não foi possível obter os PRs",
       "snapshot": "Não registrado neste snapshot",
-      "disabled": "PRs desativados no GitHub: a revisão acontece fora da plataforma"
+      "disabled": "PRs desativados no GitHub: a revisão acontece fora da plataforma",
+      "disabled_gitlab": "Merge requests desativados no GitLab: a revisão acontece fora da plataforma"
     },
     "prSample": "{{n}} PRs",
     "addDelete": {
@@ -120,7 +122,8 @@
       "computing": "O GitHub ainda está calculando; tente de novo em instantes",
       "tooLarge": "O GitHub não calcula para repositórios com mais de 10 mil commits",
       "error": "Não foi possível obter os dados",
-      "snapshot": "Não registrado neste snapshot"
+      "snapshot": "Não registrado neste snapshot",
+      "tooLarge_gitlab": "Mais de {{commitCap}} commits nos últimos 12 meses: o Bisolhador não lê todos no GitLab"
     },
     "closedShare": "{{pct}}% fechadas",
     "reviewCoverage": "Cobertura de Revisão",
@@ -140,7 +143,8 @@
       "error": "Indisponível",
       "snapshot": "Não registrado neste snapshot",
       "noMerged": "Sem PRs mergeados",
-      "disabled": "PRs desativados no GitHub"
+      "disabled": "PRs desativados no GitHub",
+      "disabled_gitlab": "MRs desativados no GitLab"
     },
     "ciHealth": "Saúde do CI",
     "ciHealthTooltip": "Percentual de sucesso das últimas execuções do GitHub Actions disparadas por push no branch principal (até 50). Contam sucesso contra falha, timeout e falha de inicialização; canceladas e puladas ficam de fora. Execuções agendadas, do Dependabot e de pull requests não entram; pushes feitos por bots entram. CI fora do GitHub Actions (Travis, CircleCI…) não aparece aqui.",
@@ -159,7 +163,11 @@
       "snapshot": "Não registrado neste snapshot",
       "tagsNoToken": "Sem releases; {{count}} tags no GitHub (a cadência pelas tags requer token)",
       "noStableTags": "Sem releases nem tags estáveis ({{count}} tags no GitHub)",
-      "tagDatesFailed": "Sem releases; {{count}} tags no GitHub (não foi possível obter as datas das tags)"
+      "tagDatesFailed": "Sem releases; {{count}} tags no GitHub (não foi possível obter as datas das tags)",
+      "noRuns_gitlab": "Sem pipelines de push concluídos no branch principal",
+      "noReleases_gitlab": "Nenhuma release publicada no GitLab",
+      "noStableTags_gitlab": "Sem releases nem tags estáveis ({{count}} tags no GitLab)",
+      "tagDatesFailed_gitlab": "Sem releases; {{count}} tags no GitLab (não foi possível obter as datas das tags)"
     },
     "releasesLast12_one": "{{count}} release em 12 meses",
     "releasesLast12_other": "{{count}} releases em 12 meses",
@@ -179,7 +187,13 @@
     "tagReleasesLast12_other": "{{count}} versões (tags) em 12 meses",
     "tagReleasesLast12Capped": "{{count}}+ versões (tags) em 12 meses",
     "releasesFromTags": "sem releases: medido pelas tags, sem pré-versões",
-    "conventionalCommitsOther": "{{pct}}% seguem outra convenção (prefixo: resumo)"
+    "conventionalCommitsOther": "{{pct}}% seguem outra convenção (prefixo: resumo)",
+    "starsTooltip_gitlab": "Número total de estrelas que o projeto recebeu no GitLab.",
+    "divergenceTooltip_gitlab": "Média de comentários de pessoas por merge request (MR), nos até {{n}} MRs mergeados mais recentes. No GitLab, conta as notas de usuário de cada MR (as primeiras {{noteCap}}); notas de sistema, comentários e MRs de bots não contam.",
+    "ciHealthTooltip_gitlab": "Percentual de sucesso dos últimos pipelines do GitLab CI/CD concluídos no branch principal e disparados por push (até 50). Contam sucesso contra falha; cancelados e pulados ficam de fora. Pipelines agendados e de merge request não entram. CI fora do GitLab CI/CD não aparece aqui.",
+    "releaseCadenceTooltip_gitlab": "Releases publicadas no GitLab nos últimos 12 meses (datadas pela criação ou pelo lançamento), intervalo mediano entre os dias com release nesse período, dias desde a última e percentual de tags no formato SemVer entre as até 100 mais recentes. Sem nenhuma release, usa as tags: as até 100 mais recentes, sem pré-versões (-rc, -beta, -alpha…), datadas pela tag anotada ou pelo commit.",
+    "issuesDisabled_gitlab": "Issues desativadas no GitLab",
+    "leadTimeTooltip_gitlab": "Mediana do tempo entre a criação e o merge de um merge request (MR), nos até {{n}} MRs mergeados mais recentes (sem contar bots). A mediana não é distorcida por poucos MRs muito lentos; o p90 mostra a cauda (90% foram mergeados até esse tempo)."
   },
   "language": {
     "pt": "PT",
@@ -204,7 +218,8 @@
     "notAvailable": "N/A",
     "unavailable": {
       "noProfile": "O GitHub não fornece o perfil de comunidade deste repositório (acontece com forks), então o Health Score não pôde ser calculado.",
-      "error": "Não foi possível obter o perfil de comunidade do GitHub (falha ou limite da API). Tente novamente em instantes."
+      "error": "Não foi possível obter o perfil de comunidade do GitHub (falha ou limite da API). Tente novamente em instantes.",
+      "error_gitlab": "Não foi possível listar os arquivos do projeto no GitLab (falha ou limite da API). Tente novamente em instantes."
     },
     "files": {
       "readme": "README",
@@ -216,7 +231,9 @@
       "prTemplate": "PR Template"
     },
     "fromTree": "O Health Score foi calculado a partir dos arquivos do repositório, porque o GitHub não fornece o perfil de comunidade para forks.",
-    "uncertain": "Pode estar subestimado: não foi possível confirmar a ausência de Issue Template (lista de arquivos do GitHub incompleta ou indisponível). Este resultado não é salvo no histórico."
+    "uncertain": "Pode estar subestimado: não foi possível confirmar a ausência de Issue Template (lista de arquivos do GitHub incompleta ou indisponível). Este resultado não é salvo no histórico.",
+    "tooltip_gitlab": "Mede a saúde comunitária baseada em 7 indicadores de governança open-source. No GitLab, que não tem perfil de comunidade, os arquivos são procurados na raiz do projeto e os templates em .gitlab/issue_templates e .gitlab/merge_request_templates.",
+    "uncertain_gitlab": "Pode estar subestimado: não foi possível confirmar a ausência de Issue Template (a listagem de .gitlab/issue_templates falhou e a lista de arquivos do projeto está incompleta)."
   },
   "maturity": {
     "title": "Maturidade de Engenharia",
@@ -243,7 +260,9 @@
       "error": "Não foi possível obter os dados de revisão dos PRs (falha ou limite da API GraphQL do GitHub). Tente novamente em instantes.",
       "snapshot": "Este snapshot histórico não registrou os dados de revisão dos PRs.",
       "noMerged": "Nenhum PR mergeado recentemente (sem contar bots): não há revisão nem discussão para medir.",
-      "disabled": "Os pull requests estão desativados no GitHub: o projeto revisa código fora da plataforma (por exemplo, por e-mail), então não há revisão nem discussão para medir aqui."
+      "disabled": "Os pull requests estão desativados no GitHub: o projeto revisa código fora da plataforma (por exemplo, por e-mail), então não há revisão nem discussão para medir aqui.",
+      "error_gitlab": "Não foi possível obter os dados de revisão dos merge requests (falha ou limite da API GraphQL do GitLab). Tente novamente em instantes.",
+      "disabled_gitlab": "Os merge requests estão desativados no GitLab: o projeto revisa código fora da plataforma, então não há revisão nem discussão para medir aqui."
     },
     "detectors": {
       "tests": "Procura pastas test/, tests/, __tests__/ e arquivos *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/.",
@@ -254,9 +273,12 @@
     "notVerified": {
       "truncated": "Não verificado: o GitHub devolveu a lista de arquivos truncada (repositório muito grande), então \"não encontrado\" não seria confiável.",
       "unavailable": "Não verificado: não foi possível obter a lista de arquivos do GitHub (falha ou limite da API).",
-      "legacy": "Snapshot antigo: verificado com critérios mais limitados, então \"não encontrado\" não é confiável."
+      "legacy": "Snapshot antigo: verificado com critérios mais limitados, então \"não encontrado\" não é confiável.",
+      "truncated_gitlab": "Não verificado: o projeto tem mais de {{treeCap}} arquivos e o Bisolhador não lê a árvore inteira no GitLab, então \"não encontrado\" não seria confiável.",
+      "unavailable_gitlab": "Não verificado: não foi possível obter a lista de arquivos do GitLab (falha ou limite da API)."
     },
-    "codeReviewDetail": "Dos {{n}} PRs mergeados mais recentes (sem contar bots), {{unapproved}}% foram mergeados sem aprovação (Approve) de outra pessoa; {{selfMerge}}% foram mergeados pelo próprio autor. Só conta a aprovação formal do GitHub: projetos que aprovam por comando ou bot (ex: /lgtm) aparecem como sem aprovação."
+    "codeReviewDetail": "Dos {{n}} PRs mergeados mais recentes (sem contar bots), {{unapproved}}% foram mergeados sem aprovação (Approve) de outra pessoa; {{selfMerge}}% foram mergeados pelo próprio autor. Só conta a aprovação formal do GitHub: projetos que aprovam por comando ou bot (ex: /lgtm) aparecem como sem aprovação.",
+    "codeReviewDetail_gitlab": "Dos {{n}} MRs mergeados mais recentes (sem contar bots), {{unapproved}}% foram mergeados sem aprovação (Approve) de outra pessoa; {{selfMerge}}% foram mergeados pelo próprio autor. Só conta a aprovação do GitLab: projetos que aprovam só por comentário aparecem como sem aprovação."
   },
   "contributors": {
     "title": "Contribuidores",
@@ -277,7 +299,8 @@
       },
       "unavailable": {
         "title": "Contribuidores Indisponíveis",
-        "message": "Não foi possível obter os contribuidores do GitHub (falha ou limite da API). Tente novamente em instantes."
+        "message": "Não foi possível obter os contribuidores do GitHub (falha ou limite da API). Tente novamente em instantes.",
+        "message_gitlab": "Não foi possível obter os contribuidores do GitLab (falha ou limite da API). Tente novamente em instantes."
       },
       "healthy": {
         "title": "Trabalho Distribuído",
@@ -293,7 +316,9 @@
       },
       "tooLarge": {
         "title": "Contribuidores Indisponíveis no GitHub",
-        "message": "O GitHub não lista os contribuidores deste repositório pela API: o histórico é grande demais. É um limite da plataforma, não uma falha temporária."
+        "message": "O GitHub não lista os contribuidores deste repositório pela API: o histórico é grande demais. É um limite da plataforma, não uma falha temporária.",
+        "title_gitlab": "Contribuidores Indisponíveis no GitLab",
+        "message_gitlab": "O GitLab não devolveu a lista de contribuidores deste projeto, e os commits dos últimos 12 meses passam do limite que o Bisolhador lê."
       }
     },
     "scope": {
@@ -302,8 +327,10 @@
       "allTimeOnly": "Commits de todo o histórico (janela de 12 meses indisponível no momento)",
       "botsExcluded_one": "{{count}} bot excluído",
       "botsExcluded_other": "{{count}} bots excluídos",
-      "capped": "considera só os 100 maiores contribuidores"
-    }
+      "capped": "considera só os 100 maiores contribuidores",
+      "allTimeOnly_gitlab": "Commits de todo o histórico, pela lista de contribuidores do GitLab (mais de {{commitCap}} commits nos últimos 12 meses), agrupados por e-mail"
+    },
+    "tooltip_gitlab": "Quem faz os commits e quão concentrado está o trabalho. Bots (Renovate, contas de token de projeto, GitLab Duo…) não são contados; no GitLab, as pessoas são agrupadas pelo e-mail dos commits. Concentração alta em uma pessoa significa risco de dependência."
   },
   "activity": {
     "title": "Atividades Recentes",
@@ -320,13 +347,15 @@
     "commitBy": "por {{author}} • {{date}}",
     "noCommits": "Repositório sem commits.",
     "commitsUnavailable": "Não foi possível carregar os commits agora (falha ou limite da API do GitHub).",
-    "commitsNotRecorded": "Nenhum commit registrado neste snapshot."
+    "commitsNotRecorded": "Nenhum commit registrado neste snapshot.",
+    "commitsUnavailable_gitlab": "Não foi possível carregar os commits agora (falha ou limite da API do GitLab)."
   },
   "charts": {
     "commitActivity": {
       "title": "Commits por Semana (últimas {{count}} semanas)",
       "tooltip": "Commits por semana nas últimas 52 semanas (estatística do GitHub). Projetos jovens mostram só o período desde o primeiro commit.",
-      "titleNoData": "Commits por Semana"
+      "titleNoData": "Commits por Semana",
+      "tooltip_gitlab": "Commits por semana nas últimas 52 semanas, contados a partir dos commits do branch principal (o GitLab não tem essa estatística pronta). Projetos jovens mostram só o período desde o primeiro commit."
     },
     "techStack": {
       "title": "Stack Tecnológica",
@@ -340,14 +369,17 @@
       "scope": "Todo o histórico · {{n}} commits (sem merges) · no horário de quem fez cada commit.",
       "scopeCapped": "Os {{n}} commits que o GitHub considera (limite da estatística; não é o histórico completo) · sem merges · no horário de quem fez cada commit.",
       "smallSample": "Amostra pequena: interprete com cautela.",
-      "scopeYear": "Últimos 12 meses · {{n}} commits (sem merges) · no horário de quem fez cada commit."
+      "scopeYear": "Últimos 12 meses · {{n}} commits (sem merges) · no horário de quem fez cada commit.",
+      "tooltip_gitlab": "Distribuição dos commits dos últimos 12 meses (sem merges, branch principal) pelos dias da semana, no fuso de quem fez cada commit. Calculada a partir dos commits: o GitLab não tem essa estatística. Inclui commits de bots."
     },
     "statsUnavailable": {
       "computing": "O GitHub ainda está calculando essa estatística. Tente de novo em instantes.",
       "tooLarge": "O GitHub não calcula essa estatística para repositórios muito grandes.",
       "error": "Não foi possível obter essa estatística do GitHub.",
       "notRecordedWeekdays": "Não registrado neste snapshot (versões anteriores usavam só os 10 commits mais recentes).",
-      "snapshot": "Não registrado neste snapshot."
+      "snapshot": "Não registrado neste snapshot.",
+      "tooLarge_gitlab": "Mais de {{commitCap}} commits nos últimos 12 meses: o Bisolhador não lê todos no GitLab, e um gráfico parcial mostraria semanas sem commits que não foram lidas.",
+      "error_gitlab": "Não foi possível obter os commits do GitLab para essa estatística."
     }
   },
   "ranking": {
@@ -774,7 +806,8 @@
     "unavailable": {
       "noToken": "Com token do GitHub, também verificamos .gitignore, configuração (declaração desligada), template, revisão por IA e salvaguardas.",
       "error": "Não foi possível obter parte dos dados (falha ou limite da API do GitHub): os itens marcados n/d ou ? não foram verificados.",
-      "unsupported": "Nesta plataforma, ainda não verificamos .gitignore, configuração versionada de agentes, revisão por IA nem salvaguardas: esses itens aparecem como não verificados."
+      "unsupported": "Nesta plataforma, ainda não verificamos .gitignore, configuração versionada de agentes, revisão por IA nem salvaguardas: esses itens aparecem como não verificados.",
+      "error_gitlab": "Não foi possível obter parte dos dados (falha ou limite da API do GitLab): os itens marcados n/d ou ? não foram verificados."
     },
     "notRecorded": "IA no Processo: não registrado nesta análise.",
     "students": {
@@ -797,7 +830,8 @@
       "configUnavailable": "n/d: não foi possível consultar quem adicionou ou alterou os arquivos de configuração de IA.",
       "footnote": "Commits do branch principal no período, sem merges e sem bots de manutenção. \"Autor não identificado\" reúne os commits que não estão ligados a uma conta do GitHub (não agrupamos por nome). Configuração: arquivos de IA (fora os do template) com commit da pessoa no período, nos locais verificados. Nada desta tabela é salvo nem vai para o CSV."
     },
-    "notOnPlatform": "ainda não disponível nesta plataforma"
+    "notOnPlatform": "ainda não disponível nesta plataforma",
+    "tooltip_gitlab": "Rastros que o GitLab guarda: coautoria declarada em commits e MRs abertos por agentes. Configuração de agentes, revisão por IA e salvaguardas ainda não são verificadas no GitLab. Não mede quanto código foi escrito por IA."
   },
   "gitlab": {
     "notice": "Projeto do GitLab ({{host}}). O histórico (link permanente, Linha do Tempo, Benchmark e Ranking) ainda não existe para o GitLab: esta análise não é gravada. Contribuidores, atividade semanal, dias da semana e churn são calculados a partir dos commits dos últimos 12 meses."

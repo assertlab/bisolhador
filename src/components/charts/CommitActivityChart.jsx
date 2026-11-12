@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
@@ -9,7 +9,7 @@ import { trimCommitSeries } from '../../utils/activityStats.js';
 // status: 'computing' (HTTP 202) / 'error' when GitHub didn't return the
 // series (data null); undefined for snapshots from before 2026-10.
 export default function CommitActivityChart({ data, createdAt, status }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const { textColor, gridColor } = useChartTheme();
 
   // Smart trimming by project age (shared with the PDF report: utils/activityStats.js)

@@ -215,7 +215,7 @@ export function RepoReportDocument({ model, t, locale, meta }) {
     return (
       <View>
         {items.map((k) => (
-          <Text key={k} style={[s.p, { marginBottom: 6 }]}>{t(`report.repo.method.${k}`, { version: meta.appVersion, registry: meta.registryVersion, date: when ?? 'N/A' })}</Text>
+          <Text key={k} style={[s.p, { marginBottom: 6 }]}>{t(`report.repo.method.${k}`, { version: meta.appVersion, registry: meta.registryVersion, date: when ?? 'N/A', host: header.host })}</Text>
         ))}
       </View>
     );

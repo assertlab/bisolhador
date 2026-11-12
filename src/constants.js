@@ -67,3 +67,5 @@ export const GITLAB_TREE_MAX_PAGES = 10; // 1,000 paths: student projects whole;
 export const GITLAB_COMMIT_MAX_PAGES = 10; // 1,000 commits of the last 52 weeks; gitlab-runner (24 pages) sampled
 export const GITLAB_BRANCH_MAX_PAGES = 5; // 500 branches (gitlab-runner: 423)
 export const GITLAB_COMMIT_WEEKS = 52; // weekly series, contributors, punch card and churn come from these commits
+export const GITLAB_MR_NOTES = 50; // notes read per merge request (comments, first review, approval times)
+export const GITLAB_COUNT_LIMIT = 10_000; // GitLab omits X-Total above this: counts beyond it are N/A

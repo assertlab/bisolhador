@@ -4,6 +4,7 @@ import { REGISTRY_VERSION } from '../utils/aiRegistry.js';
 import { version } from '../../package.json';
 import { buildRepoReportModel } from './repoReportModel.js';
 import { plainText } from './plainText.js';
+import { withPlatform } from '../lib/platformText.js';
 
 /**
  * Dashboard PDF report. react-pdf, the document and the report texts are imported on click, not at page
@@ -22,7 +23,8 @@ export async function generateRepoReport(data, { isSnapshot = false } = {}) {
   ]);
   registerFonts();
   const locale = intlLocale(i18n.language);
-  const t = (key, options) => plainText(i18n.t(key, options));
+  // GitLab reports read the `_gitlab` variants where the wording differs (lib/platformText.js)
+  const t = withPlatform((key, options) => plainText(i18n.t(key, options)), data.provider);
   const model = buildRepoReportModel(data, t, locale, { isSnapshot });
   const meta = {
     appVersion: version,

@@ -1,4 +1,4 @@
-import { Trans, useTranslation } from 'react-i18next';
+import { usePlatformTranslation, PlatformTrans } from '../../lib/platformText.js';
 import { Link } from 'react-router-dom';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
@@ -17,7 +17,7 @@ const TD = 'px-3 py-2 text-gray-700 dark:text-slate-300';
  * Lives only in the browser's memory: never in the CSV, Supabase or GA.
  */
 export function AiStudentTable({ students }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const locale = intlLocale();
   const num = (v) => formatters.formatNumber(v, locale);
 
@@ -35,7 +35,7 @@ export function AiStudentTable({ students }) {
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6 space-y-3">
       <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{t('aiProcess.students.title')}</h4>
       <div role="note" className="text-sm text-gray-700 dark:text-slate-200 bg-gray-50 dark:bg-slate-900/40 border border-gray-200 dark:border-slate-700 rounded-md p-3 space-y-1">
-        <p><Trans i18nKey="aiProcess.students.notice" components={{ strong: <strong /> }} /></p>
+        <p><PlatformTrans i18nKey="aiProcess.students.notice" components={{ strong: <strong /> }} /></p>
         <p>{t('aiProcess.students.agentLimit')}</p>
         <p>
           {/* New tab: following it in place would lose the in-memory class analysis; noreferrer keeps

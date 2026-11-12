@@ -6,6 +6,7 @@ import { useHashScroll } from '../hooks/useHashScroll.js';
 import { useLazyLocale } from '../hooks/useLazyLocale.js';
 import { LazyTextsState } from '../components/LazyTextsState.jsx';
 import { GUIDE_SECTIONS, CHAOSS, DATA_ETHICS_URL, AI_GUIDE_PATH } from '../utils/indicatorGuide.js';
+import { gitlabLimits } from '../lib/platformText.js';
 
 const RELATION_STYLE = {
   equivalent: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
@@ -17,6 +18,8 @@ const RELATION_STYLE = {
 // indicator. Cards link here with #<id> (indicatorGuide.guidePath).
 export function Guide({ isSettingsOpen, setIsSettingsOpen }) {
   const { t } = useTranslation();
+  // GitLab limits quoted by the "Diferenças no GitLab" entry (from the constants)
+  const limits = gitlabLimits();
   // react-router doesn't scroll to #anchors, nor reset scroll on navigation;
   // focus moves to the entry for keyboard and screen-reader users.
   const texts = useLazyLocale('guide');
@@ -63,15 +66,18 @@ export function Guide({ isSettingsOpen, setIsSettingsOpen }) {
                     {['what', 'read', 'limits'].map((field) => (
                       <div key={field}>
                         <dt className="font-medium text-gray-900 dark:text-white">{t(`guide.${field}`)}</dt>
-                        <dd>{t(`guide.items.${item.id}.${field}`)}</dd>
+                        <dd>{t(`guide.items.${item.id}.${field}`, item.id === 'gitlab' ? limits : undefined)}</dd>
                       </div>
                     ))}
                     <div>
                       <dt className="font-medium text-gray-900 dark:text-white flex flex-wrap items-center gap-2">
                         {t('guide.chaoss')}
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${RELATION_STYLE[item.relation]}`}>
-                          {t(`guide.relation.${item.relation}`)}
-                        </span>
+                        {/* A reference entry (not an indicator) has no CHAOSS relation of its own */}
+                        {!item.reference && (
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${RELATION_STYLE[item.relation]}`}>
+                            {t(`guide.relation.${item.relation}`)}
+                          </span>
+                        )}
                       </dt>
                       <dd className="space-y-1">
                         {item.chaoss.length > 0 && (

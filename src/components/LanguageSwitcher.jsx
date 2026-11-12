@@ -1,8 +1,8 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { changeLanguageWithLocales } from '../lib/lazyLocales.js';
 
 export function LanguageSwitcher() {
-  const { i18n, t } = useTranslation();
+  const { i18n, t } = usePlatformTranslation();
 
   const handleLanguageChange = (lang) => {
     // Fetches the open page's lazy texts (/guia) in the new language first: no loading flash.

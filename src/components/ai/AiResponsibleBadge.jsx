@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import { GuideLink } from '../GuideLink.jsx';
 import { badgeScoreText } from '../../utils/aiProcess.js';
 import { BlockTitle, Chip } from './AiParts.jsx';
@@ -10,7 +10,7 @@ const STATE_TONE = { met: 'green', unmet: 'neutral', na: 'neutral', unverified: 
  * Not applicable without any AI trace (never a 0 score); 'na'/'unverified' are out of the denominator.
  */
 export function AiResponsibleBadge({ badge }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const complete = badge.applicable && badge.total > 0 && badge.met === badge.total;
   let summary;
   if (!badge.applicable) summary = t('aiProcess.badge.notApplicable');

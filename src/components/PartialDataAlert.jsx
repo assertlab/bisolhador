@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 
 export function PartialDataAlert({ warnings }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const [dismissed, setDismissed] = useState(false);
 
   if (!warnings || warnings.length === 0 || dismissed) return null;

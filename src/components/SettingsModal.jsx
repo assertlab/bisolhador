@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { getItem, setItem, removeItem } from '../utils/storage.js';
 import { GITHUB_TOKEN_KEY, tokenKey, getToken } from '../services/tokens.js';
 import { GITLAB_HOSTS } from '../utils/repoRef.js';
@@ -22,7 +22,7 @@ async function checkToken(host, token) {
 }
 
 export function SettingsModal({ isOpen, onClose }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const [token, setToken] = useState(() => getItem(GITHUB_TOKEN_KEY) || '');
   const [gitlabTokens, setGitlabTokens] = useState(() => Object.fromEntries(GITLAB_HOSTS.map((h) => [h, getToken({ provider: 'gitlab', host: h }) ?? ''])));
   const [gitlabChecks, setGitlabChecks] = useState({});

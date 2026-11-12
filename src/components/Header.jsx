@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { version } from '../../package.json';
 import { HelpModal } from './HelpModal.jsx';
@@ -20,7 +20,7 @@ const ICON_BUTTON = 'bg-white dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-
 // language and help move to a panel (the full toolbar was ~930px wide and
 // scrolled the whole page sideways on phones; at 1024px it was still 33px too wide).
 export function Header({ onSettingsClick }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleRef = useRef(null);

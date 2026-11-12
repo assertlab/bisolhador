@@ -1,9 +1,9 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 
 // Which commits the contributor numbers count (shared by BusFactorCard and
 // ContributorsTable, which use the same analysis).
 export function ContributorsScope({ analysis }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   if (!analysis?.window) return null; // snapshots saved before 2026-10 don't record it
   return (
     <p className="text-xs text-gray-500 dark:text-slate-400">

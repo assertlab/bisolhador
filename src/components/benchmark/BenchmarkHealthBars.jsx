@@ -1,9 +1,9 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
 
 export function BenchmarkHealthBars({ repos }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = usePlatformTranslation();
 
   return (
     <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-6">

@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Fase 2 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`), PR 1 de 2. Não publicar antes do PR 2 (textos).
+---
+
+## [3.26.0] - 2026-11-12
+
+Fase 2 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`): o Dashboard analisa projetos públicos do GitLab.
 
 ### ✨ Added
 
@@ -18,6 +22,12 @@ Fase 2 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`), PR 1 de 2. Não publicar a
   - Projetos `internal` e privados são recusados no Dashboard, com indicação do Modo Turma.
   - Nada é gravado: o aviso na tela explica que o histórico ainda não existe para o GitLab; a Linha do Tempo fica escondida.
 - **Tokens do GitLab nas configurações:** um por instância, verificado ao salvar (escopo `read_api`, validade).
+- **Textos na linguagem do GitLab:** num projeto do GitLab, cards, tooltips, avisos e o PDF falam de merge requests, pipelines do GitLab CI/CD e estatísticas calculadas a partir dos commits, em vez de GitHub Actions e estatísticas do GitHub. Só os textos que mudam de verdade ganham variante (chave `_gitlab`, `src/lib/platformText.js`); os limites citados (1.000 commits, 1.000 arquivos…) vêm das constantes.
+- **Guia "Como interpretar": entrada "Diferenças no GitLab"** (seção Plataformas), com o que muda em cada indicador e o que ainda não existe para o GitLab; o aviso do Dashboard leva até ela.
+
+### ✨ Changed
+
+- O botão de configurações passa a se chamar "Configurar tokens de acesso" (GitHub e GitLab).
 
 ### 🐛 Fixed
 
@@ -30,6 +40,7 @@ Fase 2 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`), PR 1 de 2. Não publicar a
 ### 🧪 Tests
 
 - `gitlabData.test.js`, `gitlabService.test.js` (token só para o próprio host, contagens sem `X-Total`, árvore com teto, listagens ausentes, falha só do tamanho dos MRs) e o fluxo GitLab do `useRepository`; terceiro fluxo no `smoke:csp` (gitlab.com simulado). Verificado no navegador contra gitlab-org/gitlab-runner e um projeto público do CIn.
+- `platformText.test.js` (toda variante `_gitlab` tem a chave-base, existe em pt e en e não menciona GitHub) e `repoReportModel.gitlab.test.js` (o PDF de um relatório do GitLab, com os textos reais, sem "GitHub"). Um teste exige que todo componente use `usePlatformTranslation` e `PlatformTrans` em vez de `useTranslation` e `Trans`. No navegador, a página e os tooltips de gitlab-org/gitlab-runner e de um projeto público do CIn não mencionam GitHub.
 
 ---
 

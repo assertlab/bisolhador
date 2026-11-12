@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import useChartTheme from '../../hooks/useChartTheme';
 import { createBaseChartOptions } from '../../lib/chartDefaults';
 import { intlLocale } from '../../i18n.js';
@@ -56,7 +56,7 @@ const datasetConfigs = {
  * Categorias: popularity (Stars/Forks), velocity (Open/Closed Issues), quality (Lead Time/Code Churn)
  */
 export default function BenchmarkComparisonChart({ repos, metricCategory = 'popularity' }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = usePlatformTranslation();
   const chartTheme = useChartTheme();
 
   const categoryTitles = {

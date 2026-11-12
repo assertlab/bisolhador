@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { useNavigate } from 'react-router-dom';
 import { formatters } from '../utils/formatters.js';
 import { downloadBlob } from '../utils/downloadBlob.js';
@@ -14,7 +14,7 @@ import { GuideLink } from './GuideLink.jsx';
 import { repoFileSlug } from '../utils/repoRef.js';
 
 export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = usePlatformTranslation();
   const locale = intlLocale(i18n.language);
   // Pull requests turned off on GitHub (read-only mirrors like torvalds/linux): "disabled", not N/A or 0
   const prsDisabled = data.features?.pullRequests === false;

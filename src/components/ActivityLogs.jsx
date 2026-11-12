@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { Tooltip } from './Tooltip.jsx';
 import { formatters } from '../utils/formatters.js';
 import { intlLocale } from '../i18n.js';
@@ -8,7 +8,7 @@ import { Avatar } from './Avatar.jsx';
 // commits (409). Never render a failure as an empty list. Snapshots: older ones
 // saved a failure as [], so an empty list there only says "none recorded".
 export function ActivityLogs({ commits, pullRequests, isSnapshot = false }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = usePlatformTranslation();
   // null = the request failed (live) or wasn't recorded (snapshot); [] = no commits
   const emptyCommitsKey = isSnapshot ? 'activity.commitsNotRecorded' : Array.isArray(commits) ? 'activity.noCommits' : 'activity.commitsUnavailable';
   const locale = intlLocale(i18n.language);

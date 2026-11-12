@@ -1,5 +1,5 @@
 import { Component, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { Header } from './Header';
 import { SettingsModal } from './SettingsModal';
 import analytics from '../services/analytics.js';
@@ -8,7 +8,7 @@ import { claimAutoReload, isChunkLoadError } from '../lib/chunkErrors.js';
 // Self-contained: the settings modal normally lives inside each page, which is gone here, and a
 // rate-limit or token problem is exactly when someone needs it.
 function ErrorPage({ error }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">

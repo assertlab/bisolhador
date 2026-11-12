@@ -1,11 +1,11 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
 import { topShareLevel, TOP_SHARE_STYLE } from '../../utils/contributors.js';
 
 // Level recomputed from the stored percentage on purpose (current thresholds for old snapshots).
 export function BenchmarkBusFactorRisk({ repos }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = usePlatformTranslation();
   const noneMeasured = repos.every((repo) => repo.busFactorPercentage == null);
 
   return (

@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import { Link } from 'react-router-dom';
 import { GuideLink } from '../GuideLink.jsx';
 import { AI_MIN_GROUP } from '../../constants.js';
@@ -22,7 +22,7 @@ const NOTE = 'text-xs text-gray-500 dark:text-slate-400';
  * Inside NewTabContext (Classroom) every link here opens in a new tab: see lib/newTab.js.
  */
 export function AiProcessSection({ aiProcess }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const newTab = useNewTab();
 
   if (!aiProcess?.available) {
@@ -154,7 +154,7 @@ export function AiProcessSection({ aiProcess }) {
 }
 
 function ConfigDepth({ tools, config, toolLabel }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const configured = tools.filter((tool) => tool.configKind);
   return (
     <div className="text-sm text-gray-700 dark:text-slate-200 space-y-1">
@@ -180,7 +180,7 @@ function ConfigDepth({ tools, config, toolLabel }) {
 }
 
 function Safeguards({ safeguards, missingKey, num }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   if (!safeguards.available) {
     return (
       <p className="text-sm text-gray-700 dark:text-slate-200">
