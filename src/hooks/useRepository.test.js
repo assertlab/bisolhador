@@ -42,6 +42,7 @@ function mockLinux(overrides = {}) {
     fetchCodeFrequency: vi.fn(async () => { throw statsError('TOO_LARGE'); }),
     fetchPunchCard: vi.fn(async () => []),
     fetchActionRuns: vi.fn(async () => ({ total_count: 0, workflow_runs: [] })),
+    fetchAiRepoContext: vi.fn(async () => null),
     ...Object.fromEntries(SEARCH.map((name) => [name, vi.fn(async () => 7)])),
     ...overrides,
   });
@@ -200,6 +201,7 @@ function mockGitlab(overrides = {}) {
     fetchCodeFrequency: vi.fn(async () => []),
     fetchPunchCard: vi.fn(async () => []),
     fetchActionRuns: vi.fn(async () => ({ total_count: 0, workflow_runs: [] })),
+    fetchAiRepoContext: vi.fn(async () => null),
     ...overrides,
   });
 }
@@ -262,11 +264,12 @@ describe('fetchRepositoryData: GitLab', () => {
     expect(gitlab.fetchCommits).not.toHaveBeenCalled();
   });
 
-  it('with a token, review stats are requested and the AI context is skipped (no GitLab fetcher yet)', async () => {
+  it('with a token, review stats are requested; the Dashboard asks for the AI context files only (it has the tree)', async () => {
     hasToken.value = true;
     mockGitlab({ fetchPullRequestReviewStats: vi.fn(async () => []), fetchBranchActivity: vi.fn(async () => ({ totalCount: 2, branches: [], capped: false })), fetchTagDates: vi.fn(async () => ({ total: 0, dates: [], fullPage: false })) });
     const report = await fetchRepositoryData('gitlab.com/g/p'); // the API answers with the canonical g/sub/p
     expect(gitlab.fetchPullRequestReviewStats).toHaveBeenCalledWith('g/sub', 'p');
+    expect(gitlab.fetchAiRepoContext).toHaveBeenCalledWith('g/sub', 'p', { listings: false });
     expect(report._warnings).toBeUndefined();
   });
 });

@@ -47,8 +47,7 @@ async function analyzeRepository(name, period, rejectedHosts) {
     service.fetchMergedPullRequestsInPeriod(o, r, period.since, period.until),
     info.default_branch ? service.fetchCiRunsInPeriod(o, r, info.default_branch, period.from, period.to) : Promise.resolve({ ...NO_CI_RUNS }),
     service.fetchReleases(o, r),
-    // No AI context query on GitLab yet: those checks read "not available on this platform"
-    service.fetchAiRepoContext ? service.fetchAiRepoContext(o, r) : Promise.resolve(null),
+    service.fetchAiRepoContext(o, r),
   ]);
   // Parts fail on their own (N/A in that column): say why in the console
   const fullName = repoListName(ref);
@@ -65,7 +64,7 @@ async function analyzeRepository(name, period, rejectedHosts) {
     provider: ref.provider,
     url: repoWebUrl(ref),
     isPrivate: info.private,
-    ...analyzeTeamRepo({ history, prs, runs, releases }, period, { ctx, authorship, contextUnsupported: !service.fetchAiRepoContext }),
+    ...analyzeTeamRepo({ history, prs, runs, releases }, period, { ctx, authorship }),
   };
 }
 

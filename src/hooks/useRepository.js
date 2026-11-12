@@ -191,8 +191,9 @@ export async function fetchRepositoryData(repoName) {
         punchCard: service.fetchPunchCard(owner, repo),
         actionRuns: repoData.default_branch ? service.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
         // AI in the Process: .gitignore, .claude/settings.json, template. Token only (zero new requests without one).
-        // Not on GitLab yet (no fetcher): those checks stay "not verified".
-        aiContext: hasToken && service.fetchAiRepoContext ? service.fetchAiRepoContext(owner, repo) : Promise.resolve(null),
+        // GitHub: token only (GraphQL); GitLab: public projects answer without one (detailsWithoutToken).
+        // The Dashboard has the tree: only the files are needed (GitLab skips the directory listings)
+        aiContext: detailed ? service.fetchAiRepoContext(owner, repo, { listings: false }) : Promise.resolve(null),
     };
     const endpointNames = Object.keys(tasks);
     const settled = await Promise.allSettled(Object.values(tasks));
@@ -339,9 +340,8 @@ export async function fetchRepositoryData(repoName) {
         maturity,
         prLimit: MERGED_PR_SAMPLE,
       }),
-      withToken: hasToken,
-      // No AI context fetcher for this platform yet: config/safeguard checks aren't a token or request problem
-      ...(!service.fetchAiRepoContext && { contextUnsupported: true }),
+      // The token-only checks ran (GitLab runs them without a token)
+      withToken: detailed,
     };
 
     // One report object: shown on screen and persisted as the snapshot's full_report.

@@ -235,6 +235,8 @@ export function parseAiRepoContext(data, { allowPrivateTemplate = false } = {}) 
     workflowPaths: workflowPaths(repo),
     rootPaths: rootPaths(repo),
     unverified: CONTEXT_PARTS.filter((part) => unread.has(part)),
+    // The platform never reports a template (GitLab): every origin outside the authorship query is unknown
+    templateUnknowable: data?.templateUnsupported === true,
     available: true,
   };
 }
@@ -265,6 +267,7 @@ export function analyzeAiConfig(paths, treeStatus, ctx, { classroomCreated = fal
     entries: detectConfig(paths).map((e) => ({ ...e, fromTemplate: originOf(e.path, templatePaths, originChecked, classroomCreated) })),
     hiddenLocal: gitignoreHidesAi(read('gitignore') ? (context.gitignore ?? '') : null),
     coauthorDisabled: read('claudeSettings') ? (context.claudeSettings == null ? false : coauthorDisabled(context.claudeSettings)) : null,
+    templateUnknowable: context?.templateUnknowable === true,
   };
 }
 
@@ -291,14 +294,17 @@ export function analyzeCoherence(config, commits, prs) {
   if (!measured) unverified.push('commits');
   if (!prs.available) unverified.push('prs');
 
+  // Where the platform can't tell template files apart (GitLab), a course template's AI config would flag
+  // every team: only files known to be the team's own count for this rule ('template' stays unverified).
+  const flaggable = config.templateUnknowable ? own.filter((e) => e.fromTemplate !== null) : own;
   const flags = [];
   if (measured && !declared) {
-    if (own.length > 0) flags.push('configWithoutDeclaration');
+    if (flaggable.length > 0) flags.push('configWithoutDeclaration');
     if (config.hiddenLocal?.length > 0) flags.push('hiddenWithoutDeclaration');
   }
 
   // 'generic' (AGENTS.md, .mcp.json) belongs to no tool in particular, so it never mismatches.
-  const configTools = unique(own.map((e) => e.toolId).filter((id) => id !== 'generic'));
+  const configTools = unique(flaggable.map((e) => e.toolId).filter((id) => id !== 'generic'));
   const declaredTools = unique([...(commits.tools ?? []), ...(prs.agentTools ?? [])]);
   const toolMismatch = configTools.length > 0 && declaredTools.length > 0 && !configTools.some((t) => declaredTools.includes(t));
 
@@ -461,18 +467,15 @@ export function normalizeSnapshotAiProcess(report) {
 
 /**
  * Why the token-only checks may be missing: 'noToken' (GitHub: context, AI review and safeguards all
- * need it), 'unsupported' (no context query on this platform, GitLab for now: .gitignore, settings,
- * template; AI review and safeguards still come from the MRs), or null (they ran; a null value is a
- * failed request). `missingKey`: the text for a missing AI review or safeguards.
+ * need it), or null (they ran; a null value is a failed request). `missingKey`: the text for a missing
+ * AI review or safeguards.
  */
 const GAP_KEYS = {
-  // Only the context query is missing; AI review and safeguards come from the MR data, so a gap there is a failure
-  unsupported: { noteKey: 'aiProcess.unavailable.unsupported', missingKey: 'aiProcess.fetchFailed' },
   noToken: { noteKey: 'aiProcess.unavailable.noToken', missingKey: 'aiProcess.needsToken' },
   none: { noteKey: null, missingKey: 'aiProcess.fetchFailed' },
 };
 
 export function aiContextGap(ai) {
-  const gap = ai?.contextUnsupported === true ? 'unsupported' : ai?.withToken === false ? 'noToken' : null;
+  const gap = ai?.withToken === false ? 'noToken' : null;
   return { gap, ...GAP_KEYS[gap ?? 'none'] };
 }

@@ -168,8 +168,54 @@ describe('createGitlabService: requests', () => {
     expect(await createGitlabService('gitlab.com').fetchActionRuns('g', 'p', 'main')).toMatchObject({ total_count: 1, workflow_runs: [{ event: 'push', conclusion: 'success' }] });
   });
 
-  it('has no AI context fetcher yet (useRepository skips it)', () => {
-    expect(createGitlabService('gitlab.com').fetchAiRepoContext).toBeUndefined();
+  it('AI context: root + existing AI directories + .gitignore, read as GitHub\'s; template origin unverified', async () => {
+    const { parseAiRepoContext } = await import('../utils/aiProcess.js');
+    const tree = (...names) => names.map(([name, type]) => ({ name, type, path: name }));
+    routes = [
+      ['/repository/tree?per_page=100&path=.agent', reply(tree(['rules', 'tree'], ['skills', 'tree']))],
+      ['/repository/tree?per_page=100&path=.pi', reply(tree(['prompts', 'tree']))],
+      ['/repository/tree?per_page=100&path=.gitlab%2Fduo', reply({ message: '404 Tree Not Found' }, { status: 404 })],
+      ['/repository/tree?per_page=100', reply(tree(['.agent', 'tree'], ['.pi', 'tree'], ['.gitlab', 'tree'], ['.gitignore', 'blob'], ['README.md', 'blob'], ['.gitlab-ci.yml', 'blob']))],
+      ['/repository/files/.gitignore/raw?ref=HEAD', { ok: true, status: 200, headers: new Headers(), text: async () => 'node_modules\n.claude/\n' }],
+    ];
+    const raw = await createGitlabService('gitlab.com').fetchAiRepoContext('g', 'p');
+    const ctx = parseAiRepoContext(raw, { allowPrivateTemplate: true });
+    expect(ctx.contextPaths).toEqual(expect.arrayContaining(['.agent/rules', '.agent/skills', '.pi/prompts', '.gitignore']));
+    expect(ctx.gitignore).toContain('.claude/');
+    expect(ctx.claudeSettings).toBeNull(); // no .claude directory: nothing to read, not unverified
+    expect(ctx.templatePaths).toBeNull(); // GitLab reports no template: origin not verified
+    expect(ctx.unverified).toEqual([]);
+    expect(ctx.rootPaths).toContain('.gitlab-ci.yml');
+    // Only directories present at the root were listed: no request for .github, .claude…
+    expect(calls.some((c) => /path=\.github/.test(c.url))).toBe(false);
+  });
+
+  it('AI context: a full root page may be truncated, so a .gitignore not seen there is "not verified", not absent', async () => {
+    const { parseAiRepoContext } = await import('../utils/aiProcess.js');
+    routes = [['/repository/tree?per_page=100', reply(page(100, 'dir').map((e) => ({ ...e, type: 'tree' })))]];
+    const ctx = parseAiRepoContext(await createGitlabService('gitlab.com').fetchAiRepoContext('g', 'p'));
+    expect(ctx.unverified).toEqual(expect.arrayContaining(['gitignore', 'claudeSettings', 'listings']));
+  });
+
+  it('AI context without listings (Dashboard): only the files are read', async () => {
+    routes = [
+      ['/repository/files/.gitignore/raw?ref=HEAD', { ok: true, status: 200, headers: new Headers(), text: async () => '.cursor/' }],
+      ['/repository/tree?per_page=100', reply([{ name: '.agent', type: 'tree' }, { name: '.gitignore', type: 'blob' }])],
+    ];
+    const raw = await createGitlabService('gitlab.com').fetchAiRepoContext('g', 'p', { listings: false });
+    expect(calls.map((c) => c.url).filter((u) => /path=/.test(u))).toEqual([]);
+    expect(raw.repository.gitignore.text).toBe('.cursor/');
+    expect(raw.templateUnsupported).toBe(true);
+  });
+
+  it('AI context: a listing that fails is "not verified" (partial error), not "absent"', async () => {
+    const { parseAiRepoContext } = await import('../utils/aiProcess.js');
+    routes = [
+      ['/repository/tree?per_page=100&path=.agent', reply({}, { status: 500 })],
+      ['/repository/tree?per_page=100', reply([{ name: '.agent', type: 'tree', path: '.agent' }])],
+    ];
+    const ctx = parseAiRepoContext(await createGitlabService('gitlab.com').fetchAiRepoContext('g', 'p'));
+    expect(ctx.unverified).toContain('listings');
   });
 });
 

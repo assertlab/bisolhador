@@ -161,6 +161,7 @@ describe('analyzeAiConfig', () => {
       ],
       hiddenLocal: ['.claude/'],
       coauthorDisabled: true,
+      templateUnknowable: false,
     });
   });
   it('no context (no token) or unavailable context → template, gitignore and settings unverified', () => {
@@ -291,7 +292,7 @@ describe('analyzeResponsibleBadge', () => {
 describe('buildAiProcess', () => {
   it('buildAiProcess has no person logins and the method/version', () => {
     const ai = buildAiProcess(fullFixture);
-    expect(ai).toMatchObject({ method: 'ai-traces-v1', registryVersion: '2026-10-27' });
+    expect(ai).toMatchObject({ method: 'ai-traces-v1', registryVersion: '2026-11-12' });
     expect(JSON.stringify(ai)).not.toContain('alice');
   });
   it('merges sources per tool; template-only tools are flagged fromTemplate and have no config source', () => {
@@ -471,10 +472,32 @@ describe('parseAiRepoContext', () => {
 });
 
 describe('aiContextGap', () => {
-  it('unsupported platform, no token, or ran (a missing value is then a failure)', async () => {
+  it('no token, or ran (a missing value is then a failure)', async () => {
     const { aiContextGap } = await import('./aiProcess.js');
-    expect(aiContextGap({ withToken: true, contextUnsupported: true })).toEqual({ gap: 'unsupported', noteKey: 'aiProcess.unavailable.unsupported', missingKey: 'aiProcess.fetchFailed' });
     expect(aiContextGap({ withToken: false })).toMatchObject({ gap: 'noToken', missingKey: 'aiProcess.needsToken' });
     expect(aiContextGap({ withToken: true })).toEqual({ gap: null, noteKey: null, missingKey: 'aiProcess.fetchFailed' });
+  });
+});
+
+describe('analyzeCoherence where the platform never reports a template (GitLab)', () => {
+  const commits = { available: true, n: 10, withAi: 0, tools: [] };
+  const prs = { available: true, byAgents: 0, agentTools: [] };
+  const config = (fromTemplate, templateUnknowable) => ({
+    status: 'complete', hiddenLocal: [], templateUnknowable,
+    entries: [{ toolId: 'antigravity', path: '.agent/skills', kind: 'extensions', fromTemplate }],
+  });
+
+  it('config of unknown origin does not flag "config without declaration" (a course template would flag every team)', () => {
+    const c = analyzeCoherence(config(null, true), commits, prs);
+    expect(c.flags).toEqual([]);
+    expect(c.unverified).toContain('template');
+  });
+
+  it('on GitHub the rule is unchanged: unknown origin still counts', () => {
+    expect(analyzeCoherence(config(null, false), commits, prs).flags).toEqual(['configWithoutDeclaration']);
+  });
+
+  it('a file known to be the team\'s own still flags on GitLab', () => {
+    expect(analyzeCoherence(config(false, true), commits, prs).flags).toEqual(['configWithoutDeclaration']);
   });
 });

@@ -14,7 +14,7 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 - **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
 - **📖 Como interpretar**: definição, limitações e referência às métricas CHAOSS de cada indicador
 - **🎓 Modo Turma**: compare os repositórios das equipes de uma turma no período da disciplina, do GitHub e do GitLab na mesma tabela (privados e, no GitLab, internos também, com o token de quem usa, sem salvar nada); importa uma organização do GitHub ou um grupo do GitLab com subgrupos; exportação CSV e relatório PDF
-- **🤖 IA no Processo**: rastros de IA que a plataforma guarda (configuração de agentes versionada, coautoria declarada em commits, PRs abertos por agentes, revisões de bots de IA), com cruzamento entre as fontes e o selo "Uso responsável de IA"; tudo é limite inferior (sem rastro não quer dizer sem IA). No GitLab, o .gitignore, as configurações locais e a origem template ainda não são verificados, e o GitLab Duo ainda não é reconhecido.
+- **🤖 IA no Processo**: rastros de IA que a plataforma guarda (configuração de agentes versionada, coautoria declarada em commits, PRs abertos por agentes, revisões de bots de IA), com cruzamento entre as fontes e o selo "Uso responsável de IA"; tudo é limite inferior (sem rastro não quer dizer sem IA). Reconhece também Google Antigravity (`.agent/`), Pi (`.pi/`) e GitLab Duo (`.gitlab/duo/` e a revisão nos MRs). No GitLab, a origem template não é verificada, e commits de agentes do GitLab Duo (contas de serviço) ainda não são reconhecidos.
 - **📊 Benchmark Multi-Repo**: Compare a evolução de até 10 repositórios lado a lado com gráficos comparativos, filtros temporais (7d, 30d, 60d, 90d, todo histórico) e tabela de métricas detalhada _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
 - **📈 Time Machine (Histórico de Evolução)**: Visualize a evolução temporal de qualquer repositório através de gráficos interativos com filtros de período (7d, 30d, 60d, 90d, todo histórico). Acompanhe o crescimento de Stars, Forks e Watchers ao longo do tempo com dados baseados em snapshots históricos _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
 - **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca, com data/hora da coleta sempre visível _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
@@ -44,6 +44,9 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 - **O que muda no GitLab:** algumas métricas são calculadas a partir dos commits dos últimos 12 meses, a revisão usa notas e aprovações dos merge requests, e o CI usa os pipelines. Detalhes em *Como interpretar → Diferenças no GitLab* (`/guia#gitlab`).
 
 ## 🔄 Últimas Atualizações
+
+### v3.28.0 - Antigravity, Pi e GitLab Duo na IA no Processo
+- **✨ Novas ferramentas reconhecidas** (Google Antigravity, Pi, GitLab Duo) e **contexto de IA lido no GitLab**, inclusive na Turma com projetos internos
 
 ### v3.27.2 - Token recusado e repositório não encontrado
 - **🐛 Mensagens próprias** quando o GitHub ou o GitLab recusa o token salvo (com o host) e quando o repositório não é encontrado (no GitLab, lembra que internos e privados exigem login)

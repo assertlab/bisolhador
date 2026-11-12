@@ -18,7 +18,21 @@
 //   `Co-authored-by`, not Cursor: so REST commits need `agentAccounts` (a person-type account that is the agent),
 //   because a User-type author is otherwise never an agent. GraphQL commits (Classroom) already match by e-mail.
 
-export const REGISTRY_VERSION = '2026-10-27'; // 2026-10-27: Cursor as PR author (`cursor[bot]`) and agent commits (`cursoragent` account)
+// - 2026-11-12, official docs (no co-author e-mail in any of them, so config only):
+//   Only documented subfolders/files are matched (a bare `.agent/` or `.pi/` is also used by monitoring/CI agents and
+//   Raspberry Pi projects). Google Antigravity (antigravity.google/docs/rules, /docs/skills): workspace rules in `.agents/rules/*.md`, skills in
+//   `.agents/skills/`, legacy `.agent/` still supported ("backward compatibility for .agent/skills"); OpenSpec's tool table
+//   (Fission-AI/OpenSpec docs/supported-tools.md) writes Antigravity skills/commands to `.agent/skills` and `.agent/workflows`
+//   and notes "`.agents` is not `.agent`: the singular directory belongs to Antigravity". `.agents/skills/` itself is the
+//   shared Agent Skills location read by several tools (Codex, Zed, Pi…): generic, not Antigravity.
+//   Pi (pi.dev/docs/latest/configuration.md): project config in `.pi/` (settings.json, SYSTEM.md, skills/, prompts/,
+//   extensions/…). Seen in student projects on gitlab.cin.ufpe.br (`.agent/{rules,skills,workflows}`, `.pi/{skills,prompts}`).
+//   GitLab Duo (docs.gitlab.com …/customize/custom_rules, review instructions): `.gitlab/duo/chat-rules.md` and
+//   `.gitlab/duo/mr-review-instructions.yaml`; its code review bot is the account `GitLabDuo` (bot: true on gitlab.com MRs,
+//   seen 2026-11-11). Agent flows commit as service accounts (`duo-<flow>-<group>`, `ai-<flow>-<group>`) and their MRs are
+//   attributed to the human who triggered them (…/duo_agent_platform/security): not detectable by a fixed login yet.
+
+export const REGISTRY_VERSION = '2026-11-12'; // 2026-11-12: Google Antigravity, Pi, GitLab Duo; shared .agents/skills (generic)
 
 // GitHub Classroom's bot creates the template-derived initial commit.
 export const CLASSROOM_BOT = 'github-classroom';
@@ -44,6 +58,10 @@ export const CONTEXT_DIRS = [
   '.windsurf/rules',
   '.junie',
   '.gemini',
+  '.agent',
+  '.agents',
+  '.pi',
+  '.gitlab/duo',
 ];
 
 // Every regex metacharacter, backslash included (not only '.': CodeQL js/incomplete-sanitization).
@@ -224,10 +242,49 @@ export const AI_TOOLS = [
     reviewerLogins: ['greptile-apps'],
   },
   {
+    id: 'antigravity',
+    label: 'Google Antigravity',
+    config: [
+      { re: dir('.agent/skills'), show: '.agent/skills/', kind: 'extensions' },
+      { re: dir('.agent/workflows'), show: '.agent/workflows/', kind: 'extensions' },
+      // Only the documented subfolders: a bare .agent/ is also used by monitoring/CI agents
+      { re: dir('.agent/rules'), show: '.agent/rules/', kind: 'instructions' },
+      { re: dir('.agents/rules'), show: '.agents/rules/', kind: 'instructions' },
+      { re: dir('.agents/workflows'), show: '.agents/workflows/', kind: 'extensions' },
+    ],
+    coauthors: [],
+    agentLogins: [],
+    reviewerLogins: [],
+  },
+  {
+    id: 'pi',
+    label: 'Pi',
+    config: [
+      { re: dir('.pi/skills'), show: '.pi/skills/', kind: 'extensions' },
+      { re: dir('.pi/prompts'), show: '.pi/prompts/', kind: 'extensions' },
+      { re: dir('.pi/extensions'), show: '.pi/extensions/', kind: 'extensions' },
+      // Documented files only: a bare .pi/ also shows up in unrelated projects (Raspberry Pi…)
+      { re: /^\.pi\/(settings\.json|SYSTEM\.md|APPEND_SYSTEM\.md)$/, show: '.pi/settings.json', kind: 'instructions' },
+    ],
+    coauthors: [],
+    agentLogins: [],
+    reviewerLogins: [],
+  },
+  {
+    id: 'gitlab-duo',
+    label: 'GitLab Duo',
+    config: [{ re: dir('.gitlab/duo'), show: '.gitlab/duo/', kind: 'instructions' }],
+    coauthors: [],
+    agentLogins: [],
+    reviewerLogins: ['gitlabduo'],
+  },
+  {
     id: 'generic',
     label: 'Agentes (genérico)',
     config: [
       { re: anyLevel('AGENTS.md'), show: '**/AGENTS.md', kind: 'instructions' },
+      // Agent Skills shared by several tools (Codex, Zed, Pi, Antigravity…): not one tool's
+      { re: dir('.agents/skills'), show: '.agents/skills/', kind: 'extensions' },
       { re: anyLevel('.mcp.json'), show: '**/.mcp.json', kind: 'extensions' },
     ],
     coauthors: [],
