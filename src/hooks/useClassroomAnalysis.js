@@ -9,6 +9,14 @@ import { authorshipPaths } from '../utils/aiClassroom.js';
 
 const CONCURRENCY = 3; // repositories analyzed at once (~6–9 requests each)
 
+// A host that refused the token or hit its usage limit: the queued repositories of that host get this row
+// instead of being requested (the run can be repeated later). Returns the row.
+function stopHost(stoppedHosts, error) {
+  const row = { status: error.code === 'TOKEN_REJECTED' ? 'tokenRejected' : 'rateLimited', host: error.host, ...(error.resetAt && { resetAt: error.resetAt }) };
+  if (!stoppedHosts.has(error.host)) stoppedHosts.set(error.host, row);
+  return row;
+}
+
 /**
  * One repository: visibility check first, then the period fetches in parallel.
  * Private repositories ARE analyzed here — the one exception to "never process
@@ -20,22 +28,19 @@ const CONCURRENCY = 3; // repositories analyzed at once (~6–9 requests each)
  * `name` is a list entry (GitHub "owner/repo", GitLab "host/path"); the service
  * comes from its ref (getProvider), with that host's token.
  */
-async function analyzeRepository(name, period, rejectedHosts) {
+async function analyzeRepository(name, period, stoppedHosts) {
   const { ref: requested } = parseRepoRef(name);
   const service = requested && getProvider(requested);
   if (!service) return { status: 'error' };
-  // That host already refused the token in this run: don't send it again for every repository
-  if (rejectedHosts.has(requested.host)) return { status: 'tokenRejected', host: requested.host };
+  // That host already refused the token or hit its usage limit in this run: don't keep asking it
+  if (stoppedHosts.has(requested.host)) return stoppedHosts.get(requested.host);
   const [owner, repo] = ownerAndRepo(requested);
   let info;
   try {
     // Missing repository or refused token are final (isFinalError, not retried); anything else gets 2 retries
     info = await withExponentialBackoff(() => service.fetchRepository(owner, repo), 2, 300);
   } catch (error) {
-    if (error.code === 'TOKEN_REJECTED') {
-      rejectedHosts.add(error.host);
-      return { status: 'tokenRejected', host: error.host };
-    }
+    if (error.code === 'TOKEN_REJECTED' || error.code === 'RATE_LIMITED') return stopHost(stoppedHosts, error);
     return error.code === 'NOT_FOUND' ? { status: 'notFound', host: requested.host } : { status: 'error' };
   }
   if (typeof info?.private !== 'boolean') return { status: 'error' }; // can't tell: don't analyze
@@ -49,15 +54,18 @@ async function analyzeRepository(name, period, rejectedHosts) {
     service.fetchReleases(o, r),
     service.fetchAiRepoContext(o, r),
   ]);
-  // Parts fail on their own (N/A in that column): say why in the console
+  // Parts fail on their own (N/A in that column): say why in the console. A usage limit on any of them
+  // stops that host for the repositories still queued (this row keeps what did load).
   const fullName = repoListName(ref);
+  const limited = [history, prs, runs, releases, aiContext].map((r) => r.reason).find((e) => e?.code === 'RATE_LIMITED');
+  if (limited) stopHost(stoppedHosts, limited);
   for (const [part, result] of Object.entries({ history, prs, runs, releases, aiContext })) {
     if (result.status === 'rejected') console.warn(`[classroom] ${fullName}: ${part} failed:`, result.reason?.message);
   }
   // Parsed once: the authorship query and the analysis read the same context. Classroom may read
   // a private template (it already analyzes private repositories, in memory only).
   const ctx = aiContext.status === 'fulfilled' && aiContext.value ? parseAiRepoContext(aiContext.value, { allowPrivateTemplate: true }) : null;
-  const authorship = await fetchAuthorship(service, o, r, ctx, fullName);
+  const authorship = await fetchAuthorship(service, o, r, ctx, fullName, stoppedHosts);
   return {
     status: 'ok',
     fullName,
@@ -72,13 +80,14 @@ async function analyzeRepository(name, period, rejectedHosts) {
  * Who added or changed each AI-config file (+1 GraphQL, only when the repository has
  * configuration outside the template). [] = nothing to ask; null = unknown (context or query failed).
  */
-async function fetchAuthorship(service, owner, repo, ctx, fullName) {
+async function fetchAuthorship(service, owner, repo, ctx, fullName, stoppedHosts) {
   if (!ctx || !service.fetchAiConfigAuthorship) return null;
   const paths = authorshipPaths(ctx);
   if (paths.length === 0) return [];
   try {
     return await service.fetchAiConfigAuthorship(owner, repo, paths);
   } catch (error) {
+    if (error?.code === 'RATE_LIMITED' || error?.code === 'TOKEN_REJECTED') stopHost(stoppedHosts, error);
     console.warn(`[classroom] ${fullName}: AI config authorship failed:`, error?.message);
     return null;
   }
@@ -98,13 +107,13 @@ export function useClassroomAnalysis(repos, period, enabled, runId = 0) {
     if (!key) return undefined;
     let cancelled = false;
     const queue = [...repos];
-    const rejectedHosts = new Set(); // hosts whose token was refused in this run
+    const stoppedHosts = new Map(); // host → the row its refusal gave (token refused, usage limit) in this run
     const worker = async () => {
       while (!cancelled && queue.length) {
         const name = queue.shift();
         let row;
         try {
-          row = await analyzeRepository(name, period, rejectedHosts);
+          row = await analyzeRepository(name, period, stoppedHosts);
         } catch {
           row = { status: 'error' };
         }

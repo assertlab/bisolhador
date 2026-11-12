@@ -375,7 +375,7 @@ describe('githubService: failures are errors, not zeros', () => {
     fetchMock.mockReturnValue(json({ message: 'API rate limit exceeded' }, { status: 403 }));
     const error = await githubService.fetchContributors('o', 'r').catch((e) => e);
     expect(error.message).toMatch(/403/);
-    expect(error.code).toBeUndefined(); // a rate limit is a plain failure: a later search may work
+    expect(error.code).toBe('RATE_LIMITED'); // a usage limit, never TOO_LARGE: a later search may work (it still blocks the snapshot)
     expect(fetchMock.mock.calls[0][0]).toContain('per_page=100');
   });
 
@@ -511,5 +511,23 @@ describe('githubService.fetchRepository: refused token and missing repository ar
     vi.stubGlobal('fetch', vi.fn(() => json({ message: 'Not Found' }, { status: 404 })));
     vi.stubGlobal('localStorage', { getItem: () => null });
     await expect(githubService.fetchRepository('o', 'r')).rejects.toMatchObject({ code: 'NOT_FOUND', message: expect.stringMatching(/404/) });
+  });
+});
+
+describe('githubService: usage limits through every request', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('GraphQL answering 200 with an error of type RATE_LIMITED → RATE_LIMITED, not retried as a plain failure', async () => {
+    vi.stubGlobal('localStorage', { getItem: () => 'ghp_x' });
+    const fetchMock = vi.fn(() => json({ errors: [{ type: 'RATE_LIMITED', message: 'API rate limit exceeded' }] }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(githubService.fetchCommitHistoryInPeriod('o', 'r', 'a', 'b')).rejects.toMatchObject({ code: 'RATE_LIMITED', host: 'github.com' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('any fetcher (here fetchCommits) gets RATE_LIMITED on a 403 with no requests left', async () => {
+    vi.stubGlobal('localStorage', { getItem: () => null });
+    vi.stubGlobal('fetch', vi.fn(() => json({ message: 'API rate limit exceeded' }, { status: 403, headers: { 'x-ratelimit-remaining': '0' } })));
+    await expect(githubService.fetchCommits('o', 'r')).rejects.toMatchObject({ code: 'RATE_LIMITED' });
   });
 });

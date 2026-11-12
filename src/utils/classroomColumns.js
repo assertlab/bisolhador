@@ -1,6 +1,7 @@
 import { badgeScoreText, configChecked } from './aiProcess.js';
 import { toolLabel } from '../components/ai/toolLabel.js';
 import { GITHUB_REF } from '../services/tokens.js';
+import { classroomRetryI18n } from './rateLimit.js';
 
 // Classroom table/CSV columns: header key, guide entry, raw value, and whether the
 // value comes from a capped sample (shown with "*" / "+"). Rows that failed for a
@@ -35,6 +36,10 @@ export function coherenceFlags(r) {
  */
 export function classroomStatusText(row, dup, t) {
   const status = dup ? 'duplicate' : row?.status ?? 'pending';
+  if (status === 'rateLimited') {
+    const retry = classroomRetryI18n(row);
+    return `${t('classroom.status.rateLimited', { host: row.host })} ${t(retry.key, retry.options)}`;
+  }
   const gitlabNotFound = status === 'notFound' && row.host !== GITHUB_REF.host;
   return t(`classroom.status.${status}`, { name: dup, host: row?.host, ...(gitlabNotFound && { context: 'gitlab' }) });
 }

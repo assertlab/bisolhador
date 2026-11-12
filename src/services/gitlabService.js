@@ -5,7 +5,7 @@
 // project. Both arrive validated by parseRepoRef; the project id is their
 // encoded full path. Counts and lists THROW on failure (never a fake zero),
 // as in githubService.
-import { getToken, tokenRejectedError } from './tokens.js';
+import { getToken, tokenRejectedError, rateLimitedError } from './tokens.js';
 import {
   toRepoData, toRestCommit, weeklySeries, punchCard, codeFrequency, contributorStats,
   profileFromListings, toRestPullRequest, toReviewNodes, toWorkflowRuns, toRelease, isGitlabBot, WEEK_MS,
@@ -60,14 +60,17 @@ export function createGitlabService(host) {
   }
 
   // 401 with a token = the token was refused (TOKEN_REJECTED); 404 = NOT_FOUND (or invisible without login)
-  const failure = (label, status) => (status === 401 && getToken(tokenRef)
-    ? tokenRejectedError(host, `GitLab ${label}`)
-    : httpError(label, status, status === 404 ? 'NOT_FOUND' : undefined));
+  // 429 = RATE_LIMITED (no reset time: GitLab doesn't expose its RateLimit headers through CORS)
+  const failure = (label, response) => {
+    const { status } = response;
+    if (status === 401 && getToken(tokenRef)) return tokenRejectedError(host, `GitLab ${label}`);
+    return rateLimitedError(response, host, `GitLab ${label}`) ?? httpError(label, status, status === 404 ? 'NOT_FOUND' : undefined);
+  };
 
   async function request(path, label, { notFound } = {}) {
     const response = await fetch(`${API}${path}`, { headers: headers() });
     if (response.status === 404 && notFound !== undefined) return { response, body: notFound };
-    if (!response.ok) throw failure(label, response.status);
+    if (!response.ok) throw failure(label, response);
     return { response, body: await response.json() };
   }
   const json = async (path, label, opts) => (await request(path, label, opts)).body;
@@ -116,7 +119,7 @@ export function createGitlabService(host) {
       headers: { ...headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, variables }),
     });
-    if (!response.ok) throw failure(`GraphQL ${label}`, response.status);
+    if (!response.ok) throw failure(`GraphQL ${label}`, response);
     const body = await response.json();
     if (!body.data) throw new Error(`GitLab GraphQL ${label} failed: ${body.errors?.[0]?.message ?? 'no data'}`);
     if (body.errors?.length) console.warn(`[gitlabService] GraphQL ${label} returned partial data:`, body.errors[0].message);
@@ -153,7 +156,7 @@ export function createGitlabService(host) {
   const rawFile = async (owner, repo, path) => {
     const response = await fetch(`${API}/projects/${projectId(owner, repo)}/repository/files/${encodeURIComponent(path)}/raw?ref=HEAD`, { headers: headers() });
     if (response.status === 404) return null;
-    if (!response.ok) throw failure(`file ${path}`, response.status);
+    if (!response.ok) throw failure(`file ${path}`, response);
     return response.text();
   };
 

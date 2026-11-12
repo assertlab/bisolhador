@@ -23,6 +23,7 @@ import { formatters } from '../utils/formatters.js';
 import { buildStatCards } from '../utils/dashboardCards.js';
 import { PlatformProvider, withPlatform } from '../lib/platformText.js';
 import { GuideLink } from '../components/GuideLink.jsx';
+import { rateLimitI18n } from '../utils/rateLimit.js';
 import { intlLocale } from '../i18n.js';
 
 // Lazy-loaded chart components (Code Splitting). Each also waits on
@@ -75,12 +76,13 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const snapshotParams = getSnapshotParams(searchParams);
   const isSnapshotUrl = Boolean(snapshotParams);
   const snapshot = useSnapshot(snapshotParams);
-  const { data: repoData, loading, error, errorI18n } = useRepository(isSnapshotUrl ? null : searchParams.get('q'));
+  const { data: repoData, loading, error, errorI18n, errorRateLimit } = useRepository(isSnapshotUrl ? null : searchParams.get('q'));
+  const rateLimitText = (info) => { const { key, options } = rateLimitI18n(info); return t(key, options); };
   const displayData = isSnapshotUrl ? snapshot.data : repoData;
   const displayLoading = isSnapshotUrl ? snapshot.loading : loading;
   const displayError = isSnapshotUrl
     ? (snapshot.failed ? t('errors.snapshotUnavailable') : null)
-    : errorI18n ? t(errorI18n.key, errorI18n.options) : error;
+    : errorRateLimit ? rateLimitText(errorRateLimit) : errorI18n ? t(errorI18n.key, errorI18n.options) : error;
   const isSnapshotMode = isSnapshotUrl && !snapshotAlertDismissed;
   const locale = intlLocale(i18n.language);
   // The stat cards' text comes from utils/dashboardCards.js (shared with the PDF report)
@@ -194,6 +196,12 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
 
           {/* Alerta de Dados Parciais */}
           <PartialDataAlert warnings={displayData?._warnings} />
+          {/* Part of the indicators failed because the platform limited the requests */}
+          {displayData?._rateLimit && (
+            <p role="alert" className="w-full max-w-2xl mx-auto mt-3 bg-yellow-50 border border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-300 px-4 py-3 rounded-md text-sm">
+              {rateLimitText(displayData._rateLimit)}
+            </p>
+          )}
 
           {/* GitLab: no history yet, and some charts are computed from commits */}
           {displayData?.provider === 'gitlab' && (

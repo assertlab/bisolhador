@@ -7,8 +7,9 @@
  * @returns {Promise<T>} Result of the function call
  * @throws After all retries are exhausted, or at once for a final error (isFinalError)
  */
-// Answers that a retry can't change: a refused token, a missing repository (codes set by the services).
-const FINAL_CODES = new Set(['TOKEN_REJECTED', 'NOT_FOUND']);
+// Answers that a retry can't change (now): a refused token, a missing repository, a usage limit
+// (retrying would only spend more of it). Codes set by the services.
+const FINAL_CODES = new Set(['TOKEN_REJECTED', 'NOT_FOUND', 'RATE_LIMITED']);
 export const isFinalError = (error) => FINAL_CODES.has(error?.code);
 
 export async function withExponentialBackoff(fn, maxRetries = 3, baseDelay = 1000) {

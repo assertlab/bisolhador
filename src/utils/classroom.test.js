@@ -194,5 +194,7 @@ describe('classroomStatusText (table and CSV)', () => {
     expect(classroomStatusText({ status: 'notFound', host: 'gitlab.com' }, null, t)).toBe('classroom.status.notFound_gitlab|gitlab.com|');
     expect(classroomStatusText({ status: 'notFound', host: 'github.com' }, null, t)).toBe('classroom.status.notFound|github.com|');
     expect(classroomStatusText({ status: 'ok' }, 'a/b', t)).toBe('classroom.status.duplicate||a/b');
+    expect(classroomStatusText({ status: 'rateLimited', host: 'gitlab.cin.ufpe.br', resetAt: null }, null, t))
+      .toBe('classroom.status.rateLimited|gitlab.cin.ufpe.br| classroom.status.retry.rateLimited||');
   });
 });
