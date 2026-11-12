@@ -13,6 +13,10 @@ Decisões do mantenedor (2026-11-11):
 - **Primeira entrega:** **Dashboard (análise ao vivo) e Turma (`/turma`)**. Histórico (snapshots no Supabase, Ranking, Timeline e Benchmark) fica para uma fase posterior.
 - **Implementação:** um PR por fase, sempre seguindo o fluxo do `AGENTS.md` (sem merge automático).
 
+Decisão de 2026-11-12:
+
+- **Token:** só token **legado** com `read_api`. Tokens fine-grained (beta) ficam fora da 1ª entrega (seção 2.1).
+
 ---
 
 ## 1. Diagnóstico: onde o código depende do GitHub
@@ -115,7 +119,9 @@ Testado em 2026-11-11 com chamadas anônimas a gitlab.com, enviando `Origin` de 
 |---|---|
 | CORS | **Funciona no browser.** `/api/*` (REST e GraphQL) responde `Access-Control-Allow-Origin: *` sem credenciais, e o preflight aceita `PRIVATE-TOKEN`/`Authorization` **[verificado]**. A configuração é do próprio GitLab (`Rack::Cors`), então instâncias self-hosted seguem o mesmo padrão, **a menos que um proxy reverso na frente remova os headers**. Isso precisa ser validado em cada instância da lista. |
 | Headers legíveis | `Link`, `X-Total`, `X-Total-Pages`, `X-Next-Page` etc. ficam expostos. **`RateLimit-*` não fica exposto**: o SPA só consegue tratar o 429. |
-| Autenticação | `PRIVATE-TOKEN: <pat>` ou `Authorization: Bearer`. Escopo mínimo: `read_api`. 401 = token inválido; 403 `insufficient_scope` = falta escopo. |
+| Autenticação | `PRIVATE-TOKEN: <pat>` ou `Authorization: Bearer`. Escopo mínimo: `read_api` em token **legado**. 401 = token inválido; 403 `insufficient_scope` = falta escopo. |
+| Tokens fine-grained | **Não suportados na 1ª entrega.** Estão em beta: o GitLab desaconselha o uso em produção, a cobertura é de cerca de 75% dos endpoints REST e o GraphQL depende dos feature flags `granular_personal_access_tokens` e `granular_personal_access_tokens_for_graphql` ligados na instância. Como o plano usa GraphQL para flags de metadados, aprovações, `diffStatsSummary` e `repository.blobs`, um token fine-grained daria 403 em parte das chamadas, e esse 403 seria indistinguível de falta de membership. O texto de ajuda e o link de criação de token (`SettingsModal`, `HelpModal`, locales) apontam para o **token legado com `read_api`**. Reavaliar quando o recurso sair do beta. |
+| Validação do token | `GET /api/v4/personal_access_tokens/self` devolve `scopes`, `expires_at`, `active` e `revoked`. O `SettingsModal` usa isso ao salvar o token para avisar se falta `read_api`, se o token expirou ou se está perto de expirar. |
 | Rate limit em gitlab.com (hoje) | Anônimo: **500 req/min por IP** **[verificado]**. Autenticado: 2.000 req/min. Search: 100/min. |
 | Rate limit proposto pela GitLab | Anônimo cairia para **60 req/h por IP**, sem data confirmada. Se isso entrar em vigor, o token vira praticamente obrigatório, como no GitHub. |
 | Contagens | `X-Total` com `per_page=1` substitui o truque do header `Link`. **Ausente acima de 10k registros** e em `/repository/commits` e `/pipelines` **[verificado]**. |
@@ -190,6 +196,8 @@ Fontes:
 - https://docs.gitlab.com/api/merge_request_approvals/
 - https://docs.gitlab.com/api/graphql/
 - https://docs.gitlab.com/user/project/settings/project_access_tokens/
+- https://docs.gitlab.com/auth/tokens/fine_grained_access_tokens_graphql/
+- https://docs.gitlab.com/development/permissions/granular_access/graphql_architecture
 
 ---
 
@@ -232,6 +240,8 @@ Fontes:
    - Uma seção GitLab no `SettingsModal`.
    - `hasToken(ref)` substitui `hasGithubToken` nos chamadores (`useRepository`, `Classroom`).
    - O token só é enviado para o próprio host.
+   - Ao salvar, validar com `GET /personal_access_tokens/self` (seção 2.1): exigir `read_api` e mostrar a data de expiração. Token fine-grained ou sem `read_api` gera aviso, não bloqueio silencioso.
+   - **Falha parcial:** um 403 numa fonte específica vira "indisponível com motivo" só para aquele indicador e não derruba a análise inteira. Isso cobre o `statistics`, que exige papel Reporter ou acima, e endpoints negados a tokens fine-grained que alguém crie mesmo assim. O 401 continua sendo erro global de token inválido.
 
 5. **CSP**
    - Substituição no build (`%VITE_…%` no `index.html`, como já é feito com `VITE_SUPABASE_URL`, ou um plugin no `vite.config.js`) para incluir `https://gitlab.com` mais os hosts da lista em `connect-src` e `img-src`.
@@ -258,6 +268,7 @@ Fontes:
 - ✅ Instância institucional: `gitlab.cin.ufpe.br`. CORS e endpoints validados (seção 2.3). Falta confirmar os limites de taxa com a administração do servidor.
 - Medir quantas requisições custa analisar 3 projetos reais de alunos e 1 projeto grande (`gitlab-org/gitlab-runner`), com e sem token.
 - Testar se o GraphQL anônimo devolve `notes` de MR.
+- Medições com token usam **token legado com `read_api`** no `gitlab.cin.ufpe.br` (validade curta, guardado fora do repositório, por exemplo em `.env.local`). Tokens fine-grained ficam fora da Fase 0 (seção 2.1).
 - **Saída:** os números neste documento e os tetos de paginação em `src/constants.js`.
 
 ### Fase 1: fundação, sem mudança visível no GitHub
@@ -273,6 +284,7 @@ Fontes:
 ### Fase 2: `gitlabService` e Dashboard ao vivo
 
 - `src/services/gitlabService.js` e `gitlabService.test.js`, no padrão de `githubService.test.js`: `vi.stubGlobal('fetch')`, e falha lança erro em vez de virar zero.
+  - Testes de falha parcial: 403 em uma fonte (ex.: `statistics`, `notes`) marca só aquele indicador como indisponível; 401 interrompe a análise com erro de token.
 - Agregadores a partir de commits: séries semanais, punch card, churn, contribuidores por e-mail.
 - Health score a partir da árvore.
 - Métricas de MR via GraphQL e CI via pipelines.
@@ -312,3 +324,4 @@ Fontes:
 3. **Métricas "equivalentes" com metodologia diferente** (séries amostradas, revisão via notas): exigem `method`/`source` explícitos e textos que deixem a diferença clara.
 4. **CSP presa à lista do build:** uma instância nova exige novo deploy.
 5. **Proxy de instância self-hosted removendo CORS:** a análise não funciona sem backend. Fica fora do escopo e é detectado na Fase 0.
+6. **Tokens fine-grained em beta:** usuários podem criá-los por engano, já que a tela do GitLab oferece essa opção. A mitigação é a validação via `/personal_access_tokens/self`, o tratamento de falha parcial por indicador e um texto de ajuda que peça o token legado explicitamente.
