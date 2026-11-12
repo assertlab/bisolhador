@@ -14,6 +14,12 @@ describe('parseRepoList', () => {
     expect(r.invalid).toEqual(['justname', '../x', 'a/b"is:private']);
   });
 
+  it('GitLab addresses and hostless 3-segment paths are invalid (GitHub only until phase 3), never cut to 2 segments', () => {
+    const r = parseRepoList('gitlab.com/g/sub/p https://gitlab.com/g/p a/b/c https://example.com/x/y ok/repo');
+    expect(r.repos).toEqual(['ok/repo']);
+    expect(r.invalid).toEqual(['gitlab.com/g/sub/p', 'https://gitlab.com/g/p', 'a/b/c', 'https://example.com/x/y']);
+  });
+
   it(`caps at ${CLASSROOM_MAX_REPOS}`, () => {
     const r = parseRepoList(Array.from({ length: 60 }, (_, i) => `o/r${i}`).join('\n'));
     expect(r.repos).toHaveLength(CLASSROOM_MAX_REPOS);

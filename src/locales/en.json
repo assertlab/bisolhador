@@ -1,6 +1,11 @@
 {
   "errors": {
     "privateRepo": "This repository is private. Bisolhador only works with public repositories, since analyzed data may be shared publicly.",
+    "repoInputInvalid": "Invalid repository address. Use owner/repo for GitHub, or the full address (with the host) for GitLab.",
+    "repoHostRequired": "This path has more than two levels, which only exists on GitLab. Include the host, for example gitlab.com/group/subgroup/project.",
+    "repoHostNotAllowed": "This address is neither GitHub nor a GitLab instance enabled in Bisolhador, so it was not analyzed.",
+    "repoNameUnsafe": "GitHub returned a repository name with characters Bisolhador does not accept, so the analysis was stopped.",
+    "providerUnavailable": "Analysis of GitLab repositories ({{host}}) is still in development. For now, Bisolhador only analyzes GitHub repositories.",
     "privacyCheckFailed": "Could not confirm whether this repository is public (network issue or GitHub rate limit). For safety, it wasn't added — please try again shortly.",
     "invalidRepoName": "Couldn't open the history: this repository's name contains invalid characters.",
     "snapshotUnavailable": "Couldn't load this snapshot: it doesn't exist, the link is wrong, or history is temporarily unavailable. Check the link or try again in a moment.",

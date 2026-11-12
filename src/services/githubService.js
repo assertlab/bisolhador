@@ -1,7 +1,7 @@
 // GitHub Service - Modern ES6 Module for API calls
 // Migrated from v1-legacy/src/modules/githubAPI.js
 
-import { getItem } from "../utils/storage.js";
+import { getToken, hasToken, GITHUB_REF } from "./tokens.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
 import { ciRunsForBranch, TAGS_PAGE } from "../utils/projectPractices.js";
@@ -26,11 +26,11 @@ const GITHUB_BASE_URL = "https://api.github.com";
 const MIN_PR_PAGE = 6; // classroom PR scan: smallest page before giving up
 
 export function hasGithubToken() {
-  return Boolean(getItem("github_token"));
+  return hasToken(GITHUB_REF);
 }
 
 function getHeaders() {
-  const token = getItem("github_token");
+  const token = getToken(GITHUB_REF);
   const headers = {
     Accept: "application/vnd.github.v3+json",
   };

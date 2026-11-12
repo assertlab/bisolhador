@@ -267,7 +267,7 @@ O custo base cabe com folga nos limites atuais do gitlab.com e, ao que tudo indi
      - `gitlab.com/g/sub/p`;
      - `https://<host>/g/sub/p` (inclusive com `/-/tree/...`);
      - `https://github.com/o/r`.
-   - Valida cada segmento com um padrão **por provider**: o do GitHub é o atual (`SAFE_GITHUB_NAME_PATTERN`); o do GitLab precisa aceitar caminhos válidos lá, como os que começam com `_` (ex.: `_infra/tool`), e segue as regras de path do GitLab. Valida também o **host contra a allow-list** `GITLAB_HOSTS` em `src/constants.js`, que vem de `VITE_GITLAB_HOSTS` e sempre inclui `gitlab.com`. Host fora da lista: bloqueia (fail-closed).
+   - Valida cada segmento com um padrão **por provider**: o do GitHub é o atual (`SAFE_GITHUB_NAME_PATTERN`); o do GitLab precisa aceitar caminhos válidos lá, como os que começam com `_` (ex.: `_infra/tool`), e segue as regras de path do GitLab. Valida também o **host contra a allow-list** `GITLAB_HOSTS` (em `src/utils/repoRef.js`), que vem de `VITE_GITLAB_HOSTS` e sempre inclui `gitlab.com`. Host fora da lista: bloqueia (fail-closed).
    - Entrada **sem host** com 2 segmentos continua sendo GitHub; sem host com 3 ou mais segmentos é recusada com mensagem pedindo o host (`gitlab.com/...`), sem adivinhar.
    - `parseSafeRepoName` continua valendo para o GitHub e para dados persistidos.
    - Funções auxiliares: `repoKey(ref)` (com host), `repoWebUrl(ref)` e `repoFileSlug(ref)` (troca todas as barras).
@@ -332,12 +332,12 @@ O custo base cabe com folga nos limites atuais do gitlab.com e, ao que tudo indi
 
 ### Fase 1: fundação, sem mudança visível no GitHub
 
-- `RepoRef`, `parseRepoRef` e funções auxiliares, com testes de subgrupos, host fora da lista e URL colada.
-- Corrigir os `split('/')` e `replace('/')` listados em 1.2.
-- `useRepository` com resultados nomeados.
-- `providers/index.js` com o GitHub como único provider.
-- Token por host no `SettingsModal`.
-- `{{platform}}` nas strings genéricas.
+- ✅ `RepoRef`, `parseRepoRef` e funções auxiliares (`src/utils/repoRef.js`), com testes de subgrupos, host fora da lista e URL colada. Allow-list `GITLAB_HOSTS` no próprio `repoRef.js`, a partir de `VITE_GITLAB_HOSTS` (host com porta opcional; entrada inválida é descartada com aviso no console). Primeiro segmento com ponto é lido como host mesmo sem `https://`, porque owner do GitHub não tem ponto.
+- ✅ `split('/')` e `replace('/')`: o Dashboard (`useRepository`), a lista da Turma (`parseRepoList`) e os nomes de arquivo (`RepoInfoCard`) passam pelo `RepoRef`. Ficam como estão, porque só recebem nomes do GitHub já validados: `Benchmark.jsx` (histórico, Fase 4), `useClassroomAnalysis.js` e `Classroom.jsx:89` (Fase 3).
+- ✅ `useRepository` com resultados nomeados.
+- ✅ `providers/index.js` com o GitHub como único provider. Um endereço GitLab dá erro `PROVIDER_UNAVAILABLE` antes de qualquer requisição.
+- ✅ Token por host: `src/services/tokens.js` (`gitlab_token:<host>`). **A seção GitLab do `SettingsModal` fica para a Fase 2:** sem o `gitlabService`, um campo de token que não faz nada só confundiria.
+- `{{platform}}` nas strings genéricas: **movido para a Fase 2**, junto com os textos que mudam de natureza, para que a lista de strings saia do uso real.
 - **Critério de aceite:** testes atuais verdes e `npm run smoke:csp` passando sem alteração.
 
 ### Fase 2: `gitlabService` e Dashboard ao vivo

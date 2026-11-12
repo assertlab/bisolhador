@@ -32,6 +32,10 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.25.0 - Base para o GitLab
+- **✨ A busca aceita a URL do GitHub colada**, e endereços do GitLab ou de outros hosts ganham mensagens próprias
+- **🔧 Fundação para analisar GitLab** (gitlab.com e instâncias institucionais): referência de repositório com plataforma e host, token por host
+
 ### v3.24.0 - Cadência por tags e outra convenção de commits
 - **✨ Projetos sem releases são medidos pelas tags** (sem pré-versões; datas com token) e "Total de Releases" mostra as tags ao lado
 - **✨ Conventional Commits mostra quando a maioria segue outra convenção** ("prefixo: resumo", como o kernel Linux)

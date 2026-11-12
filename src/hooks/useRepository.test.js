@@ -3,7 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // The whole data pipeline with the GitHub layer mocked: which requests are
 // made, what the report says and whether the snapshot is saved.
 const { github, saveSearch, hasToken } = vi.hoisted(() => ({ github: {}, saveSearch: vi.fn(), hasToken: { value: false } }));
-vi.mock('../services/githubService.js', () => ({ githubService: github, hasGithubToken: () => hasToken.value }));
+vi.mock('../services/githubService.js', () => ({ githubService: github }));
+vi.mock('../services/tokens.js', () => ({ hasToken: () => hasToken.value }));
 vi.mock('../services/analytics.js', () => ({ default: { saveSearch } }));
 vi.mock('../i18n.js', () => ({ default: { t: (key) => key } }));
 vi.mock('../lib/chartSetup.js', () => ({ ensureChartSetup: () => Promise.resolve() }));
@@ -126,5 +127,48 @@ describe('fetchRepositoryData: read-only mirrors and contributors GitHub won\'t 
     expect(github.fetchTagsCount).not.toHaveBeenCalled();
     expect(report.stats.tags).toBeUndefined();
     expect(report.practices.releases.source).toBeUndefined();
+  });
+});
+
+describe('fetchRepositoryData: repository input (RepoRef)', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    saveSearch.mockReset().mockResolvedValue(42);
+    for (const key of Object.keys(github)) delete github[key];
+  });
+
+  it.each([
+    ['gitlab.com/group/sub/project', 'PROVIDER_UNAVAILABLE'],
+    ['https://gitlab.com/group/project', 'PROVIDER_UNAVAILABLE'],
+    ['group/sub/project', 'REPO_HOST_REQUIRED'],
+    ['https://example.com/a/b', 'REPO_HOST_NOT_ALLOWED'],
+    ['../x/y', 'INVALID_REPO_INPUT'],
+  ])('%s → %s, before any request', async (input, code) => {
+    mockLinux();
+    await expect(fetchRepositoryData(input)).rejects.toMatchObject({ code });
+    expect(github.fetchRepository).not.toHaveBeenCalled();
+    expect(saveSearch).not.toHaveBeenCalled();
+  });
+
+  it('a pasted GitHub URL analyzes the repository; the report keeps the canonical name and web URL', async () => {
+    mockLinux();
+    const report = await fetchRepositoryData('https://github.com/Torvalds/Linux/tree/master');
+    expect(github.fetchRepository).toHaveBeenCalledWith('Torvalds', 'Linux');
+    expect(github.fetchCommits).toHaveBeenCalledWith('torvalds', 'linux');
+    expect(report.fullName).toBe('torvalds/linux');
+    expect(report.url).toBe('https://github.com/torvalds/linux');
+    expect(report.searchedName).toBeUndefined();
+  });
+
+  it('a renamed repository records the typed name as searchedName', async () => {
+    mockLinux();
+    const report = await fetchRepositoryData('linus/old-name');
+    expect(report.searchedName).toBe('linus/old-name');
+  });
+
+  it('an unsafe canonical name from the API is refused, not used in requests', async () => {
+    mockLinux({ fetchRepository: vi.fn(async () => ({ full_name: 'evil/../x', private: false })) });
+    await expect(fetchRepositoryData('a/b')).rejects.toMatchObject({ code: 'UNSAFE_REPO_NAME', message: 'errors.repoNameUnsafe' });
+    expect(github.fetchCommits).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { parseSafeRepoName } from './repoName.js';
+import { parseRepoRef, repoKey } from './repoRef.js';
 import { isBot, isBotName } from './contributors.js';
 import { analyzeReviewMetrics, analyzeLeadTime } from './prReviewStats.js';
 import { analyzeCiRuns, analyzeConventionalCommits, CLASSROOM_CI_EVENTS, RELEASES_PAGE } from './projectPractices.js';
@@ -14,28 +14,27 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * Pasted text → repositories. Accepts "owner/repo" or GitHub URLs, one per
- * line or separated by commas/spaces; dedupes case-insensitively. Names must
- * pass parseSafeRepoName: they go into a search query (see githubService).
+ * line or separated by commas/spaces; dedupes case-insensitively. Each entry
+ * goes through parseRepoRef (names go into a search query, see githubService).
+ * GitHub only until GitLab reaches Classroom (docs/ESTUDO_GITLAB.md, phase 3):
+ * a GitLab address is listed as invalid instead of being cut down to
+ * something that looks like a GitHub name ("gitlab.com/g/sub/p" used to
+ * become "gitlab.com/g").
  */
 export function parseRepoList(text) {
   const repos = [];
   const invalid = [];
   const seen = new Set();
   for (const raw of String(text ?? '').split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean)) {
-    const name = raw
-      .replace(/^(https?:\/\/)?(www\.)?github\.com\//i, '')
-      .replace(/\.git$/i, '')
-      .split(/[?#]/)[0]
-      .split('/').slice(0, 2).join('/');
-    const parts = parseSafeRepoName(name);
-    if (!parts) {
+    const { ref } = parseRepoRef(raw);
+    if (ref?.provider !== 'github') {
       invalid.push(raw);
       continue;
     }
-    const key = name.toLowerCase();
+    const key = repoKey(ref);
     if (!seen.has(key)) {
       seen.add(key);
-      repos.push(parts.join('/'));
+      repos.push(ref.path);
     }
   }
   return { repos: repos.slice(0, CLASSROOM_MAX_REPOS), invalid, truncated: repos.length > CLASSROOM_MAX_REPOS };
