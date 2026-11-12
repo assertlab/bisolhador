@@ -19,8 +19,8 @@ describe('registry shape', () => {
   it('has unique ids and the expected tools', () => {
     const ids = AI_TOOLS.map((t) => t.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toEqual(expect.arrayContaining(['claude', 'copilot', 'cursor', 'codex', 'gemini', 'aider', 'devin', 'jules', 'windsurf', 'junie', 'amp', 'kiro', 'cline', 'opencode', 'coderabbit', 'sourcery', 'generic']));
-    expect(REGISTRY_VERSION).toBe('2026-10-27');
+    expect(ids).toEqual(expect.arrayContaining(['claude', 'copilot', 'cursor', 'codex', 'gemini', 'aider', 'devin', 'jules', 'windsurf', 'junie', 'amp', 'kiro', 'cline', 'opencode', 'coderabbit', 'sourcery', 'antigravity', 'pi', 'gitlab-duo', 'generic']));
+    expect(REGISTRY_VERSION).toBe('2026-11-12');
     expect(CLASSROOM_BOT).toBe('github-classroom');
     expect(CONTEXT_DIRS).toContain('.claude/skills');
   });
@@ -188,5 +188,34 @@ describe('gitignore and settings', () => {
     expect(coauthorDisabled('{')).toBeNull();
     expect(coauthorDisabled('[]')).toBeNull();
     expect(coauthorDisabled(null)).toBeNull();
+  });
+});
+
+describe('Antigravity, Pi, GitLab Duo and shared .agents/skills (official docs, 2026-11-12)', () => {
+  it('config paths seen in student projects resolve to the right tool', async () => {
+    const { detectConfig } = await import('./aiTraces.js');
+    const found = detectConfig([
+      '.agent/rules/style.md', '.agent/skills/openspec-propose/SKILL.md', '.agent/workflows/opsx-apply.md',
+      '.agents/rules/a.md', '.agents/skills/x/SKILL.md',
+      '.pi/skills/openspec-explore/SKILL.md', '.pi/prompts/opsx-propose.md', '.pi/settings.json',
+      '.gitlab/duo/chat-rules.md', '.gitlab/duo/mr-review-instructions.yaml',
+      '.gitlab/issue_templates/Bug.md', // a GitLab template, not AI
+      '.agent/config.yml', '.pi/boot/config.txt', // .agent/ and .pi/ used for other things (monitoring agent, Raspberry Pi)
+    ]);
+    const byPath = Object.fromEntries(found.map((e) => [e.path, e.toolId]));
+    expect(byPath).toMatchObject({
+      '.agent/rules/style.md': 'antigravity', '.agent/skills/openspec-propose/SKILL.md': 'antigravity', '.agent/workflows/opsx-apply.md': 'antigravity',
+      '.agents/rules/a.md': 'antigravity', '.agents/skills/x/SKILL.md': 'generic',
+      '.pi/skills/openspec-explore/SKILL.md': 'pi', '.pi/prompts/opsx-propose.md': 'pi', '.pi/settings.json': 'pi',
+      '.gitlab/duo/chat-rules.md': 'gitlab-duo', '.gitlab/duo/mr-review-instructions.yaml': 'gitlab-duo',
+    });
+    expect(byPath['.gitlab/issue_templates/Bug.md']).toBeUndefined();
+    expect(byPath['.agent/config.yml']).toBeUndefined();
+    expect(byPath['.pi/boot/config.txt']).toBeUndefined();
+  });
+
+  it('GitLab Duo reviewing a merge request counts as an AI reviewer', async () => {
+    const { reviewerToolOf } = await import('./aiTraces.js');
+    expect(reviewerToolOf('GitLabDuo')).toBe('gitlab-duo');
   });
 });

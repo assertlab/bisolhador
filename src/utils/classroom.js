@@ -124,7 +124,7 @@ function configStatusOf(ctx) {
  * the period) and the per-student rows (in memory only). parsed null = AI context query failed.
  * runs: the period's Actions runs (null = failed), CI evidence for the badge's tests/CI criterion.
  */
-function analyzeTeamAi(history, prs, runs, parsed, authorship, period, contextUnsupported) {
+function analyzeTeamAi(history, prs, runs, parsed, authorship, period) {
   const ctx = classroomAiContext(parsed, authorship);
   const commits = history ? history.nodes.map(fromGraphqlCommit) : null;
   return {
@@ -140,8 +140,6 @@ function analyzeTeamAi(history, prs, runs, parsed, authorship, period, contextUn
         prLimit: Infinity,
       }),
       withToken: true, // Classroom always runs with a token
-      // No AI context fetcher on this platform (GitLab for now): not a token or request problem
-      ...(contextUnsupported && { contextUnsupported: true }),
     },
     students: {
       ...analyzeStudents(commits, authorship, period, ctx?.templatePaths ?? null),
@@ -154,11 +152,10 @@ function analyzeTeamAi(history, prs, runs, parsed, authorship, period, contextUn
  * One table row from the settled fetches of a repository. Each part fails on
  * its own (null → N/A in that column only).
  * @param {{history, prs, runs, releases}} results - Promise.allSettled results
- * @param {{ctx?: object|null, authorship?: Array|null, contextUnsupported?: boolean}} ai - parseAiRepoContext
- *   result (null = context query failed or unsupported), fetchAiConfigAuthorship result ([] = nothing to
- *   ask, null = failed), and whether the platform has no AI context query at all
+ * @param {{ctx?: object|null, authorship?: Array|null}} ai - parseAiRepoContext result (null = context
+ *   query failed) and fetchAiConfigAuthorship result ([] = nothing to ask, null = failed or none on the platform)
  */
-export function analyzeTeamRepo(results, period, { ctx = null, authorship = null, contextUnsupported = false } = {}) {
+export function analyzeTeamRepo(results, period, { ctx = null, authorship = null } = {}) {
   const prs = settled(results.prs);
   const review = prs ? analyzeReviewMetrics(prs.stats, 'error', { limit: Infinity }) : null;
   const leadTime = prs ? analyzeLeadTime(prs.stats, 'graphql', { limit: Infinity }) : null;
@@ -179,6 +176,6 @@ export function analyzeTeamRepo(results, period, { ctx = null, authorship = null
       : { available: false, reason: 'error' },
     ci: analyzeCiRuns(settled(results.runs), { events: CLASSROOM_CI_EVENTS }),
     releases: releasesInPeriod(settled(results.releases), period),
-    ...analyzeTeamAi(settled(results.history), prs, settled(results.runs), ctx, authorship, period, contextUnsupported),
+    ...analyzeTeamAi(settled(results.history), prs, settled(results.runs), ctx, authorship, period),
   };
 }

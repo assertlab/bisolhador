@@ -11,6 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.28.0] - 2026-11-12
+
+### ✨ Added
+
+- **IA no Processo reconhece mais ferramentas** (registro `2026-11-12`, verificado nas documentações oficiais):
+  - **Google Antigravity:** `.agent/rules|skills|workflows/` (caminho antigo, ainda aceito), `.agents/rules/` e `.agents/workflows/`. Só as subpastas documentadas: um `.agent/` qualquer também aparece em agentes de monitoramento e CI.
+  - **Pi** (pi.dev): `.pi/skills|prompts|extensions/` e `.pi/settings.json`, `SYSTEM.md`, `APPEND_SYSTEM.md`.
+  - **GitLab Duo:** a pasta `.gitlab/duo/` (regras do chat e instruções de revisão) e a revisão de MRs pela conta `GitLabDuo`.
+  - `.agents/skills/` (Agent Skills compartilhadas por várias ferramentas) conta como "Agentes (genérico)".
+  - As pastas novas também são listadas no Modo Turma do GitHub.
+- **IA no Processo no GitLab lê o contexto:** a configuração de agentes, o `.gitignore` e o `.claude/settings.json`, no Dashboard (sem token, em projetos públicos) e no Modo Turma. Com isso, projetos internos de alunos na Turma mostram as ferramentas configuradas (nos projetos testados: Google Antigravity, Pi e Claude).
+- Continuam de fora no GitLab: a origem template (ele não informa de que modelo o projeto veio), quem adicionou a configuração na Turma e os commits de agentes do GitLab Duo, feitos por contas de serviço. Por isso, no GitLab, configuração de origem não verificada não dispara "fontes em desacordo" (configuração sem declaração): um modelo da disciplina com skills de IA marcaria todas as equipes. O template continua listado como não verificado.
+- No Dashboard do GitLab, o contexto lê só o `.gitignore` e o `.claude/settings.json` (a árvore já traz a configuração). Uma listagem com 100 itens (página cheia, talvez truncada) conta como não verificada, nunca como ausência.
+
+### 🧪 Tests
+
+- Detecção das pastas novas e do revisor do GitLab Duo; `fetchAiRepoContext` do GitLab lido pelo mesmo `parseAiRepoContext` (só pastas que existem na raiz; falha de uma listagem = não verificado). Verificado no navegador com uma turma real do gitlab.cin.ufpe.br.
+
+---
+
 ## [3.27.2] - 2026-11-12
 
 ### 🐛 Fixed

@@ -805,7 +805,8 @@
       "configUnverified": "configuration (file tree truncated or unavailable)",
       "gitignoreUnverified": ".gitignore and turned-off declaration (AI context query unavailable)",
       "templateUnverified": "template origin (it couldn't be confirmed which configuration files came from the template or from GitHub Classroom)",
-      "prsUnverified": "PRs (merged PRs could not be fetched)"
+      "prsUnverified": "PRs (merged PRs could not be fetched)",
+      "templateUnverified_gitlab": "template origin (GitLab doesn't report which template a project came from, so the template's configuration can't be told apart from the team's own)"
     },
     "badge": {
       "title": "Responsible AI use",
@@ -832,7 +833,6 @@
     "unavailable": {
       "noToken": "With a GitHub token, we also check .gitignore, configuration (turned-off declaration), template, AI review and safeguards.",
       "error": "Part of the data could not be fetched (GitHub API failure or limit): items marked N/A or ? were not verified.",
-      "unsupported": "On this platform we don't check .gitignore, .claude/settings.json or template origin yet (nor, in Classroom Mode, the agent configuration files): those items show as not verified. GitLab's own agents and reviewers, such as GitLab Duo, aren't recognized yet.",
       "error_gitlab": "Part of the data could not be fetched (GitLab API failure or limit): items marked N/A or ? were not verified."
     },
     "notRecorded": "AI in the Process: not recorded in this analysis.",
@@ -855,10 +855,10 @@
       "sampled": "Computed over the 300 most recent commits of the period.",
       "configUnavailable": "n/a: could not check who added or changed the AI configuration files.",
       "footnote": "Default-branch commits in the period, without merges and maintenance bots. \"Unidentified author\" gathers commits not linked to a GitHub account (we don't group by name). Configuration: AI files (template files excluded) with a commit by that person in the period, in the checked locations. Nothing in this table is saved or goes into the CSV.",
-      "footnote_gitlab": "Default-branch commits in the period, no merges and no maintenance bots. On GitLab, commits don't report the account behind them: people are grouped by the name on their commits, so the same person under different names takes more than one row. AI configuration isn't checked on GitLab. Nothing in this table is saved or goes into the CSV.",
+      "footnote_gitlab": "Default-branch commits in the period, no merges and no maintenance bots. On GitLab, commits don't report the account behind them: people are grouped by the name on their commits, so the same person under different names takes more than one row. Who added the AI configuration files isn't checked on GitLab yet. Nothing in this table is saved or goes into the CSV.",
       "configUnavailable_gitlab": "N/A: on GitLab, we don't check yet who added or changed AI configuration files."
     },
-    "tooltip_gitlab": "Traces GitLab keeps: versioned AI agent configuration, co-authorship declared in commits, MRs opened by agents and reviews by AI bots, recognized by the tool registry (GitLab's own agents, such as GitLab Duo, not yet). It does not measure how much code AI wrote."
+    "tooltip_gitlab": "Traces GitLab keeps: versioned AI agent configuration (including .gitlab/duo, Google Antigravity's .agent/ and Pi's .pi/), co-authorship declared in commits, MRs opened by agents and reviews by AI bots, such as GitLab Duo. It does not measure how much code AI wrote."
   },
   "gitlab": {
     "notice": "GitLab project ({{host}}). History (permanent link, Timeline, Benchmark and Ranking) doesn't exist for GitLab yet: this analysis is not saved. Contributors, weekly activity, weekdays and churn are computed from the commits of the last 12 months."

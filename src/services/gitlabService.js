@@ -19,6 +19,7 @@ import {
 } from '../constants.js';
 import { withExponentialBackoff } from '../utils/retry.js';
 import { TAGS_PAGE, NO_CI_RUNS } from '../utils/projectPractices.js';
+import { CONTEXT_DIRS } from '../utils/aiRegistry.js';
 
 // Several fetchers read the same request (the year of commits feeds four
 // charts; the project and its listings feed health). It is shared for this
@@ -144,6 +145,15 @@ export function createGitlabService(host) {
     { notFound: null },
   );
   const issueTemplates = (owner, repo) => once(`issueTemplates:${owner}/${repo}`, () => listing(owner, repo, '.gitlab/issue_templates'));
+  // Root listing, shared by health and the AI context
+  const rootListing = (owner, repo) => once(`root:${owner}/${repo}`, () => listing(owner, repo, ''));
+  // A file's text at HEAD; null when it doesn't exist
+  const rawFile = async (owner, repo, path) => {
+    const response = await fetch(`${API}/projects/${projectId(owner, repo)}/repository/files/${encodeURIComponent(path)}/raw?ref=HEAD`, { headers: headers() });
+    if (response.status === 404) return null;
+    if (!response.ok) throw failure(`file ${path}`, response.status);
+    return response.text();
+  };
 
   const issueStats = (owner, repo) => once(`issues:${owner}/${repo}`, async () => {
     const data = await json(`/projects/${projectId(owner, repo)}/issues_statistics`, 'issues statistics');
@@ -235,7 +245,7 @@ export function createGitlabService(host) {
     async fetchCommunityProfile(owner, repo) {
       const [data, root, issues, mergeRequests] = await Promise.all([
         project(owner, repo),
-        listing(owner, repo, ''),
+        rootListing(owner, repo),
         issueTemplates(owner, repo),
         listing(owner, repo, '.gitlab/merge_request_templates'),
       ]);
@@ -396,9 +406,64 @@ export function createGitlabService(host) {
       return { repos: items.map((p) => ({ fullName: `${host}/${p.path_with_namespace}`, archived: Boolean(p.archived) })), capped };
     },
 
-    // AI in the Process on GitLab (config files, GitLab Duo) isn't mapped yet:
-    // no fetchAiRepoContext, so useRepository skips it and the section shows
-    // those checks as not verified, never as absent.
+    /**
+     * AI context in the shape of githubService.fetchAiRepoContext (parseAiRepoContext reads it):
+     * .gitignore and .claude/settings.json text, and the listing of each CONTEXT_DIRS directory
+     * (alias d<i>; '' = root) whose top level exists at the root (most projects: 1–4 requests).
+     * `listings: false` (Dashboard, which has the tree) reads only the two files.
+     * GitLab reports no template repository: the template part is marked unread and
+     * `templateUnsupported` tells the coherence rule that origins can never be checked here.
+     * A failed or possibly truncated part (a full page of 100) is a partial error on its alias
+     * ("not verified"), never "absent". Transient failures get one retry.
+     */
+    async fetchAiRepoContext(owner, repo, { listings = true } = {}) {
+      const unreadTemplate = { path: ['repository', 'templateRepository'], message: 'GitLab reports no template repository' };
+      const root = await rootListing(owner, repo);
+      if (root === null) return { repository: { templateRepository: null }, errors: [unreadTemplate], templateUnsupported: true };
+      const full = (entries) => entries.length >= GITLAB_PER_PAGE; // only the first page was read
+      const topLevel = new Set(root.filter((e) => e.type === 'tree').map((e) => e.name));
+      const rootFiles = new Set(root.filter((e) => e.type === 'blob').map((e) => e.name));
+      const errors = [unreadTemplate];
+      const unread = (alias, message) => errors.push({ path: ['repository', alias], message });
+      const repository = { templateRepository: null, workflows: null };
+      if (listings) {
+        repository.d0 = { entries: root.map((e) => ({ name: e.name, type: e.type })) };
+        if (full(root)) unread('d0', 'root listing may be truncated');
+      }
+      const settled = async (alias, load) => {
+        try {
+          repository[alias] = await withExponentialBackoff(load, 1, 500);
+        } catch (error) {
+          if (error.code === 'TOKEN_REJECTED') throw error;
+          repository[alias] = null;
+          unread(alias, error.message);
+        }
+      };
+      // A file missing from a root page that may be truncated isn't "absent": not verified
+      const readFile = (alias, path, present) => {
+        if (present) return settled(alias, async () => ({ text: await rawFile(owner, repo, path) }));
+        if (full(root)) unread(alias, `${path}: root listing may be truncated`);
+        return null;
+      };
+      await Promise.all([
+        ...(listings ? CONTEXT_DIRS : []).map((dir, i) => {
+          if (!dir || !topLevel.has(dir.split('/')[0])) return null;
+          return settled(`d${i}`, async () => {
+            const entries = await listing(owner, repo, dir);
+            if (entries && full(entries)) throw new Error(`${dir}: listing may be truncated`);
+            return entries ? { entries: entries.map((e) => ({ name: e.name, type: e.type })) } : null;
+          });
+        }),
+        readFile('gitignore', '.gitignore', rootFiles.has('.gitignore')),
+        topLevel.has('.claude')
+          ? settled('claudeSettings', async () => {
+            const text = await rawFile(owner, repo, '.claude/settings.json');
+            return text == null ? null : { text };
+          })
+          : readFile('claudeSettings', '.claude/settings.json', false),
+      ]);
+      return { repository, errors, templateUnsupported: true };
+    },
   };
 }
 
