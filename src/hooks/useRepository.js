@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getProvider } from '../services/providers/index.js';
 import { hasToken as hasTokenFor } from '../services/tokens.js';
 import { parseRepoRef, withPath, repoWebUrl, repoKey, ownerAndRepo } from '../utils/repoRef.js';
+import { rateLimitI18n, rateLimitInfo } from '../utils/rateLimit.js';
 import { analyzers } from '../utils/analyzers.js';
 import { analyzeReviewMetrics, analyzeLeadTime, pullRequestsDisabled } from '../utils/prReviewStats.js';
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
@@ -116,6 +117,11 @@ export async function fetchRepositoryData(repoName) {
     const repoData = await service.fetchRepository(...ownerAndRepo(requested)).catch((error) => {
         // Said in words: which token was refused, or a project GitLab hides without login
         if (error.code === 'TOKEN_REJECTED') throw inputError('TOKEN_REJECTED', 'errors.tokenRejected', { host: error.host });
+        if (error.code === 'RATE_LIMITED') {
+            const info = rateLimitInfo(error, { noToken: requested.provider === 'github' && !hasTokenFor(requested) });
+            const { key, options } = rateLimitI18n(info);
+            throw Object.assign(inputError('RATE_LIMITED', key, options), { rateLimit: info });
+        }
         if (error.code === 'NOT_FOUND') {
             // GitLab: with a token, the project is missing or that token can't see it; without one, it may need login
             const key = requested.provider !== 'gitlab' ? 'errors.repoNotFound' : hasTokenFor(requested) ? 'errors.repoNotFoundGitlabToken' : 'errors.repoNotFoundGitlab';
@@ -441,8 +447,12 @@ export async function fetchRepositoryData(repoName) {
         console.warn('[useRepository] Snapshot not saved, unavailable:', blockers.join(', '));
     }
 
+    // A usage limit that took down part of the indicators (the page says which host and when to retry).
+    // Kept out of `report`: never persisted.
+    const limited = Object.values(results).map((r) => r.reason).find((e) => e?.code === 'RATE_LIMITED');
     const formattedData = {
         ...report,
+        ...(limited && { _rateLimit: rateLimitInfo(limited, { noToken: !hasToken && ref.provider === 'github' }) }),
         searchId, // ID da busca salva no banco (null quando não foi gravada)
         _warnings: warnings.length > 0 ? warnings : undefined
     };
@@ -474,6 +484,8 @@ export function useRepository(repoName) {
         errorCode: error?.code || null,
         // Translated messages: the key, so the page shows them in the current language
         errorI18n: error?.i18nKey ? { key: error.i18nKey, options: error.i18nOptions } : null,
+        // Usage limit: the page builds the text when rendering (reset time in the current language)
+        errorRateLimit: error?.rateLimit ?? null,
     };
 }
 

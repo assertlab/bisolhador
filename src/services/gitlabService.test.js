@@ -231,6 +231,11 @@ describe('createGitlabService: refused token', () => {
     expect(anon.status).toBe(401);
   });
 
+  it('429 → RATE_LIMITED for that host, not a generic failure', async () => {
+    routes = [['/api/graphql', reply({}, { status: 429 })], ['/projects/', reply({ message: 'Retry later' }, { status: 429 })]];
+    await expect(createGitlabService('gitlab.cin.ufpe.br').fetchRepository('g', 'p')).rejects.toMatchObject({ code: 'RATE_LIMITED', host: 'gitlab.cin.ufpe.br' });
+  });
+
   it('404 → NOT_FOUND, message keeps the status (Classroom reads it)', async () => {
     routes = [['/api/graphql', reply({ data: { project: null } })], ['/projects/', reply({ message: '404 Project Not Found' }, { status: 404 })]];
     await expect(createGitlabService('gitlab.com').fetchRepository('g', 'p')).rejects.toMatchObject({ code: 'NOT_FOUND', message: expect.stringMatching(/404/) });

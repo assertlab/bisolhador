@@ -25,6 +25,7 @@ import { Tooltip } from '../components/Tooltip.jsx';
 import { NewTabHint } from '../components/NewTabHint.jsx';
 import { NEW_TAB_LINK_PROPS, NewTabContext } from '../lib/newTab.js';
 import { PlatformProvider } from '../lib/platformText.js';
+import { rateLimitI18n, rateLimitInfo } from '../utils/rateLimit.js';
 
 const DEFAULT_PERIOD_DAYS = 120;
 
@@ -116,6 +117,10 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
       setImportState({ found: repos.length, matched: matched.length, capped });
     } catch (error) {
       if (requestId !== importRequest.current) return;
+      if (error.code === 'RATE_LIMITED') {
+        setImportState({ rateLimit: rateLimitInfo(error) });
+        return;
+      }
       setImportState({ error: error.code === 'TOKEN_REJECTED' ? 'tokenRejected' : error.code === 'NOT_FOUND' ? 'orgNotFound' : 'orgFailed', host: error.host });
     }
   };
@@ -244,8 +249,10 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
               {importState?.loading ? t('classroom.importing') : t('classroom.importButton')}
             </button>
             {importState && !importState.loading && (
-              <span role="status" className={`text-xs ${importState.error ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-slate-400'}`}>
-                {importState.error
+              <span role="status" className={`text-xs ${importState.error || importState.rateLimit ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-slate-400'}`}>
+                {importState.rateLimit
+                  ? (({ key, options }) => t(key, options))(rateLimitI18n(importState.rateLimit))
+                  : importState.error
                   ? t(`classroom.import.${importState.error}`, { host: importState.host })
                   : t('classroom.import.result', { found: importState.found, matched: importState.matched }) + (importState.capped ? ` ${t('classroom.import.capped')}` : '')}
               </span>

@@ -19,7 +19,11 @@
     "tokenRejected": "O {{host}} recusou o token salvo neste navegador (inválido, revogado ou expirado). Confira ou troque o token nas configurações (ícone ⚙️); sem token, só projetos públicos são analisados.",
     "repoNotFound": "Repositório não encontrado no GitHub, ou privado sem acesso com o seu token. Confira o dono e o nome; repositórios privados só são analisados no Modo Turma.",
     "repoNotFoundGitlab": "Projeto não encontrado em {{host}}. Confira o caminho; se o projeto for interno ou privado, ele não aparece sem login: analise-o no Modo Turma, com um token da instância.",
-    "repoNotFoundGitlabToken": "Projeto não encontrado em {{host}}, ou o seu token dessa instância não tem acesso a ele. Confira o caminho e se a sua conta participa do projeto."
+    "repoNotFoundGitlabToken": "Projeto não encontrado em {{host}}, ou o seu token dessa instância não tem acesso a ele. Confira o caminho e se a sua conta participa do projeto.",
+    "rateLimited": "O {{host}} atingiu o limite de requisições por enquanto. Tente de novo em alguns minutos.",
+    "rateLimited_noToken": "O {{host}} atingiu o limite de requisições por enquanto. Tente de novo em alguns minutos; sem token, o GitHub permite 60 por hora, e com um token (ícone ⚙️), 5.000.",
+    "rateLimitedAt": "O {{host}} atingiu o limite de requisições. Ele libera às {{time}}; tente de novo depois disso.",
+    "rateLimitedAt_noToken": "O {{host}} atingiu o limite de requisições. Ele libera às {{time}}; tente de novo depois disso. Sem token, o GitHub permite 60 por hora, e com um token (ícone ⚙️), 5.000."
   },
   "header": {
     "title": "Bisolhador",
@@ -662,10 +666,15 @@
       "pending": "Na fila…",
       "ok": "Analisado",
       "notFound": "Repositório não encontrado (ou privado sem acesso com o seu token).",
-      "error": "Não foi possível analisar (falha ou limite da API).",
+      "error": "Não foi possível analisar (falha da API ou de rede); tente de novo.",
       "duplicate": "Mesmo repositório que {{name}} (renomeado).",
       "tokenRejected": "O {{host}} recusou o seu token (inválido, revogado ou expirado): troque-o nas configurações e analise de novo.",
-      "notFound_gitlab": "Projeto não encontrado em {{host}} (ou sem acesso com o seu token)."
+      "notFound_gitlab": "Projeto não encontrado em {{host}} (ou sem acesso com o seu token).",
+      "rateLimited": "O {{host}} limitou as requisições: este repositório não foi analisado.",
+      "retry": {
+        "rateLimited": "Analise de novo em alguns minutos.",
+        "rateLimitedAt": "Analise de novo depois das {{time}}."
+      }
     },
     "sampledNote": "* calculado sobre uma amostra (300 commits mais recentes ou PRs examinados até o limite); + indica que o número real é maior.",
     "invalidUrlPeriod": "O período no link é inválido. Escolha as datas e analise de novo.",

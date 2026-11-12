@@ -19,7 +19,11 @@
     "tokenRejected": "{{host}} rejected the token saved in this browser (invalid, revoked or expired). Check or replace it in the settings (⚙️ icon); without a token, only public projects are analyzed.",
     "repoNotFound": "Repository not found on GitHub, or private with no access through your token. Check the owner and the name; private repositories are only analyzed in Classroom Mode.",
     "repoNotFoundGitlab": "Project not found on {{host}}. Check the path; if the project is internal or private, it doesn't show up without logging in: analyze it in Classroom Mode, with a token for the instance.",
-    "repoNotFoundGitlabToken": "Project not found on {{host}}, or your token for that instance has no access to it. Check the path and whether your account is a member of the project."
+    "repoNotFoundGitlabToken": "Project not found on {{host}}, or your token for that instance has no access to it. Check the path and whether your account is a member of the project.",
+    "rateLimited": "{{host}} hit its request limit for now. Try again in a few minutes.",
+    "rateLimited_noToken": "{{host}} hit its request limit for now. Try again in a few minutes; without a token, GitHub allows 60 per hour, and with one (⚙️ icon), 5,000.",
+    "rateLimitedAt": "{{host}} hit its request limit. It resets at {{time}}; try again after that.",
+    "rateLimitedAt_noToken": "{{host}} hit its request limit. It resets at {{time}}; try again after that. Without a token, GitHub allows 60 per hour, and with one (⚙️ icon), 5,000."
   },
   "header": {
     "title": "Bisolhador",
@@ -662,10 +666,15 @@
       "pending": "Queued…",
       "ok": "Analyzed",
       "notFound": "Repository not found (or private without access with your token).",
-      "error": "Couldn't analyze it (API failure or rate limit).",
+      "error": "Couldn't analyze it (API or network failure); try again.",
       "duplicate": "Same repository as {{name}} (renamed).",
       "tokenRejected": "{{host}} rejected your token (invalid, revoked or expired): replace it in the settings and run the analysis again.",
-      "notFound_gitlab": "Project not found on {{host}} (or no access with your token)."
+      "notFound_gitlab": "Project not found on {{host}} (or no access with your token).",
+      "rateLimited": "{{host}} limited the requests: this repository wasn't analyzed.",
+      "retry": {
+        "rateLimited": "Run the analysis again in a few minutes.",
+        "rateLimitedAt": "Run the analysis again after {{time}}."
+      }
     },
     "sampledNote": "* computed over a sample (the 300 most recent commits, or PRs examined up to the limit); + means the real number is higher.",
     "invalidUrlPeriod": "The period in the link is invalid. Pick the dates and analyze again.",

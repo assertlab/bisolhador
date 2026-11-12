@@ -45,6 +45,9 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 
 ## 🔄 Últimas Atualizações
 
+### v3.29.1 - Limite de requisições com mensagem própria
+- **🐛 Quando o GitHub ou o GitLab limita as chamadas**, a mensagem diz qual host e quando tentar de novo (no GitHub, o horário em que libera)
+
 ### v3.29.0 - Autoria da configuração de IA na Turma do GitLab
 - **✨ A visão por estudante mostra quem mexeu na configuração de IA** também em projetos do GitLab
 

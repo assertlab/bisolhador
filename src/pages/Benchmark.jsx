@@ -2,7 +2,8 @@ import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
-import { githubService } from '../services/githubService';
+import { githubService, hasGithubToken } from '../services/githubService';
+import { rateLimitI18n, rateLimitInfo } from '../utils/rateLimit.js';
 import { withExponentialBackoff } from '../utils/retry.js';
 import { useBenchmarkRepos } from '../hooks/useBenchmarkRepos';
 import { useTimeFilter } from '../hooks/useTimeFilter';
@@ -128,6 +129,11 @@ export function Benchmark({ isSettingsOpen, setIsSettingsOpen }) {
       canonicalName = repoInfo?.full_name || repoName;
     } catch (error) {
       // Fail closed: we can't confirm this repo is public, so we refuse to add it.
+      if (error?.code === 'RATE_LIMITED') {
+        const { key, options } = rateLimitI18n(rateLimitInfo(error, { noToken: !hasGithubToken() }));
+        showToast(t(key, options), 'error');
+        return;
+      }
       const key = error?.code === 'TOKEN_REJECTED' ? 'errors.tokenRejected' : error?.code === 'NOT_FOUND' ? 'errors.repoNotFound' : 'errors.privacyCheckFailed';
       showToast(t(key, { host: error?.host }), 'error');
       return;

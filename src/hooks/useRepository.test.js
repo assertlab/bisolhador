@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // The whole data pipeline with the GitHub layer mocked: which requests are
 // made, what the report says and whether the snapshot is saved.
@@ -7,7 +7,7 @@ vi.mock('../services/githubService.js', () => ({ githubService: github }));
 vi.mock('../services/gitlabService.js', () => ({ createGitlabService: () => gitlab }));
 vi.mock('../services/tokens.js', () => ({ hasToken: () => hasToken.value }));
 vi.mock('../services/analytics.js', () => ({ default: { saveSearch } }));
-vi.mock('../i18n.js', () => ({ default: { t: (key) => key } }));
+vi.mock('../i18n.js', () => ({ default: { t: (key) => key }, intlLocale: () => 'pt-BR' }));
 vi.mock('../lib/chartSetup.js', () => ({ ensureChartSetup: () => Promise.resolve() }));
 
 import { fetchRepositoryData } from './useRepository.js';
@@ -258,6 +258,11 @@ describe('fetchRepositoryData: GitLab', () => {
     expect(gitlab.fetchCommits).not.toHaveBeenCalled();
   });
 
+  it('a usage limit → RATE_LIMITED, with the reset time when the platform gave one, final', async () => {
+    mockGitlab({ fetchRepository: vi.fn(async () => { throw Object.assign(new Error('429'), { code: 'RATE_LIMITED', host: 'gitlab.com', resetAt: null }); }) });
+    await expect(fetchRepositoryData('gitlab.com/g/p')).rejects.toMatchObject({ code: 'RATE_LIMITED', message: 'errors.rateLimited', final: true, i18nOptions: { host: 'gitlab.com' } });
+  });
+
   it('an unknown visibility is refused too, as "couldn\'t confirm" (retryable), not "not public"', async () => {
     mockGitlab({ fetchRepository: vi.fn(async () => ({ full_name: 'g/p', private: null, visibility: null })) });
     await expect(fetchRepositoryData('gitlab.com/g/p')).rejects.toMatchObject({ code: 'VISIBILITY_UNKNOWN', message: 'errors.visibilityUnknown' });
@@ -287,5 +292,20 @@ describe('fetchRepositoryData: GitHub repository not found', () => {
   it('404 → REPO_NOT_FOUND with the GitHub text', async () => {
     mockLinux({ fetchRepository: vi.fn(async () => { throw Object.assign(new Error('HTTP error! status: 404'), { code: 'NOT_FOUND', status: 404 }); }) });
     await expect(fetchRepositoryData('o/r')).rejects.toMatchObject({ code: 'REPO_NOT_FOUND', message: 'errors.repoNotFound' });
+  });
+});
+
+describe('fetchRepositoryData: GitHub usage limit without a token', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    hasToken.value = false;
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('adds the token hint (context noToken) and the reset time', async () => {
+    mockLinux({ fetchRepository: vi.fn(async () => { throw Object.assign(new Error('403'), { code: 'RATE_LIMITED', host: 'github.com', resetAt: Date.UTC(2026, 10, 12, 18, 30) }); }) });
+    const error = await fetchRepositoryData('o/r').catch((e) => e);
+    expect(error).toMatchObject({ code: 'RATE_LIMITED', i18nKey: 'errors.rateLimitedAt', i18nOptions: { host: 'github.com', context: 'noToken' }, rateLimit: { host: 'github.com', noToken: true } });
+    expect(error.i18nOptions.time).toMatch(/\d{2}:\d{2}/);
   });
 });

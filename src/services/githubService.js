@@ -1,7 +1,7 @@
 // GitHub Service - Modern ES6 Module for API calls
 // Migrated from v1-legacy/src/modules/githubAPI.js
 
-import { getToken, hasToken, GITHUB_REF, tokenRejectedError } from "./tokens.js";
+import { getToken, hasToken, GITHUB_REF, tokenRejectedError, rateLimitedError, rateLimitedFrom } from "./tokens.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
 import { ciRunsForBranch, TAGS_PAGE, NO_CI_RUNS } from "../utils/projectPractices.js";
@@ -42,9 +42,22 @@ function getHeaders() {
 
 // A failed response as an error: 401 sent with a token = TOKEN_REJECTED (named, not retried);
 // 404 = NOT_FOUND (not retried); the status is kept for the callers that read it.
-const httpFailure = (label, status) => (status === 401 && hasGithubToken()
-  ? tokenRejectedError(GITHUB_REF.host, label)
-  : Object.assign(new Error(`${label} failed: HTTP ${status}`), { status, ...(status === 404 && { code: "NOT_FOUND" }) }));
+// (Usage limits never reach here: ghFetch throws them first.)
+const httpFailure = (label, response) => {
+  const { status } = response;
+  if (status === 401 && hasGithubToken()) return tokenRejectedError(GITHUB_REF.host, label);
+  return Object.assign(new Error(`${label} failed: HTTP ${status}`), { status, ...(status === 404 && { code: "NOT_FOUND" }) });
+};
+
+// Every GitHub request goes through here: a usage limit (403/429, secondary limit included) throws
+// RATE_LIMITED with the reset time, whatever fetcher made the request, so no caller retries it or
+// reads it as an ordinary failure.
+async function ghFetch(url, init) {
+  const response = await fetch(url, init);
+  const limited = await rateLimitedFrom(response, GITHUB_REF.host, new URL(url).pathname);
+  if (limited) throw limited;
+  return response;
+}
 
 function lastPageFromLink(linkHeader) {
   const match = linkHeader?.match(/<([^>]+)>;\s*rel="last"/);
@@ -59,13 +72,17 @@ function lastPageFromLink(linkHeader) {
 // withErrors: returns { data, errors } so the caller can tell a field that
 // failed (null + an error on its path) from one that doesn't exist (null).
 async function graphql(query, variables, label, { withErrors = false } = {}) {
-  const response = await fetch(`${GITHUB_BASE_URL}/graphql`, {
+  const response = await ghFetch(`${GITHUB_BASE_URL}/graphql`, {
     method: "POST",
     headers: { ...getHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ query, variables }),
   });
-  if (!response.ok) throw httpFailure(`GraphQL ${label}`, response.status);
+  if (!response.ok) throw httpFailure(`GraphQL ${label}`, response);
   const body = await response.json();
+  // The GraphQL budget can run out with HTTP 200 and an error of type RATE_LIMITED
+  if (body.errors?.some((e) => e?.type === "RATE_LIMITED")) {
+    throw rateLimitedError({ status: 429, headers: response.headers }, GITHUB_REF.host, `GraphQL ${label}`);
+  }
   if (!body.data) {
     throw new Error(`GraphQL ${label} failed: ${body.errors?.[0]?.message ?? "no data"}`);
   }
@@ -90,7 +107,7 @@ function statsError(code, path, status) {
 // when the repo is too large. Codes match utils/activityStats.js.
 async function fetchStats(owner, repo, path) {
   const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/${path}`;
-  const response = await fetch(url, { headers: getHeaders() });
+  const response = await ghFetch(url, { headers: getHeaders() });
   if (response.status === 202) throw statsError('COMPUTING', path);
   if (response.status === 204) return [];
   if (response.status === 422) throw statsError('TOO_LARGE', path);
@@ -100,7 +117,7 @@ async function fetchStats(owner, repo, path) {
 
 async function fetchSearchCount(owner, repo, qualifiers) {
   const query = `repo:${encodeURIComponent(owner)}/${encodeURIComponent(repo)}+${qualifiers}`;
-  const response = await fetch(`${GITHUB_BASE_URL}/search/issues?q=${query}`, { headers: getHeaders() });
+  const response = await ghFetch(`${GITHUB_BASE_URL}/search/issues?q=${query}`, { headers: getHeaders() });
   if (!response.ok) {
     throw new Error(`Search "${qualifiers}" failed: HTTP ${response.status}`);
   }
@@ -115,10 +132,10 @@ export const githubService = {
     }
 
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
 
     // The first request of every analysis: a refused token (401 "Bad credentials") is named here
-    if (!response.ok) throw httpFailure("Repository", response.status);
+    if (!response.ok) throw httpFailure("Repository", response);
 
     const data = await response.json();
     return data;
@@ -132,7 +149,7 @@ export const githubService = {
     const perPage = params.perPage || GITHUB_PER_PAGE_COMMITS;
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits?per_page=${perPage}`;
 
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
     if (response.status === 409) return []; // empty repository
 
     if (!response.ok) {
@@ -148,7 +165,7 @@ export const githubService = {
   // per_page=20 list made "Total de Branches" 20 for repos with 1,000+).
   async fetchBranchCount(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=1`;
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
     if (!response.ok) {
       throw new Error(`Branches failed: HTTP ${response.status}`);
     }
@@ -204,11 +221,11 @@ export const githubService = {
   // [] → "no contributors" and a persisted empty bus factor). GitHub refuses
   // this list for repositories with a huge history (torvalds/linux: 403 "The
   // history or contributor list is too large…"): that error gets code
-  // TOO_LARGE, a limit of the API that a later search won't lift. A 403 for
-  // any other reason (rate limit) stays a plain failure.
+  // TOO_LARGE, a limit of the API that a later search won't lift. A usage limit
+  // is RATE_LIMITED (ghFetch); a 403 for any other reason stays a plain failure.
   async fetchContributors(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors?per_page=${GITHUB_PER_PAGE_CONTRIBUTORS}`;
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
     if (!response.ok) {
       const error = new Error(`Contributors failed: HTTP ${response.status}`);
       if (response.status === 403) {
@@ -233,7 +250,7 @@ export const githubService = {
   // back to anything.
   async fetchContributorStats(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/contributors`;
-    const attempt = () => fetch(url, { headers: getHeaders() }).catch((error) => ({ networkError: error }));
+    const attempt = () => ghFetch(url, { headers: getHeaders() }).catch((error) => ({ networkError: error }));
     const retriable = (res) => res.networkError || res.status === 202 || res.status >= 500;
     let response = await attempt();
     if (retriable(response)) {
@@ -266,7 +283,7 @@ export const githubService = {
 
     try {
       const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/languages`;
-      const response = await fetch(url, { headers: getHeaders() });
+      const response = await ghFetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
         console.warn(`Failed to fetch languages: ${response.status}`);
@@ -293,7 +310,7 @@ export const githubService = {
   // forks): "unavailable", not an error. Any other failure throws.
   async fetchCommunityProfile(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/community/profile`;
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
     if (response.status === 404) return null;
     if (!response.ok) {
       throw new Error(`Community profile failed: HTTP ${response.status}`);
@@ -308,7 +325,7 @@ export const githubService = {
 
     try {
       const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=all&sort=created&direction=desc&per_page=${GITHUB_PER_PAGE_RECENT_PRS}`;
-      const response = await fetch(url, { headers: getHeaders() });
+      const response = await ghFetch(url, { headers: getHeaders() });
 
       if (!response.ok) {
         console.warn(
@@ -330,7 +347,7 @@ export const githubService = {
   // exclude_pull_requests only empties each run's pull_requests array (smaller payload).
   async fetchActionRuns(owner, repo, branch) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/runs?branch=${encodeURIComponent(branch)}&event=push&status=completed&exclude_pull_requests=true&per_page=50`;
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
     if (response.status === 404) return { total_count: 0, workflow_runs: [] };
     if (!response.ok) throw new Error(`Actions runs failed: HTTP ${response.status}`);
     return response.json();
@@ -339,7 +356,7 @@ export const githubService = {
   // Latest 100 releases (release cadence). Throws on failure.
   async fetchReleases(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases?per_page=100`;
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
     if (!response.ok) throw new Error(`Releases failed: HTTP ${response.status}`);
     return response.json();
   },
@@ -347,7 +364,7 @@ export const githubService = {
   async fetchReleasesCount(owner, repo) {
     // Throws on failure (the caller shows n/d) instead of returning 0.
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases?per_page=${GITHUB_PER_PAGE_RELEASES}`;
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
 
     if (!response.ok) {
       throw new Error(`Releases failed: HTTP ${response.status}`);
@@ -366,7 +383,7 @@ export const githubService = {
   // so the Link header's rel="last" page number IS the count. Throws on failure.
   async fetchTagsCount(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/tags?per_page=1`;
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
     if (!response.ok) throw new Error(`Tags failed: HTTP ${response.status}`);
     const lastPage = lastPageFromLink(response.headers.get("link"));
     if (lastPage !== null) return lastPage;
@@ -430,7 +447,7 @@ export const githubService = {
   async hasIssueTemplateDirectory(owner, repo) {
     const base = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents`;
     const responses = await Promise.all(
-      ['.github/ISSUE_TEMPLATE', 'docs/ISSUE_TEMPLATE', 'ISSUE_TEMPLATE'].map((dir) => fetch(`${base}/${dir}`, { headers: getHeaders() }))
+      ['.github/ISSUE_TEMPLATE', 'docs/ISSUE_TEMPLATE', 'ISSUE_TEMPLATE'].map((dir) => ghFetch(`${base}/${dir}`, { headers: getHeaders() }))
     );
     const failed = responses.find((r) => !r.ok && r.status !== 404);
     if (failed) throw new Error(`Issue template check failed: HTTP ${failed.status}`);
@@ -444,9 +461,9 @@ export const githubService = {
   async fetchRepositoryTree(owner, repo, defaultBranch) {
     if (!defaultBranch) return { tree: [], truncated: false }; // empty repository: nothing to find
     const base = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(defaultBranch)}`;
-    const response = await fetch(`${base}?recursive=1`, { headers: getHeaders() });
+    const response = await ghFetch(`${base}?recursive=1`, { headers: getHeaders() });
     if (response.status === 422) {
-      const rootOnly = await fetch(base, { headers: getHeaders() });
+      const rootOnly = await ghFetch(base, { headers: getHeaders() });
       if (!rootOnly.ok) {
         throw new Error(`Repository tree failed: HTTP ${rootOnly.status}`);
       }
@@ -465,7 +482,7 @@ export const githubService = {
   // *created* PRs, mostly still open in active repos. Throws on failure.
   async fetchPullRequestStats(owner, repo) {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=closed&sort=updated&direction=desc&per_page=${CLOSED_PR_SCAN}`;
-    const response = await fetch(url, { headers: getHeaders() });
+    const response = await ghFetch(url, { headers: getHeaders() });
     if (response.status === 404) return []; // pull requests disabled (torvalds/linux): no PRs, not a failure
     if (!response.ok) {
       throw new Error(`PR stats failed: HTTP ${response.status}`);
@@ -554,9 +571,9 @@ export const githubService = {
       const repos = [];
       for (let page = 1; page <= maxPages; page++) {
         const url = `${GITHUB_BASE_URL}/${kind}/${encodeURIComponent(owner)}/repos?type=all&sort=full_name&per_page=100&page=${page}`;
-        const response = await fetch(url, { headers: getHeaders() });
+        const response = await ghFetch(url, { headers: getHeaders() });
         if (response.status === 404) return null;
-        if (!response.ok) throw httpFailure(`Repositories of ${owner}`, response.status);
+        if (!response.ok) throw httpFailure(`Repositories of ${owner}`, response);
         const data = await response.json();
         repos.push(...data.map((r) => ({ fullName: r.full_name, private: r.private, archived: r.archived })));
         if (data.length < 100) return { repos, capped: false };
@@ -564,7 +581,7 @@ export const githubService = {
       return { repos, capped: true };
     };
     const result = (await list('orgs')) ?? (await list('users'));
-    if (!result) throw httpFailure(`Repositories of ${owner}`, 404);
+    if (!result) throw httpFailure(`Repositories of ${owner}`, { status: 404 });
     return result;
   },
 
@@ -737,7 +754,7 @@ export const githubService = {
     const all = [];
     let total = 0;
     for (let page = 1; page <= CLASSROOM_CI_RUN_PAGES; page += 1) {
-      const response = await fetch(`${base}&page=${page}`, { headers: getHeaders() }).catch((error) => {
+      const response = await ghFetch(`${base}&page=${page}`, { headers: getHeaders() }).catch((error) => {
         if (page === 1) throw error;
         return null; // a later page failing keeps what was read (marked capped below)
       });

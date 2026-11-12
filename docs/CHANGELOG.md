@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.1] - 2026-11-12
+
+### 🐛 Fixed
+
+- **Limite de requisições tem mensagem própria.** Quando o GitHub ou o GitLab limita as chamadas (HTTP 429, ou 403 do GitHub sem requisições restantes ou com `Retry-After`), o Dashboard e o Benchmark dizem qual host limitou e quando tentar de novo: no GitHub, o horário em que o limite libera, e, sem token, que o token aumenta o limite de 60 para 5.000 por hora; no GitLab, "em alguns minutos" (o GitLab não informa o horário ao navegador). Antes: o texto cru do erro, ou "não foi possível confirmar a visibilidade" no Benchmark.
+- **Na Turma**, a linha diz que o host limitou as requisições e que o repositório não foi analisado; os repositórios desse host ainda na fila não são consultados (como com token recusado). A importação de organização/grupo diz o mesmo.
+- Um limite não é repetido pelas novas tentativas automáticas (só gastaria mais do limite).
+- **Detectado em qualquer requisição:** todas as chamadas ao GitHub passam por um ponto único, que reconhece também o limite secundário sem headers (pelo corpo da resposta), o `Retry-After` em formato de data e o GraphQL que responde 200 com erro de limite. Quando o limite derruba só parte dos indicadores, o Dashboard mostra o aviso junto ao de dados parciais; na Turma, um limite em qualquer requisição interrompe aquele host para os repositórios na fila.
+- O horário de liberação acompanha a troca de idioma, e um horário implausível (mais de um dia à frente) é ignorado.
+- O status genérico de falha da Turma deixou de citar "limite da API", que agora tem status próprio.
+
+### 🧪 Tests
+
+- `rateLimitedError` (429, 403 sem requisições restantes, `Retry-After`, 403 comum), GitHub e GitLab, `useRepository` (texto com horário e dica de token), retry e o texto da Turma. Verificado no navegador com respostas simuladas de limite do GitHub (403 com horário) e do gitlab.cin.ufpe.br (429).
+
+---
+
 ## [3.29.0] - 2026-11-12
 
 ### ✨ Added
