@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { githubService, hasGithubToken } from '../services/githubService.js';
+import { getProvider } from '../services/providers/index.js';
+import { hasToken as hasTokenFor } from '../services/tokens.js';
+import { parseRepoRef, withPath, repoWebUrl, repoKey } from '../utils/repoRef.js';
 import { analyzers } from '../utils/analyzers.js';
 import { analyzeReviewMetrics, analyzeLeadTime, pullRequestsDisabled } from '../utils/prReviewStats.js';
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
@@ -23,17 +25,17 @@ const PERSIST_BLOCKERS = ['communityProfile', 'openIssues', 'closedIssues', 'pul
 // Branches: with a token, every branch's last commit via GraphQL → exact count
 // and zombies (release/protected/default excluded). Without one, the exact
 // count from one REST request; zombies unavailable (it'd take a request per branch).
-async function fetchBranchAnalysis(owner, repo, defaultBranch, hasToken) {
+async function fetchBranchAnalysis(service, owner, repo, defaultBranch, hasToken) {
     if (!hasToken) {
-        return { count: await githubService.fetchBranchCount(owner, repo), zombies: null, zombiesReason: 'noToken' };
+        return { count: await service.fetchBranchCount(owner, repo), zombies: null, zombiesReason: 'noToken' };
     }
     try {
-        const { totalCount, branches, capped } = await githubService.fetchBranchActivity(owner, repo);
+        const { totalCount, branches, capped } = await service.fetchBranchActivity(owner, repo);
         return { count: totalCount, capped, ...analyzeBranches(branches, { defaultBranch }) };
     } catch (error) {
         // Keep the exact total from REST; only zombies become unavailable.
         console.warn('[useRepository] GraphQL branches failed, falling back to REST count:', error.message);
-        return { count: await githubService.fetchBranchCount(owner, repo), zombies: null, zombiesReason: 'error' };
+        return { count: await service.fetchBranchCount(owner, repo), zombies: null, zombiesReason: 'error' };
     }
 }
 
@@ -42,13 +44,13 @@ async function fetchBranchAnalysis(owner, repo, defaultBranch, hasToken) {
 // /contributors list (all-time, marked partial). Throws only if both fail;
 // the error keeps the fallback's code (TOO_LARGE: GitHub won't list the
 // contributors of this repository, see fetchContributors).
-async function fetchContributorAnalysis(owner, repo) {
+async function fetchContributorAnalysis(service, owner, repo) {
     try {
-        const stats = await githubService.fetchContributorStats(owner, repo);
+        const stats = await service.fetchContributorStats(owner, repo);
         return analyzeContributors(peopleFromStats(stats), { source: 'stats' });
     } catch (error) {
         console.warn('[useRepository] Contributor stats unavailable, using /contributors fallback:', error.message);
-        const list = await githubService.fetchContributors(owner, repo);
+        const list = await service.fetchContributors(owner, repo);
         return analyzeContributors(peopleFromContributors(list), { source: 'contributors' });
     }
 }
@@ -62,13 +64,13 @@ async function fetchContributorAnalysis(owner, repo) {
 // count still goes out (datesFailed: the card says the dates couldn't be
 // read, not "no releases"). Only when the count fails too is `tags` null
 // ("no releases", as before); a tag failure never fails the releases.
-async function fetchReleaseData(owner, repo, hasToken) {
-    const list = await githubService.fetchReleases(owner, repo);
-    const count = list.length < RELEASES_PAGE ? list.length : await githubService.fetchReleasesCount(owner, repo);
+async function fetchReleaseData(service, owner, repo, hasToken) {
+    const list = await service.fetchReleases(owner, repo);
+    const count = list.length < RELEASES_PAGE ? list.length : await service.fetchReleasesCount(owner, repo);
     if (list.length > 0) return { list, count, tags: null };
-    const countOnly = (extra = {}) => githubService.fetchTagsCount(owner, repo).then((total) => ({ total, dates: null, ...extra }));
+    const countOnly = (extra = {}) => service.fetchTagsCount(owner, repo).then((total) => ({ total, dates: null, ...extra }));
     const tags = await (hasToken
-        ? githubService.fetchTagDates(owner, repo).catch((error) => {
+        ? service.fetchTagDates(owner, repo).catch((error) => {
             console.warn('[useRepository] Tag dates unavailable, counting tags only:', error.message);
             return countOnly({ datesFailed: true });
         })
@@ -80,11 +82,25 @@ async function fetchReleaseData(owner, repo, hasToken) {
     return { list, count, tags };
 }
 
+// Errors thrown here carry a code the Dashboard can tell apart; the message is
+// already translated (errors.*). `final`: the same input or repository gives
+// the same answer, so the query doesn't retry it.
+function inputError(code, key, options) {
+    return Object.assign(new Error(i18n.t(key, options)), { code, final: true });
+}
+
+const INPUT_ERRORS = {
+    invalid: ['INVALID_REPO_INPUT', 'errors.repoInputInvalid'],
+    hostRequired: ['REPO_HOST_REQUIRED', 'errors.repoHostRequired'],
+    hostNotAllowed: ['REPO_HOST_NOT_ALLOWED', 'errors.repoHostNotAllowed'],
+};
+
 // Exported for tests (useRepository.test.js); the app goes through useRepository.
 export async function fetchRepositoryData(repoName) {
-    if (!repoName || !repoName.includes('/')) {
-        throw new Error('Formato inválido. Use owner/repo');
-    }
+    const { ref: requested, error: inputProblem } = parseRepoRef(repoName);
+    if (inputProblem) throw inputError(...INPUT_ERRORS[inputProblem]);
+    const service = getProvider(requested);
+    if (!service) throw inputError('PROVIDER_UNAVAILABLE', 'errors.providerUnavailable', { host: requested.host });
 
     // Fire-and-forget: start downloading + registering chart.js in parallel
     // with the GitHub fetches below, instead of waiting until a chart
@@ -94,10 +110,9 @@ export async function fetchRepositoryData(repoName) {
         console.warn('[useRepository] Chart.js prefetch failed (non-fatal, will retry on chart mount):', err);
     });
 
-    const [requestedOwner, requestedRepo] = repoName.split('/');
-
     // First fetch repository data to get default branch
-    const repoData = await githubService.fetchRepository(requestedOwner, requestedRepo);
+    const [requestedOwner, requestedRepo] = requested.segments;
+    const repoData = await service.fetchRepository(requestedOwner, requestedRepo);
     if (!repoData) {
         throw new Error('Não foi possível buscar informações do repositório');
     }
@@ -106,18 +121,19 @@ export async function fetchRepositoryData(repoName) {
     // regardless of the PAT having read access to them. Must run before any
     // of the 15+ parallel fetches below and before analytics.saveSearch.
     if (repoData.private === true) {
-        const privateRepoError = new Error(i18n.t('errors.privateRepo'));
-        privateRepoError.code = 'PRIVATE_REPO_UNSUPPORTED';
-        throw privateRepoError;
+        throw inputError('PRIVATE_REPO_UNSUPPORTED', 'errors.privateRepo');
     }
 
     // Canonical name from here on: /repos follows renames (facebook/react →
     // react/react), but the Search API does not — querying the typed name gave
     // HTTP 422 → 0 issues/PRs, and the history split across two names.
-    const fullName = repoData.full_name;
-    const [owner, repo] = fullName.split('/');
+    // Validated again: it goes into every request URL and into the report.
+    const ref = withPath(requested, repoData.full_name);
+    if (!ref) throw inputError('UNSAFE_REPO_NAME', 'errors.repoNameUnsafe');
+    const fullName = ref.path;
+    const [owner, repo] = ref.segments;
 
-    const hasToken = hasGithubToken();
+    const hasToken = hasTokenFor(ref);
 
     // Features the owner turned off on GitHub (torvalds/linux, a read-only
     // mirror: pull requests and issues disabled). Their counts are not zero,
@@ -128,40 +144,36 @@ export async function fetchRepositoryData(repoName) {
     const issuesDisabled = repoData.has_issues === false;
     const skipped = (value) => Promise.resolve(value);
 
-    // Fetch all other data in parallel
-    const results = await Promise.allSettled([
-        githubService.fetchCommits(owner, repo),
-        fetchBranchAnalysis(owner, repo, repoData.default_branch, hasToken),
-        fetchContributorAnalysis(owner, repo),
-        prsDisabled ? skipped(null) : githubService.fetchPullRequests(owner, repo),
-        issuesDisabled ? skipped(null) : githubService.fetchOpenIssuesCount(owner, repo),
-        issuesDisabled ? skipped(null) : githubService.fetchClosedIssuesCount(owner, repo),
-        prsDisabled ? skipped([]) : githubService.fetchRecentPullRequests(owner, repo),
-        githubService.fetchLanguages(owner, repo),
-        githubService.fetchCommunityProfile(owner, repo),
-        githubService.fetchRepositoryTree(owner, repo, repoData.default_branch),
-        fetchReleaseData(owner, repo, hasToken),
-        githubService.fetchCommitActivity(owner, repo),
+    // Fetch all other data in parallel. Named, not positional: the order is
+    // only the order of the partial-data warnings.
+    const tasks = {
+        commits: service.fetchCommits(owner, repo),
+        branches: fetchBranchAnalysis(service, owner, repo, repoData.default_branch, hasToken),
+        contributors: fetchContributorAnalysis(service, owner, repo),
+        pullRequests: prsDisabled ? skipped(null) : service.fetchPullRequests(owner, repo),
+        openIssues: issuesDisabled ? skipped(null) : service.fetchOpenIssuesCount(owner, repo),
+        closedIssues: issuesDisabled ? skipped(null) : service.fetchClosedIssuesCount(owner, repo),
+        recentPRs: prsDisabled ? skipped([]) : service.fetchRecentPullRequests(owner, repo),
+        languages: service.fetchLanguages(owner, repo),
+        communityProfile: service.fetchCommunityProfile(owner, repo),
+        repositoryTree: service.fetchRepositoryTree(owner, repo, repoData.default_branch),
+        releases: fetchReleaseData(service, owner, repo, hasToken),
+        commitActivity: service.fetchCommitActivity(owner, repo),
         // [] when disabled: the AI section reads "no PRs in the sample", as when the list was empty
-        prsDisabled ? skipped([]) : githubService.fetchPullRequestStats(owner, repo),
-        githubService.fetchCodeFrequency(owner, repo),
-        prsDisabled ? skipped(null) : githubService.fetchMergedPRsCount(owner, repo),
+        prStats: prsDisabled ? skipped([]) : service.fetchPullRequestStats(owner, repo),
+        codeFrequency: service.fetchCodeFrequency(owner, repo),
+        mergedPRs: prsDisabled ? skipped(null) : service.fetchMergedPRsCount(owner, repo),
         // GraphQL requires a token; without one, skip it (metrics → unavailable).
-        hasToken && !prsDisabled ? githubService.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null),
-        githubService.fetchPunchCard(owner, repo),
-        repoData.default_branch ? githubService.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
+        prReviewStats: hasToken && !prsDisabled ? service.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null),
+        punchCard: service.fetchPunchCard(owner, repo),
+        actionRuns: repoData.default_branch ? service.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
         // AI in the Process: .gitignore, .claude/settings.json, template. Token only (zero new requests without one).
-        hasToken ? githubService.fetchAiRepoContext(owner, repo) : Promise.resolve(null)
-    ]);
-
-    // Map of result indices to human-readable endpoint names
-    const endpointNames = [
-        'commits', 'branches', 'contributors', 'pullRequests',
-        'openIssues', 'closedIssues', 'recentPRs', 'languages',
-        'communityProfile', 'repositoryTree', 'releases',
-        'commitActivity', 'prStats', 'codeFrequency', 'mergedPRs',
-        'prReviewStats', 'punchCard', 'actionRuns', 'aiContext'
-    ];
+        aiContext: hasToken ? service.fetchAiRepoContext(owner, repo) : Promise.resolve(null),
+    };
+    const endpointNames = Object.keys(tasks);
+    const settled = await Promise.allSettled(Object.values(tasks));
+    const results = Object.fromEntries(endpointNames.map((name, index) => [name, settled[index]]));
+    const valueOf = (name, fallback = null) => (results[name].status === 'fulfilled' ? results[name].value : fallback);
 
     // Collect warnings from rejected promises. The REST PR list only feeds lead
     // time when the GraphQL sample is missing: its failure alone isn't partial
@@ -171,44 +183,44 @@ export async function fetchRepositoryData(repoName) {
     // contributors: when GitHub refuses to list them for this repository
     // (TOO_LARGE), the contributors card explains it; a later search won't
     // change it, so it is not "partial data" either (and doesn't block the snapshot).
-    const contributorsTooLarge = results[2]?.status === 'rejected' && results[2].reason?.code === 'TOO_LARGE';
+    const contributorsTooLarge = results.contributors.status === 'rejected' && results.contributors.reason?.code === 'TOO_LARGE';
     const SELF_EXPLAINED = new Set(['commitActivity', 'codeFrequency', 'punchCard', 'actionRuns', 'aiContext', ...(contributorsTooLarge ? ['contributors'] : [])]);
-    const warnings = results.reduce((acc, result, index) => {
-        const unused = endpointNames[index] === 'prStats' && results[15]?.status === 'fulfilled' && results[15].value;
-        if (result.status === 'rejected' && !unused && !SELF_EXPLAINED.has(endpointNames[index])) {
-            acc.push(endpointNames[index]);
-        }
-        return acc;
-    }, []);
+    const prStatsUnused = Boolean(valueOf('prReviewStats'));
+    const warnings = endpointNames.filter((name) => results[name].status === 'rejected'
+        && !(name === 'prStats' && prStatsUnused)
+        && !SELF_EXPLAINED.has(name));
 
     // Extract results with fail-safe handling
     // Counts/branches/profile: null when the request failed (see _warnings), never a fake 0.
-    const branches = results[1]?.status === 'fulfilled' ? results[1].value : null;
-    const contributorAnalysis = results[2]?.status === 'fulfilled' ? results[2].value : null;
-    const pulls = results[3]?.status === 'fulfilled' ? results[3].value : null;
-    const issuesOpenCount = results[4]?.status === 'fulfilled' ? results[4].value : null;
-    const issuesClosedCount = results[5]?.status === 'fulfilled' ? results[5].value : null;
-    const pullRequests = results[6]?.status === 'fulfilled' ? results[6].value : [];
-    const languages = results[7]?.status === 'fulfilled' ? results[7].value : {};
-    const communityProfile = results[8]?.status === 'fulfilled' ? results[8].value : null;
-    const repositoryTree = results[9]?.status === 'fulfilled' ? results[9].value : null;
-    const releasesCount = results[10]?.status === 'fulfilled' ? results[10].value.count : null;
+    const branches = valueOf('branches');
+    const contributorAnalysis = valueOf('contributors');
+    const pulls = valueOf('pullRequests');
+    const issuesOpenCount = valueOf('openIssues');
+    const issuesClosedCount = valueOf('closedIssues');
+    const pullRequests = valueOf('recentPRs', []);
+    const languages = valueOf('languages', {});
+    const communityProfile = valueOf('communityProfile');
+    const repositoryTree = valueOf('repositoryTree');
+    const releaseData = valueOf('releases');
+    const releasesCount = releaseData?.count ?? null;
     // Tags on GitHub when there are no releases (null otherwise, or when the tag request failed)
-    const releaseTags = results[10]?.status === 'fulfilled' ? results[10].value.tags : null;
+    const releaseTags = releaseData?.tags ?? null;
+    const commits = valueOf('commits');
     // /stats/*: 'computing' (202) / 'tooLarge' (422) / 'error' are shown as such,
     // never as an all-zero chart (see utils/activityStats.js)
-    const activityStats = statsStatus(results[11]);
-    const codeFrequencyStats = statsStatus(results[13]);
-    const punchCardStats = statsStatus(results[16]);
-    const pullRequestsStats = results[12]?.status === 'fulfilled' ? results[12].value : null;
-    const mergedPRsCount = results[14]?.status === 'fulfilled' ? results[14].value : null;
-    const prReviewStats = results[15]?.status === 'fulfilled' ? results[15].value : null;
+    const activityStats = statsStatus(results.commitActivity);
+    const codeFrequencyStats = statsStatus(results.codeFrequency);
+    const punchCardStats = statsStatus(results.punchCard);
+    const pullRequestsStats = valueOf('prStats');
+    const mergedPRsCount = valueOf('mergedPRs');
+    const prReviewStats = valueOf('prReviewStats');
     // null = skipped (no token) or failed: the section shows those checks as not verified.
-    const aiContext = results[18]?.status === 'fulfilled' && results[18].value ? parseAiRepoContext(results[18].value) : null;
+    const rawAiContext = valueOf('aiContext');
+    const aiContext = rawAiContext ? parseAiRepoContext(rawAiContext) : null;
 
     // Get recent commits and PRs for activity logs. Commits: null when the
     // request failed (shown as unavailable), [] only for an empty repository.
-    const recentCommits = recentCommitsOf(results[0], RECENT_ITEMS_LIMIT);
+    const recentCommits = recentCommitsOf(results.commits, RECENT_ITEMS_LIMIT);
     const recentPRs = pullRequests.slice(0, RECENT_ITEMS_LIMIT);
 
     // Calculate repository age
@@ -228,9 +240,9 @@ export async function fetchRepositoryData(repoName) {
     // targeted check instead of leaving it uncertain on every search.
     let issueTemplateDirectory = null;
     if (communityProfile && !communityProfile.files?.issue_template && repositoryTree?.truncated && !hasIssueTemplate(treePathsOf(repositoryTree))) {
-        issueTemplateDirectory = await githubService.hasIssueTemplateDirectory(owner, repo).catch(() => null);
+        issueTemplateDirectory = await service.hasIssueTemplateDirectory(owner, repo).catch(() => null);
     }
-    const profileMissing = results[8]?.status === 'fulfilled' && !communityProfile; // fork (404), not a failed request
+    const profileMissing = results.communityProfile.status === 'fulfilled' && !communityProfile; // fork (404), not a failed request
     const profileFiles = mergeProfileWithTree(communityProfile, repositoryTree, { profileMissing, issueTemplateDirectory });
     const health = profileFiles
         ? {
@@ -239,7 +251,7 @@ export async function fetchRepositoryData(repoName) {
             ...(profileFiles.source === 'tree' && { source: 'tree' }),
             ...(profileFiles.uncertain && { uncertain: true }),
         }
-        : { score: null, files: null, available: false, reason: results[8]?.status === 'fulfilled' ? 'noProfile' : 'error' };
+        : { score: null, files: null, available: false, reason: results.communityProfile.status === 'fulfilled' ? 'noProfile' : 'error' };
 
     // Analyze maturity (zombies null = branch data unavailable)
     const maturity = analyzeMaturity(repositoryTree, branches?.zombies ?? null);
@@ -280,12 +292,12 @@ export async function fetchRepositoryData(repoName) {
     // Project practices (public REST, no token): CI health on the default
     // branch, Conventional Commits in recent commits, release cadence.
     const practices = {
-        ci: analyzeCiRuns(results[17]?.status === 'fulfilled' ? results[17].value : null),
-        commits: analyzeConventionalCommits(results[0]?.status === 'fulfilled' ? results[0].value : null),
+        ci: analyzeCiRuns(valueOf('actionRuns')),
+        commits: analyzeConventionalCommits(commits),
         // No releases but tags: cadence from the stable tags (source 'tags')
         releases: releaseTags?.total > 0
             ? analyzeTagCadence(releaseTags)
-            : analyzeReleases(results[10]?.status === 'fulfilled' ? results[10].value.list : null),
+            : analyzeReleases(releaseData?.list ?? null),
     };
 
     // AI in the Process: counts and tool ids only, nothing per person (spec §3).
@@ -297,7 +309,7 @@ export async function fetchRepositoryData(repoName) {
         treePaths: treePathsOf(repositoryTree),
         treeStatus: treeStatusOf(repositoryTree),
         ctx: aiContext,
-        commits: results[0]?.status === 'fulfilled' ? results[0].value.map(fromRestCommit) : null,
+        commits: commits ? commits.map(fromRestCommit) : null,
         prs: prReviewStats ?? pullRequestsStats,
         reviewsAvailable: Boolean(prReviewStats),
         maturity,
@@ -310,8 +322,8 @@ export async function fetchRepositoryData(repoName) {
     const report = {
       fullName,
       // Typed name when it differs (renamed repo): Timeline merges its history
-      ...(repoName.toLowerCase() !== fullName.toLowerCase() && { searchedName: repoName }),
-      url: `https://github.com/${fullName}`,
+      ...(requested.path.toLowerCase() !== fullName.toLowerCase() && { searchedName: requested.path }),
+      url: repoWebUrl(ref),
       description: repoData.description,
       language: repoData.language,
       ownerType: repoData.owner?.type || 'User',
@@ -407,13 +419,16 @@ export async function fetchRepositoryData(repoName) {
 // disables the query, so a hidden search never refetches or re-saves.
 export function useRepository(repoName) {
     const name = repoName && repoName.includes('/') ? repoName : null;
+    // One cache entry per repository, however it was typed (pasted URL, owner/repo):
+    // a second form within the stale time doesn't refetch nor save another snapshot.
+    const { ref } = name ? parseRepoRef(name) : {};
 
     const { data, isLoading, error } = useQuery({
-        queryKey: ['repository', name],
+        queryKey: ['repository', ref ? repoKey(ref) : name],
         queryFn: () => fetchRepositoryData(name),
         enabled: Boolean(name),
         staleTime: CACHE_STALE_TIME_MS,
-        retry: 1
+        retry: (failureCount, err) => failureCount < 1 && !err?.final,
     });
 
     return {

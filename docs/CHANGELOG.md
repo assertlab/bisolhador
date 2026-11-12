@@ -11,6 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.25.0] - 2026-11-12
+
+Fase 1 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`): a fundação, ainda sem analisar GitLab.
+
+### ✨ Changed
+
+- **A busca aceita a URL do GitHub colada** (`https://github.com/owner/repo/tree/main`, `github.com/owner/repo`, com ou sem `.git`). Antes, a URL virava um owner `https:` e a busca falhava.
+- **Mensagens próprias para endereços fora do GitHub.**
+  - Endereço do GitLab: a análise do GitLab ainda está em desenvolvimento.
+  - Caminho com 3 ou mais níveis e sem host: falta incluir o host.
+  - Host desconhecido: o endereço não é aceito.
+  - Em todos os casos, nada é requisitado. Antes, a mensagem era a genérica "Formato inválido", em português até na interface em inglês.
+- **Turma:** um endereço do GitLab ou um caminho de 3 níveis sem host aparece como inválido. Antes era cortado em 2 níveis (`gitlab.com/g/sub/p` virava `gitlab.com/g`).
+
+### 🔧 Internal
+
+- `parseRepoRef` (`src/utils/repoRef.js`): plataforma, host e caminho, com validação por plataforma e lista fixa de hosts GitLab (`VITE_GITLAB_HOSTS`, sempre com gitlab.com).
+- `useRepository` lê os resultados por nome, não por posição, e escolhe o serviço por `getProvider(ref)`.
+- Token por host (`src/services/tokens.js`); o GitHub mantém a chave `github_token`.
+- Nomes de arquivo do PDF, CSV e JSON trocam todas as barras, não só a primeira.
+
+### 🧪 Tests
+
+- `repoRef.test.js` (GitHub, GitLab com subgrupos, host fora da lista, segmentos inseguros, limite de níveis, `parseGitlabHosts`), `tokens.test.js`, entrada no `useRepository` (erros antes de qualquer requisição, URL colada, nome canônico inseguro recusado) e `parseRepoList` com endereços GitLab.
+
+---
+
 ## [3.24.0] - 2026-11-05
 
 ### 🐛 Fixed

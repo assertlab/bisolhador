@@ -6,6 +6,12 @@
 // react-router is patched.
 export const SAFE_GITHUB_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
+// A repository name (not an owner) may also start with '.', '_' or '-'
+// (org/.github), but is never '.' or '..'. Used by parseRepoRef; the stricter
+// parseSafeRepoName below still guards app-built routes.
+const GITHUB_REPO_SEGMENT_PATTERN = /^[A-Za-z0-9._-]+$/;
+export const isSafeGithubRepoName = (s) => GITHUB_REPO_SEGMENT_PATTERN.test(s) && s !== '.' && s !== '..';
+
 /** "owner/repo" → [owner, repo] when both segments are safe, else null. */
 export function parseSafeRepoName(fullName) {
   const parts = String(fullName ?? '').split('/');

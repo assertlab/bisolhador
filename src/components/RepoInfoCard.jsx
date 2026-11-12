@@ -11,6 +11,7 @@ import { intlLocale } from '../i18n.js';
 import { parseSafeRepoName } from '../utils/repoName.js';
 import { repoAgeText } from '../utils/repoAge.js';
 import { GuideLink } from './GuideLink.jsx';
+import { repoFileSlug } from '../utils/repoRef.js';
 
 export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
   const { t, i18n } = useTranslation();
@@ -30,7 +31,7 @@ export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
       // react-pdf and the report texts load on click (never at page load)
       const { generateRepoReport } = await import('../report/generateRepoReport.js');
       const blob = await generateRepoReport(data, { isSnapshot });
-      downloadBlob(blob, `bisolhador-${data.fullName.replace('/', '-')}-${new Date().toISOString().slice(0, 10)}.pdf`);
+      downloadBlob(blob, `bisolhador-${repoFileSlug(data.fullName)}-${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (error) {
       console.error('Erro ao gerar o relatório PDF:', error);
       // A tab that predates a deploy asks for a chunk that no longer exists: reloading fixes it, retrying can't
@@ -41,7 +42,7 @@ export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
   };
 
   const handleDownloadJSON = () => {
-    const filename = `bisolhador-report-${data.fullName.replace('/', '-')}.json`;
+    const filename = `bisolhador-report-${repoFileSlug(data.fullName)}.json`;
     exportJson(data, filename);
   };
 
@@ -63,7 +64,7 @@ export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
       [t('repo.totalMerges')]: data.stats.merges ?? 'N/A',
       [t('repo.totalReleases')]: data.stats.releases ?? 'N/A',
     };
-    const filename = `bisolhador-${data.fullName.replace('/', '-')}.csv`;
+    const filename = `bisolhador-${repoFileSlug(data.fullName)}.csv`;
     exportToCsv(filename, [row]);
   };
 
