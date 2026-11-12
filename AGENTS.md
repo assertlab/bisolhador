@@ -286,6 +286,7 @@ Stale documentation isn't a cosmetic problem in this project. It has already, co
 - Registro do Chart.js é sempre via `ensureChartSetup()` (`src/lib/chartSetup.js`, import dinâmico memoizado numa promise compartilhada) — nunca importado estaticamente/eager em nenhum arquivo, nem mesmo `main.jsx`.
 - Páginas novas em `src/pages/` entram no `App.jsx` via `React.lazy()`, seguindo o padrão já usado para Dashboard/Ranking/Timeline/Benchmark — nunca import estático de página inteira.
 - Testes automatizados ou scripts ad-hoc que precisam de dados reais do GitHub leem `SMOKE_GITHUB_TOKEN` de `process.env` (nunca prefixado `VITE_`, injetado via `page.addInitScript` no localStorage do browser de teste, nunca logado) em vez de esgotar o rate limit de 60/h ou recorrer a mock indiscriminadamente.
+- Scripts de medição contra instâncias GitLab (estudo em `docs/ESTUDO_GITLAB.md`) seguem a mesma regra com `SMOKE_GITLAB_TOKEN`: token legado `read_api` de validade curta, guardado fora do repositório (ex.: Keychain do macOS), nunca em `.env*` com prefixo `VITE_`, nunca logado. Projetos `internal`/privados de alunos não são nomeados em documentos versionados: o repositório é público.
 
 ## O Que Evitar
 

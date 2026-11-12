@@ -1,6 +1,6 @@
 # Estudo: GitLab como fonte de análise no Bisolhador
 
-> Estado: **estudo e plano**, nada implementado. Data: 2026-11-11 (base: `main` em `e97140c`).
+> Estado: **estudo e plano**, nada implementado. Data: 2026-11-11, com as medições da Fase 0 em 2026-11-12 (base: `main` em `e97140c`).
 > Referências `arquivo:linha` valem para esse commit e podem ter se deslocado depois.
 
 ## Contexto e decisões
@@ -139,7 +139,7 @@ Testado em 2026-11-11 com chamadas anônimas a gitlab.com, enviando `Origin` de 
 | PRs (MRs) e merges | `/merge_requests?state=…&per_page=1` → `X-Total` **[verificado]** | ✅ |
 | Lead time | MRs merged (`created_at`, `merged_at`) | ✅ |
 | Code review (merge sem aprovação) | GraphQL `mergeRequests{approvedBy{nodes{username bot}} author{username bot}}`; REST `/merge_requests/:iid/approvals` existe em todos os tiers **[verificado]** | ✅ |
-| Tempo até a 1ª revisão, divergência | `/notes`, `/discussions` | ⚠️ **REST dá 401 sem token** **[verificado]**. O GitLab não tem objeto "review": aproximar pela 1ª nota ou aprovação de alguém que não seja o autor. Exige `method` próprio. |
+| Tempo até a 1ª revisão, divergência | `/notes`, `/discussions` | ⚠️ REST dá 401 sem token, mas o **GraphQL devolve `notes` sem token** em projeto público (50 MRs × 50 notas numa consulta, dentro do limite de complexidade) **[verificado]**: usar o GraphQL. O GitLab não tem objeto "review": aproximar pela 1ª nota ou aprovação de alguém que não seja o autor. Exige `method` próprio. |
 | Tamanho do MR | GraphQL `diffStatsSummary{additions deletions}` **[verificado]** | ✅ |
 | Branches e branches zumbis | `/repository/branches` (`protected`, `commit.committed_date`) | ✅ |
 | Releases e tags | `/releases`, `/repository/tags` (`X-Total` presente) | ✅ |
@@ -150,7 +150,7 @@ Testado em 2026-11-11 com chamadas anônimas a gitlab.com, enviando `Origin` de 
 | CI | `/pipelines` (`status`, `ref`, `source`) | ✅ Muda o vocabulário (`push`, `merge_request_event`, `schedule`) |
 | Conventional Commits | Commits REST | ✅ |
 | IA no Processo | Trailers `Co-authored-by` (campo `trailers` dos commits), usuário `GitLabDuo` (`bot: true`) **[verificado]**, pipelines `source: duo_workflow` **[verificado]**, arquivos de configuração via tree ou GraphQL `repository.blobs` | ⚠️ Precisa de entradas próprias no `aiRegistry` |
-| Bots | Tokens de projeto: `project_<id>_bot_<rand>`. GraphQL `UserCore.bot` | ⚠️ Padrão de grupo (`group_<id>_bot_*`) não confirmado na documentação |
+| Bots | Tokens de projeto: `project_<id>_bot_<rand>`. GraphQL `UserCore.bot` | ⚠️ Padrão de grupo (`group_<id>_bot_*`) não confirmado na documentação. **`bot` não basta:** a conta `gitlab-dependency-update-bot` (gitlab-runner) vem com `bot: false` **[verificado]**, então a detecção também precisa de padrões de nome |
 | Turma: importar organização | `/groups/:id/projects?include_subgroups=true` (`X-Total` presente) | ✅ |
 | Turma: commits, MRs e CI no período | `commits?since&until`, GraphQL `mergeRequests(mergedAfter:, mergedBefore:)`, `pipelines?updated_after&updated_before` | ✅ Visão por aluno agrupada por e-mail e nome |
 | Turma: origem do template | Não há equivalente ao `github-classroom[bot]` nem ao `templateRepository` | ❌ "Origem não verificada" |
@@ -175,14 +175,15 @@ Primeira instância da allow-list, indicada pelo mantenedor. Testada sem token, 
 Observações:
 - `/pipelines` devolveu `X-Total` aqui, ao contrário do gitlab.com. O código não deve depender nem da presença nem da ausência desse header.
 - Um projeto público testado (`lgpss-in1054/ns3_code`) tem árvore de 4.373 itens, o que equivale a cerca de 44 páginas na listagem recursiva. Isso confirma que o health score não pode depender da árvore completa (seção 2.2).
-- Pendente na Fase 0: medir o custo em requisições com um projeto real de aluno, que exige token, e confirmar com o CIn os limites de taxa.
+- Limites de taxa: a página pública `/help/instance_configuration` mostra "–" (limite não ativado) para requisições não autenticadas e para os limites das APIs de arquivos, usuários, grupos e projetos (consultado em 2026-11-12). Isso bate com a ausência de headers `ratelimit-*`. Falta a confirmação da administração, porque um limite no nginx não aparece nessa página.
+- Custo medido em projetos reais: seção 2.5.
 
 ### 2.4 Conclusão
 
 É viável sem backend. A maioria dos indicadores tem equivalente direto ou pode ser calculada no cliente. Os pontos caros são:
 
 1. As séries semanais e os contribuidores, calculados a partir de commits paginados (mais requisições, resultado amostral).
-2. A revisão de MR, que só funciona com token.
+2. A revisão de MR: o REST de notas exige token, mas o GraphQL serve sem token em projeto público (seção 2.2).
 3. Commits sem login nem avatar.
 
 O custo em requisições é maior que no GitHub, principalmente na Turma (até 50 projetos), o que reforça o uso de token.
@@ -198,6 +199,61 @@ Fontes:
 - https://docs.gitlab.com/user/project/settings/project_access_tokens/
 - https://docs.gitlab.com/auth/tokens/fine_grained_access_tokens_graphql/
 - https://docs.gitlab.com/development/permissions/granular_access/graphql_architecture
+
+### 2.5 Custo medido (Fase 0, 2026-11-12)
+
+Script de medição só de leitura, fora do repositório. Os projetos de aluno são `internal` (visíveis só para quem tem login na instância) e por isso aparecem anonimizados: este repositório é público. Ele chama, em sequência, as fontes que o plano propõe para o Dashboard (seção 2.2) e para a Turma, com **paginação completa, sem teto**, para mostrar o custo real. Na Turma, o período foi de 2026-08-01 a 2026-11-12. Nas medições com token, foi usado um token legado `read_api`.
+
+| Projeto | Modo | Dashboard | Turma (por projeto) | Tempo total |
+|---|---|---|---|---|
+| Projeto de aluno A (CIn, `internal`) | token | 25 | 4 | 5,6 s |
+| Projeto de aluno B (CIn, `internal`) | token | 28 | 4 | 6,5 s |
+| Projeto de aluno C (CIn, `internal`) | token | 32 | 4 | 9,8 s |
+| A, B e C | sem token | 404 na 1ª chamada | 404 | — |
+| `lgpss-in1054/ns3_code` (CIn, público) | sem token | 67 | 4 | 29 s |
+| `gitlab-org/gitlab-runner` (gitlab.com) | sem token | 115 | 143 | 240 s |
+
+Para onde vão as requisições:
+
+- **Projetos de aluno (CIn):** 1 chamada para cada fonte de metadados e contagens, mais:
+  - a árvore recursiva, com 5 páginas (cerca de 440 itens);
+  - 1 página de commits das últimas 52 semanas (15 a 29 commits);
+  - 1 chamada REST de notas por MR mergeado (1, 4 e 8 chamadas).
+- **gitlab-runner:**
+  - notas por MR: 50 chamadas REST, todas com 401 sem token;
+  - árvore: 19 páginas;
+  - commits de 52 semanas com estatísticas: 24 páginas (2.332 commits);
+  - branches: 5 páginas.
+  - Na Turma, os commits do período em todas as branches custaram 75 páginas e os pipelines, 56.
+- **ns3_code:** 44 das 67 chamadas são a árvore recursiva (4.373 itens).
+
+Achados:
+
+1. **Visibilidade `internal`.** Os 3 projetos de aluno são `internal`: qualquer usuário logado na instância os vê, mas sem token a API responde **404, igual a um projeto inexistente**. O GitHub não tem esse nível de visibilidade. Consequências:
+   - Na prática, projeto de disciplina exige token.
+   - A mensagem de erro do 404 sem token precisa dizer "não encontrado ou exige login nesta instância".
+   - **Decisão pendente do mantenedor:** a regra de privacidade (Dashboard recusa repositório privado; só a Turma analisa) trata `internal` como privado? Se tratar, o Dashboard não abre projetos de disciplina do CIn.
+2. **Notas de MR via GraphQL.** Trocar as chamadas REST por MR (que, sem token, dão 401) por uma consulta GraphQL. A consulta funciona sem token e economiza até 50 chamadas por análise.
+3. **CI rodando só em MRs.** O projeto A não tem pipeline de push na `main`: todos rodam com `ref = refs/merge-requests/<iid>/head` e `source = merge_request_event`. Para saber a branch de destino, é preciso cruzar o iid com o MR. Se o indicador de CI do Dashboard contar só pipelines da branch padrão (como faz hoje com o GitHub), esse projeto aparece "sem CI". A Turma precisa do equivalente ao `ciRunsForBranch`.
+4. **Configuração de IA não registrada.** Os 3 projetos de aluno têm `.agent/` e `.pi/` na raiz, que parecem configuração de agentes de IA. A ferramenta de cada um ainda não está identificada, e nenhum dos dois está no `aiRegistry`. Verificar antes de registrar, como manda a política do guia de IA.
+5. **Bots:** ver a linha "Bots" da seção 2.2 (`bot: false` numa conta de bot).
+6. **Latência.** Feitas em sequência, as chamadas levaram de 0,2 a 0,4 s cada no CIn (0,4 s no projeto público sem token, com a árvore grande) e cerca de 0,9 s no gitlab.com, medidos daqui. O `gitlabService` precisa paralelizar as fontes (como o `Promise.allSettled` do GitHub) e ter tetos de paginação. Nos commits, o endpoint não devolve `X-Total`, então não dá para saber de antemão quantas páginas existem. Como a paginação é por offset (`page=N`) e o teto é fixo, dá para pedir as páginas em lotes paralelos e parar no primeiro lote que vier incompleto.
+
+Tetos propostos para `src/constants.js`, com marcação `truncated`/`capped` e o resultado tratado como amostra, nunca como total:
+
+| Constante (proposta) | Valor | Efeito medido |
+|---|---|---|
+| `GITLAB_TREE_MAX_PAGES` | 10 (1.000 itens) | Os projetos de aluno ficam inteiros; gitlab-runner (19) e ns3_code (44) ficam `truncated`, e os detectores de maturidade já tratam isso como "?". O health score não pode depender dessa árvore: sem community profile, `mergeProfileWithTree` com árvore truncada dá resultado incerto ou nulo. Por isso ele vem das listagens dirigidas da seção 2.2 |
+| `GITLAB_COMMIT_MAX_PAGES` | 10 (1.000 commits) | As 52 semanas dos alunos ficam inteiras; gitlab-runner vira amostra (24 → 10) |
+| `GITLAB_BRANCH_MAX_PAGES` | 5 | Cobre o gitlab-runner (423 branches) |
+| Pipelines na Turma | `CLASSROOM_CI_RUN_PAGES` (3), o mesmo do GitHub | gitlab-runner: 56 → 3 |
+| Commits do período na Turma | `CLASSROOM_COMMIT_PAGES` (3), o mesmo do GitHub, para que a amostra de uma turma não dependa da plataforma | Alunos: 1 página; gitlab-runner: 75 → 3 |
+
+Estimativa com esses tetos e notas via GraphQL:
+- **Dashboard:** cerca de 25 requisições por projeto de aluno e cerca de 43 no gitlab-runner, contando a consulta GraphQL de notas no lugar das chamadas REST.
+- **Turma:** cerca de 4 por projeto de aluno, sem contar o contexto de IA, que ainda não foi medido. Uma turma de 50 projetos fica em cerca de 200 requisições mais o custo da IA (no GitHub, +1 GraphQL por repositório e uma consulta condicional de autoria).
+
+O custo base cabe com folga nos limites atuais do gitlab.com e, ao que tudo indica, do CIn. O custo da IA precisa ser medido na Fase 3. Nada disso cabe nos 60 req/h anônimos anunciados pela GitLab, o que reforça o token.
 
 ---
 
@@ -265,11 +321,14 @@ Fontes:
 
 ### Fase 0: validação (spike, sem merge de código)
 
-- ✅ Instância institucional: `gitlab.cin.ufpe.br`. CORS e endpoints validados (seção 2.3). Falta confirmar os limites de taxa com a administração do servidor.
-- Medir quantas requisições custa analisar 3 projetos reais de alunos e 1 projeto grande (`gitlab-org/gitlab-runner`), com e sem token.
-- Testar se o GraphQL anônimo devolve `notes` de MR.
-- Medições com token usam **token legado com `read_api`** no `gitlab.cin.ufpe.br` (validade curta, guardado fora do repositório, por exemplo em `.env.local`). Tokens fine-grained ficam fora da Fase 0 (seção 2.1).
-- **Saída:** os números neste documento e os tetos de paginação em `src/constants.js`.
+- ✅ Instância institucional: `gitlab.cin.ufpe.br`. CORS e endpoints validados (seção 2.3).
+- ✅ Custo medido em 3 projetos de aluno, em 1 projeto público do CIn e no `gitlab-org/gitlab-runner` (seção 2.5). No gitlab.com a medição foi só sem token, porque não havia token disponível lá.
+- ✅ O GraphQL sem token devolve `notes` de MR (seção 2.2).
+- Medições com token usam **token legado com `read_api`** no `gitlab.cin.ufpe.br`, com validade curta e guardado fora do repositório (no Keychain do macOS, lido para a variável de ambiente `SMOKE_GITLAB_TOKEN` só durante a execução). Tokens fine-grained ficam fora da Fase 0 (seção 2.1).
+- Pendente:
+  - a confirmação dos limites de taxa pela administração do CIn (a página pública indica que não há limite ativado, seção 2.3);
+  - a decisão sobre a visibilidade `internal` (seção 2.5, achado 1).
+- **Saída:** os números da seção 2.5. Os tetos propostos entram em `src/constants.js` na Fase 2.
 
 ### Fase 1: fundação, sem mudança visível no GitHub
 
