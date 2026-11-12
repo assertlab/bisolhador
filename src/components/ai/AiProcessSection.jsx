@@ -42,7 +42,8 @@ export function AiProcessSection({ aiProcess }) {
   const { gap, noteKey, missingKey } = aiContextGap(aiProcess);
   // Context query (.gitignore, settings, template) skipped or failed: those checks read null.
   const contextMissing = config.hiddenLocal === null;
-  const anyFailure = !commits.available || !prs.available || (!gap && (contextMissing || !safeguards.available));
+  // Without a token nothing below ran; on a platform without the context query, safeguards still did
+  const anyFailure = !commits.available || !prs.available || (gap !== 'noToken' && !safeguards.available) || (!gap && contextMissing);
   const toolLabel = (id) => labelOf(id, t);
   const unknownTemplate = new Set(config.entries.filter((e) => e.fromTemplate === null).map((e) => e.toolId));
 

@@ -36,7 +36,7 @@
   },
   "search": {
     "label": "Buscar repositório",
-    "placeholder": "Ex: facebook/react ou assertlab/bisolhador",
+    "placeholder": "Ex: facebook/react ou gitlab.com/grupo/projeto",
     "button": "Buscar",
     "loading": "Bisolhando..."
   },
@@ -439,39 +439,57 @@
     "title": "Como usar o Bisolhador",
     "about": {
       "title": "Sobre o Bisolhador",
-      "description": "O Bisolhador é uma ferramenta analítica para avaliar repositórios GitHub como um Tech Lead. Ele analisa métricas de volume, governança, maturidade e atividade para fornecer insights sobre saúde e eficiência do projeto."
+      "description": "O Bisolhador é uma ferramenta analítica para avaliar repositórios do GitHub e do GitLab ({{hosts}}) como um Tech Lead. Ele analisa métricas de volume, governança, maturidade e atividade para fornecer insights sobre saúde e eficiência do projeto."
     },
     "token": {
-      "title": "Por que configurar um Token?",
-      "description": "Sem token, o GitHub limita a 60 requisições por hora. Com um Personal Access Token, você pode fazer até 5.000 requisições por hora, permitindo análises mais completas.",
+      "title": "Por que configurar tokens?",
+      "description": "GitHub: sem token, o limite é de 60 requisições por hora; com um Personal Access Token, 5.000. GitLab: no Dashboard, projetos públicos funcionam sem token. No Modo Turma, cada plataforma da lista precisa de um token (no GitLab, um read_api por instância); é ele que dá acesso aos projetos internos e privados.",
       "warning": {
         "important": "Importante:",
-        "message": "O token fica salvo apenas no seu navegador e nunca é enviado para nossos servidores. Sua privacidade está protegida."
+        "message": "Os tokens ficam salvos apenas no seu navegador e nunca são enviados para nossos servidores; cada token do GitLab só é enviado para a própria instância."
       }
     },
     "createToken": {
-      "title": "Como criar um Token",
+      "title": "Como criar um token do GitHub",
       "steps": [
         "Acesse <link>github.com/settings/tokens</link>",
         "Clique em \"Generate new token (classic)\"",
         "Dê um nome descritivo (ex: \"Bisolhador Analysis\")",
-        "Selecione apenas a permissão \"public_repo\" (para repositórios públicos)",
+        "Selecione a permissão \"public_repo\" (ou \"repo\", para analisar repositórios privados no Modo Turma)",
         "Clique em \"Generate token\"",
         "Copie o token gerado (começa com \"ghp_\")"
       ]
     },
     "usage": {
       "title": "Como usar",
-      "steps": [
-        "Digite o nome do repositório no formato \"owner/repo\"",
-        "Clique em \"Buscar\" ou pressione Enter",
-        "Aguarde a análise dos dados",
-        "Explore as métricas e gráficos gerados"
-      ]
+      "intro": "Digite o repositório e clique em \"Buscar\" (ou pressione Enter):",
+      "addresses": ["GitHub: owner/repo, ou cole a URL (https://github.com/owner/repo)", "GitLab: escreva o host antes do caminho, como {{example}}, ou cole a URL do projeto"],
+      "outro": "Aguarde a análise e explore as métricas e os gráficos"
     },
     "button": {
       "close": "Entendi"
-    }
+    },
+    "gitlab": {
+      "title": "Projetos do GitLab",
+      "text": "No Dashboard, só projetos públicos do GitLab são analisados, e a análise não é gravada (não há link permanente, Linha do Tempo, Benchmark nem Ranking). Projetos internos e privados podem ser analisados no Modo Turma. Algumas métricas são calculadas de outro jeito no GitLab: veja \"Diferenças no GitLab\" em Como interpretar."
+    },
+    "classroom": {
+      "title": "Modo Turma",
+      "text": "Informe um repositório por linha, misturando plataformas: owner/repo (GitHub) ou {{example}} (GitLab). Para importar uma turma inteira, escreva o nome da organização do GitHub ou host/grupo do GitLab (os subgrupos vêm junto). A Turma exige um token de cada plataforma que aparece na lista: o do GitHub, se houver repositórios do GitHub, e um token read_api de cada instância do GitLab, mesmo para projetos públicos."
+    },
+    "createGitlabToken": {
+      "title": "Como criar um token do GitLab",
+      "steps": [
+        "Na instância do GitLab, abra o avatar → Preferências → Access tokens (endereços abaixo)",
+        "Clique em \"Add new token\" e escolha o token pessoal comum, não o \"fine-grained\"",
+        "Dê um nome (ex.: \"Bisolhador\") e uma data de expiração curta",
+        "Marque só o escopo \"read_api\"",
+        "Crie o token e copie o valor (começa com \"glpat-\")",
+        "No Bisolhador, ícone ⚙️ → campo do GitLab da instância → Salvar: o token é verificado na hora"
+      ],
+      "pages": "Página de tokens de cada instância:"
+    },
+    "examplePath": "grupo/subgrupo/projeto"
   },
   "timeline": {
     "title": "Time Machine",
@@ -807,7 +825,7 @@
     "unavailable": {
       "noToken": "Com token do GitHub, também verificamos .gitignore, configuração (declaração desligada), template, revisão por IA e salvaguardas.",
       "error": "Não foi possível obter parte dos dados (falha ou limite da API do GitHub): os itens marcados n/d ou ? não foram verificados.",
-      "unsupported": "Nesta plataforma, ainda não verificamos .gitignore, configuração versionada de agentes, revisão por IA nem salvaguardas: esses itens aparecem como não verificados.",
+      "unsupported": "Nesta plataforma, ainda não verificamos o .gitignore, o .claude/settings.json nem a origem template (e, no Modo Turma, os arquivos de configuração de agentes): esses itens aparecem como não verificados. Agentes e revisores próprios do GitLab, como o GitLab Duo, ainda não são reconhecidos.",
       "error_gitlab": "Não foi possível obter parte dos dados (falha ou limite da API do GitLab): os itens marcados n/d ou ? não foram verificados."
     },
     "notRecorded": "IA no Processo: não registrado nesta análise.",
@@ -833,8 +851,7 @@
       "footnote_gitlab": "Commits do branch principal no período, sem merges e sem bots de manutenção. No GitLab, os commits não informam a conta de quem os fez: as pessoas são agrupadas pelo nome que aparece nos commits, então a mesma pessoa com nomes diferentes ocupa mais de uma linha. Configuração de IA não é verificada no GitLab. Nada desta tabela é salvo nem vai para o CSV.",
       "configUnavailable_gitlab": "n/d: no GitLab, ainda não verificamos quem adicionou ou alterou arquivos de configuração de IA."
     },
-    "notOnPlatform": "ainda não disponível nesta plataforma",
-    "tooltip_gitlab": "Rastros que o GitLab guarda: coautoria declarada em commits e MRs abertos por agentes. Configuração de agentes, revisão por IA e salvaguardas ainda não são verificadas no GitLab. Não mede quanto código foi escrito por IA."
+    "tooltip_gitlab": "Rastros que o GitLab guarda: configuração de agentes versionada, coautoria declarada em commits, MRs abertos por agentes e revisões de bots de IA, reconhecidos pelo registro de ferramentas (agentes próprios do GitLab, como o GitLab Duo, ainda não). Não mede quanto código foi escrito por IA."
   },
   "gitlab": {
     "notice": "Projeto do GitLab ({{host}}). O histórico (link permanente, Linha do Tempo, Benchmark e Ranking) ainda não existe para o GitLab: esta análise não é gravada. Contribuidores, atividade semanal, dias da semana e churn são calculados a partir dos commits dos últimos 12 meses."

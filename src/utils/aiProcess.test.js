@@ -473,7 +473,7 @@ describe('parseAiRepoContext', () => {
 describe('aiContextGap', () => {
   it('unsupported platform, no token, or ran (a missing value is then a failure)', async () => {
     const { aiContextGap } = await import('./aiProcess.js');
-    expect(aiContextGap({ withToken: true, contextUnsupported: true })).toEqual({ gap: 'unsupported', noteKey: 'aiProcess.unavailable.unsupported', missingKey: 'aiProcess.notOnPlatform' });
+    expect(aiContextGap({ withToken: true, contextUnsupported: true })).toEqual({ gap: 'unsupported', noteKey: 'aiProcess.unavailable.unsupported', missingKey: 'aiProcess.fetchFailed' });
     expect(aiContextGap({ withToken: false })).toMatchObject({ gap: 'noToken', missingKey: 'aiProcess.needsToken' });
     expect(aiContextGap({ withToken: true })).toEqual({ gap: null, noteKey: null, missingKey: 'aiProcess.fetchFailed' });
   });

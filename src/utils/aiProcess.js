@@ -460,13 +460,14 @@ export function normalizeSnapshotAiProcess(report) {
 }
 
 /**
- * Why the token-only checks (context, AI review, safeguards) may be missing:
- * 'unsupported' (no context fetcher for this platform, GitLab for now),
- * 'noToken', or null (they ran; a null value there is a failed request).
- * `missingKey`: the text for a check that is missing for that reason.
+ * Why the token-only checks may be missing: 'noToken' (GitHub: context, AI review and safeguards all
+ * need it), 'unsupported' (no context query on this platform, GitLab for now: .gitignore, settings,
+ * template; AI review and safeguards still come from the MRs), or null (they ran; a null value is a
+ * failed request). `missingKey`: the text for a missing AI review or safeguards.
  */
 const GAP_KEYS = {
-  unsupported: { noteKey: 'aiProcess.unavailable.unsupported', missingKey: 'aiProcess.notOnPlatform' },
+  // Only the context query is missing; AI review and safeguards come from the MR data, so a gap there is a failure
+  unsupported: { noteKey: 'aiProcess.unavailable.unsupported', missingKey: 'aiProcess.fetchFailed' },
   noToken: { noteKey: 'aiProcess.unavailable.noToken', missingKey: 'aiProcess.needsToken' },
   none: { noteKey: null, missingKey: 'aiProcess.fetchFailed' },
 };

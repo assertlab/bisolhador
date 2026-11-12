@@ -30,6 +30,9 @@ export function parseGitlabHosts(value) {
 }
 export const GITLAB_HOSTS = parseGitlabHosts(import.meta.env?.VITE_GITLAB_HOSTS);
 
+/** Where a GitLab user creates a personal access token on that instance (shown without the scheme). */
+export const gitlabTokenPage = (host) => `${host}/-/user_settings/personal_access_tokens`;
+
 // GitLab path rules: letters, digits, '_', '-' and '.'; can't start with '-'
 // or '.' (so no '.' or '..'), can't end in '.git' or '.atom'.
 const SAFE_GITLAB_SEGMENT_PATTERN = /^[A-Za-z0-9_][A-Za-z0-9._-]*$/;

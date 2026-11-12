@@ -386,7 +386,13 @@ Feita em 2026-11-12 (v3.27.0):
 
 ### Fase 5: documentação
 
-- `AGENTS.md` (arquitetura de providers), `README`, `CHANGELOG`, guia e ROADMAP.
+Feita em 2026-11-12 (v3.27.1); `AGENTS.md`, `CHANGELOG` e o guia foram atualizados a cada fase.
+
+- ✅ Modal "Como usar": formatos de endereço do GitHub e do GitLab, projetos do GitLab, Modo Turma e como criar o token `read_api` do GitLab (hosts da lista do build).
+- ✅ Placeholder da busca com um exemplo do GitLab.
+- ✅ README: descrição, busca, Modo Turma, privacidade (exceção da Turma) e a seção "Como informar repositórios"; recursos de histórico marcados como só GitHub.
+- ✅ Como interpretar: a entrada "Modo turma" aponta para "Diferenças no GitLab". Guia de IA: limite "GitLab" (o que ainda não é verificado).
+- ✅ ROADMAP: 1ª entrega marcada, fase 4 e pendências em aberto.
 
 ### Riscos
 

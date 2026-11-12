@@ -164,7 +164,7 @@ Score = (items present / 7) × 100%. Colors (`HealthScoreCard.jsx`): Green (≥7
 ## Project Context
 
 ### Purpose
-Educational tool by ASSERT Lab (UFPE) for software engineering teaching (v3.16.0). Transforms GitHub repository data into visual insights for students and professors.
+Educational tool by ASSERT Lab (UFPE) for software engineering teaching (current version: `package.json`). Transforms GitHub and GitLab repository data into visual insights for students and professors.
 
 ### Token System
 - Stored in `localStorage['github_token']` (via safe storage wrapper). GitLab: one token per allowed host, `gitlab_token:<host>` (`src/services/tokens.js`), sent only to that host, set in the settings modal and checked on save with `GET /personal_access_tokens/self` (needs `read_api`; legacy tokens only, fine-grained ones are out of scope)

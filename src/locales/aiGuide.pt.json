@@ -158,7 +158,8 @@
         "personalBots": "bots-agente pessoais",
         "reviewOnly": "rastro só de revisão",
         "dashboardTemplate": "origem template no Dashboard",
-        "method": "método dos snapshots"
+        "method": "método dos snapshots",
+        "gitlab": "GitLab"
       },
       "items": {
         "samples": "Amostras: no Dashboard, os {{commits}} commits mais recentes do branch principal e até {{prSample}} PRs mergeados (com token, dentre os {{prScan}} mergeados atualizados mais recentemente; sem token, dentre os {{closedScan}} PRs fechados). No Modo Turma, até os {{classroomCommits}} commits mais recentes do período e os PRs mergeados no período, examinando até {{classroomPrScan}} PRs.",
@@ -169,7 +170,8 @@
         "personalBots": "Bots-agente pessoais (GitHub Apps próprios, como fulano-agent[bot]) não podem ser classificados pelo login: contam como bots de manutenção e ficam fora das contas.",
         "reviewOnly": "Quando o único rastro é a revisão de um bot de IA, os critérios do selo \"Configuração de IA versionada\" e \"Commits com coautoria declarada\" não se aplicam: um revisor externo não precisa de nenhum dos dois.",
         "dashboardTemplate": "Origem template no Dashboard: sem token ou com template privado, a origem dos arquivos de configuração fica sempre não verificada (no cruzamento entre fontes, eles contam como do próprio repositório). Com token e template público ou ausente, ela é verificada, com uma exceção: o GitHub não informa o template dos repositórios criados pelo GitHub Classroom, então a origem fica não verificada quando o commit inicial do Classroom está na amostra de {{commits}} commits; fora dela, os arquivos contam como do próprio repositório.",
-        "method": "Snapshots: a seção é gravada com o método {{method}} e a versão do registro ({{registryVersion}}). Snapshots sem esse método mostram \"não registrado nesta análise\"."
+        "method": "Snapshots: a seção é gravada com o método {{method}} e a versão do registro ({{registryVersion}}). Snapshots sem esse método mostram \"não registrado nesta análise\".",
+        "gitlab": "GitLab: no Dashboard, a configuração de agentes é lida da árvore de arquivos, como no GitHub, e a revisão por IA e as salvaguardas vêm dos merge requests. Ainda não são verificados o .gitignore, o .claude/settings.json e a origem template (\"não verificado\"), e agentes e revisores próprios do GitLab, como o GitLab Duo, não são reconhecidos. No Modo Turma, os arquivos de configuração de agentes também não são verificados, e a visão por estudante agrupa as pessoas pelo nome dos commits."
       }
     }
   }
