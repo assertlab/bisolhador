@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.0] - 2026-11-12
+
+Fase 3 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`): o Modo Turma analisa projetos do GitLab.
+
+### ✨ Added
+
+- **Turma com projetos do GitLab** (gitlab.com e as instâncias habilitadas, como gitlab.cin.ufpe.br), inclusive **internos e privados**, com o token read_api da instância. GitHub e GitLab podem estar na mesma turma.
+  - Escreva o endereço com o host (`gitlab.cin.ufpe.br/grupo/projeto`) ou importe um grupo inteiro, com subgrupos: o campo de importação aceita `host/grupo`.
+  - Commits do branch principal, MRs mergeados no período (aprovação, 1ª revisão, lead time, tamanho), pipelines de push no branch principal e de merge request, releases e rastros de IA nos commits.
+  - Na visão por estudante, as pessoas são agrupadas pelo nome que aparece nos commits, porque o GitLab não informa a conta de quem fez cada commit.
+  - Como no GitHub, nada é gravado; a nota de privados também cita a visibilidade interna.
+- O aviso de projeto não público no Dashboard passa a indicar o Modo Turma.
+
+### 🧪 Tests
+
+- Fetchers de período do GitLab (commits, MRs com paginação, pipelines, importação de grupo), `toHistoryNode`/`classroomPipelines`, `parseGitlabGroup`, `repoListName` e a lista da Turma com GitLab. Verificado no navegador com uma turma real do gitlab.cin.ufpe.br (projetos internos).
+
+---
+
 ## [3.26.0] - 2026-11-12
 
 Fase 2 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`): o Dashboard analisa projetos públicos do GitLab.

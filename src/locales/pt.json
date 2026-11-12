@@ -14,7 +14,7 @@
     "chunkLoad": "Não foi possível carregar esta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página para tentar de novo.",
     "pageCrash": "Algo deu errado ao mostrar esta página. Recarregue para tentar de novo; se persistir, use o menu para ir a outra página.",
     "lazyTexts": "Não foi possível carregar os textos desta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página e tente de novo.",
-    "gitlabNotPublic": "Este projeto do GitLab não é público (visibilidade interna ou privada). O Dashboard analisa apenas projetos públicos, porque os dados podem ser compartilhados. A análise de projetos internos e privados do GitLab no Modo Turma está em desenvolvimento.",
+    "gitlabNotPublic": "Este projeto do GitLab não é público (visibilidade interna ou privada). O Dashboard analisa apenas projetos públicos, porque os dados podem ser compartilhados. Projetos internos e privados podem ser analisados no Modo Turma, com o seu token, sem que nada seja gravado.",
     "visibilityUnknown": "Não foi possível confirmar se este projeto é público (a resposta não informou a visibilidade). Por segurança, ele não foi analisado. Tente de novo em instantes."
   },
   "header": {
@@ -603,11 +603,11 @@
     "needsToken": "O modo turma exige um token do GitHub: cada repositório faz de 6 a 9 consultas, e sem token o limite é de 60 por hora. Para repositórios privados (ex.: GitHub Classroom), o token precisa ter acesso a eles.",
     "openSettings": "Configurar token",
     "reposLabel": "Repositórios das equipes",
-    "reposPlaceholder": "dono/repositorio ou https://github.com/dono/repositorio — um por linha",
+    "reposPlaceholder": "dono/repositorio, https://github.com/dono/repositorio ou gitlab.cin.ufpe.br/grupo/projeto — um por linha",
     "reposCount_one": "{{count}} repositório (máximo {{max}}).",
     "reposCount_other": "{{count}} repositórios (máximo {{max}}).",
     "reposTruncated": "Só os primeiros {{max}} serão analisados.",
-    "reposInvalid": "Ignorados por não serem dono/repositório: {{list}}.",
+    "reposInvalid": "Ignorados por não serem dono/repositório do GitHub nem um endereço do GitLab habilitado: {{list}}.",
     "from": "Início da disciplina",
     "to": "Fim",
     "analyze": "Analisar turma",
@@ -674,18 +674,18 @@
       "aiCoherence": "Fontes de IA em desacordo",
       "aiBadge": "Uso responsável de IA (critérios atendidos)"
     },
-    "privateNote": "Esta turma inclui repositórios privados. Os dados foram lidos com o seu token e ficam só neste navegador: nada é salvo no Bisolhador. O link e o CSV contêm nomes e números desses repositórios; compartilhe só com quem já tem acesso a eles.",
+    "privateNote": "Esta turma inclui repositórios privados (no GitLab, também os de visibilidade interna). Os dados foram lidos com o seu token e ficam só neste navegador: nada é salvo no Bisolhador. O link e o CSV contêm nomes e números desses repositórios; compartilhe só com quem já tem acesso a eles.",
     "privateBadge": "Repositório privado",
-    "importTitle": "Importar de uma organização (opcional)",
-    "orgLabel": "Organização (ou usuário: só públicos)",
+    "importTitle": "Importar de uma organização do GitHub ou de um grupo do GitLab (opcional)",
+    "orgLabel": "Organização do GitHub, ou host/grupo do GitLab (com subgrupos)",
     "prefixLabel": "Prefixo do repositório",
     "importButton": "Listar repositórios",
     "importing": "Listando…",
     "import": {
-      "result": "{{matched}} de {{found}} repositórios da organização (arquivados ficam de fora). A lista abaixo foi preenchida.",
+      "result": "{{matched}} de {{found}} repositórios (arquivados ficam de fora). A lista abaixo foi preenchida.",
       "capped": "Só os primeiros 1.000 repositórios foram lidos.",
-      "invalidOrg": "Nome de organização inválido.",
-      "orgNotFound": "Organização ou usuário não encontrado (ou sem acesso com o seu token).",
+      "invalidOrg": "Nome de organização do GitHub ou de grupo do GitLab inválido (no GitLab, use host/grupo, com um host habilitado).",
+      "orgNotFound": "Organização, usuário ou grupo não encontrado (ou sem acesso com o seu token).",
       "orgFailed": "Não foi possível listar os repositórios (falha ou limite da API)."
     },
     "ai": {
@@ -699,7 +699,8 @@
       "busy": "Gerando…",
       "anonymize": "Anonimizar repositórios no PDF (o CSV não é anonimizado)",
       "error": "Não foi possível gerar o relatório. Tente de novo; se persistir, recarregue a página."
-    }
+    },
+    "needsGitlabToken": "Os projetos do GitLab desta turma ({{hosts}}) precisam de um token read_api da instância: projetos internos e privados não aparecem sem login."
   },
   "aiProcess": {
     "title": "IA no Processo",
@@ -828,7 +829,9 @@
       "empty": "Nenhum commit no período (sem merges e sem bots de manutenção).",
       "sampled": "Calculado sobre os 300 commits mais recentes do período.",
       "configUnavailable": "n/d: não foi possível consultar quem adicionou ou alterou os arquivos de configuração de IA.",
-      "footnote": "Commits do branch principal no período, sem merges e sem bots de manutenção. \"Autor não identificado\" reúne os commits que não estão ligados a uma conta do GitHub (não agrupamos por nome). Configuração: arquivos de IA (fora os do template) com commit da pessoa no período, nos locais verificados. Nada desta tabela é salvo nem vai para o CSV."
+      "footnote": "Commits do branch principal no período, sem merges e sem bots de manutenção. \"Autor não identificado\" reúne os commits que não estão ligados a uma conta do GitHub (não agrupamos por nome). Configuração: arquivos de IA (fora os do template) com commit da pessoa no período, nos locais verificados. Nada desta tabela é salvo nem vai para o CSV.",
+      "footnote_gitlab": "Commits do branch principal no período, sem merges e sem bots de manutenção. No GitLab, os commits não informam a conta de quem os fez: as pessoas são agrupadas pelo nome que aparece nos commits, então a mesma pessoa com nomes diferentes ocupa mais de uma linha. Configuração de IA não é verificada no GitLab. Nada desta tabela é salvo nem vai para o CSV.",
+      "configUnavailable_gitlab": "n/d: no GitLab, ainda não verificamos quem adicionou ou alterou arquivos de configuração de IA."
     },
     "notOnPlatform": "ainda não disponível nesta plataforma",
     "tooltip_gitlab": "Rastros que o GitLab guarda: coautoria declarada em commits e MRs abertos por agentes. Configuração de agentes, revisão por IA e salvaguardas ainda não são verificadas no GitLab. Não mede quanto código foi escrito por IA."

@@ -74,6 +74,33 @@ export function toRestCommit(c) {
 
 const isMerge = (c) => (c.parent_ids?.length ?? 1) > 1;
 
+/**
+ * GET /repository/commits item → the GraphQL history node Classroom reads
+ * (githubService.fetchCommitHistoryInPeriod). GitLab commits carry no account,
+ * so the author's name stands in for the login: in the per-student view, people
+ * are grouped by the name on their commits. Bots get GitHub's "[bot]" suffix,
+ * so the existing bot filters leave them out.
+ */
+export function toHistoryNode(c) {
+  const bot = isGitlabBot({ name: c.author_name, email: c.author_email });
+  const name = c.author_name ?? '';
+  return {
+    message: c.message ?? c.title ?? '',
+    committedDate: c.committed_date ?? c.authored_date ?? null,
+    parents: { totalCount: c.parent_ids?.length ?? 1 },
+    author: { name, email: c.author_email ?? null, user: name ? { login: bot ? `${name}[bot]` : name } : null },
+  };
+}
+
+/**
+ * Classroom CI on GitLab: the period's finished pipelines that exercise the
+ * default branch — pushes to it and merge request pipelines (their ref is
+ * refs/merge-requests/<iid>/head; the target branch isn't in the pipeline
+ * list, and student MRs target the default branch in practice).
+ */
+export const classroomPipelines = (pipelines, branch) => (pipelines ?? [])
+  .filter((p) => (p.source === 'push' && p.ref === branch) || p.source === 'merge_request_event');
+
 // Local day of week and hour of an ISO date as written ("…T10:05:00.000-03:00"):
 // the author's own time zone, like GitHub's punch card.
 function localDayHour(iso) {

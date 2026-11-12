@@ -32,6 +32,9 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.27.0 - GitLab no Modo Turma
+- **✨ O Modo Turma analisa projetos do GitLab**, inclusive internos e privados, com o token da instância; importa um grupo inteiro com subgrupos e mistura GitHub e GitLab na mesma turma
+
 ### v3.26.0 - Projetos públicos do GitLab no Dashboard
 - **✨ O Dashboard analisa projetos públicos do GitLab** (gitlab.com e gitlab.cin.ufpe.br), com subgrupos; projetos internos e privados ficam de fora, e nada do GitLab é gravado ainda
 - **✨ Textos e guia na linguagem do GitLab** (merge requests, pipelines, estatísticas a partir dos commits) e tokens do GitLab por instância
