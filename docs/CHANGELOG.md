@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.1] - 2026-11-12
+
+Fase 5 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`): documentação de uso.
+
+### 🐛 Fixed
+
+- **IA no Processo no GitLab:** a nota dizia que a configuração de agentes não era verificada, mas no Dashboard ela é lida da árvore de arquivos. O que fica de fora é o `.gitignore`, o `.claude/settings.json`, a origem template (e, no Modo Turma, a configuração) e os agentes próprios do GitLab. Uma falha ao buscar a revisão por IA ou as salvaguardas também aparecia como "ainda não disponível nesta plataforma"; agora aparece como falha, já que as duas vêm dos merge requests.
+
+### 📝 Docs
+
+- **Modal "Como usar"** reescrito: como informar repositórios do GitHub e do GitLab (host antes do caminho), o que vale para projetos do GitLab, como usar o Modo Turma com as duas plataformas e como criar o token `read_api` do GitLab, com o link da página de tokens de cada instância aceita (a lista do build). A Turma exige um token de cada plataforma da lista, inclusive para projetos públicos do GitLab.
+- **Busca:** o exemplo mostra também um endereço do GitLab.
+- **Como interpretar:** a entrada "Modo turma" aponta para "Diferenças no GitLab". **Guia de IA:** novo limite "GitLab", com o que ainda não é verificado lá.
+- **README:** descrição e recursos com o GitLab, a seção "Como informar repositórios" (formatos, importação, tokens) e os recursos de histórico marcados como só GitHub. **ROADMAP:** 1ª entrega do GitLab concluída; fase 4 (histórico) e pendências em aberto.
+
+---
+
 ## [3.27.0] - 2026-11-12
 
 Fase 3 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`): o Modo Turma analisa projetos do GitLab.

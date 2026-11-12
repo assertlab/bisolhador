@@ -158,7 +158,8 @@
         "personalBots": "personal agent bots",
         "reviewOnly": "review-only traces",
         "dashboardTemplate": "template origin on the Dashboard",
-        "method": "snapshot method"
+        "method": "snapshot method",
+        "gitlab": "GitLab"
       },
       "items": {
         "samples": "Samples: on the Dashboard, the {{commits}} most recent commits of the default branch and up to {{prSample}} merged PRs (with a token, among the {{prScan}} most recently updated merged PRs; without one, among the {{closedScan}} closed PRs). In Classroom Mode, up to the {{classroomCommits}} most recent commits of the period and the PRs merged in the period, scanning up to {{classroomPrScan}} PRs.",
@@ -169,7 +170,8 @@
         "personalBots": "Personal agent bots (custom GitHub Apps, such as someone-agent[bot]) can't be classified by login: they count as maintenance bots and are left out of the counts.",
         "reviewOnly": "When the only trace is a review by an AI bot, the badge criteria \"Versioned AI configuration\" and \"Commits with declared co-authorship\" don't apply: an external reviewer needs neither.",
         "dashboardTemplate": "Template origin on the Dashboard: without a token or with a private template, the configuration files' origin is always unverified (in the cross-check between sources, they count as the repository's own). With a token and a public or no template, it is verified, with one exception: GitHub doesn't report the template of repositories created by GitHub Classroom, so the origin is left unverified when Classroom's initial commit is in the {{commits}}-commit sample; outside it, the files count as the repository's own.",
-        "method": "Snapshots: the section is saved with method {{method}} and the registry version ({{registryVersion}}). Snapshots without that method show \"not recorded in this analysis\"."
+        "method": "Snapshots: the section is saved with method {{method}} and the registry version ({{registryVersion}}). Snapshots without that method show \"not recorded in this analysis\".",
+        "gitlab": "GitLab: on the Dashboard, agent configuration is read from the file tree, as on GitHub, and AI review and safeguards come from the merge requests. .gitignore, .claude/settings.json and template origin aren't checked yet (\"not verified\"), and GitLab's own agents and reviewers, such as GitLab Duo, aren't recognized. In Classroom Mode, the agent configuration files aren't checked either, and the per-student view groups people by the name on their commits."
       }
     }
   }

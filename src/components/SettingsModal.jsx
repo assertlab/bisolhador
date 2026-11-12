@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePlatformTranslation } from '../lib/platformText.js';
 import { getItem, setItem, removeItem } from '../utils/storage.js';
 import { GITHUB_TOKEN_KEY, tokenKey, getToken } from '../services/tokens.js';
-import { GITLAB_HOSTS } from '../utils/repoRef.js';
+import { GITLAB_HOSTS, gitlabTokenPage } from '../utils/repoRef.js';
 import { checkGitlabToken } from '../services/gitlabService.js';
 import { intlLocale } from '../i18n.js';
 
@@ -117,8 +117,8 @@ export function SettingsModal({ isOpen, onClose }) {
                 )}
                 <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
                   {t('settings.gitlab.createToken')}{' '}
-                  <a href={`https://${host}/-/user_settings/personal_access_tokens`} target="_blank" rel="noopener noreferrer" className="text-ocean hover:underline">
-                    {`${host}/-/user_settings/personal_access_tokens`}
+                  <a href={`https://${gitlabTokenPage(host)}`} target="_blank" rel="noopener noreferrer" className="text-ocean hover:underline">
+                    {gitlabTokenPage(host)}
                   </a>
                 </p>
               </div>

@@ -36,7 +36,7 @@
   },
   "search": {
     "label": "Search repository",
-    "placeholder": "Ex: facebook/react or assertlab/bisolhador",
+    "placeholder": "Ex: facebook/react or gitlab.com/group/project",
     "button": "Search",
     "loading": "Analyzing..."
   },
@@ -439,39 +439,57 @@
     "title": "How to use Bisolhador",
     "about": {
       "title": "About Bisolhador",
-      "description": "Bisolhador is an analytical tool for evaluating GitHub repositories like a Tech Lead. It analyzes volume, governance, maturity, and activity metrics to provide insights about project health and efficiency."
+      "description": "Bisolhador is an analytical tool for evaluating GitHub and GitLab ({{hosts}}) repositories like a Tech Lead. It analyzes volume, governance, maturity, and activity metrics to provide insights about project health and efficiency."
     },
     "token": {
-      "title": "Why configure a Token?",
-      "description": "Without a token, GitHub limits to 60 requests per hour. With a Personal Access Token, you can make up to 5,000 requests per hour, allowing more complete analyses.",
+      "title": "Why configure tokens?",
+      "description": "GitHub: without a token the limit is 60 requests per hour; with a Personal Access Token, 5,000. GitLab: on the Dashboard, public projects work without a token. In Classroom Mode, each platform in the list needs a token (on GitLab, a read_api one per instance); it is what gives access to internal and private projects.",
       "warning": {
         "important": "Important:",
-        "message": "The token is saved only in your browser and is never sent to our servers. Your privacy is protected."
+        "message": "Tokens are saved only in your browser and are never sent to our servers; each GitLab token is only sent to its own instance."
       }
     },
     "createToken": {
-      "title": "How to create a Token",
+      "title": "How to create a GitHub token",
       "steps": [
         "Access <link>github.com/settings/tokens</link>",
         "Click on \"Generate new token (classic)\"",
         "Give it a descriptive name (ex: \"Bisolhador Analysis\")",
-        "Select only the \"public_repo\" permission (for public repositories)",
+        "Select the \"public_repo\" permission (or \"repo\", to analyze private repositories in Classroom Mode)",
         "Click on \"Generate token\"",
         "Copy the generated token (starts with \"ghp_\")"
       ]
     },
     "usage": {
       "title": "How to use",
-      "steps": [
-        "Enter the repository name in the format \"owner/repo\"",
-        "Click \"Search\" or press Enter",
-        "Wait for data analysis",
-        "Explore the generated metrics and charts"
-      ]
+      "intro": "Type the repository and click \"Search\" (or press Enter):",
+      "addresses": ["GitHub: owner/repo, or paste the URL (https://github.com/owner/repo)", "GitLab: write the host before the path, like {{example}}, or paste the project URL"],
+      "outro": "Wait for the analysis and explore the metrics and charts"
     },
     "button": {
       "close": "Got it"
-    }
+    },
+    "gitlab": {
+      "title": "GitLab projects",
+      "text": "On the Dashboard, only public GitLab projects are analyzed, and the analysis isn't saved (no permanent link, Timeline, Benchmark or Ranking). Internal and private projects can be analyzed in Classroom Mode. Some metrics are computed differently on GitLab: see \"Differences on GitLab\" in How to interpret."
+    },
+    "classroom": {
+      "title": "Classroom Mode",
+      "text": "Enter one repository per line, mixing platforms: owner/repo (GitHub) or {{example}} (GitLab). To import a whole class, write the GitHub organization name or the GitLab host/group (subgroups come along). Classroom needs a token for each platform in the list: GitHub's, if there are GitHub repositories, and a read_api token for each GitLab instance, even for public projects."
+    },
+    "createGitlabToken": {
+      "title": "How to create a GitLab token",
+      "steps": [
+        "On the GitLab instance, open your avatar → Preferences → Access tokens (addresses below)",
+        "Click \"Add new token\" and pick the regular personal token, not the \"fine-grained\" one",
+        "Give it a name (e.g. \"Bisolhador\") and a short expiry date",
+        "Check only the \"read_api\" scope",
+        "Create the token and copy its value (it starts with \"glpat-\")",
+        "In Bisolhador, ⚙️ icon → the instance's GitLab field → Save: the token is checked right away"
+      ],
+      "pages": "Each instance's token page:"
+    },
+    "examplePath": "group/subgroup/project"
   },
   "timeline": {
     "title": "Time Machine",
@@ -807,7 +825,7 @@
     "unavailable": {
       "noToken": "With a GitHub token, we also check .gitignore, configuration (turned-off declaration), template, AI review and safeguards.",
       "error": "Part of the data could not be fetched (GitHub API failure or limit): items marked N/A or ? were not verified.",
-      "unsupported": "On this platform we don't check .gitignore, versioned agent configuration, AI review or safeguards yet: those items show as not verified.",
+      "unsupported": "On this platform we don't check .gitignore, .claude/settings.json or template origin yet (nor, in Classroom Mode, the agent configuration files): those items show as not verified. GitLab's own agents and reviewers, such as GitLab Duo, aren't recognized yet.",
       "error_gitlab": "Part of the data could not be fetched (GitLab API failure or limit): items marked N/A or ? were not verified."
     },
     "notRecorded": "AI in the Process: not recorded in this analysis.",
@@ -833,8 +851,7 @@
       "footnote_gitlab": "Default-branch commits in the period, no merges and no maintenance bots. On GitLab, commits don't report the account behind them: people are grouped by the name on their commits, so the same person under different names takes more than one row. AI configuration isn't checked on GitLab. Nothing in this table is saved or goes into the CSV.",
       "configUnavailable_gitlab": "N/A: on GitLab, we don't check yet who added or changed AI configuration files."
     },
-    "notOnPlatform": "not available on this platform yet",
-    "tooltip_gitlab": "Traces GitLab keeps: co-authorship declared in commits and MRs opened by agents. Agent configuration, AI review and safeguards aren't checked on GitLab yet. It does not measure how much code AI wrote."
+    "tooltip_gitlab": "Traces GitLab keeps: versioned AI agent configuration, co-authorship declared in commits, MRs opened by agents and reviews by AI bots, recognized by the tool registry (GitLab's own agents, such as GitLab Duo, not yet). It does not measure how much code AI wrote."
   },
   "gitlab": {
     "notice": "GitLab project ({{host}}). History (permanent link, Timeline, Benchmark and Ranking) doesn't exist for GitLab yet: this analysis is not saved. Contributors, weekly activity, weekdays and churn are computed from the commits of the last 12 months."

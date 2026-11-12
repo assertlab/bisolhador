@@ -1,36 +1,52 @@
-# 🦈 Bisolhador Dashboard v3.16.0
+# 🦈 Bisolhador Dashboard
 
-Dashboard de Análise de Repositórios GitHub que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
+Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com e as instâncias habilitadas no build; em bisolhador.assertlab.com, também gitlab.cin.ufpe.br) que transforma dados em insights poderosos para ensinamentos de Engenharia de Software. Ferramenta educacional desenvolvida pelo ASSERT Lab (UFPE) para apoiar professores e alunos na análise de práticas de desenvolvimento.
 
 ## ✨ Features
 
-- **🔍 Busca Inteligente**: Encontre e analise repositórios GitHub usando o formato `owner/repo`
+- **🔍 Busca Inteligente**: analise repositórios do GitHub (`owner/repo` ou a URL colada) e projetos públicos do GitLab (`gitlab.com/grupo/projeto`, `gitlab.cin.ufpe.br/grupo/subgrupo/projeto` ou a URL) — veja [Como informar repositórios](#-como-informar-repositórios)
 - **📊 Métricas Completas**: Stars, forks, issues, PRs, releases e code churn
 - **📈 Gráficos Avançados**: Fluxo de trabalho, padrões de commits e stack tecnológica
 - **⚡ Health Score**: Avaliação rigorosa baseada em 7 critérios comunitários
 - **👥 Bus Factor**: Análise de risco de dependência de contribuidores com cálculo Pareto 70% e visualização de barra empilhada
 - **☢️ Análise de Risco de Equipe (Bus Factor)**: Card dedicado com número do Bus Factor, avatares dos key developers, classificação de risco (Crítico/Alto/Moderado/Saudável) e barra horizontal empilhada
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
-- **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução
+- **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
 - **📖 Como interpretar**: definição, limitações e referência às métricas CHAOSS de cada indicador
-- **🎓 Modo Turma**: compare os repositórios das equipes de uma turma no período da disciplina (privados também, com o token de quem usa, sem salvar nada), com exportação CSV
-- **🤖 IA no Processo**: rastros de IA que o GitHub guarda (configuração de agentes versionada, coautoria declarada em commits, PRs abertos por agentes, revisões de bots de IA), com cruzamento entre as fontes e o selo "Uso responsável de IA"; tudo é limite inferior (sem rastro não quer dizer sem IA)
-- **📊 Benchmark Multi-Repo**: Compare a evolução de até 10 repositórios lado a lado com gráficos comparativos, filtros temporais (7d, 30d, 60d, 90d, todo histórico) e tabela de métricas detalhada
-- **📈 Time Machine (Histórico de Evolução)**: Visualize a evolução temporal de qualquer repositório através de gráficos interativos com filtros de período (7d, 30d, 60d, 90d, todo histórico). Acompanhe o crescimento de Stars, Forks e Watchers ao longo do tempo com dados baseados em snapshots históricos
-- **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca, com data/hora da coleta sempre visível
+- **🎓 Modo Turma**: compare os repositórios das equipes de uma turma no período da disciplina, do GitHub e do GitLab na mesma tabela (privados e, no GitLab, internos também, com o token de quem usa, sem salvar nada); importa uma organização do GitHub ou um grupo do GitLab com subgrupos; exportação CSV e relatório PDF
+- **🤖 IA no Processo**: rastros de IA que a plataforma guarda (configuração de agentes versionada, coautoria declarada em commits, PRs abertos por agentes, revisões de bots de IA), com cruzamento entre as fontes e o selo "Uso responsável de IA"; tudo é limite inferior (sem rastro não quer dizer sem IA). No GitLab, o .gitignore, as configurações locais e a origem template ainda não são verificados, e o GitLab Duo ainda não é reconhecido.
+- **📊 Benchmark Multi-Repo**: Compare a evolução de até 10 repositórios lado a lado com gráficos comparativos, filtros temporais (7d, 30d, 60d, 90d, todo histórico) e tabela de métricas detalhada _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
+- **📈 Time Machine (Histórico de Evolução)**: Visualize a evolução temporal de qualquer repositório através de gráficos interativos com filtros de período (7d, 30d, 60d, 90d, todo histórico). Acompanhe o crescimento de Stars, Forks e Watchers ao longo do tempo com dados baseados em snapshots históricos _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
+- **🔗 Compartilhamento e Histórico**: Gere links permanentes (Snapshots) para suas análises. Ideal para avaliações de disciplinas, provas ou code reviews. O link congela o estado do repositório no momento da busca, com data/hora da coleta sempre visível _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
 - **🌍 Suporte Global a Fusos Horários**: As buscas por data respeitam automaticamente o fuso horário do navegador do usuário
-- **💾 Persistência Automática**: O histórico é salvo automaticamente ao carregar a análise, garantindo integridade dos dados
+- **💾 Persistência Automática**: O histórico é salvo automaticamente ao carregar a análise, garantindo integridade dos dados _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
 - **🛡️ Sanitização de Dados**: Tratamento robusto de payloads JSON para evitar erros com repositórios massivos
 - **🌐 Internacionalização Completa**: Suporte total PT/EN em todas as interfaces (Ranking, Modais, Navegação)
 - **📄 Export PDF/JSON/CSV**: Relatórios completos em PDF, dados brutos em JSON e exportação em CSV para análise em planilhas
 - ** Monitoramento de Uso**: Rastreamento de acessos e eventos (Buscas, Exports) com Google Analytics 4
 - **🛡️ Security-First (RPC Validation)**: Implementação de RPC segura no Supabase com validação de dados
-- **🔒 Apenas Repositórios Públicos**: Por design, o Bisolhador não processa nem persiste dados de repositórios privados — mesmo que seu token pessoal tenha acesso a eles — já que os dados analisados podem ser compartilhados publicamente via links permanentes
+- **🔒 Apenas Repositórios Públicos fora do Modo Turma**: o Dashboard não processa nem persiste repositórios privados (nem projetos internos do GitLab), mesmo que o token tenha acesso. A única exceção é o Modo Turma, que os analisa no navegador, com o token de quem usa, sem gravar nada
 - **🛡️ Fail-Safe**: Tratamento robusto de erros e rate limits
 - **♿ Acessibilidade (WCAG AA)**: Semântica de tabelas, aria-label/aria-hidden em ícones, suporte a leitores de tela
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
 
+## 🔎 Como informar repositórios
+
+| Plataforma | Busca (Dashboard) | Modo Turma (um por linha) |
+|---|---|---|
+| GitHub | `owner/repo` ou `https://github.com/owner/repo` | igual |
+| gitlab.com | `gitlab.com/grupo/projeto` ou a URL do projeto (só públicos) | igual (internos e privados também, com token) |
+| instância habilitada (ex.: gitlab.cin.ufpe.br) | `gitlab.cin.ufpe.br/grupo/subgrupo/projeto` ou a URL (só públicos) | igual (internos e privados também, com token) |
+
+- **No GitLab, o host vem sempre antes do caminho.** Um caminho de três níveis sem host (`grupo/sub/projeto`) é recusado com um pedido para incluir o host; outros hosts não são aceitos. As instâncias aceitas são o gitlab.com e as da variável `VITE_GITLAB_HOSTS` do build (em bisolhador.assertlab.com, gitlab.cin.ufpe.br).
+- **Importar uma turma:** no Modo Turma, o campo de importação aceita o nome de uma organização do GitHub (`ufpe-es-2026`) ou `host/grupo` do GitLab (`gitlab.cin.ufpe.br/disciplina`), com subgrupos.
+- **Tokens (ícone ⚙️):** GitHub — sem token, 60 requisições por hora; com token, 5.000. GitLab — um token por instância, com escopo `read_api` (token pessoal comum, não o "fine-grained"), criado em `<instância>/-/user_settings/personal_access_tokens`; no Dashboard, projetos públicos funcionam sem token. **O Modo Turma exige um token de cada plataforma da lista**: o do GitHub, se houver repositórios do GitHub, e o de cada instância do GitLab, mesmo para projetos públicos (é ele que dá acesso aos internos e privados). Os tokens ficam só no navegador, e cada token do GitLab só é enviado para a própria instância.
+- **O que muda no GitLab:** algumas métricas são calculadas a partir dos commits dos últimos 12 meses, a revisão usa notas e aprovações dos merge requests, e o CI usa os pipelines. Detalhes em *Como interpretar → Diferenças no GitLab* (`/guia#gitlab`).
+
 ## 🔄 Últimas Atualizações
+
+### v3.27.1 - Como usar com GitLab
+- **📝 Ajuda, README e guias** explicam como informar repositórios do GitHub e do GitLab, a Turma com as duas plataformas e o token do GitLab
 
 ### v3.27.0 - GitLab no Modo Turma
 - **✨ O Modo Turma analisa projetos do GitLab**, inclusive internos e privados, com o token da instância; importa um grupo inteiro com subgrupos e mistura GitHub e GitLab na mesma turma

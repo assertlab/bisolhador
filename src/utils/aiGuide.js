@@ -118,4 +118,5 @@ export const AI_GUIDE_LIMITS = [
   { id: 'reviewOnly', guide: 'ai-badge' },
   { id: 'dashboardTemplate', guide: 'ai-coherence' },
   { id: 'method', guide: 'ai-tools' },
+  { id: 'gitlab', guide: 'gitlab' },
 ];
