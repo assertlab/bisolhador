@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.0] - 2026-11-12
+
+### ✨ Added
+
+- **Turma com GitLab: quem mexeu na configuração de IA.** A coluna de configuração da visão por estudante, que no GitLab mostrava "n/d", passa a listar os arquivos de IA (como `.agent/skills`, `.pi/prompts`, `CLAUDE.md`) com commit da pessoa no período. Uma requisição por caminho de configuração (até 10 por projeto, 3 de cada vez), só nos projetos que têm configuração de IA. Um caminho que falha (inclusive 404) conta como desconhecido, nunca como "ninguém mexeu"; se todos falham, a coluna fica n/d. A origem template continua não verificada no GitLab: ler o histórico não faz um arquivo virar "da equipe".
+
+### 🧪 Tests
+
+- `fetchAiConfigAuthorship` do GitLab (caminho codificado, nome como login, histórico completo, falha = desconhecido), `classroomAiContext` sem template conhecido e a coluna da visão por estudante. Verificado no navegador com a turma real do gitlab.cin.ufpe.br: 3 projetos, cada um com uma pessoa ligada à configuração no período; 14 requisições a mais na turma.
+
+---
+
 ## [3.28.0] - 2026-11-12
 
 ### ✨ Added

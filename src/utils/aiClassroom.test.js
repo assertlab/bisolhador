@@ -198,3 +198,22 @@ describe('classroomMaturity (badge "tests and CI" without a tree)', () => {
     expect(classroomMaturity(nested, runs(0)).testsDetected).toBeNull();
   });
 });
+
+describe('GitLab: authorship feeds the per-student view, origin stays unverified', () => {
+  it('classroomAiContext keeps templatePaths null when the platform never reports a template', async () => {
+    const { classroomAiContext } = await import('./aiClassroom.js');
+    const ctx = { available: true, templatePaths: null, templateUnknowable: true, contextPaths: ['.agent/skills'] };
+    const out = classroomAiContext(ctx, [{ path: '.agent/skills', commits: [{ login: 'Ana', date: '2026-09-01T00:00:00Z' }], complete: true }]);
+    expect(out.templatePaths).toBeNull();
+    expect(out.originChecked).toBeUndefined();
+  });
+
+  it('analyzeStudents puts the config path on the person (keyed by the commit name, as GitLab rows are)', async () => {
+    const { analyzeStudents } = await import('./aiClassroom.js');
+    const period = { since: '2026-08-01T00:00:00.000Z', until: '2026-11-30T23:59:59.000Z' };
+    const commits = [{ message: 'feat: x', authorLogin: 'Ana', authorType: null, authorName: 'Ana', authorEmail: 'a@x', date: '2026-09-02T00:00:00Z', parents: 1 }];
+    const res = analyzeStudents(commits, [{ path: '.agent/skills', commits: [{ login: 'Ana', name: 'Ana', email: 'a@x', date: '2026-09-01T00:00:00Z' }], complete: true }], period, null);
+    expect(res.authorshipAvailable).toBe(true);
+    expect(res.rows[0]).toMatchObject({ kind: 'person', login: 'Ana', configPaths: ['.agent/skills'] });
+  });
+});

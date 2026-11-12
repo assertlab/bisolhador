@@ -45,6 +45,9 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 
 ## 🔄 Últimas Atualizações
 
+### v3.29.0 - Autoria da configuração de IA na Turma do GitLab
+- **✨ A visão por estudante mostra quem mexeu na configuração de IA** também em projetos do GitLab
+
 ### v3.28.0 - Antigravity, Pi e GitLab Duo na IA no Processo
 - **✨ Novas ferramentas reconhecidas** (Google Antigravity, Pi, GitLab Duo) e **contexto de IA lido no GitLab**, inclusive na Turma com projetos internos
 

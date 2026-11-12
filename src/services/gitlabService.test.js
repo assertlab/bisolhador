@@ -280,6 +280,25 @@ describe('createGitlabService: Classroom', () => {
     expect(await createGitlabService('gitlab.com').fetchCommitHistoryInPeriod('g', 'p', 'a', 'b', 1)).toMatchObject({ totalCount: 100, totalIsMinimum: true });
   });
 
+  it('config authorship: one request per path (encoded), author name as login, complete when under the page', async () => {
+    routes = [
+      ['path=.agent%2Fskills', reply([{ author_name: 'Ana', author_email: 'a@x', committed_date: '2026-09-01T00:00:00Z', parent_ids: ['p'] }])],
+      ['path=.pi', reply({ message: '404' }, { status: 404 })],
+    ];
+    const res = await createGitlabService('gitlab.com').fetchAiConfigAuthorship('g/sub', 'p', ['.agent/skills', '.pi']);
+    expect(calls.some((c) => c.url.includes('/projects/g%2Fsub%2Fp/repository/commits?path=.agent%2Fskills&per_page='))).toBe(true);
+    expect(res).toEqual([
+      { path: '.agent/skills', commits: [{ login: 'Ana', name: 'Ana', email: 'a@x', date: '2026-09-01T00:00:00Z' }], complete: true },
+      { path: '.pi', commits: [], complete: false }, // 404 / failed: unknown, not "nobody"
+    ]);
+  });
+
+  it('config authorship: every path failing throws (column n/d), keeping TOKEN_REJECTED as the cause', async () => {
+    store['gitlab_token:gitlab.com'] = 'expired';
+    routes = [['/repository/commits?path=', reply({}, { status: 401 })]];
+    await expect(createGitlabService('gitlab.com').fetchAiConfigAuthorship('g', 'p', ['CLAUDE.md', '.pi'])).rejects.toMatchObject({ code: 'TOKEN_REJECTED' });
+  });
+
   it('group import: subgroups included, shared projects out, same shape as the GitHub import', async () => {
     routes = [['/groups/', reply([{ path_with_namespace: 'disc/2026/t1', path: 't1', visibility: 'internal', archived: false }])]];
     const res = await createGitlabService('gitlab.cin.ufpe.br').fetchGroupProjects('disc/2026');

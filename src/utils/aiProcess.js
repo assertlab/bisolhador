@@ -235,7 +235,8 @@ export function parseAiRepoContext(data, { allowPrivateTemplate = false } = {}) 
     workflowPaths: workflowPaths(repo),
     rootPaths: rootPaths(repo),
     unverified: CONTEXT_PARTS.filter((part) => unread.has(part)),
-    // The platform never reports a template (GitLab): every origin outside the authorship query is unknown
+    // The platform never reports a template (GitLab): every origin is unknown, even for paths whose history was read
+    // (classroomAiContext), so a course template's files never count as the team's own
     templateUnknowable: data?.templateUnsupported === true,
     available: true,
   };
