@@ -21,6 +21,8 @@ import { ensureChartSetup } from '../lib/chartSetup.js';
 import { SNAPSHOT_TIMEZONE } from '../constants.js';
 import { formatters } from '../utils/formatters.js';
 import { buildStatCards } from '../utils/dashboardCards.js';
+import { PlatformProvider, withPlatform } from '../lib/platformText.js';
+import { GuideLink } from '../components/GuideLink.jsx';
 import { intlLocale } from '../i18n.js';
 
 // Lazy-loaded chart components (Code Splitting). Each also waits on
@@ -82,7 +84,8 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
   const isSnapshotMode = isSnapshotUrl && !snapshotAlertDismissed;
   const locale = intlLocale(i18n.language);
   // The stat cards' text comes from utils/dashboardCards.js (shared with the PDF report)
-  const cards = useMemo(() => (displayData ? buildStatCards(displayData, t, locale) : null), [displayData, t, locale]);
+  // Stat cards in the report platform's wording (GitLab variants, see lib/platformText.js)
+  const cards = useMemo(() => (displayData ? buildStatCards(displayData, withPlatform(t, displayData.provider), locale) : null), [displayData, t, locale]);
 
   // Sincroniza URL → estado durante o render, quando a query string muda (padrão
   // "ajustar estado quando um valor muda" da doc do React), em vez de setState
@@ -196,7 +199,8 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
           {displayData?.provider === 'gitlab' && (
             <div className="w-full max-w-2xl mx-auto mt-3">
               <p role="note" className="bg-sky-50 border border-sky-200 text-sky-800 dark:bg-sky-900/20 dark:border-sky-700 dark:text-sky-200 px-4 py-3 rounded-md text-sm">
-                {t('gitlab.notice', { host: displayData.host })}
+                {t('gitlab.notice', { host: displayData.host })}{' '}
+                <GuideLink id="gitlab" />
               </p>
             </div>
           )}
@@ -206,6 +210,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
         {displayLoading ? (
           <SkeletonDashboard />
         ) : displayData ? (
+          <PlatformProvider provider={displayData.provider}>
           <div className="space-y-6 animate-fade-in-up">
 
             {/* 1. Card Principal */}
@@ -274,6 +279,7 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <ActivityLogs commits={displayData.recentCommits} pullRequests={displayData.recentPRs} isSnapshot={isSnapshotUrl} />
 
           </div>
+          </PlatformProvider>
         ) : (
           <div className="border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl h-64 flex items-center justify-center text-gray-400 dark:text-slate-500">
             {t('app.placeholderText')}

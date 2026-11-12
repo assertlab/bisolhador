@@ -165,7 +165,9 @@
         "snapshot": "Record saved on {{date}}: the numbers of that day, not the current state of GitHub. Items the version of the time did not measure appear as not recorded.",
         "nd": "N/A and n/a mean the data could not be measured (API failure, missing token or missing source), never zero. \"Not verified\" means the check could not be done.",
         "samples": "PR indicators use limited samples of the most recent merged PRs and need a GitHub token; commits, contributors and activity follow the windows described in each section.",
-        "ai": "No trace does not mean no AI. The AI section and the badge measure observable practices, not actual use, and do not identify people."
+        "ai": "No trace does not mean no AI. The AI section and the badge measure observable practices, not actual use, and do not identify people.",
+        "live_gitlab": "Data read from GitLab ({{host}}) at analysis time ({{date}}). The numbers change over time. This analysis is not saved to history.",
+        "samples_gitlab": "Merge request indicators use up to the {{mrSample}} most recent merged MRs. Weekly activity, weekdays, additions/deletions and contributors are computed from the last 12 months of commits (up to {{commitCap}}), grouped by e-mail."
       }
     }
   }

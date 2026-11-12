@@ -20,7 +20,7 @@
   "header": {
     "title": "Bisolhador",
     "helpTitle": "How to use",
-    "settingsTitle": "Configure GitHub Token",
+    "settingsTitle": "Configure access tokens",
     "downloadTitle": "Download report as PDF",
     "downloadButton": "Download Report",
     "nav": {
@@ -69,7 +69,8 @@
     "prsDisabled": "Disabled",
     "divergencePrsDisabled": "PRs disabled on GitHub",
     "tagsCount_one": "{{formatted}} tag",
-    "tagsCount_other": "{{formatted}} tags"
+    "tagsCount_other": "{{formatted}} tags",
+    "divergencePrsDisabled_gitlab": "MRs disabled on GitLab"
   },
   "app": {
     "reload": "Reload the page",
@@ -104,7 +105,8 @@
       "noMerged": "No recently merged PRs",
       "error": "Couldn't load the PRs",
       "snapshot": "Not recorded in this snapshot",
-      "disabled": "PRs disabled on GitHub: review happens outside the platform"
+      "disabled": "PRs disabled on GitHub: review happens outside the platform",
+      "disabled_gitlab": "Merge requests disabled on GitLab: review happens outside the platform"
     },
     "prSample": "{{n}} PRs",
     "addDelete": {
@@ -120,7 +122,8 @@
       "computing": "GitHub is still computing it; try again in a moment",
       "tooLarge": "GitHub doesn't compute it for repositories with more than 10k commits",
       "error": "Couldn't load the data",
-      "snapshot": "Not recorded in this snapshot"
+      "snapshot": "Not recorded in this snapshot",
+      "tooLarge_gitlab": "More than {{commitCap}} commits in the last 12 months: Bisolhador doesn't read them all on GitLab"
     },
     "closedShare": "{{pct}}% closed",
     "reviewCoverage": "Review Coverage",
@@ -140,7 +143,8 @@
       "error": "Unavailable",
       "snapshot": "Not recorded in this snapshot",
       "noMerged": "No merged PRs",
-      "disabled": "PRs disabled on GitHub"
+      "disabled": "PRs disabled on GitHub",
+      "disabled_gitlab": "MRs disabled on GitLab"
     },
     "ciHealth": "CI Health",
     "ciHealthTooltip": "Success rate of the latest GitHub Actions runs triggered by pushes to the default branch (up to 50). Success counts against failure, timeout and startup failure; cancelled and skipped runs are left out. Scheduled, Dependabot and pull request runs aren't counted; pushes made by bots are. CI outside GitHub Actions (Travis, CircleCI…) isn't shown here.",
@@ -159,7 +163,11 @@
       "snapshot": "Not recorded in this snapshot",
       "tagsNoToken": "No releases; {{count}} tags on GitHub (cadence from tags needs a token)",
       "noStableTags": "No releases or stable tags ({{count}} tags on GitHub)",
-      "tagDatesFailed": "No releases; {{count}} tags on GitHub (couldn't read the tag dates)"
+      "tagDatesFailed": "No releases; {{count}} tags on GitHub (couldn't read the tag dates)",
+      "noRuns_gitlab": "No finished push pipelines on the default branch",
+      "noReleases_gitlab": "No releases published on GitLab",
+      "noStableTags_gitlab": "No releases or stable tags ({{count}} tags on GitLab)",
+      "tagDatesFailed_gitlab": "No releases; {{count}} tags on GitLab (couldn't read the tag dates)"
     },
     "releasesLast12_one": "{{count}} release in 12 months",
     "releasesLast12_other": "{{count}} releases in 12 months",
@@ -179,7 +187,13 @@
     "tagReleasesLast12_other": "{{count}} versions (tags) in 12 months",
     "tagReleasesLast12Capped": "{{count}}+ versions (tags) in 12 months",
     "releasesFromTags": "no releases: measured by tags, pre-releases out",
-    "conventionalCommitsOther": "{{pct}}% follow another convention (prefix: summary)"
+    "conventionalCommitsOther": "{{pct}}% follow another convention (prefix: summary)",
+    "starsTooltip_gitlab": "Total number of stars the project received on GitLab.",
+    "divergenceTooltip_gitlab": "Average comments by people per merge request (MR), over up to {{n}} most recent merged MRs. On GitLab, it counts each MR's user notes (the first {{noteCap}}); system notes, bot comments and bot MRs don't count.",
+    "ciHealthTooltip_gitlab": "Success rate of the latest finished GitLab CI/CD pipelines on the default branch triggered by a push (up to 50). Success counts against failure; cancelled and skipped ones are left out. Scheduled and merge request pipelines aren't counted. CI outside GitLab CI/CD isn't shown here.",
+    "releaseCadenceTooltip_gitlab": "Releases published on GitLab in the last 12 months (dated by creation or release date), median interval between days with a release in that period, days since the latest, and share of SemVer tags among the latest 100. With no releases at all, it uses tags: the latest 100 at most, pre-releases out (-rc, -beta, -alpha…), dated by the annotated tag or the commit.",
+    "issuesDisabled_gitlab": "Issues disabled on GitLab",
+    "leadTimeTooltip_gitlab": "Median time between a merge request's (MR) creation and its merge, over up to {{n}} most recent merged MRs (bots excluded). The median isn't skewed by a few very slow MRs; p90 shows the tail (90% were merged within that time)."
   },
   "language": {
     "pt": "PT",
@@ -204,7 +218,8 @@
     "notAvailable": "N/A",
     "unavailable": {
       "noProfile": "GitHub provides no community profile for this repository (this happens with forks), so the Health Score couldn't be calculated.",
-      "error": "Couldn't load the GitHub community profile (API failure or rate limit). Try again in a moment."
+      "error": "Couldn't load the GitHub community profile (API failure or rate limit). Try again in a moment.",
+      "error_gitlab": "Couldn't list the project's files on GitLab (API failure or rate limit). Try again in a moment."
     },
     "files": {
       "readme": "README",
@@ -216,7 +231,9 @@
       "prTemplate": "PR Template"
     },
     "fromTree": "The Health Score was calculated from the repository files, because GitHub provides no community profile for forks.",
-    "uncertain": "May be underestimated: couldn't confirm the Issue Template is absent (GitHub file list incomplete or unavailable). This result isn't saved to history."
+    "uncertain": "May be underestimated: couldn't confirm the Issue Template is absent (GitHub file list incomplete or unavailable). This result isn't saved to history.",
+    "tooltip_gitlab": "Measures community health based on 7 open-source governance indicators. On GitLab, which has no community profile, files are looked up at the project root and templates in .gitlab/issue_templates and .gitlab/merge_request_templates.",
+    "uncertain_gitlab": "May be underestimated: couldn't confirm the Issue Template is absent (listing .gitlab/issue_templates failed and the project's file list is incomplete)."
   },
   "maturity": {
     "title": "Engineering Maturity",
@@ -243,7 +260,9 @@
       "error": "Couldn't load PR review data (GitHub GraphQL API failure or rate limit). Try again in a moment.",
       "snapshot": "This historical snapshot didn't record PR review data.",
       "noMerged": "No recently merged PRs (bots excluded): there's no review or discussion to measure.",
-      "disabled": "Pull requests are disabled on GitHub: the project reviews code outside the platform (by e-mail, for example), so there is no review or discussion to measure here."
+      "disabled": "Pull requests are disabled on GitHub: the project reviews code outside the platform (by e-mail, for example), so there is no review or discussion to measure here.",
+      "error_gitlab": "Couldn't load merge request review data (GitLab GraphQL API failure or rate limit). Try again in a moment.",
+      "disabled_gitlab": "Merge requests are disabled on GitLab: the project reviews code outside the platform, so there is no review or discussion to measure here."
     },
     "detectors": {
       "tests": "Looks for test/, tests/, __tests__/ folders and *.test.js/ts(x), *.spec.*, test_*.py, *_test.go, *_spec.rb, src/test/ files.",
@@ -254,9 +273,12 @@
     "notVerified": {
       "truncated": "Not verified: GitHub returned a truncated file list (very large repository), so \"not found\" wouldn't be reliable.",
       "unavailable": "Not verified: couldn't load the file list from GitHub (API failure or rate limit).",
-      "legacy": "Old snapshot: checked with narrower criteria, so \"not found\" isn't reliable."
+      "legacy": "Old snapshot: checked with narrower criteria, so \"not found\" isn't reliable.",
+      "truncated_gitlab": "Not verified: the project has more than {{treeCap}} files and Bisolhador doesn't read the whole tree on GitLab, so \"not found\" wouldn't be reliable.",
+      "unavailable_gitlab": "Not verified: couldn't load the file list from GitLab (API failure or rate limit)."
     },
-    "codeReviewDetail": "Of the {{n}} most recent merged PRs (bots excluded), {{unapproved}}% were merged without an approval (Approve) from someone else; {{selfMerge}}% were merged by their own author. Only GitHub's formal approval counts: projects that approve by command or bot (e.g. /lgtm) show as unapproved."
+    "codeReviewDetail": "Of the {{n}} most recent merged PRs (bots excluded), {{unapproved}}% were merged without an approval (Approve) from someone else; {{selfMerge}}% were merged by their own author. Only GitHub's formal approval counts: projects that approve by command or bot (e.g. /lgtm) show as unapproved.",
+    "codeReviewDetail_gitlab": "Of the {{n}} most recent merged MRs (bots excluded), {{unapproved}}% were merged without an approval (Approve) from someone else; {{selfMerge}}% were merged by their own author. Only GitLab's approval counts: projects that approve by comment alone show as unapproved."
   },
   "contributors": {
     "title": "Contributors",
@@ -277,7 +299,8 @@
       },
       "unavailable": {
         "title": "Contributors Unavailable",
-        "message": "Couldn't load contributors from GitHub (API failure or rate limit). Try again in a moment."
+        "message": "Couldn't load contributors from GitHub (API failure or rate limit). Try again in a moment.",
+        "message_gitlab": "Couldn't load contributors from GitLab (API failure or rate limit). Try again in a moment."
       },
       "healthy": {
         "title": "Distributed Work",
@@ -293,7 +316,9 @@
       },
       "tooLarge": {
         "title": "Contributors Unavailable on GitHub",
-        "message": "GitHub doesn't list this repository's contributors through its API: the history is too large. It's a platform limit, not a temporary failure."
+        "message": "GitHub doesn't list this repository's contributors through its API: the history is too large. It's a platform limit, not a temporary failure.",
+        "title_gitlab": "Contributors Unavailable on GitLab",
+        "message_gitlab": "GitLab didn't return this project's contributor list, and the commits of the last 12 months exceed what Bisolhador reads."
       }
     },
     "scope": {
@@ -302,8 +327,10 @@
       "allTimeOnly": "Commits from the whole history (12-month window unavailable right now)",
       "botsExcluded_one": "{{count}} bot excluded",
       "botsExcluded_other": "{{count}} bots excluded",
-      "capped": "only the top 100 contributors are counted"
-    }
+      "capped": "only the top 100 contributors are counted",
+      "allTimeOnly_gitlab": "Commits from the whole history, from GitLab's contributor list (more than {{commitCap}} commits in the last 12 months), grouped by e-mail"
+    },
+    "tooltip_gitlab": "Who makes the commits and how concentrated the work is. Bots (Renovate, project token accounts, GitLab Duo…) aren't counted; on GitLab, people are grouped by commit e-mail. High concentration in one person means dependency risk."
   },
   "activity": {
     "title": "Recent Activity",
@@ -320,13 +347,15 @@
     "commitBy": "by {{author}} • {{date}}",
     "noCommits": "This repository has no commits.",
     "commitsUnavailable": "Could not load the commits right now (GitHub API failure or rate limit).",
-    "commitsNotRecorded": "No commits recorded in this snapshot."
+    "commitsNotRecorded": "No commits recorded in this snapshot.",
+    "commitsUnavailable_gitlab": "Could not load the commits right now (GitLab API failure or rate limit)."
   },
   "charts": {
     "commitActivity": {
       "title": "Commits per Week (last {{count}} weeks)",
       "tooltip": "Commits per week over the last 52 weeks (GitHub statistic). Young projects show only the period since the first commit.",
-      "titleNoData": "Commits per Week"
+      "titleNoData": "Commits per Week",
+      "tooltip_gitlab": "Commits per week over the last 52 weeks, counted from the default branch's commits (GitLab has no ready-made statistic). Young projects show only the period since the first commit."
     },
     "techStack": {
       "title": "Technology Stack",
@@ -340,14 +369,17 @@
       "scope": "Whole history · {{n}} commits (no merges) · in each commit author's own time zone.",
       "scopeCapped": "The {{n}} commits GitHub takes into account (the statistic's cap; not the full history) · no merges · in each commit author's own time zone.",
       "smallSample": "Small sample: interpret with care.",
-      "scopeYear": "Last 12 months · {{n}} commits (no merges) · in each committer's own time."
+      "scopeYear": "Last 12 months · {{n}} commits (no merges) · in each committer's own time.",
+      "tooltip_gitlab": "Distribution of the last 12 months of commits (no merges, default branch) across weekdays, in each commit author's time zone. Computed from the commits: GitLab has no such statistic. Includes bot commits."
     },
     "statsUnavailable": {
       "computing": "GitHub is still computing this statistic. Try again in a moment.",
       "tooLarge": "GitHub doesn't compute this statistic for very large repositories.",
       "error": "Couldn't load this statistic from GitHub.",
       "notRecordedWeekdays": "Not recorded in this snapshot (earlier versions used only the 10 most recent commits).",
-      "snapshot": "Not recorded in this snapshot."
+      "snapshot": "Not recorded in this snapshot.",
+      "tooLarge_gitlab": "More than {{commitCap}} commits in the last 12 months: Bisolhador doesn't read them all on GitLab, and a partial chart would show unread weeks as weeks without commits.",
+      "error_gitlab": "Couldn't load the GitLab commits for this statistic."
     }
   },
   "ranking": {
@@ -774,7 +806,8 @@
     "unavailable": {
       "noToken": "With a GitHub token, we also check .gitignore, configuration (turned-off declaration), template, AI review and safeguards.",
       "error": "Part of the data could not be fetched (GitHub API failure or limit): items marked N/A or ? were not verified.",
-      "unsupported": "On this platform we don't check .gitignore, versioned agent configuration, AI review or safeguards yet: those items show as not verified."
+      "unsupported": "On this platform we don't check .gitignore, versioned agent configuration, AI review or safeguards yet: those items show as not verified.",
+      "error_gitlab": "Part of the data could not be fetched (GitLab API failure or limit): items marked N/A or ? were not verified."
     },
     "notRecorded": "AI in the Process: not recorded in this analysis.",
     "students": {
@@ -797,7 +830,8 @@
       "configUnavailable": "n/a: could not check who added or changed the AI configuration files.",
       "footnote": "Default-branch commits in the period, without merges and maintenance bots. \"Unidentified author\" gathers commits not linked to a GitHub account (we don't group by name). Configuration: AI files (template files excluded) with a commit by that person in the period, in the checked locations. Nothing in this table is saved or goes into the CSV."
     },
-    "notOnPlatform": "not available on this platform yet"
+    "notOnPlatform": "not available on this platform yet",
+    "tooltip_gitlab": "Traces GitLab keeps: co-authorship declared in commits and MRs opened by agents. Agent configuration, AI review and safeguards aren't checked on GitLab yet. It does not measure how much code AI wrote."
   },
   "gitlab": {
     "notice": "GitLab project ({{host}}). History (permanent link, Timeline, Benchmark and Ranking) doesn't exist for GitLab yet: this analysis is not saved. Contributors, weekly activity, weekdays and churn are computed from the commits of the last 12 months."

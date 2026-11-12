@@ -1,8 +1,8 @@
 
-import { useTranslation, Trans } from 'react-i18next';
+import { usePlatformTranslation, PlatformTrans } from '../lib/platformText.js';
 
 export function HelpModal({ isOpen, onClose }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
 
   if (!isOpen) return null;
 
@@ -42,7 +42,7 @@ export function HelpModal({ isOpen, onClose }) {
             <ol className="text-sm text-gray-600 dark:text-slate-400 space-y-1 list-decimal list-inside">
               {t('help.createToken.steps', { returnObjects: true }).map((step, index) => (
                 <li key={index}>
-                  <Trans
+                  <PlatformTrans
                     i18nKey={`help.createToken.steps.${index}`}
                     components={{
                       link: <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-ocean hover:underline" />

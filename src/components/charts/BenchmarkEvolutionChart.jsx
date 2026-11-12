@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import useChartTheme from '../../hooks/useChartTheme';
 import { createBaseChartOptions, localizedDayTicks } from '../../lib/chartDefaults';
 import { formatters } from '../../utils/formatters.js';
@@ -13,7 +13,7 @@ import { SNAPSHOT_TIMEZONE } from '../../constants.js';
  * Mostra a evolução de uma métrica específica para múltiplos repositórios
  */
 export default function BenchmarkEvolutionChart({ repos, metric = 'stars' }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = usePlatformTranslation();
   const chartTheme = useChartTheme();
 
   const metricLabels = {

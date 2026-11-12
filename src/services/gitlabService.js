@@ -13,7 +13,7 @@ import {
 import { toPullRequestStats } from '../utils/prReviewStats.js';
 import {
   GITLAB_PER_PAGE, GITLAB_TREE_MAX_PAGES, GITLAB_COMMIT_MAX_PAGES, GITLAB_BRANCH_MAX_PAGES, GITLAB_COMMIT_WEEKS,
-  GITHUB_PER_PAGE_COMMITS, GITHUB_PER_PAGE_RECENT_PRS, CLOSED_PR_SCAN, MERGED_PR_SAMPLE,
+  GITHUB_PER_PAGE_COMMITS, GITHUB_PER_PAGE_RECENT_PRS, CLOSED_PR_SCAN, MERGED_PR_SAMPLE, GITLAB_MR_NOTES,
 } from '../constants.js';
 import { TAGS_PAGE } from '../utils/projectPractices.js';
 
@@ -256,7 +256,7 @@ export function createGitlabService(host) {
         mergeRequests(state: merged, first: $n, sort: MERGED_AT_DESC) { nodes { iid ${fields} } } } }`;
       const core = list(`createdAt mergedAt author { username bot } mergeUser { username }
         approvedBy { nodes { username bot } }
-        notes(first: 50) { nodes { system body createdAt author { username bot } } }`);
+        notes(first: ${GITLAB_MR_NOTES}) { nodes { system body createdAt author { username bot } } }`);
       const size = list('diffStatsSummary { additions deletions }');
       const variables = { p: `${owner}/${repo}`, n: MERGED_PR_SAMPLE };
       const [coreRes, sizeRes] = await Promise.allSettled([graphql(core, variables, 'MR review stats'), graphql(size, variables, 'MR sizes')]);

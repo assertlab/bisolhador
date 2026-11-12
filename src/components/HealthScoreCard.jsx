@@ -1,10 +1,10 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { Tooltip } from './Tooltip.jsx';
 import { HEALTH_GOOD_PERCENT, HEALTH_FAIR_PERCENT } from '../constants.js';
 import { GuideLink } from './GuideLink.jsx';
 
 export function HealthScoreCard({ health }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const { score, files, reason } = health ?? {};
   // null score = not measured (no community profile / request failed): N/A, not 0%.
   // files null = checklist not recorded (old snapshots without full_report).

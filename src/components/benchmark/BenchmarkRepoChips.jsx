@@ -1,7 +1,7 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 
 export function BenchmarkRepoChips({ selectedRepos, onRemoveRepo }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
 
   if (selectedRepos.length === 0) return null;
 

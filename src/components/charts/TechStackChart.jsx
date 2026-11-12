@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import { useMemo } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
@@ -6,7 +6,7 @@ import useChartTheme from '../../hooks/useChartTheme.js';
 import { GuideLink } from '../GuideLink.jsx';
 
 function TechStackChart({ data }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const { textColor } = useChartTheme();
 
   // Configuração dos dados para o Chart.js - Memoizada para evitar re-renders

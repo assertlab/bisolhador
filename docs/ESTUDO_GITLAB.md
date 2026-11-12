@@ -355,11 +355,12 @@ Dividida em dois PRs. **PR 1 (feito, 2026-11-12):**
 - ✅ Seção GitLab no `SettingsModal`: um token por host, validado ao salvar (`/personal_access_tokens/self`).
 - ✅ **Teste manual (navegador, build de produção, 2026-11-12):** `gitlab-org/gitlab-runner` (43 requisições, ~12 s, todos os indicadores de revisão preenchidos), `lgpss-in1054/ns3_code` (35 requisições, ~7 s) e um projeto `internal` de aluno (recusado com 2 requisições). Zero violação de CSP, zero erro de página, nada gravado.
 
-**PR 2 (textos), pendente.** Sem ele, cards do GitLab ainda dizem "GitHub" ("Sem execuções do GitHub Actions", "Nenhuma release publicada no GitHub"). **Por isso o PR 1 não é publicado sozinho**: a versão só sobe com o PR 2.
+**PR 2 (textos, feito, 2026-11-12; v3.26.0 junto com o PR 1):**
 
-- `{{platform}}` nas strings genéricas e variantes `*.gitlab` onde a métrica muda: pipelines, health por listagens, séries a partir de commits, revisão via notas e aprovações (sem horário de aprovação), criação de token.
-- Seção "Diferenças no GitLab" no guia "Como interpretar".
-- Textos do PDF.
+- ✅ Em vez de `{{platform}}` em cada string, contexto do i18next: num relatório do GitLab, `t` lê `<chave>_gitlab` quando existe e cai em `<chave>` quando não (plural incluído). `src/lib/platformText.js` (`PlatformProvider` em volta do relatório no Dashboard, `usePlatformTranslation` em **todos** os componentes, com teste que impede voltar ao `useTranslation`, e `withPlatform` nos cards e no PDF). Os limites citados nos textos vêm das constantes (`gitlabLimits()`). Só ganham variante os textos que mudam: pipelines, health por listagens, séries a partir de commits, revisão por notas e aprovações, MRs/issues desativados, árvore truncada, mensagens de falha da API. Testes garantem que toda variante tem a chave-base, existe em pt e en e não fala de GitHub.
+- ✅ Entrada "Diferenças no GitLab" no guia "Como interpretar" (seção Plataformas), ligada ao aviso do Dashboard.
+- ✅ PDF: as mesmas variantes, e a nota de método cita a instância e que a análise não é gravada.
+- Rótulos genéricos como "Total de PRs" continuam "PRs" (o termo do app); os tooltips do GitLab falam em merge requests.
 
 ### Fase 3: Turma com GitLab
 

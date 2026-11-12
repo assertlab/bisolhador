@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { Tooltip } from './Tooltip.jsx';
 import { ZOMBIE_BRANCH_DAYS, BRANCH_SCAN_MAX } from '../constants.js';
 import { GuideLink } from './GuideLink.jsx';
@@ -6,7 +6,7 @@ import { GuideLink } from './GuideLink.jsx';
 const BADGE_COLORS = { green: 'bg-green-500', yellow: 'bg-yellow-500', red: 'bg-red-500', gray: 'bg-gray-500' };
 
 export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   // Criteria only for data computed with them (snapshots before 2026-10 used the
   // first 20 branches, no exclusions).
   const zombieCriteria = branchAnalysis?.checked != null

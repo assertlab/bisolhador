@@ -32,6 +32,10 @@ Dashboard de Análise de Repositórios GitHub que transforma dados em insights p
 
 ## 🔄 Últimas Atualizações
 
+### v3.26.0 - Projetos públicos do GitLab no Dashboard
+- **✨ O Dashboard analisa projetos públicos do GitLab** (gitlab.com e gitlab.cin.ufpe.br), com subgrupos; projetos internos e privados ficam de fora, e nada do GitLab é gravado ainda
+- **✨ Textos e guia na linguagem do GitLab** (merge requests, pipelines, estatísticas a partir dos commits) e tokens do GitLab por instância
+
 ### v3.25.0 - Base para o GitLab
 - **✨ A busca aceita a URL do GitHub colada**, e endereços do GitLab ou de outros hosts ganham mensagens próprias
 - **🔧 Fundação para analisar GitLab** (gitlab.com e instâncias institucionais): referência de repositório com plataforma e host, token por host

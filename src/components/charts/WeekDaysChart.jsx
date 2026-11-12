@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
@@ -13,7 +13,7 @@ import { GuideLink } from '../GuideLink.jsx';
 // commit's own time zone) — see utils/activityStats.js. null with a status when
 // not measured; status undefined = snapshot from before 2026-10 (10 commits).
 function WeekDaysChart({ weekdays, status }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = usePlatformTranslation();
   const { textColor, gridColor } = useChartTheme();
 
   // Memoização dos dados calculados para evitar re-processamento desnecessário

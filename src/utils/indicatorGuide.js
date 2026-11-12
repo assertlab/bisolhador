@@ -94,6 +94,13 @@ export const GUIDE_SECTIONS = [
     ],
   },
   {
+    // How the indicators change on GitLab (docs/ESTUDO_GITLAB.md); a reference entry, no CHAOSS metric.
+    id: 'platforms',
+    items: [
+      { id: 'gitlab', chaoss: [], relation: 'none', reference: true },
+    ],
+  },
+  {
     id: 'people',
     items: [
       { id: 'bus-factor', chaoss: ['contributorAbsenceFactor'], relation: 'related' },

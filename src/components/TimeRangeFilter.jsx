@@ -1,4 +1,4 @@
-import { useTranslation } from "react-i18next";
+import { usePlatformTranslation } from '../lib/platformText.js';
 
 const TIME_RANGES = ["7d", "30d", "60d", "90d", "all"];
 
@@ -8,7 +8,7 @@ export function TimeRangeFilter({
   i18nPrefix,
   disabled = false,
 }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
 
   return (
     <div className="flex items-center gap-2">

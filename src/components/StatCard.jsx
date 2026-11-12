@@ -1,11 +1,11 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { formatters } from '../utils/formatters.js';
 import { Tooltip } from './Tooltip.jsx';
 import { GuideLink } from './GuideLink.jsx';
 import { intlLocale } from '../i18n.js';
 
 export function StatCard({ title, value, subValue, icon, type = 'default', tooltipText, guideId }) {
-  const { i18n } = useTranslation();
+  const { i18n } = usePlatformTranslation();
   // Cores dinâmicas baseadas no tipo de alerta (para o futuro)
   const valueColor = type === 'alert' ? 'text-coral' : 'text-gray-900 dark:text-white';
 

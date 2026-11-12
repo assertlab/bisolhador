@@ -1,7 +1,7 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 
 export function BenchmarkSearchForm({ searchInput, setSearchInput, onSubmit, isChecking }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
 
   return (
     <div className="w-full pt-4">

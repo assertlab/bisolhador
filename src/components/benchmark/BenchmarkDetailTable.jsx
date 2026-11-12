@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import { exportToCsv } from '../../utils/csvExporter.js';
 import { formatters } from '../../utils/formatters.js';
 import { leadTimeText } from '../../utils/benchmarkData.js';
@@ -8,7 +8,7 @@ import { topShareLevel, TOP_SHARE_STYLE } from '../../utils/contributors.js';
 // Level recomputed from the stored percentage (not the stored level) on purpose:
 // old snapshots then get the current thresholds, same as the Dashboard.
 export function BenchmarkDetailTable({ repos }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = usePlatformTranslation();
   const locale = intlLocale(i18n.language);
 
   const handleExportCsv = () => {

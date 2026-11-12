@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../../lib/platformText.js';
 import { GuideLink } from '../GuideLink.jsx';
 
 const CAUSES = ['squash', 'otherMember', 'noTrailer', 'disabled'];
@@ -9,7 +9,7 @@ const CAUSES = ['squash', 'otherMember', 'noTrailer', 'disabled'];
  * `skipUnverified`: reasons already explained elsewhere (e.g. the no-token note).
  */
 export function AiCoherence({ coherence, skipUnverified = [] }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const unverified = coherence.unverified.filter((u) => !skipUnverified.includes(u));
   const hasFlags = coherence.flags.length > 0;
   if (!hasFlags && !coherence.toolMismatch && !coherence.coauthorDisabled && unverified.length === 0) return null;

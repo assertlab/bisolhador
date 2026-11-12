@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { Header } from './Header';
 import { SettingsModal } from './SettingsModal';
 import { PageLoadingState } from './skeletons/PageLoadingState.jsx';
@@ -9,7 +9,7 @@ import { PageLoadingState } from './skeletons/PageLoadingState.jsx';
  * the header still there to navigate away.
  */
 export function LazyTextsState({ status, isSettingsOpen, setIsSettingsOpen }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   if (status !== 'error') return <PageLoadingState message={t('app.loadingPage')} />;
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">

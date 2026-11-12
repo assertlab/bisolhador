@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 
 export function SearchBar({ onSearch, loading }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const [inputValue, setInputValue] = useState('');
 
   const handleSubmit = (e) => {

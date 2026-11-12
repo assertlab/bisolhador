@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { usePlatformTranslation } from '../lib/platformText.js';
 import { useToast } from '../hooks/useToast';
 
 const TOAST_STYLES = {
@@ -17,7 +17,7 @@ const TOAST_STYLES = {
 };
 
 export function ToastContainer() {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const { toasts, dismissToast } = useToast();
 
   if (toasts.length === 0) return null;

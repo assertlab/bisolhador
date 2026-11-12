@@ -1,4 +1,4 @@
-import { useTranslation, Trans } from 'react-i18next';
+import { usePlatformTranslation, PlatformTrans } from '../lib/platformText.js';
 import { Tooltip } from './Tooltip.jsx';
 import { ContributorsScope } from './ContributorsScope.jsx';
 import { GuideLink } from './GuideLink.jsx';
@@ -6,7 +6,7 @@ import { contributorsTextKey } from '../utils/contributors.js';
 import { Avatar } from './Avatar.jsx';
 
 export function ContributorsTable({ contributors, busFactor, analysis }) {
-  const { t } = useTranslation();
+  const { t } = usePlatformTranslation();
   const unavailable = !contributors || ['unavailable', 'notRecorded'].includes(busFactor?.level);
 
   // Determinar cor do alerta baseado no level
@@ -54,7 +54,7 @@ export function ContributorsTable({ contributors, busFactor, analysis }) {
             </h3>
             <div className={`mt-2 text-sm ${textColor}`}>
               <p>
-                <Trans
+                <PlatformTrans
                   i18nKey={`contributors.busFactor.${level}.message`}
                   values={{ contributor: busFactor.topContributor, percentage: busFactor.percentage }}
                   components={{ bold: <strong /> }}
