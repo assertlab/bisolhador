@@ -855,8 +855,7 @@
       "sampled": "Computed over the 300 most recent commits of the period.",
       "configUnavailable": "n/a: could not check who added or changed the AI configuration files.",
       "footnote": "Default-branch commits in the period, without merges and maintenance bots. \"Unidentified author\" gathers commits not linked to a GitHub account (we don't group by name). Configuration: AI files (template files excluded) with a commit by that person in the period, in the checked locations. Nothing in this table is saved or goes into the CSV.",
-      "footnote_gitlab": "Default-branch commits in the period, no merges and no maintenance bots. On GitLab, commits don't report the account behind them: people are grouped by the name on their commits, so the same person under different names takes more than one row. Who added the AI configuration files isn't checked on GitLab yet. Nothing in this table is saved or goes into the CSV.",
-      "configUnavailable_gitlab": "N/A: on GitLab, we don't check yet who added or changed AI configuration files."
+      "footnote_gitlab": "Default-branch commits in the period, no merges and no maintenance bots. On GitLab, commits don't report the account behind them: people are grouped by the name on their commits, so the same person under different names takes more than one row. Configuration: AI files with a commit by that person in the period (template origin isn't checked on GitLab). Nothing in this table is saved or goes into the CSV."
     },
     "tooltip_gitlab": "Traces GitLab keeps: versioned AI agent configuration (including .gitlab/duo, Google Antigravity's .agent/ and Pi's .pi/), co-authorship declared in commits, MRs opened by agents and reviews by AI bots, such as GitLab Duo. It does not measure how much code AI wrote."
   },

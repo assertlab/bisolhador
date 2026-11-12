@@ -16,6 +16,7 @@ import {
   GITLAB_PER_PAGE, GITLAB_TREE_MAX_PAGES, GITLAB_COMMIT_MAX_PAGES, GITLAB_BRANCH_MAX_PAGES, GITLAB_COMMIT_WEEKS,
   GITHUB_PER_PAGE_COMMITS, GITHUB_PER_PAGE_RECENT_PRS, CLOSED_PR_SCAN, MERGED_PR_SAMPLE, GITLAB_MR_NOTES,
   CLASSROOM_COMMIT_PAGES, CLASSROOM_CI_RUN_PAGES, CLASSROOM_PR_SCAN, CLASSROOM_GITLAB_MR_PAGE, GITLAB_GROUP_MAX_PAGES,
+  AUTHORSHIP_MAX_PATHS, AUTHORSHIP_COMMITS_PER_PATH,
 } from '../constants.js';
 import { withExponentialBackoff } from '../utils/retry.js';
 import { TAGS_PAGE, NO_CI_RUNS } from '../utils/projectPractices.js';
@@ -26,6 +27,7 @@ import { CONTEXT_DIRS } from '../utils/aiRegistry.js';
 // long, enough for one analysis, then dropped.
 const SHARED_MS = 60_000;
 const TOKEN_CHECK_TIMEOUT_MS = 10_000;
+const AUTHORSHIP_PARALLEL = 3; // AI-config paths queried at once per project
 
 function httpError(label, status, code) {
   return Object.assign(new Error(`GitLab ${label} failed: HTTP ${status}`), { status, ...(code && { code }) });
@@ -395,6 +397,42 @@ export function createGitlabService(host) {
       const { items, capped } = result;
       const kept = classroomPipelines(items, branch);
       return { ...toWorkflowRuns(kept, kept.length), capped };
+    },
+
+    /**
+     * Who touched each AI-config path on the default branch, for Classroom's per-student view: the
+     * last AUTHORSHIP_COMMITS_PER_PATH commits of each path (max AUTHORSHIP_MAX_PATHS paths, one REST
+     * request each, AUTHORSHIP_PARALLEL at a time). Same shape as githubService's: { path, commits:
+     * [{ login, name, email, date }], complete }, mapped from toHistoryNode (GitLab commits carry no
+     * account: `login` is the author name; bots get "[bot]"). A path whose request failed, 404 included,
+     * is unknown (no commits, `complete: false`), never "nobody". If every path failed, it throws (the
+     * caller shows the column as n/d), carrying TOKEN_REJECTED when that was the cause.
+     */
+    async fetchAiConfigAuthorship(owner, repo, paths) {
+      const list = (paths ?? []).slice(0, AUTHORSHIP_MAX_PATHS);
+      const failures = [];
+      const one = async (path) => {
+        try {
+          const items = await withExponentialBackoff(
+            () => json(`/projects/${projectId(owner, repo)}/repository/commits?path=${encodeURIComponent(path)}&per_page=${AUTHORSHIP_COMMITS_PER_PATH}`, 'config authorship'),
+            1, 500,
+          );
+          const commits = items.map((c) => {
+            const node = toHistoryNode(c);
+            return { login: node.author.user?.login ?? null, name: node.author.name, email: node.author.email, date: node.committedDate };
+          });
+          return { path, commits, complete: items.length < AUTHORSHIP_COMMITS_PER_PATH };
+        } catch (error) {
+          failures.push(error);
+          return { path, commits: [], complete: false };
+        }
+      };
+      // A few at a time: 3 repositories run in parallel already (Classroom), so no burst against the instance
+      const out = [];
+      for (let i = 0; i < list.length; i += AUTHORSHIP_PARALLEL) out.push(...await Promise.all(list.slice(i, i + AUTHORSHIP_PARALLEL).map(one)));
+      if (list.length > 0 && failures.length === list.length) throw failures.find((e) => e.code === 'TOKEN_REJECTED') ?? failures[0];
+      if (failures.length > 0) console.warn(`[gitlabService] config authorship: ${failures.length} of ${list.length} paths failed:`, failures[0].message);
+      return out;
     },
 
     // Projects of a group and its subgroups, for the Classroom import (with the

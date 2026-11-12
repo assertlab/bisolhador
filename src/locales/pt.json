@@ -855,8 +855,7 @@
       "sampled": "Calculado sobre os 300 commits mais recentes do período.",
       "configUnavailable": "n/d: não foi possível consultar quem adicionou ou alterou os arquivos de configuração de IA.",
       "footnote": "Commits do branch principal no período, sem merges e sem bots de manutenção. \"Autor não identificado\" reúne os commits que não estão ligados a uma conta do GitHub (não agrupamos por nome). Configuração: arquivos de IA (fora os do template) com commit da pessoa no período, nos locais verificados. Nada desta tabela é salvo nem vai para o CSV.",
-      "footnote_gitlab": "Commits do branch principal no período, sem merges e sem bots de manutenção. No GitLab, os commits não informam a conta de quem os fez: as pessoas são agrupadas pelo nome que aparece nos commits, então a mesma pessoa com nomes diferentes ocupa mais de uma linha. Quem adicionou os arquivos de configuração de IA ainda não é verificado no GitLab. Nada desta tabela é salvo nem vai para o CSV.",
-      "configUnavailable_gitlab": "n/d: no GitLab, ainda não verificamos quem adicionou ou alterou arquivos de configuração de IA."
+      "footnote_gitlab": "Commits do branch principal no período, sem merges e sem bots de manutenção. No GitLab, os commits não informam a conta de quem os fez: as pessoas são agrupadas pelo nome que aparece nos commits, então a mesma pessoa com nomes diferentes ocupa mais de uma linha. Configuração: arquivos de IA com commit da pessoa no período (a origem template não é verificada no GitLab). Nada desta tabela é salvo nem vai para o CSV."
     },
     "tooltip_gitlab": "Rastros que o GitLab guarda: configuração de agentes versionada (inclusive .gitlab/duo, .agent/ do Google Antigravity e .pi/ do Pi), coautoria declarada em commits, MRs abertos por agentes e revisões de bots de IA, como o GitLab Duo. Não mede quanto código foi escrito por IA."
   },

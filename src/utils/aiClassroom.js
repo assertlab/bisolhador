@@ -50,6 +50,9 @@ export function authorshipPaths(ctx) {
  */
 export function classroomAiContext(ctx, authorship) {
   if (!ctx) return null;
+  // GitLab never reports a template and has no Classroom bot commit: the authorship read only feeds the
+  // per-student view, and every origin stays "not verified" (never "own" just because the history was read).
+  if (ctx.templateUnknowable) return { ...ctx, templatePaths: null };
   const known = ctx.templatePaths ?? new Set();
   if (authorship == null && known.size === 0) return { ...ctx, templatePaths: null };
   const checked = (Array.isArray(authorship) ? authorship : []).filter((e) => e.complete).map((e) => e.path);
