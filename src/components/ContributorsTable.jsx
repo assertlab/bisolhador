@@ -3,6 +3,7 @@ import { Tooltip } from './Tooltip.jsx';
 import { ContributorsScope } from './ContributorsScope.jsx';
 import { GuideLink } from './GuideLink.jsx';
 import { contributorsTextKey } from '../utils/contributors.js';
+import { Avatar } from './Avatar.jsx';
 
 export function ContributorsTable({ contributors, busFactor, analysis }) {
   const { t } = useTranslation();
@@ -87,7 +88,7 @@ export function ContributorsTable({ contributors, busFactor, analysis }) {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
-                      <img className="h-10 w-10 rounded-full" src={contributor.avatar_url} alt="" />
+                      <Avatar className="h-10 w-10" src={contributor.avatar_url} name={contributor.login} />
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">

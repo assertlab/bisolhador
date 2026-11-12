@@ -191,6 +191,15 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
 
           {/* Alerta de Dados Parciais */}
           <PartialDataAlert warnings={displayData?._warnings} />
+
+          {/* GitLab: no history yet, and some charts are computed from commits */}
+          {displayData?.provider === 'gitlab' && (
+            <div className="w-full max-w-2xl mx-auto mt-3">
+              <p role="note" className="bg-sky-50 border border-sky-200 text-sky-800 dark:bg-sky-900/20 dark:border-sky-700 dark:text-sky-200 px-4 py-3 rounded-md text-sm">
+                {t('gitlab.notice', { host: displayData.host })}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Lógica de Renderização */}

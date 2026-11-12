@@ -18,6 +18,10 @@
 // WebAssembly layout (script-src 'wasm-unsafe-eval' + connect-src data:) and
 // the blob worker a PNG image would spawn (it hangs the report, silently).
 //
+// Third flow (GitLab Dashboard, since phase 2 of docs/ESTUDO_GITLAB.md): a
+// mocked public gitlab.com project with subgroups. Proves connect-src lets the
+// browser reach gitlab.com and that the Dashboard renders a GitLab report.
+//
 // Exit code: 0 only if every mode navigated, loaded the dashboard, produced the
 // Dashboard and the Classroom PDF reports (valid PDFs, report font embedded), and had zero CSP violations
 // and zero page errors. With
@@ -164,6 +168,41 @@ async function mockGithubApi(page) {
     if (!body) return route.fulfill({ status: 500, contentType: 'application/json', headers: cors, body: '{"message":"smoke: not mocked"}' });
     return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
   });
+}
+
+// GitLab stand-in for the GitLab Dashboard flow (docs/ESTUDO_GITLAB.md): a public project with
+// subgroups on gitlab.com, everything empty. The point is the CSP: connect-src must let the
+// browser reach gitlab.com (the CSP check happens before route interception), and the Dashboard
+// must render a GitLab report. Counts need X-Total, exposed like GitLab does.
+const GITLAB_SMOKE_PROJECT = 'smoke-group/sub/smoke-project';
+async function mockGitlabApi(page) {
+  await page.route('https://gitlab.com/**', (route) => {
+    const request = route.request();
+    const cors = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': request.headers()['access-control-request-headers'] ?? '*',
+      'Access-Control-Expose-Headers': 'X-Total',
+    };
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+    const { pathname } = new URL(request.url());
+    let body = [];
+    if (pathname === '/api/graphql') body = { data: { project: { archived: false, issuesEnabled: true, mergeRequestsEnabled: true, visibility: 'public', mergeRequests: { nodes: [] } } } };
+    else if (pathname === `/api/v4/projects/${encodeURIComponent(GITLAB_SMOKE_PROJECT)}`) {
+      body = { path_with_namespace: GITLAB_SMOKE_PROJECT, visibility: 'public', default_branch: 'main', created_at: '2026-01-01T00:00:00Z', namespace: { kind: 'group' } };
+    } else if (pathname.endsWith('/issues_statistics')) body = { statistics: { counts: { all: 0, opened: 0, closed: 0 } } };
+    else if (pathname.endsWith('/languages')) body = {};
+    return route.fulfill({ status: 200, contentType: 'application/json', headers: { ...cors, 'X-Total': '0' }, body: JSON.stringify(body) });
+  });
+}
+
+async function runGitlabDashboardFlow(page, baseUrl) {
+  await mockGitlabApi(page);
+  await page.goto(`${baseUrl}/?q=${encodeURIComponent(`gitlab.com/${GITLAB_SMOKE_PROJECT}`)}`, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+  await page.getByRole('button', { name: PDF_BUTTON_NAME }).waitFor({ state: 'visible', timeout: DASHBOARD_TIMEOUT_MS });
+  // pt-BR: gitlab.notice
+  const notice = await page.getByText('Projeto do GitLab (gitlab.com)').isVisible();
+  return { loaded: true, notice };
 }
 
 // States a cold page load never shows: tooltips, the settings modal, the theme switch. Strict style-src
@@ -364,6 +403,7 @@ async function runBrowserFlow(baseUrl, label) {
     interactiveStates: false,
     dashboardReport: null, // { filename, bytes, pdf, fonts } of the Dashboard report download
     classroomReport: null, // { filename, bytes, pdf, fonts } once the report was generated
+    gitlabDashboard: null, // { loaded, notice } of a mocked gitlab.com project
     error: null,
   };
 
@@ -432,6 +472,7 @@ async function runBrowserFlow(baseUrl, label) {
     }
 
     flow.classroomReport = await runClassroomReportFlow(page, baseUrl);
+    flow.gitlabDashboard = await runGitlabDashboardFlow(page, baseUrl);
   } catch (err) {
     flow.error = String(err && err.message ? err.message : err);
   }
@@ -546,7 +587,7 @@ async function main() {
       `${r.flow.label}: navigationOk=${r.flow.navigationOk} searchSubmitted=${r.flow.searchSubmitted} ` +
         `dashboardLoaded=${r.flow.dashboardLoaded} pdfClicked=${r.flow.pdfClicked} downloadStarted=${r.flow.downloadStarted} datePermalinkOk=${r.flow.datePermalinkOk} ` +
         `routes=${r.flow.routesVisited.length}/${OTHER_ROUTES.length} interactive=${r.flow.interactiveStates} ` +
-        `dashboardReport=${r.flow.dashboardReport ? `${r.flow.dashboardReport.bytes}B` : 'none'} classroomReport=${r.flow.classroomReport ? `${r.flow.classroomReport.bytes}B` : 'none'} ` +
+        `dashboardReport=${r.flow.dashboardReport ? `${r.flow.dashboardReport.bytes}B` : 'none'} classroomReport=${r.flow.classroomReport ? `${r.flow.classroomReport.bytes}B` : 'none'} gitlab=${r.flow.gitlabDashboard ? (r.flow.gitlabDashboard.notice ? 'ok' : 'no-notice') : 'none'} ` +
         `cspViolations=${r.cspViolations.length} gaRequests=${r.gaRequests.length} websockets=${r.websockets.length} ` +
         `pageErrors=${r.pageErrors.length} intercepted=${JSON.stringify(r.writesIntercepted)} ` +
         `flowError=${r.flow.error ?? 'none'}`,
@@ -571,6 +612,8 @@ async function main() {
       if (!report) problems.push(`${name} PDF report was not generated`);
       else if (!report.pdf || !report.fonts || report.bytes < 5000) problems.push(`${name} PDF report is not a valid PDF with the embedded fonts (${JSON.stringify(report)})`);
     }
+    if (!f.gitlabDashboard?.loaded) problems.push('GitLab Dashboard (mocked gitlab.com) did not load');
+    else if (!f.gitlabDashboard.notice) problems.push('GitLab Dashboard loaded without the GitLab notice');
     if (!f.interactiveStates) problems.push('interactive states (tooltips, settings modal, theme) were not exercised');
     if (f.routesVisited.length !== OTHER_ROUTES.length) problems.push(`only ${f.routesVisited.length} of ${OTHER_ROUTES.length} extra routes were visited`);
     if (r.cspViolations.length) problems.push(`${r.cspViolations.length} CSP violation(s)`);

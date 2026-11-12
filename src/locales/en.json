@@ -5,7 +5,7 @@
     "repoHostRequired": "This path has more than two levels, which only exists on GitLab. Include the host, for example gitlab.com/group/subgroup/project.",
     "repoHostNotAllowed": "This address is neither GitHub nor a GitLab instance enabled in Bisolhador, so it was not analyzed.",
     "repoNameUnsafe": "GitHub returned a repository name with characters Bisolhador does not accept, so the analysis was stopped.",
-    "providerUnavailable": "Analysis of GitLab repositories ({{host}}) is still in development. For now, Bisolhador only analyzes GitHub repositories.",
+    "providerUnavailable": "Analysis of repositories on {{host}} is not available.",
     "privacyCheckFailed": "Could not confirm whether this repository is public (network issue or GitHub rate limit). For safety, it wasn't added — please try again shortly.",
     "invalidRepoName": "Couldn't open the history: this repository's name contains invalid characters.",
     "snapshotUnavailable": "Couldn't load this snapshot: it doesn't exist, the link is wrong, or history is temporarily unavailable. Check the link or try again in a moment.",
@@ -13,7 +13,9 @@
     "pdfModuleLoad": "Couldn't load the PDF generator, probably because Bisolhador was updated after this page was opened. Reload the page and try again.",
     "chunkLoad": "This page could not be loaded, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page to try again.",
     "pageCrash": "Something went wrong showing this page. Reload to try again; if it persists, use the menu to go to another page.",
-    "lazyTexts": "Could not load the texts of this page, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page and try again."
+    "lazyTexts": "Could not load the texts of this page, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page and try again.",
+    "gitlabNotPublic": "This GitLab project is not public (internal or private visibility). The Dashboard only analyzes public projects, since the data may be shared. Analyzing internal and private GitLab projects in Classroom Mode is in development.",
+    "visibilityUnknown": "Couldn't confirm whether this project is public (the response didn't include its visibility). For safety, it wasn't analyzed. Try again in a moment."
   },
   "header": {
     "title": "Bisolhador",
@@ -337,7 +339,8 @@
       "tooltipLabel": "{{day}}: {{count}} commits",
       "scope": "Whole history · {{n}} commits (no merges) · in each commit author's own time zone.",
       "scopeCapped": "The {{n}} commits GitHub takes into account (the statistic's cap; not the full history) · no merges · in each commit author's own time zone.",
-      "smallSample": "Small sample: interpret with care."
+      "smallSample": "Small sample: interpret with care.",
+      "scopeYear": "Last 12 months · {{n}} commits (no merges) · in each committer's own time."
     },
     "statsUnavailable": {
       "computing": "GitHub is still computing this statistic. Try again in a moment.",
@@ -371,7 +374,7 @@
     }
   },
   "settings": {
-    "title": "Configure GitHub Token",
+    "title": "Access tokens",
     "description": "Add your Personal Access Token to increase the limit from 60 to 5,000 requests/hour.",
     "tokenLabel": "Personal Access Token",
     "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
@@ -384,6 +387,20 @@
     "buttons": {
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "gitlab": {
+      "title": "GitLab",
+      "description": "One token per instance, with the read_api scope (a regular personal token, not a \"fine-grained\" one). Each token is only sent to its own instance and is stored in this browser only. Prefer a short expiry.",
+      "tokenLabel": "{{host}} token",
+      "createToken": "Create a token:",
+      "check": {
+        "ok": "Valid token, with read_api.",
+        "okExpires": "Valid token, with read_api. Expires on {{date}}.",
+        "invalid": "GitLab rejected this token (invalid or expired). It was saved, but analyses will fail.",
+        "inactive": "This token is revoked or inactive. It was saved, but analyses will fail.",
+        "scope": "This token lacks the read_api scope. Create another one with read_api; without it, some indicators are unavailable.",
+        "unchecked": "Couldn't check the token right now (network, or the instance is down). It was saved."
+      }
     }
   },
   "help": {
@@ -511,7 +528,8 @@
     "linkCopied": "Link copied!",
     "errorNoData": "Error: Data not saved. Try reloading the page.",
     "errorNotSaved": "This result wasn't saved because some indicators couldn't be loaded (see the partial-data warning), so there's no permanent link. Try again in a moment or set a GitHub token.",
-    "errorGeneral": "Error generating share link"
+    "errorGeneral": "Error generating share link",
+    "notSavedGitlab": "GitLab project analyses aren't saved yet, so there is no permanent link. Copy this page's address to share the live analysis."
   },
   "snapshot": {
     "title": "Historical Mode",
@@ -755,7 +773,8 @@
     },
     "unavailable": {
       "noToken": "With a GitHub token, we also check .gitignore, configuration (turned-off declaration), template, AI review and safeguards.",
-      "error": "Part of the data could not be fetched (GitHub API failure or limit): items marked N/A or ? were not verified."
+      "error": "Part of the data could not be fetched (GitHub API failure or limit): items marked N/A or ? were not verified.",
+      "unsupported": "On this platform we don't check .gitignore, versioned agent configuration, AI review or safeguards yet: those items show as not verified."
     },
     "notRecorded": "AI in the Process: not recorded in this analysis.",
     "students": {
@@ -777,6 +796,10 @@
       "sampled": "Computed over the 300 most recent commits of the period.",
       "configUnavailable": "n/a: could not check who added or changed the AI configuration files.",
       "footnote": "Default-branch commits in the period, without merges and maintenance bots. \"Unidentified author\" gathers commits not linked to a GitHub account (we don't group by name). Configuration: AI files (template files excluded) with a commit by that person in the period, in the checked locations. Nothing in this table is saved or goes into the CSV."
-    }
+    },
+    "notOnPlatform": "not available on this platform yet"
+  },
+  "gitlab": {
+    "notice": "GitLab project ({{host}}). History (permanent link, Timeline, Benchmark and Ranking) doesn't exist for GitLab yet: this analysis is not saved. Contributors, weekly activity, weekdays and churn are computed from the commits of the last 12 months."
   }
 }

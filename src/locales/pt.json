@@ -5,7 +5,7 @@
     "repoHostRequired": "Este caminho tem mais de dois níveis, o que só existe no GitLab. Inclua o host, por exemplo gitlab.com/grupo/subgrupo/projeto.",
     "repoHostNotAllowed": "Este endereço não é do GitHub nem de uma instância GitLab habilitada no Bisolhador, por isso não foi analisado.",
     "repoNameUnsafe": "O GitHub devolveu um nome de repositório com caracteres que o Bisolhador não aceita, por isso a análise foi interrompida.",
-    "providerUnavailable": "A análise de repositórios do GitLab ({{host}}) ainda está em desenvolvimento. Por enquanto, o Bisolhador analisa apenas repositórios do GitHub.",
+    "providerUnavailable": "A análise de repositórios em {{host}} não está disponível.",
     "privacyCheckFailed": "Não foi possível confirmar se este repositório é público (falha de rede ou limite de requisições do GitHub). Por segurança, ele não foi adicionado — tente novamente em instantes.",
     "invalidRepoName": "Não foi possível abrir o histórico: o nome deste repositório contém caracteres inválidos.",
     "snapshotUnavailable": "Não foi possível carregar este snapshot: ele não existe, o link está incorreto ou o histórico está temporariamente indisponível. Confira o link ou tente novamente em instantes.",
@@ -13,7 +13,9 @@
     "pdfModuleLoad": "Não foi possível carregar o gerador de PDF, provavelmente porque o Bisolhador foi atualizado depois que esta página foi aberta. Recarregue a página e tente de novo.",
     "chunkLoad": "Não foi possível carregar esta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página para tentar de novo.",
     "pageCrash": "Algo deu errado ao mostrar esta página. Recarregue para tentar de novo; se persistir, use o menu para ir a outra página.",
-    "lazyTexts": "Não foi possível carregar os textos desta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página e tente de novo."
+    "lazyTexts": "Não foi possível carregar os textos desta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página e tente de novo.",
+    "gitlabNotPublic": "Este projeto do GitLab não é público (visibilidade interna ou privada). O Dashboard analisa apenas projetos públicos, porque os dados podem ser compartilhados. A análise de projetos internos e privados do GitLab no Modo Turma está em desenvolvimento.",
+    "visibilityUnknown": "Não foi possível confirmar se este projeto é público (a resposta não informou a visibilidade). Por segurança, ele não foi analisado. Tente de novo em instantes."
   },
   "header": {
     "title": "Bisolhador",
@@ -333,19 +335,12 @@
     "weekdays": {
       "title": "Commits por Dia da Semana",
       "tooltip": "Distribuição de todos os commits do histórico (sem merges) pelos dias da semana, no fuso de quem fez cada commit (estatística punch card do GitHub). Inclui commits de bots: a API não permite separá-los.",
-      "days": [
-        "Domingo",
-        "Segunda",
-        "Terça",
-        "Quarta",
-        "Quinta",
-        "Sexta",
-        "Sábado"
-      ],
+      "days": ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
       "tooltipLabel": "{{day}}: {{count}} commits",
       "scope": "Todo o histórico · {{n}} commits (sem merges) · no horário de quem fez cada commit.",
       "scopeCapped": "Os {{n}} commits que o GitHub considera (limite da estatística; não é o histórico completo) · sem merges · no horário de quem fez cada commit.",
-      "smallSample": "Amostra pequena: interprete com cautela."
+      "smallSample": "Amostra pequena: interprete com cautela.",
+      "scopeYear": "Últimos 12 meses · {{n}} commits (sem merges) · no horário de quem fez cada commit."
     },
     "statsUnavailable": {
       "computing": "O GitHub ainda está calculando essa estatística. Tente de novo em instantes.",
@@ -379,7 +374,7 @@
     }
   },
   "settings": {
-    "title": "Configurar Token do GitHub",
+    "title": "Tokens de acesso",
     "description": "Adicione seu Personal Access Token para aumentar o limite de 60 para 5.000 requisições/hora.",
     "tokenLabel": "Personal Access Token",
     "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
@@ -392,6 +387,20 @@
     "buttons": {
       "cancel": "Cancelar",
       "save": "Salvar"
+    },
+    "gitlab": {
+      "title": "GitLab",
+      "description": "Um token por instância, com o escopo read_api (token pessoal comum, não o \"fine-grained\"). Cada token é enviado só para a própria instância e fica salvo apenas neste navegador. Prefira uma validade curta.",
+      "tokenLabel": "Token de {{host}}",
+      "createToken": "Criar um token:",
+      "check": {
+        "ok": "Token válido, com read_api.",
+        "okExpires": "Token válido, com read_api. Expira em {{date}}.",
+        "invalid": "O GitLab recusou este token (inválido ou expirado). Ele foi salvo, mas as análises vão falhar.",
+        "inactive": "Este token está revogado ou inativo. Ele foi salvo, mas as análises vão falhar.",
+        "scope": "Este token não tem o escopo read_api. Crie outro com read_api; sem ele, parte dos indicadores fica indisponível.",
+        "unchecked": "Não foi possível verificar o token agora (rede ou instância fora do ar). Ele foi salvo."
+      }
     }
   },
   "help": {
@@ -519,7 +528,8 @@
     "linkCopied": "Link copiado!",
     "errorNoData": "Erro: Dados não salvos. Tente recarregar a página.",
     "errorNotSaved": "Este resultado não foi salvo porque alguns indicadores não puderam ser carregados (veja o aviso de dados parciais), então não há link permanente. Tente de novo em instantes ou configure um token do GitHub.",
-    "errorGeneral": "Erro ao gerar link de compartilhamento"
+    "errorGeneral": "Erro ao gerar link de compartilhamento",
+    "notSavedGitlab": "Análises de projetos do GitLab ainda não são gravadas, por isso não há link permanente. Copie o endereço desta página para compartilhar a análise ao vivo."
   },
   "snapshot": {
     "title": "Modo Histórico",
@@ -763,7 +773,8 @@
     },
     "unavailable": {
       "noToken": "Com token do GitHub, também verificamos .gitignore, configuração (declaração desligada), template, revisão por IA e salvaguardas.",
-      "error": "Não foi possível obter parte dos dados (falha ou limite da API do GitHub): os itens marcados n/d ou ? não foram verificados."
+      "error": "Não foi possível obter parte dos dados (falha ou limite da API do GitHub): os itens marcados n/d ou ? não foram verificados.",
+      "unsupported": "Nesta plataforma, ainda não verificamos .gitignore, configuração versionada de agentes, revisão por IA nem salvaguardas: esses itens aparecem como não verificados."
     },
     "notRecorded": "IA no Processo: não registrado nesta análise.",
     "students": {
@@ -785,6 +796,10 @@
       "sampled": "Calculado sobre os 300 commits mais recentes do período.",
       "configUnavailable": "n/d: não foi possível consultar quem adicionou ou alterou os arquivos de configuração de IA.",
       "footnote": "Commits do branch principal no período, sem merges e sem bots de manutenção. \"Autor não identificado\" reúne os commits que não estão ligados a uma conta do GitHub (não agrupamos por nome). Configuração: arquivos de IA (fora os do template) com commit da pessoa no período, nos locais verificados. Nada desta tabela é salvo nem vai para o CSV."
-    }
+    },
+    "notOnPlatform": "ainda não disponível nesta plataforma"
+  },
+  "gitlab": {
+    "notice": "Projeto do GitLab ({{host}}). O histórico (link permanente, Linha do Tempo, Benchmark e Ranking) ainda não existe para o GitLab: esta análise não é gravada. Contribuidores, atividade semanal, dias da semana e churn são calculados a partir dos commits dos últimos 12 meses."
   }
 }

@@ -11,7 +11,7 @@ export function MaturityCard({ maturity, codeReview, branchAnalysis }) {
   // first 20 branches, no exclusions).
   const zombieCriteria = branchAnalysis?.checked != null
     ? t('maturity.zombieCriteria', { checked: branchAnalysis.checked, days: ZOMBIE_BRANCH_DAYS })
-      + (branchAnalysis.capped ? ` ${t('maturity.zombieCapped', { max: BRANCH_SCAN_MAX })}` : '')
+      + (branchAnalysis.capped ? ` ${t('maturity.zombieCapped', { max: branchAnalysis.scanMax ?? BRANCH_SCAN_MAX })}` : '')
     : null;
   const zombieCount = branchAnalysis?.capped ? `≥ ${maturity.zombies}` : maturity.zombies;
   // Só mostra a taxa quando ela foi de fato medida (ver prReviewStats.js);

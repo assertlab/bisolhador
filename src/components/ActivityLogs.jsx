@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 import { formatters } from '../utils/formatters.js';
 import { intlLocale } from '../i18n.js';
+import { Avatar } from './Avatar.jsx';
 
 // commits: null = not measured (request failed), [] = repository with no
 // commits (409). Never render a failure as an empty list. Snapshots: older ones
@@ -46,10 +47,10 @@ export function ActivityLogs({ commits, pullRequests, isSnapshot = false }) {
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {commits.slice(0, 10).map((commit, index) => (
               <div key={index} className="flex items-start space-x-3 p-3 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700">
-                <img
-                  className="w-8 h-8 rounded-full"
+                <Avatar
+                  className="w-8 h-8 flex-shrink-0"
                   src={commit.author?.avatar_url || commit.committer?.avatar_url}
-                  alt=""
+                  name={commit.commit?.author?.name}
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-900 dark:text-white truncate">

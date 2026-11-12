@@ -117,3 +117,12 @@ describe('recentCommitsOf (failed request is not "no commits")', () => {
     expect(recentCommitsOf(undefined, 10)).toBeNull();
   });
 });
+
+describe('weekdaysScopeKey', () => {
+  it('GitLab (52 weeks) / GitHub whole history / GitHub capped', async () => {
+    const { weekdaysScopeKey, PUNCH_CARD_MAX_COMMITS } = await import('./activityStats.js');
+    expect(weekdaysScopeKey({ window: '52w', total: 5 })).toBe('charts.weekdays.scopeYear');
+    expect(weekdaysScopeKey({ total: 5 })).toBe('charts.weekdays.scope');
+    expect(weekdaysScopeKey({ total: PUNCH_CARD_MAX_COMMITS })).toBe('charts.weekdays.scopeCapped');
+  });
+});

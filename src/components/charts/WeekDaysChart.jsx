@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Tooltip } from '../Tooltip.jsx';
 import useChartTheme from '../../hooks/useChartTheme.js';
-import { PUNCH_CARD_MAX_COMMITS, WEEKDAYS_MIN_SAMPLE } from '../../utils/activityStats.js';
+import { weekdaysScopeKey, WEEKDAYS_MIN_SAMPLE } from '../../utils/activityStats.js';
 import { formatters } from '../../utils/formatters.js';
 import { intlLocale } from '../../i18n.js';
 import { GuideLink } from '../GuideLink.jsx';
@@ -75,7 +75,7 @@ function WeekDaysChart({ weekdays, status }) {
       {dayCounts ? (
         <>
           <p className="text-xs text-gray-500 dark:text-slate-400 -mt-2 mb-2">
-            {t(total >= PUNCH_CARD_MAX_COMMITS ? 'charts.weekdays.scopeCapped' : 'charts.weekdays.scope', { count: total, n: formatters.formatNumber(total, intlLocale(i18n.language)) })}
+            {t(weekdaysScopeKey(weekdays), { count: total, n: formatters.formatNumber(total, intlLocale(i18n.language)) })}
             {total < WEEKDAYS_MIN_SAMPLE && ` ${t('charts.weekdays.smallSample')}`}
           </p>
           <div className="flex-grow relative">
