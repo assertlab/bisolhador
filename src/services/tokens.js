@@ -15,3 +15,12 @@ export const tokenKey = (ref) => (ref.provider === 'github' ? GITHUB_TOKEN_KEY :
 export const getToken = (ref) => getItem(tokenKey(ref)) || null;
 
 export const hasToken = (ref) => Boolean(getToken(ref));
+
+/**
+ * The platform refused the token that was sent (HTTP 401 with a token: wrong, revoked or expired).
+ * code TOKEN_REJECTED + host, so the page says which token to fix instead of a generic failure.
+ * Without a token, a 401 is just "needs login" and stays a plain HTTP error.
+ */
+export function tokenRejectedError(host, label) {
+  return Object.assign(new Error(`${label} failed: HTTP 401 (token rejected by ${host})`), { status: 401, code: 'TOKEN_REJECTED', host });
+}

@@ -1,5 +1,6 @@
 import { badgeScoreText, configChecked } from './aiProcess.js';
 import { toolLabel } from '../components/ai/toolLabel.js';
+import { GITHUB_REF } from '../services/tokens.js';
 
 // Classroom table/CSV columns: header key, guide entry, raw value, and whether the
 // value comes from a capped sample (shown with "*" / "+"). Rows that failed for a
@@ -26,6 +27,16 @@ export function aiToolIds(r) {
 export function coherenceFlags(r) {
   if (!r.ai.available || r.ai.coherence.unverified.includes('commits')) return null;
   return r.ai.coherence.flags;
+}
+
+/**
+ * A row's status in words, the same on screen and in the CSV: the duplicate's original name,
+ * the host whose token was refused, and the GitLab wording of "not found".
+ */
+export function classroomStatusText(row, dup, t) {
+  const status = dup ? 'duplicate' : row?.status ?? 'pending';
+  const gitlabNotFound = status === 'notFound' && row.host !== GITHUB_REF.host;
+  return t(`classroom.status.${status}`, { name: dup, host: row?.host, ...(gitlabNotFound && { context: 'gitlab' }) });
 }
 
 export const CLASSROOM_COLUMNS = [
@@ -69,7 +80,7 @@ export function classroomCsvRows(repos, rows, duplicateOf, t) {
     const base = {
       [t('classroom.columns.repo')]: row?.fullName ?? name,
       [t('classroom.csv.visibility')]: row?.status === 'ok' ? t(row.isPrivate ? 'classroom.csv.private' : 'classroom.csv.public') : '',
-      [t('classroom.columns.status')]: t(`classroom.status.${status}`, { name: dup }),
+      [t('classroom.columns.status')]: classroomStatusText(row, dup, t),
     };
     for (const col of CLASSROOM_COLUMNS) {
       const v = ok ? col.get(row) : null;

@@ -20,20 +20,23 @@ const CONCURRENCY = 3; // repositories analyzed at once (~6–9 requests each)
  * `name` is a list entry (GitHub "owner/repo", GitLab "host/path"); the service
  * comes from its ref (getProvider), with that host's token.
  */
-async function analyzeRepository(name, period) {
+async function analyzeRepository(name, period, rejectedHosts) {
   const { ref: requested } = parseRepoRef(name);
   const service = requested && getProvider(requested);
   if (!service) return { status: 'error' };
+  // That host already refused the token in this run: don't send it again for every repository
+  if (rejectedHosts.has(requested.host)) return { status: 'tokenRejected', host: requested.host };
   const [owner, repo] = ownerAndRepo(requested);
   let info;
   try {
-    // A 404 is final (retrying a missing repo only wastes calls); anything else gets 2 retries
-    info = await service.fetchRepository(owner, repo).catch((error) => {
-      if (/\b404\b/.test(error.message)) throw error;
-      return withExponentialBackoff(() => service.fetchRepository(owner, repo), 2, 300);
-    });
+    // Missing repository or refused token are final (isFinalError, not retried); anything else gets 2 retries
+    info = await withExponentialBackoff(() => service.fetchRepository(owner, repo), 2, 300);
   } catch (error) {
-    return { status: /\b404\b/.test(error.message) ? 'notFound' : 'error' };
+    if (error.code === 'TOKEN_REJECTED') {
+      rejectedHosts.add(error.host);
+      return { status: 'tokenRejected', host: error.host };
+    }
+    return error.code === 'NOT_FOUND' ? { status: 'notFound', host: requested.host } : { status: 'error' };
   }
   if (typeof info?.private !== 'boolean') return { status: 'error' }; // can't tell: don't analyze
   const ref = withPath(requested, info.full_name); // canonical name, validated again
@@ -96,12 +99,13 @@ export function useClassroomAnalysis(repos, period, enabled, runId = 0) {
     if (!key) return undefined;
     let cancelled = false;
     const queue = [...repos];
+    const rejectedHosts = new Set(); // hosts whose token was refused in this run
     const worker = async () => {
       while (!cancelled && queue.length) {
         const name = queue.shift();
         let row;
         try {
-          row = await analyzeRepository(name, period);
+          row = await analyzeRepository(name, period, rejectedHosts);
         } catch {
           row = { status: 'error' };
         }

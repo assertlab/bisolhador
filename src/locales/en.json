@@ -15,7 +15,11 @@
     "pageCrash": "Something went wrong showing this page. Reload to try again; if it persists, use the menu to go to another page.",
     "lazyTexts": "Could not load the texts of this page, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page and try again.",
     "gitlabNotPublic": "This GitLab project is not public (internal or private visibility). The Dashboard only analyzes public projects, since the data may be shared. Internal and private projects can be analyzed in Classroom Mode, with your token, with nothing saved.",
-    "visibilityUnknown": "Couldn't confirm whether this project is public (the response didn't include its visibility). For safety, it wasn't analyzed. Try again in a moment."
+    "visibilityUnknown": "Couldn't confirm whether this project is public (the response didn't include its visibility). For safety, it wasn't analyzed. Try again in a moment.",
+    "tokenRejected": "{{host}} rejected the token saved in this browser (invalid, revoked or expired). Check or replace it in the settings (⚙️ icon); without a token, only public projects are analyzed.",
+    "repoNotFound": "Repository not found on GitHub, or private with no access through your token. Check the owner and the name; private repositories are only analyzed in Classroom Mode.",
+    "repoNotFoundGitlab": "Project not found on {{host}}. Check the path; if the project is internal or private, it doesn't show up without logging in: analyze it in Classroom Mode, with a token for the instance.",
+    "repoNotFoundGitlabToken": "Project not found on {{host}}, or your token for that instance has no access to it. Check the path and whether your account is a member of the project."
   },
   "header": {
     "title": "Bisolhador",
@@ -659,7 +663,9 @@
       "ok": "Analyzed",
       "notFound": "Repository not found (or private without access with your token).",
       "error": "Couldn't analyze it (API failure or rate limit).",
-      "duplicate": "Same repository as {{name}} (renamed)."
+      "duplicate": "Same repository as {{name}} (renamed).",
+      "tokenRejected": "{{host}} rejected your token (invalid, revoked or expired): replace it in the settings and run the analysis again.",
+      "notFound_gitlab": "Project not found on {{host}} (or no access with your token)."
     },
     "sampledNote": "* computed over a sample (the 300 most recent commits, or PRs examined up to the limit); + means the real number is higher.",
     "invalidUrlPeriod": "The period in the link is invalid. Pick the dates and analyze again.",
@@ -704,7 +710,8 @@
       "capped": "Only the first 1,000 repositories were read.",
       "invalidOrg": "Invalid GitHub organization or GitLab group name (on GitLab, use host/group, with an enabled host).",
       "orgNotFound": "Organization, user or group not found (or no access with your token).",
-      "orgFailed": "Couldn't list the repositories (API failure or rate limit)."
+      "orgFailed": "Couldn't list the repositories (API failure or rate limit).",
+      "tokenRejected": "{{host}} rejected your token (invalid, revoked or expired): replace it in the settings."
     },
     "ai": {
       "expand": "Show AI in the Process for {{repo}}",

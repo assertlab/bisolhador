@@ -5,7 +5,7 @@
 // project. Both arrive validated by parseRepoRef; the project id is their
 // encoded full path. Counts and lists THROW on failure (never a fake zero),
 // as in githubService.
-import { getToken } from './tokens.js';
+import { getToken, tokenRejectedError } from './tokens.js';
 import {
   toRepoData, toRestCommit, weeklySeries, punchCard, codeFrequency, contributorStats,
   profileFromListings, toRestPullRequest, toReviewNodes, toWorkflowRuns, toRelease, isGitlabBot, WEEK_MS,
@@ -56,10 +56,15 @@ export function createGitlabService(host) {
     return promise;
   }
 
+  // 401 with a token = the token was refused (TOKEN_REJECTED); 404 = NOT_FOUND (or invisible without login)
+  const failure = (label, status) => (status === 401 && getToken(tokenRef)
+    ? tokenRejectedError(host, `GitLab ${label}`)
+    : httpError(label, status, status === 404 ? 'NOT_FOUND' : undefined));
+
   async function request(path, label, { notFound } = {}) {
     const response = await fetch(`${API}${path}`, { headers: headers() });
     if (response.status === 404 && notFound !== undefined) return { response, body: notFound };
-    if (!response.ok) throw httpError(label, response.status);
+    if (!response.ok) throw failure(label, response.status);
     return { response, body: await response.json() };
   }
   const json = async (path, label, opts) => (await request(path, label, opts)).body;
@@ -108,7 +113,7 @@ export function createGitlabService(host) {
       headers: { ...headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, variables }),
     });
-    if (!response.ok) throw httpError(`GraphQL ${label}`, response.status);
+    if (!response.ok) throw failure(`GraphQL ${label}`, response.status);
     const body = await response.json();
     if (!body.data) throw new Error(`GitLab GraphQL ${label} failed: ${body.errors?.[0]?.message ?? 'no data'}`);
     if (body.errors?.length) console.warn(`[gitlabService] GraphQL ${label} returned partial data:`, body.errors[0].message);

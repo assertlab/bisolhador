@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.2] - 2026-11-12
+
+### 🐛 Fixed
+
+- **Token recusado tem mensagem própria.** Quando o GitHub ou uma instância do GitLab recusa o token salvo no navegador (inválido, revogado ou expirado: HTTP 401 com token), o Dashboard diz qual host recusou e onde trocar o token, em vez de "HTTP error! status: 401". Na Turma, a linha diz o mesmo; antes, um projeto do GitLab nessa situação aparecia como "não encontrado".
+- **Repositório não encontrado tem mensagem própria** no Dashboard, em vez de "HTTP error! status: 404". No GitLab, a mensagem lembra que projetos internos e privados não aparecem sem login e aponta o Modo Turma.
+- Não são mais repetidas em nenhum lugar do app (o resultado não muda numa nova tentativa): Dashboard, Turma e Benchmark. Na Turma, depois que um host recusa o token, os repositórios desse host ainda na fila não o reenviam (os até 3 já em análise terminam), e a importação de organização/grupo também diz que o token foi recusado; o CSV traz o mesmo texto da tela.
+- No GitHub, a mensagem de não encontrado lembra que repositórios privados sem acesso também respondem assim; no GitLab, com token, diz que o token pode não ter acesso ao projeto.
+- As mensagens acompanham a troca de idioma.
+
+### 🧪 Tests
+
+- `githubService`/`gitlabService` (401 com e sem token, 404), `useRepository` (códigos e textos). Verificado no navegador com um token falso do gitlab.cin.ufpe.br (Dashboard e Turma), um projeto interno sem token e um repositório inexistente do GitHub.
+
+---
+
 ## [3.27.1] - 2026-11-12
 
 Fase 5 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`): documentação de uso.

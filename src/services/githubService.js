@@ -1,7 +1,7 @@
 // GitHub Service - Modern ES6 Module for API calls
 // Migrated from v1-legacy/src/modules/githubAPI.js
 
-import { getToken, hasToken, GITHUB_REF } from "./tokens.js";
+import { getToken, hasToken, GITHUB_REF, tokenRejectedError } from "./tokens.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
 import { ciRunsForBranch, TAGS_PAGE, NO_CI_RUNS } from "../utils/projectPractices.js";
@@ -40,6 +40,12 @@ function getHeaders() {
   return headers;
 }
 
+// A failed response as an error: 401 sent with a token = TOKEN_REJECTED (named, not retried);
+// 404 = NOT_FOUND (not retried); the status is kept for the callers that read it.
+const httpFailure = (label, status) => (status === 401 && hasGithubToken()
+  ? tokenRejectedError(GITHUB_REF.host, label)
+  : Object.assign(new Error(`${label} failed: HTTP ${status}`), { status, ...(status === 404 && { code: "NOT_FOUND" }) }));
+
 function lastPageFromLink(linkHeader) {
   const match = linkHeader?.match(/<([^>]+)>;\s*rel="last"/);
   if (!match) return null;
@@ -58,9 +64,7 @@ async function graphql(query, variables, label, { withErrors = false } = {}) {
     headers: { ...getHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ query, variables }),
   });
-  if (!response.ok) {
-    throw new Error(`GraphQL ${label} failed: HTTP ${response.status}`);
-  }
+  if (!response.ok) throw httpFailure(`GraphQL ${label}`, response.status);
   const body = await response.json();
   if (!body.data) {
     throw new Error(`GraphQL ${label} failed: ${body.errors?.[0]?.message ?? "no data"}`);
@@ -113,9 +117,8 @@ export const githubService = {
     const url = `${GITHUB_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
     const response = await fetch(url, { headers: getHeaders() });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    // The first request of every analysis: a refused token (401 "Bad credentials") is named here
+    if (!response.ok) throw httpFailure("Repository", response.status);
 
     const data = await response.json();
     return data;
@@ -553,7 +556,7 @@ export const githubService = {
         const url = `${GITHUB_BASE_URL}/${kind}/${encodeURIComponent(owner)}/repos?type=all&sort=full_name&per_page=100&page=${page}`;
         const response = await fetch(url, { headers: getHeaders() });
         if (response.status === 404) return null;
-        if (!response.ok) throw new Error(`Repositories of ${owner} failed: HTTP ${response.status}`);
+        if (!response.ok) throw httpFailure(`Repositories of ${owner}`, response.status);
         const data = await response.json();
         repos.push(...data.map((r) => ({ fullName: r.full_name, private: r.private, archived: r.archived })));
         if (data.length < 100) return { repos, capped: false };
@@ -561,7 +564,7 @@ export const githubService = {
       return { repos, capped: true };
     };
     const result = (await list('orgs')) ?? (await list('users'));
-    if (!result) throw new Error(`Repositories of ${owner} failed: HTTP 404`);
+    if (!result) throw httpFailure(`Repositories of ${owner}`, 404);
     return result;
   },
 

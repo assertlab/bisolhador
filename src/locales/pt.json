@@ -15,7 +15,11 @@
     "pageCrash": "Algo deu errado ao mostrar esta página. Recarregue para tentar de novo; se persistir, use o menu para ir a outra página.",
     "lazyTexts": "Não foi possível carregar os textos desta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página e tente de novo.",
     "gitlabNotPublic": "Este projeto do GitLab não é público (visibilidade interna ou privada). O Dashboard analisa apenas projetos públicos, porque os dados podem ser compartilhados. Projetos internos e privados podem ser analisados no Modo Turma, com o seu token, sem que nada seja gravado.",
-    "visibilityUnknown": "Não foi possível confirmar se este projeto é público (a resposta não informou a visibilidade). Por segurança, ele não foi analisado. Tente de novo em instantes."
+    "visibilityUnknown": "Não foi possível confirmar se este projeto é público (a resposta não informou a visibilidade). Por segurança, ele não foi analisado. Tente de novo em instantes.",
+    "tokenRejected": "O {{host}} recusou o token salvo neste navegador (inválido, revogado ou expirado). Confira ou troque o token nas configurações (ícone ⚙️); sem token, só projetos públicos são analisados.",
+    "repoNotFound": "Repositório não encontrado no GitHub, ou privado sem acesso com o seu token. Confira o dono e o nome; repositórios privados só são analisados no Modo Turma.",
+    "repoNotFoundGitlab": "Projeto não encontrado em {{host}}. Confira o caminho; se o projeto for interno ou privado, ele não aparece sem login: analise-o no Modo Turma, com um token da instância.",
+    "repoNotFoundGitlabToken": "Projeto não encontrado em {{host}}, ou o seu token dessa instância não tem acesso a ele. Confira o caminho e se a sua conta participa do projeto."
   },
   "header": {
     "title": "Bisolhador",
@@ -659,7 +663,9 @@
       "ok": "Analisado",
       "notFound": "Repositório não encontrado (ou privado sem acesso com o seu token).",
       "error": "Não foi possível analisar (falha ou limite da API).",
-      "duplicate": "Mesmo repositório que {{name}} (renomeado)."
+      "duplicate": "Mesmo repositório que {{name}} (renomeado).",
+      "tokenRejected": "O {{host}} recusou o seu token (inválido, revogado ou expirado): troque-o nas configurações e analise de novo.",
+      "notFound_gitlab": "Projeto não encontrado em {{host}} (ou sem acesso com o seu token)."
     },
     "sampledNote": "* calculado sobre uma amostra (300 commits mais recentes ou PRs examinados até o limite); + indica que o número real é maior.",
     "invalidUrlPeriod": "O período no link é inválido. Escolha as datas e analise de novo.",
@@ -704,7 +710,8 @@
       "capped": "Só os primeiros 1.000 repositórios foram lidos.",
       "invalidOrg": "Nome de organização do GitHub ou de grupo do GitLab inválido (no GitLab, use host/grupo, com um host habilitado).",
       "orgNotFound": "Organização, usuário ou grupo não encontrado (ou sem acesso com o seu token).",
-      "orgFailed": "Não foi possível listar os repositórios (falha ou limite da API)."
+      "orgFailed": "Não foi possível listar os repositórios (falha ou limite da API).",
+      "tokenRejected": "O {{host}} recusou o seu token (inválido, revogado ou expirado): troque-o nas configurações."
     },
     "ai": {
       "expand": "Mostrar IA no Processo de {{repo}}",
