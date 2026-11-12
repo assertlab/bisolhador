@@ -9,6 +9,7 @@ import { AiCoherence } from './AiCoherence.jsx';
 import { AiResponsibleBadge } from './AiResponsibleBadge.jsx';
 import { BlockTitle, Chip, InfoTip } from './AiParts.jsx';
 import { toolLabel as labelOf } from './toolLabel.js';
+import { aiContextGap } from '../../utils/aiProcess.js';
 import { linkTargetProps, useNewTab } from '../../lib/newTab.js';
 import { NewTabHint } from '../NewTabHint.jsx';
 
@@ -37,10 +38,11 @@ export function AiProcessSection({ aiProcess }) {
   const { tools, config, commits, prs, safeguards, coherence, badge } = aiProcess;
   const locale = intlLocale();
   const num = (value) => formatters.formatNumber(value, locale);
-  const noToken = aiProcess.withToken === false;
+  // Token-only checks skipped (no token, or not available on this platform) vs. failed
+  const { gap, noteKey, missingKey } = aiContextGap(aiProcess);
   // Context query (.gitignore, settings, template) skipped or failed: those checks read null.
   const contextMissing = config.hiddenLocal === null;
-  const anyFailure = !commits.available || !prs.available || (!noToken && (contextMissing || !safeguards.available));
+  const anyFailure = !commits.available || !prs.available || (!gap && (contextMissing || !safeguards.available));
   const toolLabel = (id) => labelOf(id, t);
   const unknownTemplate = new Set(config.entries.filter((e) => e.fromTemplate === null).map((e) => e.toolId));
 
@@ -51,7 +53,7 @@ export function AiProcessSection({ aiProcess }) {
         <InfoTip text={t('aiProcess.tooltip')} />
       </h4>
 
-      {noToken && <p className={NOTE}>{t('aiProcess.unavailable.noToken')}</p>}
+      {noteKey && <p className={NOTE}>{t(noteKey)}</p>}
       {anyFailure && <p className={NOTE}>{t('aiProcess.unavailable.error')}</p>}
 
       {/* 1. Tools and the sources that show them */}
@@ -117,7 +119,7 @@ export function AiProcessSection({ aiProcess }) {
           value={!prs.available || !prs.aiReviewed.available ? t('aiProcess.notAvailable')
             : prs.n === 0 ? t('aiProcess.emptySample')
             : `${t('aiProcess.aiReviewed', { reviewed: num(prs.aiReviewed.count), n: num(prs.n) })} (${prs.aiReviewed.percentage}%)`}
-          detail={prs.available && !prs.aiReviewed.available ? t(noToken ? 'aiProcess.needsToken' : 'aiProcess.fetchFailed') : null}
+          detail={prs.available && !prs.aiReviewed.available ? t(missingKey) : null}
           guideId="ai-review"
         />
       </section>
@@ -125,12 +127,12 @@ export function AiProcessSection({ aiProcess }) {
       {/* 4. Safeguards */}
       <section>
         <BlockTitle tooltip={t('aiProcess.safeguards.tooltip')}>{t('aiProcess.safeguards.title')}</BlockTitle>
-        <Safeguards safeguards={safeguards} noToken={noToken} num={num} />
+        <Safeguards safeguards={safeguards} missingKey={missingKey} num={num} />
         <GuideLink id="ai-safeguards" className="mt-2 inline-block" />
       </section>
 
       {/* 5. Sources in disagreement (+ what could not be verified) */}
-      <AiCoherence coherence={coherence} skipUnverified={noToken ? ['gitignore', 'template'] : []} />
+      <AiCoherence coherence={coherence} skipUnverified={gap ? ['gitignore', 'template'] : []} />
 
       {/* 6. Responsible AI use */}
       <AiResponsibleBadge badge={badge} />
@@ -177,12 +179,12 @@ function ConfigDepth({ tools, config, toolLabel }) {
   );
 }
 
-function Safeguards({ safeguards, noToken, num }) {
+function Safeguards({ safeguards, missingKey, num }) {
   const { t } = useTranslation();
   if (!safeguards.available) {
     return (
       <p className="text-sm text-gray-700 dark:text-slate-200">
-        {t('aiProcess.notAvailable')} — {t(noToken ? 'aiProcess.needsToken' : 'aiProcess.fetchFailed')}
+        {t('aiProcess.notAvailable')} — {t(missingKey)}
       </p>
     );
   }

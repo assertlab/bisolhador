@@ -36,6 +36,8 @@ jobs:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       VITE_GA_ID: ${{ vars.VITE_GA_ID }}
+      # Optional: extra GitLab instances (comma-separated), allowed in the app and in the CSP. Empty = gitlab.com only.
+      VITE_GITLAB_HOSTS: ${{ vars.VITE_GITLAB_HOSTS }}
     steps:
       # Fail-closed antes de qualquer coisa: variável/secret inexistente vira
       # string vazia, e o Vite troca %VITE_SUPABASE_URL% por nada na CSP sem

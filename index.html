@@ -14,7 +14,8 @@
         yoga em WebAssembly. A diretiva só permite compilar WebAssembly; NÃO libera eval() nem
         new Function() de JavaScript. Confirmado no navegador: sem ela o relatório falha com
         "WebAssembly.instantiate() violates ... script-src".
-      - connect-src: 'self' + api.github.com (src/services/githubService.js, único host chamado)
+      - connect-src: 'self' + api.github.com (src/services/githubService.js) + as instâncias GitLab
+        (abaixo)
         + %VITE_SUPABASE_URL% (src/services/supabase.js — usa a env var real da build via o
         "HTML env replacement" nativo do Vite, em vez de hardcodar o domínio ou usar um wildcard
         *.supabase.co, que permitiria exfiltração para QUALQUER projeto Supabase de terceiros)
@@ -23,6 +24,12 @@
         diretamente pelo nosso código, então não dá pra confirmar por grep, só pela doc do GA4)
         + data: (o mesmo yoga busca o próprio .wasm como data URI embutida no bundle; data: não
         sai da página, então não abre caminho de exfiltração como um host externo abriria).
+      - GitLab (docs/ESTUDO_GITLAB.md): o marcador GITLAB_CONNECT_SRC é trocado no build pelo plugin
+        gitlab-csp-hosts (vite.config.js): https://gitlab.com + os hosts de VITE_GITLAB_HOSTS, a mesma
+        lista que o app aceita (parseGitlabHosts em src/utils/repoRef.js). Só connect-src (REST e
+        GraphQL de cada instância, src/services/gitlabService.js): nenhuma imagem do GitLab é
+        mostrada (commits do GitLab não têm avatar). Instância fora da lista: nem o app aceita, nem a
+        CSP deixa conectar.
       - img-src: 'self' + avatars.githubusercontent.com (contributor.avatar_url em
         ContributorsTable.jsx, BusFactorCard.jsx e ActivityLogs.jsx)
         + *.google-analytics.com / www.googletagmanager.com (hits do gtag.js via <img>, conforme
@@ -45,7 +52,7 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://www.googletagmanager.com; style-src 'self'; img-src 'self' https://avatars.githubusercontent.com https://*.google-analytics.com https://www.googletagmanager.com; font-src 'self'; connect-src 'self' https://api.github.com %VITE_SUPABASE_URL% https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com data:; object-src 'none'; base-uri 'self';"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://www.googletagmanager.com; style-src 'self'; img-src 'self' https://avatars.githubusercontent.com https://*.google-analytics.com https://www.googletagmanager.com; font-src 'self'; connect-src 'self' https://api.github.com __GITLAB_CONNECT_SRC__ %VITE_SUPABASE_URL% https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com data:; object-src 'none'; base-uri 'self';"
     />
   </head>
   <body>

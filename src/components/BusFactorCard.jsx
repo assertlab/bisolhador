@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Tooltip } from './Tooltip.jsx';
 import { ContributorsScope } from './ContributorsScope.jsx';
 import { GuideLink } from './GuideLink.jsx';
+import { Avatar } from './Avatar.jsx';
 
 const DEVELOPER_COLORS = [
   '#3b82f6', '#ef4444', '#f97316', '#eab308',
@@ -61,10 +62,11 @@ export function BusFactorCard({ busFactorAnalysis }) {
       <div className="flex flex-wrap gap-3 mb-4">
         {keyDevelopers.map((dev, i) => (
           <div key={dev.login} className="flex items-center gap-2">
-            <img
+            <Avatar
               src={dev.avatar_url}
+              name={dev.login}
               alt={dev.login}
-              className="w-8 h-8 rounded-full border-2"
+              className="w-8 h-8 border-2"
               style={{ borderColor: DEVELOPER_COLORS[i % DEVELOPER_COLORS.length] }}
             />
             <div className="text-xs">

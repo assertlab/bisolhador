@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Fase 2 do suporte a GitLab (`docs/ESTUDO_GITLAB.md`), PR 1 de 2. Não publicar antes do PR 2 (textos).
+
+### ✨ Added
+
+- **Dashboard analisa projetos públicos do GitLab** (gitlab.com e as instâncias de `VITE_GITLAB_HOSTS`; em produção, gitlab.cin.ufpe.br). Aceita o endereço com subgrupos (`gitlab.com/grupo/sub/projeto`, URL colada com `/-/tree/...`).
+  - Atividade semanal, dias da semana, adições/remoções e contribuidores vêm dos commits dos últimos 12 meses (até 1.000), agrupados por e-mail; health score pelos arquivos da raiz e de `.gitlab/`; revisão de MRs pelo GraphQL (sem token); CI pelos pipelines.
+  - Projetos `internal` e privados são recusados no Dashboard, com indicação do Modo Turma.
+  - Nada é gravado: o aviso na tela explica que o histórico ainda não existe para o GitLab; a Linha do Tempo fica escondida.
+- **Tokens do GitLab nas configurações:** um por instância, verificado ao salvar (escopo `read_api`, validade).
+
+### 🐛 Fixed
+
+- Avatares ausentes (commits sem conta vinculada) mostram as iniciais em vez de uma imagem quebrada.
+
+### 🔒 Security
+
+- A CSP inclui, só em `connect-src`, os hosts GitLab da mesma lista que o app aceita (gitlab.com + `VITE_GITLAB_HOSTS`), gerada no build; nenhum outro host.
+
+### 🧪 Tests
+
+- `gitlabData.test.js`, `gitlabService.test.js` (token só para o próprio host, contagens sem `X-Total`, árvore com teto, listagens ausentes, falha só do tamanho dos MRs) e o fluxo GitLab do `useRepository`; terceiro fluxo no `smoke:csp` (gitlab.com simulado). Verificado no navegador contra gitlab-org/gitlab-runner e um projeto público do CIn.
+
 ---
 
 ## [3.25.0] - 2026-11-12

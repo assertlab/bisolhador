@@ -30,8 +30,9 @@ async function fetchBranchAnalysis(service, owner, repo, defaultBranch, hasToken
         return { count: await service.fetchBranchCount(owner, repo), zombies: null, zombiesReason: 'noToken' };
     }
     try {
-        const { totalCount, branches, capped } = await service.fetchBranchActivity(owner, repo);
-        return { count: totalCount, capped, ...analyzeBranches(branches, { defaultBranch }) };
+        const { totalCount, branches, capped, scanMax } = await service.fetchBranchActivity(owner, repo);
+        // scanMax: the platform's own cap (GitLab 500; GitHub's is BRANCH_SCAN_MAX)
+        return { count: totalCount, capped, ...(scanMax && { scanMax }), ...analyzeBranches(branches, { defaultBranch }) };
     } catch (error) {
         // Keep the exact total from REST; only zombies become unavailable.
         console.warn('[useRepository] GraphQL branches failed, falling back to REST count:', error.message);
@@ -82,6 +83,9 @@ async function fetchReleaseData(service, owner, repo, hasToken) {
     return { list, count, tags };
 }
 
+// owner = everything before the project (a GitLab namespace may hold subgroups: "g/sub"), repo = the project.
+const ownerAndRepo = (ref) => [ref.segments.slice(0, -1).join('/'), ref.segments.at(-1)];
+
 // Errors thrown here carry a code the Dashboard can tell apart; the message is
 // already translated (errors.*). `final`: the same input or repository gives
 // the same answer, so the query doesn't retry it.
@@ -111,8 +115,7 @@ export async function fetchRepositoryData(repoName) {
     });
 
     // First fetch repository data to get default branch
-    const [requestedOwner, requestedRepo] = requested.segments;
-    const repoData = await service.fetchRepository(requestedOwner, requestedRepo);
+    const repoData = await service.fetchRepository(...ownerAndRepo(requested));
     if (!repoData) {
         throw new Error('Não foi possível buscar informações do repositório');
     }
@@ -120,8 +123,13 @@ export async function fetchRepositoryData(repoName) {
     // Privacy gate: never process or persist data from private repositories,
     // regardless of the PAT having read access to them. Must run before any
     // of the 15+ parallel fetches below and before analytics.saveSearch.
+    // Visibility the API didn't tell: refuse (fail-closed), retryable.
+    if (typeof repoData.private !== 'boolean') {
+        throw Object.assign(new Error(i18n.t('errors.visibilityUnknown')), { code: 'VISIBILITY_UNKNOWN' });
+    }
+    // GitLab: anything not public (internal = only for people logged in to the instance) counts as private.
     if (repoData.private === true) {
-        throw inputError('PRIVATE_REPO_UNSUPPORTED', 'errors.privateRepo');
+        throw inputError('PRIVATE_REPO_UNSUPPORTED', requested.provider === 'gitlab' ? 'errors.gitlabNotPublic' : 'errors.privateRepo');
     }
 
     // Canonical name from here on: /repos follows renames (facebook/react →
@@ -131,9 +139,12 @@ export async function fetchRepositoryData(repoName) {
     const ref = withPath(requested, repoData.full_name);
     if (!ref) throw inputError('UNSAFE_REPO_NAME', 'errors.repoNameUnsafe');
     const fullName = ref.path;
-    const [owner, repo] = ref.segments;
+    const [owner, repo] = ownerAndRepo(ref);
 
     const hasToken = hasTokenFor(ref);
+    // GitHub needs a token for GraphQL (reviews, zombie branches, tag dates);
+    // GitLab answers those without one on public projects.
+    const detailed = hasToken || service.detailsWithoutToken === true;
 
     // Features the owner turned off on GitHub (torvalds/linux, a read-only
     // mirror: pull requests and issues disabled). Their counts are not zero,
@@ -146,9 +157,12 @@ export async function fetchRepositoryData(repoName) {
 
     // Fetch all other data in parallel. Named, not positional: the order is
     // only the order of the partial-data warnings.
+    // GraphQL review sample; the REST PR list is only its fallback (lead time),
+    // so with the review query it is requested only if that query fails.
+    const reviewTask = detailed && !prsDisabled ? service.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null);
     const tasks = {
         commits: service.fetchCommits(owner, repo),
-        branches: fetchBranchAnalysis(service, owner, repo, repoData.default_branch, hasToken),
+        branches: fetchBranchAnalysis(service, owner, repo, repoData.default_branch, detailed),
         contributors: fetchContributorAnalysis(service, owner, repo),
         pullRequests: prsDisabled ? skipped(null) : service.fetchPullRequests(owner, repo),
         openIssues: issuesDisabled ? skipped(null) : service.fetchOpenIssuesCount(owner, repo),
@@ -157,18 +171,21 @@ export async function fetchRepositoryData(repoName) {
         languages: service.fetchLanguages(owner, repo),
         communityProfile: service.fetchCommunityProfile(owner, repo),
         repositoryTree: service.fetchRepositoryTree(owner, repo, repoData.default_branch),
-        releases: fetchReleaseData(service, owner, repo, hasToken),
+        releases: fetchReleaseData(service, owner, repo, detailed),
         commitActivity: service.fetchCommitActivity(owner, repo),
         // [] when disabled: the AI section reads "no PRs in the sample", as when the list was empty
-        prStats: prsDisabled ? skipped([]) : service.fetchPullRequestStats(owner, repo),
+        prStats: prsDisabled ? skipped([])
+            : detailed ? reviewTask.then(() => null, () => service.fetchPullRequestStats(owner, repo))
+            : service.fetchPullRequestStats(owner, repo),
         codeFrequency: service.fetchCodeFrequency(owner, repo),
         mergedPRs: prsDisabled ? skipped(null) : service.fetchMergedPRsCount(owner, repo),
         // GraphQL requires a token; without one, skip it (metrics → unavailable).
-        prReviewStats: hasToken && !prsDisabled ? service.fetchPullRequestReviewStats(owner, repo) : Promise.resolve(null),
+        prReviewStats: reviewTask,
         punchCard: service.fetchPunchCard(owner, repo),
         actionRuns: repoData.default_branch ? service.fetchActionRuns(owner, repo, repoData.default_branch) : Promise.resolve({ total_count: 0, workflow_runs: [] }),
         // AI in the Process: .gitignore, .claude/settings.json, template. Token only (zero new requests without one).
-        aiContext: hasToken ? service.fetchAiRepoContext(owner, repo) : Promise.resolve(null),
+        // Not on GitLab yet (no fetcher): those checks stay "not verified".
+        aiContext: hasToken && service.fetchAiRepoContext ? service.fetchAiRepoContext(owner, repo) : Promise.resolve(null),
     };
     const endpointNames = Object.keys(tasks);
     const settled = await Promise.allSettled(Object.values(tasks));
@@ -264,7 +281,7 @@ export async function fetchRepositoryData(repoName) {
     const { codeReview, divergence, reviewProcess, leadTime } = prsDisabled
         ? pullRequestsDisabled()
         : {
-            ...analyzeReviewMetrics(prReviewStats, hasToken ? 'error' : 'noToken'),
+            ...analyzeReviewMetrics(prReviewStats, detailed ? 'error' : 'noToken'),
             leadTime: prReviewStats ? analyzeLeadTime(prReviewStats, 'graphql') : analyzeLeadTime(pullRequestsStats, 'rest'),
         };
 
@@ -316,18 +333,24 @@ export async function fetchRepositoryData(repoName) {
         prLimit: MERGED_PR_SAMPLE,
       }),
       withToken: hasToken,
+      // No AI context fetcher for this platform yet: config/safeguard checks aren't a token or request problem
+      ...(!service.fetchAiRepoContext && { contextUnsupported: true }),
     };
 
     // One report object: shown on screen and persisted as the snapshot's full_report.
     const report = {
       fullName,
+      // GitHub reports from before v3.26.0 have neither: read as GitHub.
+      provider: ref.provider,
+      host: ref.host,
       // Typed name when it differs (renamed repo): Timeline merges its history
       ...(requested.path.toLowerCase() !== fullName.toLowerCase() && { searchedName: requested.path }),
       url: repoWebUrl(ref),
       description: repoData.description,
       language: repoData.language,
       ownerType: repoData.owner?.type || 'User',
-      subscribers: repoData.subscribers_count || 0,
+      // null on GitLab (no watchers there): N/A, not 0
+      subscribers: repoData.subscribers_count ?? null,
       pushedAt: repoData.pushed_at,
       ageText: age,
       createdAt: repoData.created_at, // ISO string for calculations
@@ -366,7 +389,10 @@ export async function fetchRepositoryData(repoName) {
           techStack: formatLanguages(languages),
           activity: activityStats.status === 'ok' ? formatCommitActivity(activityStats.data) : null,
           activityStatus: activityStats.status,
-          weekdays: punchCardStats.status === 'ok' ? weekdaysFromPunchCard(punchCardStats.data) : null,
+          // GitLab: from the last 52 weeks of commits, not the whole history
+          weekdays: punchCardStats.status === 'ok'
+              ? { ...weekdaysFromPunchCard(punchCardStats.data), ...(service.punchCardWindow && { window: service.punchCardWindow }) }
+              : null,
           weekdaysStatus: punchCardStats.status
       },
       codeChurn,
@@ -388,6 +414,9 @@ export async function fetchRepositoryData(repoName) {
     // Health that the tree couldn't confirm (tree failed/truncated) may undercount.
     if (health.uncertain) blockers.push('healthScore (tree unconfirmed)');
     if (leadTime.reason === 'error') blockers.push('leadTime');
+    // History (Supabase) is GitHub-only until phase 4 of docs/ESTUDO_GITLAB.md:
+    // GitLab "foo/bar" would mix with GitHub "foo/bar" in every history view.
+    if (ref.provider !== 'github') blockers.push(`provider ${ref.provider}`);
     let searchId = null;
     if (blockers.length === 0) {
         searchId = await analytics.saveSearch({

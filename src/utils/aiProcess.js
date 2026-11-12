@@ -458,3 +458,20 @@ export function normalizeSnapshotAiProcess(report) {
   if (hasCurrentShape(report.aiProcess)) return report;
   return { ...report, aiProcess: { available: false, reason: 'snapshot' } };
 }
+
+/**
+ * Why the token-only checks (context, AI review, safeguards) may be missing:
+ * 'unsupported' (no context fetcher for this platform, GitLab for now),
+ * 'noToken', or null (they ran; a null value there is a failed request).
+ * `missingKey`: the text for a check that is missing for that reason.
+ */
+const GAP_KEYS = {
+  unsupported: { noteKey: 'aiProcess.unavailable.unsupported', missingKey: 'aiProcess.notOnPlatform' },
+  noToken: { noteKey: 'aiProcess.unavailable.noToken', missingKey: 'aiProcess.needsToken' },
+  none: { noteKey: null, missingKey: 'aiProcess.fetchFailed' },
+};
+
+export function aiContextGap(ai) {
+  const gap = ai?.contextUnsupported === true ? 'unsupported' : ai?.withToken === false ? 'noToken' : null;
+  return { gap, ...GAP_KEYS[gap ?? 'none'] };
+}

@@ -36,6 +36,12 @@ export function weekdaysFromPunchCard(punchCard) {
   return { counts, total: counts.reduce((a, b) => a + b, 0) };
 }
 
+/** Text key for what the weekday counts cover: GitLab's come from the last 52 weeks, GitHub's from the whole history (capped). */
+export function weekdaysScopeKey(weekdays) {
+  if (weekdays?.window === '52w') return 'charts.weekdays.scopeYear';
+  return (weekdays?.total ?? 0) >= PUNCH_CARD_MAX_COMMITS ? 'charts.weekdays.scopeCapped' : 'charts.weekdays.scope';
+}
+
 export const ADD_DELETE_WEEKS = 10;
 export const ADD_DELETE_MIN_ACTIVE_WEEKS = 4;
 

@@ -22,7 +22,9 @@ export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   if (!data) return null;
 
-  const timelineRoute = parseSafeRepoName(data.fullName);
+  // History (Timeline) is GitHub-only: a GitLab "foo/bar" would open GitHub foo/bar's history.
+  const isGithub = !data.provider || data.provider === 'github';
+  const timelineRoute = isGithub ? parseSafeRepoName(data.fullName) : null;
   const isTimelineRouteSafe = timelineRoute !== null;
 
   const handleDownloadPDF = async () => {
@@ -72,7 +74,8 @@ export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
     try {
       if (!data.searchId) {
         // Partial results aren't saved (useRepository PERSIST_BLOCKERS), so there's no permalink.
-        showToast(t(data._warnings?.length ? 'share.errorNotSaved' : 'share.errorNoData'), 'error');
+        // GitLab analyses aren't saved at all yet.
+        showToast(t(!isGithub ? 'share.notSavedGitlab' : data._warnings?.length ? 'share.errorNotSaved' : 'share.errorNoData'), 'error');
         return;
       }
 

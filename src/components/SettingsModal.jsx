@@ -1,25 +1,60 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getItem, setItem, removeItem } from '../utils/storage.js';
-import { GITHUB_TOKEN_KEY } from '../services/tokens.js';
+import { GITHUB_TOKEN_KEY, tokenKey, getToken } from '../services/tokens.js';
+import { GITLAB_HOSTS } from '../utils/repoRef.js';
+import { checkGitlabToken } from '../services/gitlabService.js';
+import { intlLocale } from '../i18n.js';
+
+const gitlabKey = (host) => tokenKey({ provider: 'gitlab', host });
+// An empty value removes the token
+const persist = (key, value) => (value ? setItem(key, value) : removeItem(key));
+
+// A GitLab token is checked on its own host when saved (scope read_api, expiry):
+// the result is shown as a warning, the token is saved either way.
+async function checkToken(host, token) {
+  try {
+    return await checkGitlabToken(host, token);
+  } catch (error) {
+    console.warn(`[SettingsModal] GitLab token check failed on ${host}:`, error.message);
+    return { ok: false, reason: 'unchecked' };
+  }
+}
 
 export function SettingsModal({ isOpen, onClose }) {
   const { t } = useTranslation();
   const [token, setToken] = useState(() => getItem(GITHUB_TOKEN_KEY) || '');
+  const [gitlabTokens, setGitlabTokens] = useState(() => Object.fromEntries(GITLAB_HOSTS.map((h) => [h, getToken({ provider: 'gitlab', host: h }) ?? ''])));
+  const [gitlabChecks, setGitlabChecks] = useState({});
+  const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleSave = () => {
-    if (token.trim() === '') {
-      removeItem(GITHUB_TOKEN_KEY);
-    } else {
-      setItem(GITHUB_TOKEN_KEY, token.trim());
-    }
+  const handleSave = async () => {
+    persist(GITHUB_TOKEN_KEY, token.trim());
+    setSaving(true);
+    // Saved first; the hosts are checked in parallel (each check has its own timeout)
+    const values = GITLAB_HOSTS.map((host) => [host, gitlabTokens[host].trim()]);
+    values.forEach(([host, value]) => persist(gitlabKey(host), value));
+    const checks = Object.fromEntries(await Promise.all(values.filter(([, value]) => value).map(async ([host, value]) => [host, await checkToken(host, value)])));
+    setSaving(false);
+    setGitlabChecks(checks);
     setShowSuccess(true);
 
-    // Fechar modal após 2 segundos
-    setTimeout(() => {
-      onClose();
-    }, 2000);
+    // Close after 2 s, unless a GitLab token needs attention
+    if (Object.values(checks).every((c) => c.ok)) {
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+    }
+  };
+
+  const checkMessage = (check) => {
+    if (check.ok) {
+      return check.expiresAt
+        ? t('settings.gitlab.check.okExpires', { date: new Date(`${check.expiresAt}T00:00:00`).toLocaleDateString(intlLocale()) })
+        : t('settings.gitlab.check.ok');
+    }
+    return t(`settings.gitlab.check.${check.reason}`);
   };
 
   const handleCancel = () => {
@@ -39,7 +74,7 @@ export function SettingsModal({ isOpen, onClose }) {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4">
+        <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
           <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
             {t('settings.description')}
           </p>
@@ -57,6 +92,38 @@ export function SettingsModal({ isOpen, onClose }) {
               className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-ocean focus:border-ocean"
             />
           </div>
+
+          <fieldset className="mb-4 border-t border-gray-200 dark:border-slate-700 pt-4">
+            <legend className="text-sm font-semibold text-gray-900 dark:text-white pr-2">{t('settings.gitlab.title')}</legend>
+            <p className="text-xs text-gray-600 dark:text-slate-400 mb-3">{t('settings.gitlab.description')}</p>
+            {GITLAB_HOSTS.map((host) => (
+              <div key={host} className="mb-3">
+                <label htmlFor={`gitlab-token-${host}`} className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                  {t('settings.gitlab.tokenLabel', { host })}
+                </label>
+                <input
+                  type="password"
+                  id={`gitlab-token-${host}`}
+                  value={gitlabTokens[host]}
+                  onChange={(e) => setGitlabTokens((prev) => ({ ...prev, [host]: e.target.value }))}
+                  placeholder="glpat-xxxxxxxxxxxxxxxxxxxx"
+                  autoComplete="off"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-ocean focus:border-ocean"
+                />
+                {gitlabChecks[host] && (
+                  <p role="status" className={`mt-1 text-xs ${gitlabChecks[host].ok ? 'text-green-700 dark:text-green-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                    {checkMessage(gitlabChecks[host])}
+                  </p>
+                )}
+                <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                  {t('settings.gitlab.createToken')}{' '}
+                  <a href={`https://${host}/-/user_settings/personal_access_tokens`} target="_blank" rel="noopener noreferrer" className="text-ocean hover:underline">
+                    {`${host}/-/user_settings/personal_access_tokens`}
+                  </a>
+                </p>
+              </div>
+            ))}
+          </fieldset>
 
           {showSuccess && (
             <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md">
@@ -94,6 +161,7 @@ export function SettingsModal({ isOpen, onClose }) {
           </button>
           <button
             onClick={handleSave}
+            disabled={saving}
             className="px-4 py-2 text-sm font-medium text-white bg-ocean border border-transparent rounded-md hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ocean"
           >
             {t('settings.buttons.save')}

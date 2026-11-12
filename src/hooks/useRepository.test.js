@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // The whole data pipeline with the GitHub layer mocked: which requests are
 // made, what the report says and whether the snapshot is saved.
-const { github, saveSearch, hasToken } = vi.hoisted(() => ({ github: {}, saveSearch: vi.fn(), hasToken: { value: false } }));
+const { github, gitlab, saveSearch, hasToken } = vi.hoisted(() => ({ github: {}, gitlab: {}, saveSearch: vi.fn(), hasToken: { value: false } }));
 vi.mock('../services/githubService.js', () => ({ githubService: github }));
+vi.mock('../services/gitlabService.js', () => ({ createGitlabService: () => gitlab }));
 vi.mock('../services/tokens.js', () => ({ hasToken: () => hasToken.value }));
 vi.mock('../services/analytics.js', () => ({ default: { saveSearch } }));
 vi.mock('../i18n.js', () => ({ default: { t: (key) => key } }));
@@ -138,8 +139,6 @@ describe('fetchRepositoryData: repository input (RepoRef)', () => {
   });
 
   it.each([
-    ['gitlab.com/group/sub/project', 'PROVIDER_UNAVAILABLE'],
-    ['https://gitlab.com/group/project', 'PROVIDER_UNAVAILABLE'],
     ['group/sub/project', 'REPO_HOST_REQUIRED'],
     ['https://example.com/a/b', 'REPO_HOST_NOT_ALLOWED'],
     ['../x/y', 'INVALID_REPO_INPUT'],
@@ -170,5 +169,102 @@ describe('fetchRepositoryData: repository input (RepoRef)', () => {
     mockLinux({ fetchRepository: vi.fn(async () => ({ full_name: 'evil/../x', private: false })) });
     await expect(fetchRepositoryData('a/b')).rejects.toMatchObject({ code: 'UNSAFE_REPO_NAME', message: 'errors.repoNameUnsafe' });
     expect(github.fetchCommits).not.toHaveBeenCalled();
+  });
+});
+
+// A public GitLab project with subgroups, the way gitlabService answers (GitHub shapes).
+function mockGitlab(overrides = {}) {
+  for (const key of Object.keys(gitlab)) delete gitlab[key];
+  Object.assign(gitlab, {
+    fetchRepository: vi.fn(async () => ({
+      full_name: 'g/sub/p', private: false, visibility: 'public', default_branch: 'main', description: 'd', language: null,
+      created_at: '2020-01-01T00:00:00Z', pushed_at: '2026-11-01T00:00:00Z', owner: { type: 'Organization' },
+      stargazers_count: 3, forks_count: 1, subscribers_count: null, has_issues: true, has_pull_requests: true,
+    })),
+    fetchCommits: vi.fn(async () => []),
+    fetchBranchCount: vi.fn(async () => 2),
+    fetchContributorStats: vi.fn(async () => []),
+    fetchContributors: vi.fn(async () => []),
+    fetchPullRequests: vi.fn(async () => 4),
+    fetchMergedPRsCount: vi.fn(async () => 3),
+    fetchOpenIssuesCount: vi.fn(async () => 1),
+    fetchClosedIssuesCount: vi.fn(async () => 2),
+    fetchRecentPullRequests: vi.fn(async () => []),
+    fetchPullRequestStats: vi.fn(async () => []),
+    fetchLanguages: vi.fn(async () => ({ Java: 80, Shell: 20 })),
+    fetchCommunityProfile: vi.fn(async () => ({ files: { readme: { path: 'README.md' } } })),
+    fetchRepositoryTree: vi.fn(async () => ({ tree: [], truncated: false })),
+    fetchReleases: vi.fn(async () => []),
+    fetchTagsCount: vi.fn(async () => 0),
+    fetchCommitActivity: vi.fn(async () => ({ all: [] })),
+    fetchCodeFrequency: vi.fn(async () => []),
+    fetchPunchCard: vi.fn(async () => []),
+    fetchActionRuns: vi.fn(async () => ({ total_count: 0, workflow_runs: [] })),
+    ...overrides,
+  });
+}
+
+describe('fetchRepositoryData: GitLab', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    saveSearch.mockReset().mockResolvedValue(42);
+    hasToken.value = false;
+  });
+
+  it('a public project is analyzed with namespace "g/sub" and project "p", and never saved', async () => {
+    mockGitlab({ detailsWithoutToken: true, fetchPullRequestReviewStats: vi.fn(async () => []), fetchBranchActivity: vi.fn(async () => ({ totalCount: 2, branches: [], capped: false })) });
+    const report = await fetchRepositoryData('https://gitlab.com/g/sub/p/-/tree/main');
+    expect(gitlab.fetchRepository).toHaveBeenCalledWith('g/sub', 'p');
+    expect(gitlab.fetchCommits).toHaveBeenCalledWith('g/sub', 'p');
+    expect(report).toMatchObject({ fullName: 'g/sub/p', provider: 'gitlab', host: 'gitlab.com', url: 'https://gitlab.com/g/sub/p', subscribers: null, searchId: null });
+    expect(report.stats).toMatchObject({ prs: 4, merges: 3 });
+    expect(saveSearch).not.toHaveBeenCalled();
+    // No token needed for the GraphQL details on GitLab
+    expect(gitlab.fetchPullRequestReviewStats).toHaveBeenCalledWith('g/sub', 'p');
+    expect(gitlab.fetchBranchActivity).toHaveBeenCalled();
+    expect(report.codeReview.reason).not.toBe('noToken');
+  });
+
+  it.each(['internal', 'private'])('a %s project is refused before any other request (internal counts as private)', async (visibility) => {
+    mockGitlab({ fetchRepository: vi.fn(async () => ({ full_name: 'g/p', private: true, visibility })) });
+    await expect(fetchRepositoryData('gitlab.com/g/p')).rejects.toMatchObject({ code: 'PRIVATE_REPO_UNSUPPORTED', message: 'errors.gitlabNotPublic', final: true });
+    expect(gitlab.fetchCommits).not.toHaveBeenCalled();
+    expect(saveSearch).not.toHaveBeenCalled();
+  });
+
+  it('the REST MR list (lead-time fallback) is requested only when the review query fails', async () => {
+    const detailed = { detailsWithoutToken: true, fetchBranchActivity: vi.fn(async () => ({ totalCount: 2, branches: [], capped: false })), fetchTagDates: vi.fn(async () => ({ total: 0, dates: [], fullPage: false })) };
+    mockGitlab({ ...detailed, fetchPullRequestReviewStats: vi.fn(async () => []) });
+    await fetchRepositoryData('gitlab.com/g/sub/p');
+    expect(gitlab.fetchPullRequestStats).not.toHaveBeenCalled();
+
+    mockGitlab({ ...detailed, fetchPullRequestReviewStats: vi.fn(async () => { throw new Error('GraphQL 502'); }) });
+    const report = await fetchRepositoryData('gitlab.com/g/sub/p');
+    expect(gitlab.fetchPullRequestStats).toHaveBeenCalledWith('g/sub', 'p');
+    expect(report.metrics.leadTime).toMatchObject({ source: 'rest' });
+    expect(report._warnings).toEqual(['prReviewStats']);
+  });
+
+    it('an unknown visibility is refused too, as "couldn\'t confirm" (retryable), not "not public"', async () => {
+    mockGitlab({ fetchRepository: vi.fn(async () => ({ full_name: 'g/p', private: null, visibility: null })) });
+    await expect(fetchRepositoryData('gitlab.com/g/p')).rejects.toMatchObject({ code: 'VISIBILITY_UNKNOWN', message: 'errors.visibilityUnknown' });
+    expect(gitlab.fetchCommits).not.toHaveBeenCalled();
+  });
+
+  it('with a token, review stats are requested and the AI context is skipped (no GitLab fetcher yet)', async () => {
+    hasToken.value = true;
+    mockGitlab({ fetchPullRequestReviewStats: vi.fn(async () => []), fetchBranchActivity: vi.fn(async () => ({ totalCount: 2, branches: [], capped: false })), fetchTagDates: vi.fn(async () => ({ total: 0, dates: [], fullPage: false })) });
+    const report = await fetchRepositoryData('gitlab.com/g/p'); // the API answers with the canonical g/sub/p
+    expect(gitlab.fetchPullRequestReviewStats).toHaveBeenCalledWith('g/sub', 'p');
+    expect(report._warnings).toBeUndefined();
+  });
+});
+
+describe('fetchRepositoryData: GitHub reports carry the provider', () => {
+  it('provider github, host github.com', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockLinux();
+    const report = await fetchRepositoryData('torvalds/linux');
+    expect(report).toMatchObject({ provider: 'github', host: 'github.com', subscribers: 8000 });
   });
 });

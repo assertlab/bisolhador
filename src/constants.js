@@ -59,3 +59,11 @@ export const CLASSROOM_PR_SCAN = 200; // merged PRs scanned (by last update) to 
 // One retry after this wait; still 202 → the caller falls back to /contributors (partial, not persisted).
 // The value is a guess (not measured), and the wait adds to the Dashboard's load time on a cold repository.
 export const CONTRIBUTOR_STATS_RETRY_DELAY_MS = 3000;
+
+// GitLab (docs/ESTUDO_GITLAB.md, section 2.5): pagination caps, 100 items per page.
+// Beyond a cap the result is a sample (truncated/capped), never a total.
+export const GITLAB_PER_PAGE = 100;
+export const GITLAB_TREE_MAX_PAGES = 10; // 1,000 paths: student projects whole; gitlab-runner (19) truncated
+export const GITLAB_COMMIT_MAX_PAGES = 10; // 1,000 commits of the last 52 weeks; gitlab-runner (24 pages) sampled
+export const GITLAB_BRANCH_MAX_PAGES = 5; // 500 branches (gitlab-runner: 423)
+export const GITLAB_COMMIT_WEEKS = 52; // weekly series, contributors, punch card and churn come from these commits

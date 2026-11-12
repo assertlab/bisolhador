@@ -342,16 +342,24 @@ O custo base cabe com folga nos limites atuais do gitlab.com e, ao que tudo indi
 
 ### Fase 2: `gitlabService` e Dashboard ao vivo
 
-- `src/services/gitlabService.js` e `gitlabService.test.js`, no padrão de `githubService.test.js`: `vi.stubGlobal('fetch')`, e falha lança erro em vez de virar zero.
-  - Testes de falha parcial: 403 em uma fonte (ex.: `statistics`, `notes`) marca só aquele indicador como indisponível; 401 interrompe a análise com erro de token.
-- Agregadores a partir de commits: séries semanais, punch card, churn, contribuidores por e-mail.
-- Health score a partir da árvore.
-- Métricas de MR via GraphQL e CI via pipelines.
-- `report.provider/host`, sem persistência, com aviso na UI.
-- **Esconder ou bloquear o botão de Timeline (`RepoInfoCard.handleViewTimeline`) e as entradas para o Benchmark quando `provider !== 'github'`**: hoje a única checagem é `parseSafeRepoName(fullName)`, e um projeto GitLab de 2 segmentos (`foo/bar`) abriria o histórico do repositório GitHub `foo/bar`, que não tem relação nenhuma com ele.
-- CSP com a allow-list e mock do GitLab no `scripts/csp-smoke-test.mjs`.
-- Textos de UI, guia e PDF para as métricas que mudam.
-- **Teste manual:** `gitlab-org/gitlab-runner` e um projeto pequeno.
+Dividida em dois PRs. **PR 1 (feito, 2026-11-12):**
+
+- ✅ `src/services/gitlabService.js` (um serviço por host, `createGitlabService`) e `src/utils/gitlabData.js` (transformações puras para os formatos do GitHub), com testes (`fetch` simulado; falha lança erro em vez de virar zero).
+  - Falha parcial: cada fonte falha sozinha (o `Promise.allSettled` do `useRepository` deixa só aquele indicador indisponível). **Pendente:** um 401 de token inválido ainda aparece como o erro genérico da busca, não como "token inválido".
+- ✅ Agregadores a partir de uma leitura das 52 semanas de commits: séries semanais, punch card, churn e contribuidores por e-mail.
+- ✅ Health score pelas listagens dirigidas (raiz e `.gitlab/`), não pela árvore.
+- ✅ Métricas de MR via GraphQL (duas consultas: núcleo e tamanho) e CI via pipelines. Revisão, branches zumbis e datas das tags funcionam **sem token** no GitLab (`detailsWithoutToken`), medido no gitlab-runner e no CIn.
+- ✅ `report.provider/host`, sem persistência (bloqueio `provider gitlab`), com aviso na UI; botão da Timeline escondido e o Compartilhar explica que não há link permanente.
+- ✅ `internal` e `private` recusados no Dashboard (`errors.gitlabNotPublic`).
+- ✅ CSP com a allow-list (plugin `gitlab-csp-hosts` no `vite.config.js`), `VITE_GITLAB_HOSTS` no `deploy.yml` e no job `smoke`, e um terceiro fluxo no `scripts/csp-smoke-test.mjs` com o gitlab.com simulado.
+- ✅ Seção GitLab no `SettingsModal`: um token por host, validado ao salvar (`/personal_access_tokens/self`).
+- ✅ **Teste manual (navegador, build de produção, 2026-11-12):** `gitlab-org/gitlab-runner` (43 requisições, ~12 s, todos os indicadores de revisão preenchidos), `lgpss-in1054/ns3_code` (35 requisições, ~7 s) e um projeto `internal` de aluno (recusado com 2 requisições). Zero violação de CSP, zero erro de página, nada gravado.
+
+**PR 2 (textos), pendente.** Sem ele, cards do GitLab ainda dizem "GitHub" ("Sem execuções do GitHub Actions", "Nenhuma release publicada no GitHub"). **Por isso o PR 1 não é publicado sozinho**: a versão só sobe com o PR 2.
+
+- `{{platform}}` nas strings genéricas e variantes `*.gitlab` onde a métrica muda: pipelines, health por listagens, séries a partir de commits, revisão via notas e aprovações (sem horário de aprovação), criação de token.
+- Seção "Diferenças no GitLab" no guia "Como interpretar".
+- Textos do PDF.
 
 ### Fase 3: Turma com GitLab
 

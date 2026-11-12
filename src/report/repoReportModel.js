@@ -1,8 +1,8 @@
 import { buildStatCards } from '../utils/dashboardCards.js';
 import { repoAgeText } from '../utils/repoAge.js';
-import { trimCommitSeries, PUNCH_CARD_MAX_COMMITS, WEEKDAYS_MIN_SAMPLE } from '../utils/activityStats.js';
+import { trimCommitSeries, weekdaysScopeKey, WEEKDAYS_MIN_SAMPLE } from '../utils/activityStats.js';
 import { formatters } from '../utils/formatters.js';
-import { badgeScoreText } from '../utils/aiProcess.js';
+import { badgeScoreText, aiContextGap } from '../utils/aiProcess.js';
 import { contributorsTextKey } from '../utils/contributors.js';
 import { plainText } from './plainText.js';
 import { toolLabel } from '../components/ai/toolLabel.js';
@@ -108,7 +108,7 @@ function maturitySection(data, t, state) {
 
   const reviewAvailable = codeReview?.available === true;
   const zombieCriteria = branchAnalysis?.checked != null
-    ? `${t('maturity.zombieCriteria', { checked: branchAnalysis.checked, days: ZOMBIE_BRANCH_DAYS })}${branchAnalysis.capped ? ` ${t('maturity.zombieCapped', { max: BRANCH_SCAN_MAX })}` : ''}`
+    ? `${t('maturity.zombieCriteria', { checked: branchAnalysis.checked, days: ZOMBIE_BRANCH_DAYS })}${branchAnalysis.capped ? ` ${t('maturity.zombieCapped', { max: branchAnalysis.scanMax ?? BRANCH_SCAN_MAX })}` : ''}`
     : null;
   const zombieCount = branchAnalysis?.capped ? `>= ${maturity.zombies}` : maturity.zombies;
   return {
@@ -183,7 +183,7 @@ function weekdaysSection(data, t, locale) {
     title,
     days: t('charts.weekdays.days', { returnObjects: true }),
     counts,
-    note: `${t(total >= PUNCH_CARD_MAX_COMMITS ? 'charts.weekdays.scopeCapped' : 'charts.weekdays.scope', { count: total, n: formatters.formatNumber(total, locale) })}${total < WEEKDAYS_MIN_SAMPLE ? ` ${t('charts.weekdays.smallSample')}` : ''}`,
+    note: `${t(weekdaysScopeKey(weekdays), { count: total, n: formatters.formatNumber(total, locale) })}${total < WEEKDAYS_MIN_SAMPLE ? ` ${t('charts.weekdays.smallSample')}` : ''}`,
   };
 }
 
@@ -194,9 +194,9 @@ function aiSection(ai, t, locale) {
   }
   const { tools, config, commits, prs, safeguards, coherence, badge } = ai;
   const num = (v) => formatters.formatNumber(v, locale);
-  const noToken = aiProcessNoToken(ai);
+  const { noteKey, missingKey } = aiContextGap(ai);
   const lines = {
-    notes: [noToken && t('aiProcess.unavailable.noToken'), (!commits.available || !prs.available) && t('aiProcess.unavailable.error')].filter(Boolean),
+    notes: [noteKey && t(noteKey), (!commits.available || !prs.available) && t('aiProcess.unavailable.error')].filter(Boolean),
     tools: tools.length > 0
       ? tools.map((tool) => `${toolLabel(tool.id, t)}: ${[...tool.sources.map((src) => t(`aiProcess.sources.${src}`)), tool.fromTemplate && t('aiProcess.sources.template')].filter(Boolean).join(', ')}`)
       : [config.hiddenLocal?.length > 0 ? t('aiProcess.hiddenOnly') : `${t('aiProcess.noTraces')} ${t('aiProcess.noTracesDetail')}`],
@@ -206,7 +206,7 @@ function aiSection(ai, t, locale) {
       { label: t('aiProcess.prsLabel'), value: !prs.available ? t('aiProcess.notAvailable') : prs.n === 0 ? t('aiProcess.emptySample') : `${t('aiProcess.prs', { byAgents: num(prs.byAgents), n: num(prs.n) })} (${prs.percentage}%)` },
       { label: t('aiProcess.aiReviewedLabel'), value: !prs.available || !prs.aiReviewed?.available ? t('aiProcess.notAvailable') : prs.n === 0 ? t('aiProcess.emptySample') : `${t('aiProcess.aiReviewed', { reviewed: num(prs.aiReviewed.count), n: num(prs.n) })} (${prs.aiReviewed.percentage}%)` },
     ],
-    safeguards: safeguardLines(safeguards, noToken, num, t),
+    safeguards: safeguardLines(safeguards, missingKey, num, t),
     coherence: coherence.flags.length > 0
       ? { title: t('aiProcess.coherence.title'), intro: t('aiProcess.coherence.intro'), flags: coherence.flags.map((f) => t(`aiProcess.coherence.${f}`)) }
       : null,
@@ -217,8 +217,6 @@ function aiSection(ai, t, locale) {
   };
   return lines;
 }
-
-const aiProcessNoToken = (ai) => ai.withToken === false;
 
 function depthLines(tools, config, t) {
   const configured = tools.filter((tool) => tool.configKind);
@@ -234,8 +232,8 @@ function depthLines(tools, config, t) {
   return lines;
 }
 
-function safeguardLines(safeguards, noToken, num, t) {
-  if (!safeguards.available) return [`${t('aiProcess.notAvailable')} — ${t(noToken ? 'aiProcess.needsToken' : 'aiProcess.fetchFailed')}`];
+function safeguardLines(safeguards, missingKey, num, t) {
+  if (!safeguards.available) return [`${t('aiProcess.notAvailable')} — ${t(missingKey)}`];
   if (!safeguards.agentPrs) return [t('aiProcess.safeguards.noAgentPrs')];
   const { size } = safeguards;
   return [
