@@ -14,7 +14,7 @@
     "chunkLoad": "This page could not be loaded, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page to try again.",
     "pageCrash": "Something went wrong showing this page. Reload to try again; if it persists, use the menu to go to another page.",
     "lazyTexts": "Could not load the texts of this page, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page and try again.",
-    "gitlabNotPublic": "This GitLab project is not public (internal or private visibility). The Dashboard only analyzes public projects, since the data may be shared. Analyzing internal and private GitLab projects in Classroom Mode is in development.",
+    "gitlabNotPublic": "This GitLab project is not public (internal or private visibility). The Dashboard only analyzes public projects, since the data may be shared. Internal and private projects can be analyzed in Classroom Mode, with your token, with nothing saved.",
     "visibilityUnknown": "Couldn't confirm whether this project is public (the response didn't include its visibility). For safety, it wasn't analyzed. Try again in a moment."
   },
   "header": {
@@ -603,11 +603,11 @@
     "needsToken": "Classroom mode needs a GitHub token: each repository makes 6 to 9 requests, and without a token the limit is 60 per hour. For private repositories (e.g. GitHub Classroom), the token must have access to them.",
     "openSettings": "Set up token",
     "reposLabel": "Team repositories",
-    "reposPlaceholder": "owner/repository or https://github.com/owner/repository — one per line",
+    "reposPlaceholder": "owner/repository, https://github.com/owner/repository or gitlab.cin.ufpe.br/group/project — one per line",
     "reposCount_one": "{{count}} repository (max {{max}}).",
     "reposCount_other": "{{count}} repositories (max {{max}}).",
     "reposTruncated": "Only the first {{max}} will be analyzed.",
-    "reposInvalid": "Ignored, not owner/repository: {{list}}.",
+    "reposInvalid": "Ignored, neither a GitHub owner/repository nor an enabled GitLab address: {{list}}.",
     "from": "Course start",
     "to": "End",
     "analyze": "Analyze class",
@@ -674,18 +674,18 @@
       "aiCoherence": "AI sources in disagreement",
       "aiBadge": "Responsible AI use (criteria met)"
     },
-    "privateNote": "This class includes private repositories. The data was read with your token and stays in this browser: nothing is saved by Bisolhador. The link and the CSV contain these repositories' names and numbers; share them only with people who already have access.",
+    "privateNote": "This class includes private repositories (on GitLab, internal ones too). The data was read with your token and stays in this browser: nothing is saved by Bisolhador. The link and the CSV contain these repositories' names and numbers; share them only with people who already have access.",
     "privateBadge": "Private repository",
-    "importTitle": "Import from an organization (optional)",
-    "orgLabel": "Organization (or user: public only)",
+    "importTitle": "Import from a GitHub organization or a GitLab group (optional)",
+    "orgLabel": "GitHub organization, or GitLab host/group (with subgroups)",
     "prefixLabel": "Repository prefix",
     "importButton": "List repositories",
     "importing": "Listing…",
     "import": {
-      "result": "{{matched}} of the organization's {{found}} repositories (archived ones left out). The list below was filled in.",
+      "result": "{{matched}} of {{found}} repositories (archived ones left out). The list below was filled in.",
       "capped": "Only the first 1,000 repositories were read.",
-      "invalidOrg": "Invalid organization name.",
-      "orgNotFound": "Organization or user not found (or no access with your token).",
+      "invalidOrg": "Invalid GitHub organization or GitLab group name (on GitLab, use host/group, with an enabled host).",
+      "orgNotFound": "Organization, user or group not found (or no access with your token).",
       "orgFailed": "Couldn't list the repositories (API failure or rate limit)."
     },
     "ai": {
@@ -699,7 +699,8 @@
       "busy": "Generating…",
       "anonymize": "Anonymize repositories in the PDF (the CSV is not anonymized)",
       "error": "Could not generate the report. Try again; if it persists, reload the page."
-    }
+    },
+    "needsGitlabToken": "This class's GitLab projects ({{hosts}}) need a read_api token for that instance: internal and private projects don't show up without logging in."
   },
   "aiProcess": {
     "title": "AI in the Process",
@@ -828,7 +829,9 @@
       "empty": "No commits in the period (merges and maintenance bots excluded).",
       "sampled": "Computed over the 300 most recent commits of the period.",
       "configUnavailable": "n/a: could not check who added or changed the AI configuration files.",
-      "footnote": "Default-branch commits in the period, without merges and maintenance bots. \"Unidentified author\" gathers commits not linked to a GitHub account (we don't group by name). Configuration: AI files (template files excluded) with a commit by that person in the period, in the checked locations. Nothing in this table is saved or goes into the CSV."
+      "footnote": "Default-branch commits in the period, without merges and maintenance bots. \"Unidentified author\" gathers commits not linked to a GitHub account (we don't group by name). Configuration: AI files (template files excluded) with a commit by that person in the period, in the checked locations. Nothing in this table is saved or goes into the CSV.",
+      "footnote_gitlab": "Default-branch commits in the period, no merges and no maintenance bots. On GitLab, commits don't report the account behind them: people are grouped by the name on their commits, so the same person under different names takes more than one row. AI configuration isn't checked on GitLab. Nothing in this table is saved or goes into the CSV.",
+      "configUnavailable_gitlab": "N/A: on GitLab, we don't check yet who added or changed AI configuration files."
     },
     "notOnPlatform": "not available on this platform yet",
     "tooltip_gitlab": "Traces GitLab keeps: co-authorship declared in commits and MRs opened by agents. Agent configuration, AI review and safeguards aren't checked on GitLab yet. It does not measure how much code AI wrote."

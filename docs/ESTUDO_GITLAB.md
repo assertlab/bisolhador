@@ -364,13 +364,16 @@ Dividida em dois PRs. **PR 1 (feito, 2026-11-12):**
 
 ### Fase 3: Turma com GitLab
 
-- `parseRepoList` aceita URLs e paths do GitLab.
-- Importação de grupo com `include_subgroups`.
-- `analyzeTeamRepo` com fontes GitLab: commits, MRs merged e pipelines no período.
-- Checagem de visibilidade fail-closed: `internal` e `private` exigem o token do host, e visibilidade ausente bloqueia.
-- Visão por aluno agrupada por e-mail.
-- CSV e PDF com coluna de plataforma.
-- **Teste:** com um grupo real de disciplina.
+Feita em 2026-11-12 (v3.27.0):
+
+- ✅ `parseRepoList` aceita endereços do GitLab com host; a lista guarda `repoListName` (GitHub `owner/repo`, GitLab `host/caminho`).
+- ✅ Importação de grupo com subgrupos: o campo aceita `<host habilitado>/grupo` (`parseGitlabGroup`, `fetchGroupProjects`).
+- ✅ `analyzeRepository` escolhe o serviço pelo `RepoRef`, com o token do host; fontes GitLab no período: commits do branch principal, MRs mergeados (filtro por data de merge no GraphQL) e pipelines concluídos de push no branch principal ou de MR.
+- ✅ Visibilidade: `internal` e `private` são analisados aqui (como os privados do GitHub), com o token do host; visibilidade ausente bloqueia (fail-closed). A análise só começa quando há token para todas as plataformas da lista.
+- **Mudança em relação ao plano:** a visão por aluno agrupa pelo **nome** que aparece nos commits, não pelo e-mail, para não exibir e-mails na tela. Consequência: a mesma pessoa com nomes diferentes aparece em mais de uma linha (dito na nota da tabela).
+- **Mudança em relação ao plano:** sem coluna de plataforma no CSV e no PDF. O nome do repositório do GitLab já traz o host (`gitlab.cin.ufpe.br/g/p`), o que identifica a plataforma sem mudar as colunas do CSV.
+- IA no Processo: sem contexto de configuração no GitLab, como no Dashboard.
+- ✅ **Teste (navegador, build de produção, 2026-11-12):** importação do grupo de uma disciplina no gitlab.cin.ufpe.br (12 projetos, todos `internal`) e análise de 3 projetos de 01/08 a 12/11. Foram 19 requisições no total, com todas as colunas preenchidas, visão por estudante, PDF gerado, zero violação de CSP e nada gravado.
 
 ### Fase 4: histórico (fora da 1ª entrega)
 

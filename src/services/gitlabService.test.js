@@ -173,6 +173,57 @@ describe('createGitlabService: requests', () => {
   });
 });
 
+describe('createGitlabService: Classroom', () => {
+  it('commit history of the period: since/until sent, history nodes, capped at the page limit', async () => {
+    routes = [['/repository/commits?since=', () => reply(page(100).map((_, i) => ({ id: String(i), author_name: 'Ana', message: 'feat: x', parent_ids: ['p'] })))]];
+    const h = await createGitlabService('gitlab.com').fetchCommitHistoryInPeriod('g/sub', 'p', '2026-08-01T00:00:00.000Z', '2026-11-30T23:59:59.000Z', 2);
+    expect(calls[0].url).toContain('/projects/g%2Fsub%2Fp/repository/commits?since=2026-08-01T00%3A00%3A00.000Z&until=2026-11-30T23%3A59%3A59.000Z');
+    expect(h).toMatchObject({ totalCount: 200, capped: true });
+    expect(h.nodes[0]).toMatchObject({ message: 'feat: x', author: { user: { login: 'Ana' } } });
+  });
+
+  it('merged MRs of the period: merge-date filter as variables, pages until the end', async () => {
+    const mr = (iid) => ({ iid, createdAt: '2026-09-01T00:00:00Z', mergedAt: '2026-09-02T00:00:00Z', author: { username: 'ana' }, approvedBy: { nodes: [] }, notes: { nodes: [] } });
+    let n = 0;
+    routes = [['/api/graphql', () => reply({ data: { project: { mergeRequests: n++ === 0
+      ? { pageInfo: { hasNextPage: true, endCursor: 'c1' }, nodes: [mr(1)] }
+      : { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [mr(2)] } } } })]];
+    const res = await createGitlabService('gitlab.com').fetchMergedPullRequestsInPeriod('g', 'p', '2026-08-01T00:00:00Z', '2026-11-30T23:59:59Z');
+    expect(res).toMatchObject({ capped: false });
+    expect(res.stats).toHaveLength(2);
+    const vars = calls.map((c) => JSON.parse(c.body).variables);
+    expect(vars).toEqual([{ p: 'g/p', a: '2026-08-01T00:00:00Z', b: '2026-11-30T23:59:59Z', after: null }, { p: 'g/p', a: '2026-08-01T00:00:00Z', b: '2026-11-30T23:59:59Z', after: 'c1' }]);
+  });
+
+  it('CI of the period: pushes to the default branch and MR pipelines, as Actions runs', async () => {
+    routes = [['/pipelines?scope=finished&created_after=', reply([
+      { source: 'push', ref: 'main', status: 'success' }, { source: 'push', ref: 'dev', status: 'failed' },
+      { source: 'merge_request_event', ref: 'refs/merge-requests/1/head', status: 'failed' },
+    ])]];
+    const runs = await createGitlabService('gitlab.com').fetchCiRunsInPeriod('g', 'p', 'main', '2026-08-01', '2026-11-30');
+    expect(calls[0].url).toContain('created_after=2026-08-01T00%3A00%3A00Z&created_before=2026-11-30T23%3A59%3A59Z');
+    expect(runs).toMatchObject({ total_count: 2, capped: false });
+    expect(runs.workflow_runs.map((r) => [r.event, r.conclusion])).toEqual([['push', 'success'], ['pull_request', 'failure']]);
+  });
+
+  it('CI/CD turned off (403/404) is "no pipelines", not a failure', async () => {
+    routes = [['/pipelines?', reply({ message: '403 Forbidden' }, { status: 403 })]];
+    expect(await createGitlabService('gitlab.com').fetchCiRunsInPeriod('g', 'p', 'main', '2026-08-01', '2026-11-30')).toEqual({ total_count: 0, workflow_runs: [], capped: false });
+  });
+
+  it('commits of the period: the count is a minimum when the page cap is reached', async () => {
+    routes = [['/repository/commits?since=', () => reply(page(100).map((_, i) => ({ id: String(i), author_name: 'A', parent_ids: ['p'] })))]];
+    expect(await createGitlabService('gitlab.com').fetchCommitHistoryInPeriod('g', 'p', 'a', 'b', 1)).toMatchObject({ totalCount: 100, totalIsMinimum: true });
+  });
+
+  it('group import: subgroups included, shared projects out, same shape as the GitHub import', async () => {
+    routes = [['/groups/', reply([{ path_with_namespace: 'disc/2026/t1', path: 't1', visibility: 'internal', archived: false }])]];
+    const res = await createGitlabService('gitlab.cin.ufpe.br').fetchGroupProjects('disc/2026');
+    expect(calls[0].url).toContain('/groups/disc%2F2026/projects?include_subgroups=true&with_shared=false');
+    expect(res).toEqual({ repos: [{ fullName: 'gitlab.cin.ufpe.br/disc/2026/t1', archived: false }], capped: false });
+  });
+});
+
 describe('checkGitlabToken', () => {
   it.each([
     [reply({ scopes: ['read_api'], active: true, expires_at: '2026-12-01' }), { ok: true, expiresAt: '2026-12-01' }],

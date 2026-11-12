@@ -69,3 +69,5 @@ export const GITLAB_BRANCH_MAX_PAGES = 5; // 500 branches (gitlab-runner: 423)
 export const GITLAB_COMMIT_WEEKS = 52; // weekly series, contributors, punch card and churn come from these commits
 export const GITLAB_MR_NOTES = 50; // notes read per merge request (comments, first review, approval times)
 export const GITLAB_COUNT_LIMIT = 10_000; // GitLab omits X-Total above this: counts beyond it are N/A
+export const CLASSROOM_GITLAB_MR_PAGE = 25; // merged MRs per GraphQL page in Classroom (each with notes and approvals)
+export const GITLAB_GROUP_MAX_PAGES = 10; // × 100 projects of a group (and subgroups) for the Classroom import

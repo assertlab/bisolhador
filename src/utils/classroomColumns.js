@@ -29,7 +29,7 @@ export function coherenceFlags(r) {
 }
 
 export const CLASSROOM_COLUMNS = [
-  { key: 'commits', guide: 'commit-activity', get: (r) => (r.commits.available ? r.commits.commits : null) },
+  { key: 'commits', guide: 'commit-activity', get: (r) => (r.commits.available ? r.commits.commits : null), atLeast: (r) => r.commits.commitsAtLeast === true },
   { key: 'authors', guide: 'contributors', get: (r) => (r.commits.available ? r.commits.authors : null), sampled: commitsCapped },
   { key: 'topShare', guide: 'bus-factor', get: (r) => r.commits.topSharePercentage, pct: true, n: (r) => (r.commits.available ? r.commits.humanCommits : null), sampled: commitsCapped },
   { key: 'mergedPrs', guide: 'prs-merges', get: (r) => (r.prs.available ? r.prs.merged : null), atLeast: (r) => r.prs.capped },

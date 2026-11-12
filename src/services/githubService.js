@@ -4,7 +4,7 @@
 import { getToken, hasToken, GITHUB_REF } from "./tokens.js";
 import { withExponentialBackoff } from "../utils/retry.js";
 import { toPullRequestStats } from "../utils/prReviewStats.js";
-import { ciRunsForBranch, TAGS_PAGE } from "../utils/projectPractices.js";
+import { ciRunsForBranch, TAGS_PAGE, NO_CI_RUNS } from "../utils/projectPractices.js";
 import { CONTEXT_DIRS, WORKFLOWS_DIR } from "../utils/aiRegistry.js";
 import {
   GITHUB_PER_PAGE_COMMITS,
@@ -738,7 +738,7 @@ export const githubService = {
         if (page === 1) throw error;
         return null; // a later page failing keeps what was read (marked capped below)
       });
-      if (response?.status === 404 && page === 1) return { total_count: 0, workflow_runs: [], capped: false };
+      if (response?.status === 404 && page === 1) return { ...NO_CI_RUNS };
       if (!response?.ok) {
         if (page === 1) throw new Error(`Actions runs failed: HTTP ${response?.status}`);
         total = Math.max(total, all.length + 1);

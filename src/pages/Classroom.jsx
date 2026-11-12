@@ -5,8 +5,11 @@ import { Header } from '../components/Header';
 import { SettingsModal } from '../components/SettingsModal';
 import { GuideLink } from '../components/GuideLink.jsx';
 import { useClassroomAnalysis } from '../hooks/useClassroomAnalysis.js';
-import { hasGithubToken, githubService } from '../services/githubService.js';
-import { parseSafeRepoName, SAFE_GITHUB_NAME_PATTERN } from '../utils/repoName.js';
+import { githubService } from '../services/githubService.js';
+import { getProvider } from '../services/providers/index.js';
+import { hasToken as hasTokenFor, GITHUB_REF } from '../services/tokens.js';
+import { SAFE_GITHUB_NAME_PATTERN } from '../utils/repoName.js';
+import { parseRepoRef, parseGitlabGroup, repoWebUrl } from '../utils/repoRef.js';
 import { parseRepoList, parsePeriod, CLASSROOM_MAX_REPOS } from '../utils/classroom.js';
 import { formatDuration } from '../utils/prReviewStats.js';
 import { formatters } from '../utils/formatters.js';
@@ -21,8 +24,21 @@ import { AiStudentTable } from '../components/ai/AiStudentTable.jsx';
 import { Tooltip } from '../components/Tooltip.jsx';
 import { NewTabHint } from '../components/NewTabHint.jsx';
 import { NEW_TAB_LINK_PROPS, NewTabContext } from '../lib/newTab.js';
+import { PlatformProvider } from '../lib/platformText.js';
 
 const DEFAULT_PERIOD_DAYS = 120;
+
+// The repository's page on its platform (GitHub "owner/repo", GitLab "host/path"); plain text if the name doesn't parse
+// One entry per host still without a token
+const missingTokensFor = (refs) => [...new Map(refs.filter((ref) => !hasTokenFor(ref)).map((ref) => [ref.host, ref])).values()];
+
+// url: the analyzed row's own (canonical) link; error and duplicate rows parse the requested name.
+function RepoLink({ name, url }) {
+  const ref = url ? null : parseRepoRef(name).ref;
+  const href = url ?? (ref && repoWebUrl(ref));
+  if (!href) return name;
+  return <a href={href} {...NEW_TAB_LINK_PROPS} className="hover:underline">{name}<NewTabHint /></a>;
+}
 const isoDay = (d) => d.toISOString().slice(0, 10);
 
 // Columns and CSV rows live in utils/classroomColumns.js; the screen adds the JSX-only rendering.
@@ -75,20 +91,26 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
   const [prefix, setPrefix] = useState('');
   const [importState, setImportState] = useState(null); // { loading } | { found, matched, capped } | { error }
   const importRequest = useRef(0);
+  // "<allowed GitLab host>/group[/sub]" imports a GitLab group with its subgroups; anything else is a GitHub organization
+  const gitlabGroup = parseGitlabGroup(org);
+  const importRef = gitlabGroup ? { provider: 'gitlab', host: gitlabGroup.host } : GITHUB_REF;
   const importOrg = async () => {
     const requestId = ++importRequest.current; // a newer import wins
-    if (!SAFE_GITHUB_NAME_PATTERN.test(org)) {
+    if (!gitlabGroup && !SAFE_GITHUB_NAME_PATTERN.test(org)) {
       setImportState({ error: 'invalidOrg' });
       return;
     }
     setImportState({ loading: true });
     try {
-      const { repos, capped } = await githubService.fetchOwnerRepositories(org);
       const wanted = prefix.trim().toLowerCase();
+      // Same item shape from both: fullName as written in the list (GitLab with its host)
+      const { repos, capped } = gitlabGroup
+        ? await getProvider(importRef).fetchGroupProjects(gitlabGroup.path)
+        : await githubService.fetchOwnerRepositories(org);
       const matched = repos
-        .filter((r) => !r.archived && r.fullName.split('/')[1].toLowerCase().startsWith(wanted))
+        .filter((r) => !r.archived && r.fullName.split('/').at(-1).toLowerCase().startsWith(wanted))
         .map((r) => r.fullName)
-        .filter((name) => parseSafeRepoName(name));
+        .filter((name) => parseRepoRef(name).ref);
       if (requestId !== importRequest.current) return;
       setText(matched.join('\n'));
       setImportState({ found: repos.length, matched: matched.length, capped });
@@ -100,8 +122,19 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
 
   const requested = useMemo(() => parseRepoList(searchParams.get('repos') ?? ''), [searchParams]);
   const period = useMemo(() => parsePeriod(searchParams.get('from'), searchParams.get('to')), [searchParams]);
-  const hasToken = hasGithubToken();
-  const { rows, done, total, running } = useClassroomAnalysis(requested.repos, period, hasToken && requested.repos.length > 0, runId);
+  // A token for every platform/host in the class (the requested one, or the list being typed):
+  // GitHub always needs one here; GitLab internal/private projects do too.
+  // Each list is parsed once (parseRepoList keeps the refs); the token checks below read localStorage each render,
+  // so a token saved in the settings modal counts at once.
+  const draft = useMemo(() => parseRepoList(text), [text]);
+  const listed = [...draft.refs, ...requested.refs];
+  // Notice: every platform in the typed and the requested list (GitHub when both are empty)
+  const missingTokens = missingTokensFor(listed.length > 0 ? listed : [GITHUB_REF]);
+  const draftMissingTokens = missingTokensFor(draft.refs);
+  const missingGithub = missingTokens.some((ref) => ref.provider === 'github');
+  const missingGitlabHosts = missingTokens.filter((ref) => ref.provider === 'gitlab').map((ref) => ref.host);
+  const tokensReady = missingTokensFor(requested.refs).length === 0;
+  const { rows, done, total, running } = useClassroomAnalysis(requested.repos, period, tokensReady && requested.repos.length > 0, runId);
   const urlPeriodInvalid = requested.repos.length > 0 && !period;
   // Two requested names resolving to the same repository (renamed): keep the first
   const firstByRepo = new Map();
@@ -115,7 +148,6 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
     return first && first !== name ? first : null;
   };
 
-  const draft = parseRepoList(text);
   const draftPeriod = parsePeriod(from, to);
 
   const submit = (e) => {
@@ -189,9 +221,10 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
           </div>
         )}
 
-        {!hasToken && (
+        {missingTokens.length > 0 && (
           <div role="status" className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-300 px-4 py-3 rounded-md text-sm flex flex-wrap items-center gap-3">
-            <span>{t('classroom.needsToken')}</span>
+            {missingGithub && <span>{t('classroom.needsToken')}</span>}
+            {missingGitlabHosts.length > 0 && <span>{t('classroom.needsGitlabToken', { hosts: missingGitlabHosts.join(', ') })}</span>}
             <button type="button" onClick={() => setIsSettingsOpen(true)} className="underline font-medium">{t('classroom.openSettings')}</button>
           </div>
         )}
@@ -207,7 +240,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
               {t('classroom.prefixLabel')}
               <input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="projeto-1-" className="block mt-1 p-2 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 dark:text-white" />
             </label>
-            <button type="button" onClick={importOrg} disabled={!hasToken || !org || importState?.loading} className="px-4 py-2 text-sm font-medium rounded-lg border border-ocean text-ocean disabled:opacity-50">
+            <button type="button" onClick={importOrg} disabled={!hasTokenFor(importRef) || !org || importState?.loading} className="px-4 py-2 text-sm font-medium rounded-lg border border-ocean text-ocean disabled:opacity-50">
               {importState?.loading ? t('classroom.importing') : t('classroom.importButton')}
             </button>
             {importState && !importState.loading && (
@@ -243,7 +276,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
             </label>
             <button
               type="submit"
-              disabled={!hasToken || !draftPeriod || draft.repos.length === 0}
+              disabled={draftMissingTokens.length > 0 || !draftPeriod || draft.repos.length === 0}
               className="px-5 py-2.5 bg-ocean text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('classroom.analyze')}
@@ -319,7 +352,7 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                                   <span aria-hidden="true">{open ? '−' : '+'}</span>
                                 </button>
                               )}
-                              <a href={`https://github.com/${shownName}`} {...NEW_TAB_LINK_PROPS} className="hover:underline">{shownName}<NewTabHint /></a>
+                              <RepoLink name={shownName} url={dup ? undefined : row?.url} />
                               {row?.isPrivate && !dup && <span className="ml-1" title={t('classroom.privateBadge')} aria-label={t('classroom.privateBadge')}>🔒</span>}
                             </td>
                             {ok
@@ -339,8 +372,11 @@ export function Classroom({ isSettingsOpen, setIsSettingsOpen }) {
                                     and cap it at the scroll box width (100cqw) minus the cell padding. */}
                                 <div className="sticky left-3 w-[calc(100cqw-1.5rem)] max-w-5xl space-y-4 break-words">
                                   <h3 className="text-base font-semibold text-shark dark:text-white">{t('aiProcess.title')} — {shownName}</h3>
-                                  <AiProcessSection aiProcess={row.ai} />
-                                  <AiStudentTable students={row.students} />
+                                  {/* GitLab rows read the GitLab wording (lib/platformText.js) */}
+                                  <PlatformProvider provider={row.provider}>
+                                    <AiProcessSection aiProcess={row.ai} />
+                                    <AiStudentTable students={row.students} />
+                                  </PlatformProvider>
                                 </div>
                               </td>
                             </tr>

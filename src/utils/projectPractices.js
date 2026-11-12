@@ -54,6 +54,9 @@ const DEPENDENCY_BOTS = /^(dependabot|renovate)/i;
 
 export const CLASSROOM_CI_EVENTS = ['push', 'pull_request', 'merge_group'];
 
+/** A period with no CI runs (no default branch, Actions/CI disabled): copy it, don't mutate. */
+export const NO_CI_RUNS = Object.freeze({ total_count: 0, workflow_runs: Object.freeze([]), capped: false });
+
 /**
  * Classroom CI: runs that exercise the default branch, whatever the trigger. A repository whose
  * required checks run only on `pull_request` (no `push` workflow) has no push runs on the branch

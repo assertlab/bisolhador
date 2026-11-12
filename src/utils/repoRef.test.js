@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { vi } from 'vitest';
-import { parseRepoRef, withPath, repoKey, repoWebUrl, repoFileSlug, parseGitlabHosts, GITLAB_MAX_SEGMENTS } from './repoRef.js';
+import { parseRepoRef, withPath, repoKey, repoWebUrl, repoFileSlug, parseGitlabHosts, parseGitlabGroup, repoListName, ownerAndRepo, GITLAB_MAX_SEGMENTS } from './repoRef.js';
 
 const HOSTS = { gitlabHosts: ['gitlab.com', 'gitlab.cin.ufpe.br'] };
 const parse = (input) => parseRepoRef(input, HOSTS);
@@ -107,5 +107,24 @@ describe('parseGitlabHosts', () => {
     const hosts = parseGitlabHosts('git.example.edu:8443');
     expect(hosts).toEqual(['gitlab.com', 'git.example.edu:8443']);
     expect(parseRepoRef('https://git.example.edu:8443/g/p', { gitlabHosts: hosts }).ref).toMatchObject({ provider: 'gitlab', host: 'git.example.edu:8443', path: 'g/p' });
+  });
+});
+
+describe('Classroom helpers', () => {
+  it('repoListName round-trips through parseRepoRef; ownerAndRepo splits the namespace', () => {
+    for (const input of ['facebook/react', 'gitlab.cin.ufpe.br/g/sub/p']) {
+      const { ref } = parse(input);
+      expect(repoListName(ref)).toBe(input);
+      expect(parse(repoListName(ref)).ref).toEqual(ref);
+    }
+    expect(ownerAndRepo(parse('gitlab.com/g/sub/p').ref)).toEqual(['g/sub', 'p']);
+    expect(ownerAndRepo(parse('o/r').ref)).toEqual(['o', 'r']);
+  });
+
+  it('parseGitlabGroup: allowed host + safe group path; anything else null', () => {
+    expect(parseGitlabGroup('gitlab.cin.ufpe.br/disciplina/2026-1', HOSTS)).toEqual({ host: 'gitlab.cin.ufpe.br', path: 'disciplina/2026-1' });
+    expect(parseGitlabGroup('https://gitlab.com/grupo/', HOSTS)).toEqual({ host: 'gitlab.com', path: 'grupo' });
+    expect(parseGitlabGroup('https://gitlab.com/grupo/sub/-/merge_requests', HOSTS)).toEqual({ host: 'gitlab.com', path: 'grupo/sub' });
+    for (const bad of ['ufpe-org', 'gitlab.example.org/g', 'gitlab.com', 'gitlab.com/../x', 'gitlab.com/-g']) expect(parseGitlabGroup(bad, HOSTS), bad).toBeNull();
   });
 });

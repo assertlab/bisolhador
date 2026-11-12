@@ -5,7 +5,8 @@ import { parseAiRepoContext } from './aiProcess.js';
 describe('parseRepoList', () => {
   it('accepts owner/repo and GitHub URLs, any separator; dedupes case-insensitively', () => {
     const r = parseRepoList('a/b\nhttps://github.com/c/d.git, https://github.com/E/F/tree/main  a/B;g/h?tab=x github.com/i/j');
-    expect(r).toEqual({ repos: ['a/b', 'c/d', 'E/F', 'g/h', 'i/j'], invalid: [], truncated: false });
+    expect(r).toMatchObject({ repos: ['a/b', 'c/d', 'E/F', 'g/h', 'i/j'], invalid: [], truncated: false });
+    expect(r.refs.map((ref) => ref.path)).toEqual(r.repos); // parsed once, same order
   });
 
   it('rejects names that are not safe owner/repo (they go into a search query)', () => {
@@ -14,10 +15,10 @@ describe('parseRepoList', () => {
     expect(r.invalid).toEqual(['justname', '../x', 'a/b"is:private']);
   });
 
-  it('GitLab addresses and hostless 3-segment paths are invalid (GitHub only until phase 3), never cut to 2 segments', () => {
-    const r = parseRepoList('gitlab.com/g/sub/p https://gitlab.com/g/p a/b/c https://example.com/x/y ok/repo');
-    expect(r.repos).toEqual(['ok/repo']);
-    expect(r.invalid).toEqual(['gitlab.com/g/sub/p', 'https://gitlab.com/g/p', 'a/b/c', 'https://example.com/x/y']);
+  it('GitLab addresses are kept with their host (subgroups whole); hostless 3-segment paths and unknown hosts are invalid', () => {
+    const r = parseRepoList('gitlab.com/g/sub/p https://gitlab.com/G/P/-/tree/main gitlab.com/g/p a/b/c https://example.com/x/y ok/repo g/p');
+    expect(r.repos).toEqual(['gitlab.com/g/sub/p', 'gitlab.com/G/P', 'ok/repo', 'g/p']); // GitLab g/p ≠ GitHub g/p; G/P = g/p
+    expect(r.invalid).toEqual(['a/b/c', 'https://example.com/x/y']);
   });
 
   it(`caps at ${CLASSROOM_MAX_REPOS}`, () => {
@@ -172,5 +173,15 @@ describe('analyzeTeamRepo', () => {
     it('context unavailable → unverified', () => {
       expect(testsCi(analyze(null, runs(0)))).toBe('unverified');
     });
+  });
+});
+
+describe('analyzeCommitHistory: a count that is a minimum (GitLab)', () => {
+  it('marks commitsAtLeast, so the column shows "+"', async () => {
+    const { CLASSROOM_COLUMNS } = await import('./classroomColumns.js');
+    const h = analyzeCommitHistory({ totalCount: 300, totalIsMinimum: true, capped: true, nodes: [node('ana')] });
+    expect(h.commitsAtLeast).toBe(true);
+    expect(CLASSROOM_COLUMNS.find((c) => c.key === 'commits').atLeast({ commits: h })).toBe(true);
+    expect(analyzeCommitHistory({ totalCount: 3, capped: false, nodes: [node('ana')] }).commitsAtLeast).toBeUndefined();
   });
 });

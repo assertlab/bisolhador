@@ -9,13 +9,16 @@ import { getToken } from './tokens.js';
 import {
   toRepoData, toRestCommit, weeklySeries, punchCard, codeFrequency, contributorStats,
   profileFromListings, toRestPullRequest, toReviewNodes, toWorkflowRuns, toRelease, isGitlabBot, WEEK_MS,
+  toHistoryNode, classroomPipelines,
 } from '../utils/gitlabData.js';
 import { toPullRequestStats } from '../utils/prReviewStats.js';
 import {
   GITLAB_PER_PAGE, GITLAB_TREE_MAX_PAGES, GITLAB_COMMIT_MAX_PAGES, GITLAB_BRANCH_MAX_PAGES, GITLAB_COMMIT_WEEKS,
   GITHUB_PER_PAGE_COMMITS, GITHUB_PER_PAGE_RECENT_PRS, CLOSED_PR_SCAN, MERGED_PR_SAMPLE, GITLAB_MR_NOTES,
+  CLASSROOM_COMMIT_PAGES, CLASSROOM_CI_RUN_PAGES, CLASSROOM_PR_SCAN, CLASSROOM_GITLAB_MR_PAGE, GITLAB_GROUP_MAX_PAGES,
 } from '../constants.js';
-import { TAGS_PAGE } from '../utils/projectPractices.js';
+import { withExponentialBackoff } from '../utils/retry.js';
+import { TAGS_PAGE, NO_CI_RUNS } from '../utils/projectPractices.js';
 
 // Several fetchers read the same request (the year of commits feeds four
 // charts; the project and its listings feed health). It is shared for this
@@ -322,6 +325,70 @@ export function createGitlabService(host) {
       if (!defaultBranch) return { tree: [], truncated: false };
       const { items, capped } = await paged(`/projects/${projectId(owner, repo)}/repository/tree?recursive=true&ref=${encodeURIComponent(defaultBranch)}`, 'tree', GITLAB_TREE_MAX_PAGES, { notFound: [] });
       return { tree: items.map((e) => ({ path: e.path, type: e.type })), truncated: capped };
+    },
+
+    // --- Classroom (period-bounded; same shapes as githubService) ----------
+
+    // Default-branch commits between since/until (ISO), up to maxPages × 100, retried like GitHub's.
+    // No X-Total on commits: totalCount is what was read, a minimum when capped (totalIsMinimum).
+    async fetchCommitHistoryInPeriod(owner, repo, since, until, maxPages = CLASSROOM_COMMIT_PAGES) {
+      const { items, capped } = await withExponentialBackoff(() => paged(
+        `/projects/${projectId(owner, repo)}/repository/commits?since=${encodeURIComponent(since)}&until=${encodeURIComponent(until)}`,
+        'commits in period', maxPages, { notFound: [] },
+      ), 2, 1000);
+      return { totalCount: items.length, totalIsMinimum: capped, nodes: items.map(toHistoryNode), capped };
+    },
+
+    // MRs merged in the period, by merge date (GitLab filters on it server-side),
+    // with the same review fields as the Dashboard. Up to CLASSROOM_PR_SCAN.
+    async fetchMergedPullRequestsInPeriod(owner, repo, since, until) {
+      const query = `query($p: ID!, $a: Time, $b: Time, $after: String) { project(fullPath: $p) {
+        mergeRequests(state: merged, mergedAfter: $a, mergedBefore: $b, first: ${CLASSROOM_GITLAB_MR_PAGE}, after: $after, sort: MERGED_AT_DESC) {
+          pageInfo { hasNextPage endCursor }
+          nodes { iid createdAt mergedAt author { username bot } mergeUser { username }
+            approvedBy { nodes { username bot } }
+            notes(first: ${GITLAB_MR_NOTES}) { nodes { system body createdAt author { username bot } } }
+            diffStatsSummary { additions deletions } } } } }`;
+      const nodes = [];
+      let after = null;
+      for (;;) {
+        // Retried like GitHub's: one transient 5xx shouldn't lose every MR of the repository
+        const data = await withExponentialBackoff(() => graphql(query, { p: `${owner}/${repo}`, a: since, b: until, after }, 'merged MRs in period'), 2, 1000);
+        const conn = data.project?.mergeRequests;
+        if (!conn) throw new Error('GitLab GraphQL merged MRs in period failed: project not found');
+        nodes.push(...conn.nodes.filter(Boolean));
+        if (!conn.pageInfo.hasNextPage || nodes.length >= CLASSROOM_PR_SCAN) return { stats: toPullRequestStats(toReviewNodes(nodes)), capped: conn.pageInfo.hasNextPage };
+        after = conn.pageInfo.endCursor;
+      }
+    },
+
+    // Finished pipelines CREATED in the period (as GitHub's runs: a retry later
+    // doesn't move them) that exercise the default branch (classroomPipelines),
+    // as Actions runs. `capped` = more than the pages read. CI/CD turned off
+    // (403/404 on page 1) = no pipelines, as Actions disabled on GitHub.
+    async fetchCiRunsInPeriod(owner, repo, branch, fromDate, toDate) {
+      let result;
+      try {
+        result = await paged(
+          `/projects/${projectId(owner, repo)}/pipelines?scope=finished&created_after=${encodeURIComponent(`${fromDate}T00:00:00Z`)}&created_before=${encodeURIComponent(`${toDate}T23:59:59Z`)}`,
+          'pipelines in period', CLASSROOM_CI_RUN_PAGES,
+        );
+      } catch (error) {
+        if (error.status === 403 || error.status === 404) return { ...NO_CI_RUNS };
+        throw error;
+      }
+      const { items, capped } = result;
+      const kept = classroomPipelines(items, branch);
+      return { ...toWorkflowRuns(kept, kept.length), capped };
+    },
+
+    // Projects of a group and its subgroups, for the Classroom import (with the
+    // user's token, internal and private ones they can see are included).
+    // with_shared=false: projects shared INTO the group from elsewhere stay out.
+    async fetchGroupProjects(group, maxPages = GITLAB_GROUP_MAX_PAGES) {
+      const { items, capped } = await paged(`/groups/${encodeURIComponent(group)}/projects?include_subgroups=true&with_shared=false&order_by=path&sort=asc`, 'group projects', maxPages);
+      // Same shape as githubService.fetchOwnerRepositories, fullName as written in the Classroom list
+      return { repos: items.map((p) => ({ fullName: `${host}/${p.path_with_namespace}`, archived: Boolean(p.archived) })), capped };
     },
 
     // AI in the Process on GitLab (config files, GitLab Duo) isn't mapped yet:

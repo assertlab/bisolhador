@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   isGitlabBot, toRepoData, toRestCommit, weeklySeries, punchCard, codeFrequency, contributorStats,
-  profileFromListings, toRestPullRequest, toReviewNodes, toWorkflowRuns, toRelease,
+  profileFromListings, toRestPullRequest, toReviewNodes, toWorkflowRuns, toRelease, toHistoryNode, classroomPipelines,
 } from './gitlabData.js';
+import { analyzeCommitHistory } from './classroom.js';
+import { fromGraphqlCommit } from './aiProcess.js';
 import { toPullRequestStats } from './prReviewStats.js';
 import { peopleFromStats } from './contributors.js';
 import { weekdaysFromPunchCard, addDeleteRatio } from './activityStats.js';
@@ -181,5 +183,26 @@ describe('toRestCommit', () => {
       sha: 'abc', html_url: 'https://gitlab.com/g/p/-/commit/abc', author: null, parents: [{ sha: 'a' }, { sha: 'b' }],
       commit: { message: 'feat: x', author: { name: 'Ana', email: 'ana@x.org' } },
     });
+  });
+});
+
+describe('Classroom shapes', () => {
+  it('toHistoryNode: the GraphQL history node Classroom reads; the author name stands in for the login; bots get [bot]', () => {
+    const nodes = [
+      commit({ author_name: 'Ana', message: 'feat: a' }), commit({ author_name: 'Ana', message: 'fix: b' }), commit({ author_name: 'Bia', message: 'wip' }),
+      commit({ author_name: 'Deploy', author_email: 'project_9_bot_x@noreply.gitlab.com' }), commit({ parent_ids: ['a', 'b'], author_name: 'Ana' }),
+    ].map(toHistoryNode);
+    expect(nodes[0]).toMatchObject({ message: 'feat: a', parents: { totalCount: 1 }, author: { name: 'Ana', email: 'ana@x.org', user: { login: 'Ana' } } });
+    expect(nodes[3].author.user.login).toBe('Deploy[bot]');
+    expect(fromGraphqlCommit(nodes[0])).toMatchObject({ authorLogin: 'Ana', authorEmail: 'ana@x.org', parents: 1 });
+    const h = analyzeCommitHistory({ totalCount: 5, capped: false, nodes });
+    expect(h).toMatchObject({ commits: 5, authors: 2, humanCommits: 3, topSharePercentage: 67 });
+  });
+
+  it('classroomPipelines: pushes to the default branch and merge request pipelines', () => {
+    const kept = classroomPipelines([
+      { source: 'push', ref: 'main' }, { source: 'push', ref: 'feature' }, { source: 'merge_request_event', ref: 'refs/merge-requests/3/head' }, { source: 'schedule', ref: 'main' },
+    ], 'main');
+    expect(kept.map((p) => p.source + ':' + p.ref)).toEqual(['push:main', 'merge_request_event:refs/merge-requests/3/head']);
   });
 });

@@ -51,13 +51,21 @@ const isSafeGitlabSegment = (s) => SAFE_GITLAB_SEGMENT_PATTERN.test(s) && !/\.(g
  * segments with no host that aren't a GitHub page path: never guess the
  * platform), 'hostNotAllowed' (a host outside the allow-list).
  */
-export function parseRepoRef(input, { gitlabHosts = GITLAB_HOSTS } = {}) {
-  let text = String(input ?? '').trim().split(/[?#]/)[0].replace(/\/+$/, '');
-  if (!text) return { error: 'invalid' };
+// Typed/pasted text → { scheme, segments }: trimmed, query/fragment and trailing slashes cut, scheme removed.
+function splitInput(input) {
+  const text = String(input ?? '').trim().split(/[?#]/)[0].replace(/\/+$/, '');
+  return { empty: !text, scheme: /^https?:\/\//i.test(text), segments: text.replace(/^https?:\/\//i, '').split('/') };
+}
 
-  const scheme = /^https?:\/\//i.test(text);
-  text = text.replace(/^https?:\/\//i, '');
-  let segments = text.split('/');
+// GitLab web URLs put everything after the project (or group) behind "/-/".
+const beforeDash = (segments) => (segments.includes('-') ? segments.slice(0, segments.indexOf('-')) : segments);
+
+export function parseRepoRef(input, { gitlabHosts = GITLAB_HOSTS } = {}) {
+  const parts = splitInput(input);
+  if (parts.empty) return { error: 'invalid' };
+
+  const { scheme } = parts;
+  let { segments } = parts;
   const first = segments[0].toLowerCase();
 
   let host = null;
@@ -76,9 +84,7 @@ export function parseRepoRef(input, { gitlabHosts = GITLAB_HOSTS } = {}) {
   }
 
   if (!gitlabHosts.includes(host)) return { error: 'hostNotAllowed' };
-  // GitLab web URLs put everything after the project behind "/-/".
-  const dash = segments.indexOf('-');
-  if (dash !== -1) segments = segments.slice(0, dash);
+  segments = beforeDash(segments);
   if (segments.length > 0) segments[segments.length - 1] = segments[segments.length - 1].replace(/\.git$/i, '');
   return refFromSegments('gitlab', host, segments);
 }
@@ -100,6 +106,28 @@ function refFromSegments(provider, host, segments) {
 export function withPath(ref, path) {
   return refFromSegments(ref.provider, ref.host, String(path ?? '').split('/')).ref ?? null;
 }
+
+/**
+ * A GitLab group as typed for the Classroom import: "<allowed host>/group[/sub…]"
+ * (an https:// URL works too). → { host, path } or null. Same segment rules as projects.
+ */
+export function parseGitlabGroup(input, { gitlabHosts = GITLAB_HOSTS } = {}) {
+  const { segments } = splitInput(input);
+  const host = segments[0].toLowerCase();
+  const path = beforeDash(segments.slice(1));
+  if (!gitlabHosts.includes(host) || path.length < 1 || path.length > GITLAB_MAX_SEGMENTS - 1 || !path.every(isSafeGitlabSegment)) return null;
+  return { host, path: path.join('/') };
+}
+
+/** owner = everything before the project (a GitLab namespace may hold subgroups: "g/sub"), repo = the project. */
+export const ownerAndRepo = (ref) => [ref.segments.slice(0, -1).join('/'), ref.segments.at(-1)];
+
+/**
+ * How a repository is written in lists (Classroom, CSV, PDF, ?repos=): GitHub as
+ * always ("owner/repo"), GitLab with its host ("gitlab.cin.ufpe.br/g/p"), which
+ * parseRepoRef reads back to the same ref.
+ */
+export const repoListName = (ref) => (ref.provider === 'github' ? ref.path : `${ref.host}/${ref.path}`);
 
 /** Identity across platforms: the same "foo/bar" on GitHub and on GitLab are different projects. */
 export const repoKey = (ref) => `${ref.host}/${ref.path}`.toLowerCase();

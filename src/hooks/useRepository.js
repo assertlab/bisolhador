@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getProvider } from '../services/providers/index.js';
 import { hasToken as hasTokenFor } from '../services/tokens.js';
-import { parseRepoRef, withPath, repoWebUrl, repoKey } from '../utils/repoRef.js';
+import { parseRepoRef, withPath, repoWebUrl, repoKey, ownerAndRepo } from '../utils/repoRef.js';
 import { analyzers } from '../utils/analyzers.js';
 import { analyzeReviewMetrics, analyzeLeadTime, pullRequestsDisabled } from '../utils/prReviewStats.js';
 import { analyzeContributors, peopleFromStats, peopleFromContributors } from '../utils/contributors.js';
@@ -82,9 +82,6 @@ async function fetchReleaseData(service, owner, repo, hasToken) {
     });
     return { list, count, tags };
 }
-
-// owner = everything before the project (a GitLab namespace may hold subgroups: "g/sub"), repo = the project.
-const ownerAndRepo = (ref) => [ref.segments.slice(0, -1).join('/'), ref.segments.at(-1)];
 
 // Errors thrown here carry a code the Dashboard can tell apart; the message is
 // already translated (errors.*). `final`: the same input or repository gives

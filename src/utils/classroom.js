@@ -1,4 +1,4 @@
-import { parseRepoRef, repoKey } from './repoRef.js';
+import { parseRepoRef, repoKey, repoListName } from './repoRef.js';
 import { isBot, isBotName } from './contributors.js';
 import { analyzeReviewMetrics, analyzeLeadTime } from './prReviewStats.js';
 import { analyzeCiRuns, analyzeConventionalCommits, CLASSROOM_CI_EVENTS, RELEASES_PAGE } from './projectPractices.js';
@@ -13,31 +13,33 @@ export const CLASSROOM_MAX_REPOS = 50;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * Pasted text → repositories. Accepts "owner/repo" or GitHub URLs, one per
- * line or separated by commas/spaces; dedupes case-insensitively. Each entry
- * goes through parseRepoRef (names go into a search query, see githubService).
- * GitHub only until GitLab reaches Classroom (docs/ESTUDO_GITLAB.md, phase 3):
- * a GitLab address is listed as invalid instead of being cut down to
- * something that looks like a GitHub name ("gitlab.com/g/sub/p" used to
- * become "gitlab.com/g").
+ * Pasted text → repositories. Accepts "owner/repo" or GitHub URLs, and GitLab
+ * addresses with their host ("gitlab.cin.ufpe.br/g/sub/p", pasted URLs) on the
+ * allowed hosts; one per line or separated by commas/spaces; dedupes
+ * case-insensitively across platforms (repoKey). Each entry goes through
+ * parseRepoRef; the list keeps repoListName (GitHub "owner/repo", GitLab
+ * "host/path"), which parseRepoRef reads back.
  */
 export function parseRepoList(text) {
   const repos = [];
+  const refs = [];
   const invalid = [];
   const seen = new Set();
   for (const raw of String(text ?? '').split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean)) {
     const { ref } = parseRepoRef(raw);
-    if (ref?.provider !== 'github') {
+    if (!ref) {
       invalid.push(raw);
       continue;
     }
     const key = repoKey(ref);
     if (!seen.has(key)) {
       seen.add(key);
-      repos.push(ref.path);
+      repos.push(repoListName(ref));
+      refs.push(ref);
     }
   }
-  return { repos: repos.slice(0, CLASSROOM_MAX_REPOS), invalid, truncated: repos.length > CLASSROOM_MAX_REPOS };
+  // refs: the parsed repos, same order and cap (callers don't parse the names again)
+  return { repos: repos.slice(0, CLASSROOM_MAX_REPOS), refs: refs.slice(0, CLASSROOM_MAX_REPOS), invalid, truncated: repos.length > CLASSROOM_MAX_REPOS };
 }
 
 /** Valid course period (YYYY-MM-DD, from ≤ to), or null. Dates are UTC days. */
@@ -77,6 +79,8 @@ export function analyzeCommitHistory(history) {
   return {
     available: true,
     commits: history.totalCount,
+    // GitLab can't count the period's commits: what was read, a minimum when the page cap was reached
+    ...(history.totalIsMinimum && { commitsAtLeast: true }),
     capped: history.capped,
     sampled: history.nodes.length,
     authors: byAuthor.size,
@@ -120,7 +124,7 @@ function configStatusOf(ctx) {
  * the period) and the per-student rows (in memory only). parsed null = AI context query failed.
  * runs: the period's Actions runs (null = failed), CI evidence for the badge's tests/CI criterion.
  */
-function analyzeTeamAi(history, prs, runs, parsed, authorship, period) {
+function analyzeTeamAi(history, prs, runs, parsed, authorship, period, contextUnsupported) {
   const ctx = classroomAiContext(parsed, authorship);
   const commits = history ? history.nodes.map(fromGraphqlCommit) : null;
   return {
@@ -136,6 +140,8 @@ function analyzeTeamAi(history, prs, runs, parsed, authorship, period) {
         prLimit: Infinity,
       }),
       withToken: true, // Classroom always runs with a token
+      // No AI context fetcher on this platform (GitLab for now): not a token or request problem
+      ...(contextUnsupported && { contextUnsupported: true }),
     },
     students: {
       ...analyzeStudents(commits, authorship, period, ctx?.templatePaths ?? null),
@@ -148,10 +154,11 @@ function analyzeTeamAi(history, prs, runs, parsed, authorship, period) {
  * One table row from the settled fetches of a repository. Each part fails on
  * its own (null → N/A in that column only).
  * @param {{history, prs, runs, releases}} results - Promise.allSettled results
- * @param {{ctx?: object|null, authorship?: Array|null}} ai - parseAiRepoContext result (null = context
- *   query failed) and fetchAiConfigAuthorship result ([] = nothing to ask, null = failed)
+ * @param {{ctx?: object|null, authorship?: Array|null, contextUnsupported?: boolean}} ai - parseAiRepoContext
+ *   result (null = context query failed or unsupported), fetchAiConfigAuthorship result ([] = nothing to
+ *   ask, null = failed), and whether the platform has no AI context query at all
  */
-export function analyzeTeamRepo(results, period, { ctx = null, authorship = null } = {}) {
+export function analyzeTeamRepo(results, period, { ctx = null, authorship = null, contextUnsupported = false } = {}) {
   const prs = settled(results.prs);
   const review = prs ? analyzeReviewMetrics(prs.stats, 'error', { limit: Infinity }) : null;
   const leadTime = prs ? analyzeLeadTime(prs.stats, 'graphql', { limit: Infinity }) : null;
@@ -172,6 +179,6 @@ export function analyzeTeamRepo(results, period, { ctx = null, authorship = null
       : { available: false, reason: 'error' },
     ci: analyzeCiRuns(settled(results.runs), { events: CLASSROOM_CI_EVENTS }),
     releases: releasesInPeriod(settled(results.releases), period),
-    ...analyzeTeamAi(settled(results.history), prs, settled(results.runs), ctx, authorship, period),
+    ...analyzeTeamAi(settled(results.history), prs, settled(results.runs), ctx, authorship, period, contextUnsupported),
   };
 }
