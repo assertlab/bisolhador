@@ -1,6 +1,6 @@
 {
   "errors": {
-    "privateRepo": "This repository is private. Bisolhador only works with public repositories, since analyzed data may be shared publicly.",
+    "privateRepo": "This repository is private. Benchmark compares saved history, and analyses of private repositories are never saved. Analyze it on the Dashboard or in Classroom Mode, with your token.",
     "repoInputInvalid": "Invalid repository address. Use owner/repo for GitHub, or the full address (with the host) for GitLab.",
     "repoHostRequired": "This path has more than two levels, which only exists on GitLab. Include the host, for example gitlab.com/group/subgroup/project.",
     "repoHostNotAllowed": "This address is neither GitHub nor a GitLab instance enabled in Bisolhador, so it was not analyzed.",
@@ -14,11 +14,10 @@
     "chunkLoad": "This page could not be loaded, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page to try again.",
     "pageCrash": "Something went wrong showing this page. Reload to try again; if it persists, use the menu to go to another page.",
     "lazyTexts": "Could not load the texts of this page, probably because of a network failure or because Bisolhador was updated after it was opened. Reload the page and try again.",
-    "gitlabNotPublic": "This GitLab project is not public (internal or private visibility). The Dashboard only analyzes public projects, since the data may be shared. Internal and private projects can be analyzed in Classroom Mode, with your token, with nothing saved.",
     "visibilityUnknown": "Couldn't confirm whether this project is public (the response didn't include its visibility). For safety, it wasn't analyzed. Try again in a moment.",
     "tokenRejected": "{{host}} rejected the token saved in this browser (invalid, revoked or expired). Check or replace it in the settings (⚙️ icon); without a token, only public projects are analyzed.",
-    "repoNotFound": "Repository not found on GitHub, or private with no access through your token. Check the owner and the name; private repositories are only analyzed in Classroom Mode.",
-    "repoNotFoundGitlab": "Project not found on {{host}}. Check the path; if the project is internal or private, it doesn't show up without logging in: analyze it in Classroom Mode, with a token for the instance.",
+    "repoNotFound": "Repository not found on GitHub, or private with no access through your token. Check the owner and the name; to analyze a private repository, save a token with access to it in the settings (⚙️ icon).",
+    "repoNotFoundGitlab": "Project not found on {{host}}. Check the path; if the project is internal or private, it doesn't show up without logging in: save a read_api token for the instance in the settings (⚙️ icon).",
     "repoNotFoundGitlabToken": "Project not found on {{host}}, or your token for that instance has no access to it. Check the path and whether your account is a member of the project.",
     "rateLimited": "{{host}} hit its request limit for now. Try again in a few minutes.",
     "rateLimited_noToken": "{{host}} hit its request limit for now. Try again in a few minutes; without a token, GitHub allows 60 per hour, and with one (⚙️ icon), 5,000.",
@@ -451,7 +450,7 @@
     },
     "token": {
       "title": "Why configure tokens?",
-      "description": "GitHub: without a token the limit is 60 requests per hour; with a Personal Access Token, 5,000. GitLab: on the Dashboard, public projects work without a token. In Classroom Mode, each platform in the list needs a token (on GitLab, a read_api one per instance); it is what gives access to internal and private projects.",
+      "description": "GitHub: without a token the limit is 60 requests per hour; with a Personal Access Token, 5,000. GitLab: on the Dashboard, public projects work without a token. The token is what gives access to private (and, on GitLab, internal) repositories on the Dashboard and in Classroom Mode; in Classroom Mode, each platform in the list needs one (on GitLab, a read_api one per instance).",
       "warning": {
         "important": "Important:",
         "message": "Tokens are saved only in your browser and are never sent to our servers; each GitLab token is only sent to its own instance."
@@ -479,7 +478,7 @@
     },
     "gitlab": {
       "title": "GitLab projects",
-      "text": "On the Dashboard, only public GitLab projects are analyzed, and the analysis isn't saved (no permanent link, Timeline, Benchmark or Ranking). Internal and private projects can be analyzed in Classroom Mode. Some metrics are computed differently on GitLab: see \"Differences on GitLab\" in How to interpret."
+      "text": "On the Dashboard, public GitLab projects are analyzed without a token, and internal and private ones with the instance's token. GitLab analyses aren't saved (no permanent link, Timeline, Benchmark or Ranking). Some metrics are computed differently on GitLab: see \"Differences on GitLab\" in How to interpret."
     },
     "classroom": {
       "title": "Classroom Mode",
@@ -587,6 +586,7 @@
     "errorNoData": "Error: Data not saved. Try reloading the page.",
     "errorNotSaved": "This result wasn't saved because some indicators couldn't be loaded (see the partial-data warning), so there's no permanent link. Try again in a moment or set a GitHub token.",
     "errorGeneral": "Error generating share link",
+    "notSavedPrivate": "Analyses of private repositories are never saved, so there is no permanent link. This page's address only shows the analysis to people with access to the repository and a saved token.",
     "notSavedGitlab": "GitLab project analyses aren't saved yet, so there is no permanent link. Copy this page's address to share the live analysis."
   },
   "snapshot": {
@@ -870,5 +870,8 @@
   },
   "gitlab": {
     "notice": "GitLab project ({{host}}). History (permanent link, Timeline and Benchmark) doesn't exist for GitLab yet: this analysis is not saved. The Ranking is GitHub-only. Contributors, weekly activity, weekdays and churn are computed from the commits of the last 12 months."
+  },
+  "privateNotice": {
+    "text": "Private repository (on GitLab, private or internal), analyzed with your token. Nothing from this analysis is saved in Bisolhador, and Google Analytics stays off on this page until it is closed. Anyone opening this address only sees the analysis if they have access to the repository. Exported PDF, CSV and JSON files contain the data: share them only with people who already have access."
   }
 }

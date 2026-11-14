@@ -163,6 +163,7 @@
         "registry": "Registro de ferramentas de IA: versão {{registry}}.",
         "live": "Dados lidos do GitHub no momento da análise ({{date}}). Os números mudam com o tempo.",
         "snapshot": "Registro salvo em {{date}}: são os números daquele dia, não o estado atual do GitHub. Itens que a versão da época não media aparecem como não registrados.",
+        "private": "Repositório privado (no GitLab, privado ou interno), lido com o token de quem gerou este relatório. A análise não foi gravada no Bisolhador; este PDF contém os dados e só deve ser compartilhado com quem já tem acesso ao repositório.",
         "nd": "N/A e n/d significam que o dado não pôde ser medido (falha da API, falta de token ou fonte ausente), nunca zero. \"Não verificado\" significa que a checagem não pôde ser feita.",
         "samples": "Indicadores de PRs usam amostras limitadas dos PRs mergeados mais recentes e dependem de token do GitHub; commits, contribuidores e atividade seguem as janelas descritas em cada seção.",
         "ai": "Sem rastro não significa sem IA. A seção de IA e o selo medem práticas observáveis, não o uso real, e não identificam pessoas.",

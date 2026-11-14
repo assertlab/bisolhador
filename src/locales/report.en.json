@@ -163,6 +163,7 @@
         "registry": "AI tool registry: version {{registry}}.",
         "live": "Data read from GitHub at the time of the analysis ({{date}}). The numbers change over time.",
         "snapshot": "Record saved on {{date}}: the numbers of that day, not the current state of GitHub. Items the version of the time did not measure appear as not recorded.",
+        "private": "Private repository (on GitLab, private or internal), read with the token of whoever generated this report. The analysis was not saved in Bisolhador; this PDF contains the data and should only be shared with people who already have access to the repository.",
         "nd": "N/A and n/a mean the data could not be measured (API failure, missing token or missing source), never zero. \"Not verified\" means the check could not be done.",
         "samples": "PR indicators use limited samples of the most recent merged PRs and need a GitHub token; commits, contributors and activity follow the windows described in each section.",
         "ai": "No trace does not mean no AI. The AI section and the badge measure observable practices, not actual use, and do not identify people.",

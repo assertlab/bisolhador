@@ -48,6 +48,8 @@ describe('buildRepoReportModel', () => {
     expect(live.header).toMatchObject({ fullName: 'o/r', description: 'desc', language: 'JavaScript', isSnapshot: false, branches: 3, releases: 2 });
     expect(live.header.age).toContain('repo.ageYears');
     expect(model(full(), { isSnapshot: true }).header.isSnapshot).toBe(true);
+    expect(live.header.private).toBe(false);
+    expect(model({ ...full(), private: true }).header.private).toBe(true);
     expect(model({ ...full(), description: null }).header.description).toBe('repo.noDescription');
   });
 

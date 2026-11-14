@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // The whole data pipeline with the GitHub layer mocked: which requests are
 // made, what the report says and whether the snapshot is saved.
-const { github, gitlab, saveSearch, hasToken } = vi.hoisted(() => ({ github: {}, gitlab: {}, saveSearch: vi.fn(), hasToken: { value: false } }));
+const { github, gitlab, saveSearch, disableAnalytics, hasToken } = vi.hoisted(() => ({ github: {}, gitlab: {}, saveSearch: vi.fn(), disableAnalytics: vi.fn(), hasToken: { value: false } }));
 vi.mock('../services/githubService.js', () => ({ githubService: github }));
 vi.mock('../services/gitlabService.js', () => ({ createGitlabService: () => gitlab }));
 vi.mock('../services/tokens.js', () => ({ hasToken: () => hasToken.value }));
-vi.mock('../services/analytics.js', () => ({ default: { saveSearch } }));
+vi.mock('../services/analytics.js', () => ({ default: { saveSearch, disable: disableAnalytics } }));
 vi.mock('../i18n.js', () => ({ default: { t: (key) => key }, intlLocale: () => 'pt-BR' }));
 vi.mock('../lib/chartSetup.js', () => ({ ensureChartSetup: () => Promise.resolve() }));
 
@@ -74,6 +74,25 @@ describe('fetchRepositoryData: read-only mirrors and contributors GitHub won\'t 
     expect(report.contributors).toBeNull();
     expect(saveSearch).toHaveBeenCalledOnce();
     expect(report.searchId).toBe(42);
+  });
+
+  it('a private repository is analyzed (with the token that can read it), never saved, and GA goes off', async () => {
+    disableAnalytics.mockReset();
+    const linux = () => ({ full_name: 'torvalds/linux', private: false, default_branch: 'master', created_at: '2011-09-04T22:48:12Z', owner: { type: 'User' }, has_pull_requests: false, has_issues: false });
+    mockLinux({ fetchRepository: vi.fn(async () => ({ ...linux(), private: true })) });
+    const report = await fetchRepositoryData('torvalds/linux');
+    expect(report).toMatchObject({ private: true, searchId: null });
+    expect(github.fetchCommits).toHaveBeenCalled();
+    expect(saveSearch).not.toHaveBeenCalled();
+    expect(disableAnalytics).toHaveBeenCalled();
+
+    // the same repository public: saved, GA untouched, no `private` field
+    disableAnalytics.mockReset();
+    mockLinux({ fetchRepository: vi.fn(async () => linux()) });
+    const pub = await fetchRepositoryData('torvalds/linux');
+    expect(pub).not.toHaveProperty('private');
+    expect(saveSearch).toHaveBeenCalledOnce();
+    expect(disableAnalytics).not.toHaveBeenCalled();
   });
 
   it('any other contributor failure still warns and blocks the snapshot', async () => {
@@ -227,11 +246,18 @@ describe('fetchRepositoryData: GitLab', () => {
     expect(report.codeReview.reason).not.toBe('noToken');
   });
 
-  it.each(['internal', 'private'])('a %s project is refused before any other request (internal counts as private)', async (visibility) => {
-    mockGitlab({ fetchRepository: vi.fn(async () => ({ full_name: 'g/p', private: true, visibility })) });
-    await expect(fetchRepositoryData('gitlab.com/g/p')).rejects.toMatchObject({ code: 'PRIVATE_REPO_UNSUPPORTED', message: 'errors.gitlabNotPublic', final: true });
-    expect(gitlab.fetchCommits).not.toHaveBeenCalled();
+  it.each(['internal', 'private'])('a %s project is analyzed as private (internal counts as private): never saved, GA off', async (visibility) => {
+    disableAnalytics.mockReset();
+    hasToken.value = true;
+    mockGitlab({
+      fetchRepository: vi.fn(async () => ({ full_name: 'g/p', private: true, visibility, default_branch: 'main', created_at: '2020-01-01T00:00:00Z', owner: { type: 'Organization' }, has_issues: true, has_pull_requests: true })),
+      fetchPullRequestReviewStats: vi.fn(async () => []), fetchBranchActivity: vi.fn(async () => ({ totalCount: 2, branches: [], capped: false })), fetchTagDates: vi.fn(async () => ({ total: 0, dates: [], fullPage: false })),
+    });
+    const report = await fetchRepositoryData('gitlab.com/g/p');
+    expect(report).toMatchObject({ private: true, provider: 'gitlab', searchId: null });
+    expect(gitlab.fetchCommits).toHaveBeenCalled();
     expect(saveSearch).not.toHaveBeenCalled();
+    expect(disableAnalytics).toHaveBeenCalled();
   });
 
   it('the REST MR list (lead-time fallback) is requested only when the review query fails', async () => {

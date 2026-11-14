@@ -16,11 +16,12 @@ Decisões do mantenedor (2026-11-11):
 Decisão de 2026-11-12:
 
 - **Token:** só token **legado** com `read_api`. Tokens fine-grained (beta) ficam fora da 1ª entrega (seção 2.1).
-- **Visibilidade `internal` = privado.** Um projeto GitLab só conta como público com `visibility: public`. `internal` e `private` seguem a regra dos repositórios privados do GitHub: o Dashboard recusa, só a Turma analisa (ao vivo, com o token de quem usa) e nada vai para o Supabase. Visibilidade ausente ou desconhecida bloqueia a análise (fail-closed). Motivo: `internal` restringe o conteúdo a quem tem login na instância, e gravar as métricas desses projetos num banco público expõe o que a instância protege. A análise de um projeto só de aluno é feita pela Turma com uma lista de 1 projeto.
+- **Visibilidade `internal` = privado.** Um projeto GitLab só conta como público com `visibility: public`. `internal` e `private` seguem a regra dos repositórios privados do GitHub: analisados ao vivo com o token de quem usa (na Turma e, desde 2026-11-14, também no Dashboard) e nada vai para o Supabase. Visibilidade ausente ou desconhecida bloqueia a análise (fail-closed). Motivo: `internal` restringe o conteúdo a quem tem login na instância, e gravar as métricas desses projetos num banco público expõe o que a instância protege. A análise de um projeto só de aluno era feita pela Turma com uma lista de 1 projeto; desde a decisão de 2026-11-14, abaixo, é feita no Dashboard.
 
 Decisão de 2026-11-14:
 
 - **O GitLab não entra no Ranking.** O Ranking continua só com repositórios do GitHub, inclusive depois da Fase 4, quando as análises do GitLab passarem a ser gravadas. Motivo: parte dos indicadores do GitLab é medida de outro jeito (health score pelas listagens dirigidas, séries a partir de commits, revisão por notas e aprovações), e uma lista única compararia números que não são equivalentes. A decisão é pública (README, guia "Diferenças no GitLab" e `AGENTS.md`) e só será revista com motivo novo.
+- **O Dashboard analisa projetos `internal` e `private`** (e repositórios privados do GitHub, por simetria), com o token de quem usa. Motivo: estudar a dinâmica de trabalho de cada equipe individualmente, o que o Modo Turma não faz nem pretende fazer. As garantias são as da Turma: nada é gravado (inclusive depois da Fase 4, quando só `visibility: public` poderá ser gravado), o Google Analytics fica desligado antes de o nome ir para a URL sempre que há token para o host, e a página avisa. Feito na v3.31.0.
 
 ---
 
@@ -354,7 +355,7 @@ Dividida em dois PRs. **PR 1 (feito, 2026-11-12):**
 - ✅ Health score pelas listagens dirigidas (raiz e `.gitlab/`), não pela árvore.
 - ✅ Métricas de MR via GraphQL (duas consultas: núcleo e tamanho) e CI via pipelines. Revisão, branches zumbis e datas das tags funcionam **sem token** no GitLab (`detailsWithoutToken`), medido no gitlab-runner e no CIn.
 - ✅ `report.provider/host`, sem persistência (bloqueio `provider gitlab`), com aviso na UI; botão da Timeline escondido e o Compartilhar explica que não há link permanente.
-- ✅ `internal` e `private` recusados no Dashboard (`errors.gitlabNotPublic`).
+- ✅ `internal` e `private` recusados no Dashboard (`errors.gitlabNotPublic`). **Revisto em 2026-11-14 (v3.31.0):** passam a ser analisados com token, sem gravar (ver "Contexto e decisões").
 - ✅ CSP com a allow-list (plugin `gitlab-csp-hosts` no `vite.config.js`), `VITE_GITLAB_HOSTS` no `deploy.yml` e no job `smoke`, e um terceiro fluxo no `scripts/csp-smoke-test.mjs` com o gitlab.com simulado.
 - ✅ Seção GitLab no `SettingsModal`: um token por host, validado ao salvar (`/personal_access_tokens/self`).
 - ✅ **Teste manual (navegador, build de produção, 2026-11-12):** `gitlab-org/gitlab-runner` (43 requisições, ~12 s, todos os indicadores de revisão preenchidos), `lgpss-in1054/ns3_code` (35 requisições, ~7 s) e um projeto `internal` de aluno (recusado com 2 requisições). Zero violação de CSP, zero erro de página, nada gravado.
@@ -384,7 +385,7 @@ Feita em 2026-11-12 (v3.27.0):
 - Versionar antes `obter_snapshot` e o DDL de `analytics_searches`.
 - Migração com `provider text default 'github'` e `host text default 'github.com'`.
 - Novas assinaturas das RPCs (DROP + CREATE, atenção ao PGRST203 de overload ambíguo) com chave `(provider, host, lower(repo_name))`.
-- Ligar `saveSearch` para o GitLab.
+- Ligar `saveSearch` para o GitLab, **só para `visibility: public`** (privados e internos nunca são gravados, decisão de 2026-11-14).
 - Timeline com rota splat + host; Benchmark com filtro e rótulo de plataforma.
 - **Ranking só com o GitHub** (decisão de 2026-11-14): o `get_leaderboard` passa a filtrar `provider = 'github'`, para que as análises do GitLab gravadas a partir desta fase não apareçam lá.
 

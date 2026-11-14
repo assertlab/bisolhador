@@ -133,17 +133,17 @@ export async function fetchRepositoryData(repoName) {
         throw new Error('Não foi possível buscar informações do repositório');
     }
 
-    // Privacy gate: never process or persist data from private repositories,
-    // regardless of the PAT having read access to them. Must run before any
-    // of the 15+ parallel fetches below and before analytics.saveSearch.
+    // Privacy gate (decided 2026-11-14): private repositories (GitHub private; GitLab internal or
+    // private, i.e. anything not "public") are analyzed live with the user's own token — it only
+    // reads what that person can already see — and NEVER persisted: `private` blocks saveSearch
+    // below, fail-closed (anything but `false`). GA is switched off before the name reached the
+    // URL (analytics.disableIfPrivateSearch); here again, in case the search came another way.
     // Visibility the API didn't tell: refuse (fail-closed), retryable.
     if (typeof repoData.private !== 'boolean') {
         throw Object.assign(new Error(i18n.t('errors.visibilityUnknown')), { code: 'VISIBILITY_UNKNOWN' });
     }
-    // GitLab: anything not public (internal = only for people logged in to the instance) counts as private.
-    if (repoData.private === true) {
-        throw inputError('PRIVATE_REPO_UNSUPPORTED', requested.provider === 'gitlab' ? 'errors.gitlabNotPublic' : 'errors.privateRepo');
-    }
+    const isPrivate = repoData.private !== false;
+    if (isPrivate) analytics.disable();
 
     // Canonical name from here on: /repos follows renames (facebook/react →
     // react/react), but the Search API does not — querying the typed name gave
@@ -356,6 +356,8 @@ export async function fetchRepositoryData(repoName) {
       // GitHub reports from before v3.26.0 have neither: read as GitHub.
       provider: ref.provider,
       host: ref.host,
+      // Analyzed with the user's token, never saved (the page shows a notice; no permalink nor Timeline)
+      ...(isPrivate && { private: true }),
       // Typed name when it differs (renamed repo): Timeline merges its history
       ...(requested.path.toLowerCase() !== fullName.toLowerCase() && { searchedName: requested.path }),
       url: repoWebUrl(ref),
@@ -421,6 +423,8 @@ export async function fetchRepositoryData(repoName) {
     // blocking kept repositories like torvalds/linux out of the history for good.
     // They are saved as unavailable (busFactor.reason 'tooLarge'), never as zero.
     const blockers = warnings.filter((w) => PERSIST_BLOCKERS.includes(w));
+    // Private repositories are never persisted (privacy gate above). Kept first and unconditional.
+    if (repoData.private !== false) blockers.unshift('private repository');
     // Fallback contributor data (all-time, no window) is a different method:
     // persisting it would mix methods in Timeline/Benchmark history.
     if (contributorAnalysis?.partial) blockers.push('contributors (partial)');

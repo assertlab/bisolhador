@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.31.0] - 2026-11-14
+
+### ✨ Added
+
+- **O Dashboard analisa repositórios privados** do GitHub e projetos internos e privados do GitLab (gitlab.com e instâncias habilitadas), com o token de quem usa, para estudar a dinâmica de trabalho de cada equipe individualmente, o que o Modo Turma não faz. Decisão do mantenedor de 2026-11-14; antes, o Dashboard recusava esses repositórios e apontava o Modo Turma.
+  - **Nada é gravado.** `private repository` é sempre bloqueio de persistência (fail-closed: só `private === false` pode ser gravado), também para o GitLab depois da fase 4 do histórico. Sem link permanente nem Linha do Tempo; o botão Compartilhar explica por quê.
+  - **Google Analytics desligado antes de o nome ir para a URL.** Só se sabe que um repositório é privado depois da 1ª requisição, mas o nome já está em `?q=`, e a medição aprimorada do GA4 o enviaria. Por isso, sempre que há token para o host buscado, o GA é desligado antes da busca entrar na URL (também ao abrir um link `/?q=` direto) e fica desligado até a página ser fechada, como no Modo Turma. Sem token, um repositório privado nem pode ser lido.
+  - **Aviso na tela e no PDF:** a análise foi feita com o seu token, não é gravada, e os arquivos exportados contêm os dados.
+  - Benchmark, Linha do Tempo e Ranking continuam só com repositórios públicos, porque leem o histórico gravado. A mensagem do Benchmark para privados passa a dizer isso.
+- Textos atualizados (pt e en): mensagens de "não encontrado" (salvar um token, em vez de usar o Modo Turma), ajuda sobre tokens e GitLab, guias do Modo Turma e de *Diferenças no GitLab*, README e `AGENTS.md` (segurança, GA4 e decisões). A mensagem `errors.gitlabNotPublic` saiu.
+
+### 🧪 Tests
+
+- `fetchRepositoryData`: repositório privado do GitHub e projetos `internal`/`private` do GitLab analisados, sem `saveSearch`, com o GA desligado; o mesmo repositório público continua gravado. `analytics`: `searchMayBePrivate` (token por plataforma e host; entrada inválida nunca conta), GA desligado na busca e no carregamento de `/?q=` com token, mantido sem token. Modelo do PDF com `header.private`.
+
+---
+
 ## [3.30.0] - 2026-11-14
 
 ### ✨ Changed
