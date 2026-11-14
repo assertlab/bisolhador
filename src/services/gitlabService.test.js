@@ -325,11 +325,46 @@ describe('createGitlabService: Classroom', () => {
     routes = [['/pipelines?scope=finished&created_after=', reply([
       { source: 'push', ref: 'main', status: 'success' }, { source: 'push', ref: 'dev', status: 'failed' },
       { source: 'merge_request_event', ref: 'refs/merge-requests/1/head', status: 'failed' },
-    ])]];
+    ])], ['/merge_requests?', reply([{ iid: 1, project_id: 7, source_project_id: 7, target_branch: 'main', author: { username: 'ana' } }])]];
     const runs = await createGitlabService('gitlab.com').fetchCiRunsInPeriod('g', 'p', 'main', '2026-08-01', '2026-11-30');
     expect(calls[0].url).toContain('created_after=2026-08-01T00%3A00%3A00Z&created_before=2026-11-30T23%3A59%3A59Z');
     expect(runs).toMatchObject({ total_count: 2, capped: false });
     expect(runs.workflow_runs.map((r) => [r.event, r.conclusion])).toEqual([['push', 'success'], ['pull_request', 'failure']]);
+  });
+
+  it('CI of the period: MR pipelines from forks, Dependabot/Renovate or to another branch are left out; agents count', async () => {
+    const mrPipeline = (iid, suffix = 'head') => ({ source: 'merge_request_event', ref: `refs/merge-requests/${iid}/${suffix}`, status: 'success' });
+    routes = [
+      ['/pipelines?scope=finished', reply([mrPipeline(1), mrPipeline(1, 'merge'), mrPipeline(2), mrPipeline(3), mrPipeline(4), mrPipeline(5), mrPipeline(6), mrPipeline(9)])],
+      ['/merge_requests?', reply([
+        { iid: 1, project_id: 7, source_project_id: 7, target_branch: 'main', author: { username: 'ana' } },
+        { iid: 2, project_id: 7, source_project_id: 99, target_branch: 'main', author: { username: 'outsider' } },
+        { iid: 3, project_id: 7, source_project_id: 7, target_branch: 'main', author: { username: 'renovate-bot', name: 'Renovate Bot' } },
+        { iid: 4, project_id: 7, source_project_id: 7, target_branch: 'main', author: { username: 'project_7_bot_ab12', name: 'Dependabot' } },
+        { iid: 5, project_id: 7, source_project_id: 7, target_branch: 'dev', author: { username: 'ana' } },
+        { iid: 6, project_id: 7, source_project_id: 7, target_branch: 'main', author: { username: 'GitLabDuo', name: 'GitLab Duo' } },
+      ])],
+    ];
+    const runs = await createGitlabService('gitlab.com').fetchCiRunsInPeriod('g', 'p', 'main', '2026-08-01', '2026-11-30');
+    const lookup = calls.filter((c) => c.url.includes('/merge_requests?'));
+    expect(lookup).toHaveLength(1);
+    expect(decodeURIComponent(lookup[0].url)).toContain('state=all&per_page=100&iids[]=1&iids[]=2&iids[]=3&iids[]=4&iids[]=5&iids[]=6&iids[]=9');
+    // kept: MR 1 (twice: head and merge refs), the agent's MR 6, and MR 9 (not returned: unknown, kept)
+    expect(runs.total_count).toBe(4);
+  });
+
+  it('CI of the period: no MR pipelines, no MR request', async () => {
+    routes = [['/pipelines?scope=finished', reply([{ source: 'push', ref: 'main', status: 'success' }])]];
+    expect((await createGitlabService('gitlab.com').fetchCiRunsInPeriod('g', 'p', 'main', '2026-08-01', '2026-11-30')).total_count).toBe(1);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('CI of the period: the MR lookup failing fails the CI (never MR pipelines counted unfiltered)', async () => {
+    routes = [
+      ['/pipelines?scope=finished', reply([{ source: 'merge_request_event', ref: 'refs/merge-requests/1/head', status: 'success' }])],
+      ['/merge_requests?', reply({ message: '404' }, { status: 404 })],
+    ];
+    await expect(createGitlabService('gitlab.com').fetchCiRunsInPeriod('g', 'p', 'main', '2026-08-01', '2026-11-30')).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   it('CI/CD turned off (403/404) is "no pipelines", not a failure', async () => {

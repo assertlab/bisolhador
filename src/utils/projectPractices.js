@@ -50,7 +50,7 @@ export function analyzeCiRuns(response, { events = ['push'] } = {}) {
 }
 
 /** Triggers the Classroom CI indicator counts (see ciRunsForBranch). */
-const DEPENDENCY_BOTS = /^(dependabot|renovate)/i;
+export const DEPENDENCY_BOTS = /^(dependabot|renovate)/i;
 
 export const CLASSROOM_CI_EVENTS = ['push', 'pull_request', 'merge_group'];
 
