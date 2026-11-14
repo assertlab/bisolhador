@@ -3,6 +3,7 @@
 // (docs/ESTUDO_GITLAB.md, section 3.2). Pure functions; the requests are in
 // services/gitlabService.js.
 import { isBotName } from './contributors.js';
+import { DEPENDENCY_BOTS } from './projectPractices.js';
 
 export const WEEK_MS = 7 * 24 * 3600 * 1000;
 
@@ -92,14 +93,30 @@ export function toHistoryNode(c) {
   };
 }
 
+// refs/merge-requests/<iid>/head (or /merge, /train): the MR a pipeline ran for.
+const MR_REF = /^refs\/merge-requests\/(\d+)\//;
+export const mergeRequestIidOf = (ref) => {
+  const m = MR_REF.exec(ref ?? '');
+  return m ? Number(m[1]) : null;
+};
+
 /**
- * Classroom CI on GitLab: the period's finished pipelines that exercise the
- * default branch — pushes to it and merge request pipelines (their ref is
- * refs/merge-requests/<iid>/head; the target branch isn't in the pipeline
- * list, and student MRs target the default branch in practice).
+ * Classroom CI on GitLab, the same rule as GitHub's ciRunsForBranch: the period's finished pipelines
+ * that exercise the default branch — pushes to it and merge request pipelines. The pipeline list
+ * doesn't say who opened the MR, so `mrs` (iid → MR from GET /merge_requests) tells: an MR from a
+ * fork (source project ≠ target project), opened by Dependabot or Renovate, or targeting another
+ * branch is left out; other bots (coding agents) are the team's work and count. An MR pipeline
+ * whose MR wasn't returned (deleted) stays, like GitHub's PR runs with no target reported.
  */
-export const classroomPipelines = (pipelines, branch) => (pipelines ?? [])
-  .filter((p) => (p.source === 'push' && p.ref === branch) || p.source === 'merge_request_event');
+export const classroomPipelines = (pipelines, branch, mrs = new Map()) => (pipelines ?? []).filter((p) => {
+  if (p.source === 'push') return p.ref === branch;
+  if (p.source !== 'merge_request_event') return false;
+  const mr = mrs.get(mergeRequestIidOf(p.ref));
+  if (!mr) return true;
+  const fromFork = mr.source_project_id != null && mr.project_id != null && mr.source_project_id !== mr.project_id;
+  const dependencyBot = DEPENDENCY_BOTS.test(mr.author?.username ?? '') || DEPENDENCY_BOTS.test(mr.author?.name ?? '');
+  return !fromFork && !dependencyBot && (!mr.target_branch || mr.target_branch === branch);
+});
 
 // Local day of week and hour of an ISO date as written ("…T10:05:00.000-03:00"):
 // the author's own time zone, like GitHub's punch card.

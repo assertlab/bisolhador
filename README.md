@@ -45,6 +45,9 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 
 ## 🔄 Últimas Atualizações
 
+### v3.30.0 - CI da Turma no GitLab com a mesma regra do GitHub
+- **✨ Pipelines de MRs de forks, do Dependabot ou do Renovate e com outro branch de destino deixam de contar** no CI da Turma em projetos do GitLab, como já era no GitHub
+
 ### v3.29.3 - Projetos grandes do GitLab carregam mais rápido
 - **⚡ Páginas buscadas em paralelo:** árvore, commits do ano, branches, pipelines e projetos de um grupo do GitLab pedem até 3 páginas de cada vez, em vez de uma por vez
 

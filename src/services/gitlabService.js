@@ -9,7 +9,7 @@ import { getToken, tokenRejectedError, rateLimitedError } from './tokens.js';
 import {
   toRepoData, toRestCommit, weeklySeries, punchCard, codeFrequency, contributorStats,
   profileFromListings, toRestPullRequest, toReviewNodes, toWorkflowRuns, toRelease, isGitlabBot, WEEK_MS,
-  toHistoryNode, classroomPipelines,
+  toHistoryNode, classroomPipelines, mergeRequestIidOf,
 } from '../utils/gitlabData.js';
 import { toPullRequestStats } from '../utils/prReviewStats.js';
 import {
@@ -403,6 +403,9 @@ export function createGitlabService(host) {
     // doesn't move them) that exercise the default branch (classroomPipelines),
     // as Actions runs. `capped` = more than the pages read. CI/CD turned off
     // (403/404 on page 1) = no pipelines, as Actions disabled on GitHub.
+    // MR pipelines don't say who opened the MR: their MRs are read (iids[], up to
+    // 100 per request, usually one) to leave out forks, Dependabot/Renovate and
+    // other target branches. That read failing fails the CI (never counted unfiltered).
     async fetchCiRunsInPeriod(owner, repo, branch, fromDate, toDate) {
       let result;
       try {
@@ -415,7 +418,17 @@ export function createGitlabService(host) {
         throw error;
       }
       const { items, capped } = result;
-      const kept = classroomPipelines(items, branch);
+      const iids = [...new Set(items.filter((p) => p.source === 'merge_request_event').map((p) => mergeRequestIidOf(p.ref)).filter(Number.isInteger))];
+      const mrs = new Map();
+      for (let i = 0; i < iids.length; i += GITLAB_PER_PAGE) {
+        const query = iids.slice(i, i + GITLAB_PER_PAGE).map((iid) => `iids[]=${iid}`).join('&');
+        const list = await withExponentialBackoff(
+          () => json(`/projects/${projectId(owner, repo)}/merge_requests?state=all&per_page=${GITLAB_PER_PAGE}&${query}`, 'merge requests of pipelines'),
+          2, 1000,
+        );
+        for (const mr of Array.isArray(list) ? list : []) mrs.set(mr.iid, mr);
+      }
+      const kept = classroomPipelines(items, branch, mrs);
       return { ...toWorkflowRuns(kept, kept.length), capped };
     },
 

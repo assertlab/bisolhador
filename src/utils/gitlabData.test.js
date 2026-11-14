@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   isGitlabBot, toRepoData, toRestCommit, weeklySeries, punchCard, codeFrequency, contributorStats,
-  profileFromListings, toRestPullRequest, toReviewNodes, toWorkflowRuns, toRelease, toHistoryNode, classroomPipelines,
+  profileFromListings, toRestPullRequest, toReviewNodes, toWorkflowRuns, toRelease, toHistoryNode, classroomPipelines, mergeRequestIidOf,
 } from './gitlabData.js';
 import { analyzeCommitHistory } from './classroom.js';
 import { fromGraphqlCommit } from './aiProcess.js';
@@ -204,5 +204,20 @@ describe('Classroom shapes', () => {
       { source: 'push', ref: 'main' }, { source: 'push', ref: 'feature' }, { source: 'merge_request_event', ref: 'refs/merge-requests/3/head' }, { source: 'schedule', ref: 'main' },
     ], 'main');
     expect(kept.map((p) => p.source + ':' + p.ref)).toEqual(['push:main', 'merge_request_event:refs/merge-requests/3/head']);
+  });
+
+  it('classroomPipelines with the MRs: forks, Dependabot/Renovate and other targets out, as GitHub\'s ciRunsForBranch', () => {
+    const mrs = new Map([
+      [1, { project_id: 7, source_project_id: 7, target_branch: 'main', author: { username: 'ana' } }],
+      [2, { project_id: 7, source_project_id: 8, target_branch: 'main', author: { username: 'ana' } }],
+      [3, { project_id: 7, source_project_id: 7, target_branch: 'main', author: { username: 'dependabot' } }],
+      [4, { project_id: 7, source_project_id: 7, target_branch: 'release', author: { username: 'ana' } }],
+    ]);
+    const mr = (iid) => ({ source: 'merge_request_event', ref: `refs/merge-requests/${iid}/head` });
+    expect(classroomPipelines([mr(1), mr(2), mr(3), mr(4), mr(5)], 'main', mrs).map((p) => mergeRequestIidOf(p.ref))).toEqual([1, 5]);
+  });
+
+  it('mergeRequestIidOf: head, merge and train refs; anything else is null', () => {
+    expect(['refs/merge-requests/12/head', 'refs/merge-requests/3/merge', 'refs/merge-requests/4/train', 'main', undefined].map(mergeRequestIidOf)).toEqual([12, 3, 4, null, null]);
   });
 });

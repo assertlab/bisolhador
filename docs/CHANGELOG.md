@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.0] - 2026-11-14
+
+### ✨ Changed
+
+- **Turma com GitLab: o CI segue a mesma regra do GitHub.** Pipelines de merge request só contam quando o MR é do próprio projeto, não foi aberto pelo Dependabot nem pelo Renovate e tem como destino o branch principal. Antes, todos os pipelines de MR contavam, inclusive os de forks e de bots de dependência, porque a lista de pipelines do GitLab não informa quem abriu o MR nem o destino. Agora o Bisolhador lê esses MRs (`iids[]`, até 100 por requisição; em geral, uma requisição a mais por projeto e nenhuma quando não há pipeline de MR).
+  - Agentes de código (como o GitLab Duo) contam, como no GitHub: o trabalho deles é da equipe.
+  - Um pipeline cujo MR não volta na leitura (MR apagado) continua contando, como as execuções de PR do GitHub sem destino informado.
+  - Se a leitura dos MRs falha, o CI daquele projeto aparece como falha, em vez de contar os pipelines sem filtro.
+  - O guia *Diferenças no GitLab* (pt e en) foi atualizado.
+- Minor, e não patch: a coluna de CI da Turma pode mudar para projetos do GitLab que tenham MRs de forks ou de bots de dependência.
+
+### 🧪 Tests
+
+- `classroomPipelines` com os MRs (fork, Dependabot, outro destino, MR não devolvido), `mergeRequestIidOf` (refs `head`, `merge` e `train`) e `fetchCiRunsInPeriod` (uma leitura com todos os iids, nenhuma sem pipeline de MR, falha da leitura derruba o CI).
+
+---
+
 ## [3.29.3] - 2026-11-14
 
 ### ⚡ Performance
