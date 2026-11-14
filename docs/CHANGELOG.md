@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.2] - 2026-11-14
+
+### 📝 Documentation
+
+- **Projetos do GitLab não entram no Ranking** (decisão do mantenedor). O Ranking continua só com o GitHub, também depois que as análises do GitLab passarem a ser gravadas (fase 4): parte dos indicadores do GitLab é medida de outro jeito, e uma lista única compararia números que não são equivalentes. A decisão aparece no README, no `AGENTS.md`, no guia *Diferenças no GitLab* e no aviso do Dashboard para projetos do GitLab (os dois em pt e en); a fase 4 do `docs/ESTUDO_GITLAB.md` passa a prever o filtro `provider = 'github'` no `get_leaderboard`.
+- `docs/ESTUDO_GITLAB.md`: o cabeçalho diz que a 1ª entrega está concluída (dizia "nada implementado"), a pendência do token inválido sai da Fase 2 (resolvida na v3.27.2) e a nova seção "Estado em 2026-11-14" lista o que falta. O ROADMAP inclui a confirmação dos limites de taxa do gitlab.cin.ufpe.br.
+
+---
+
 ## [3.29.1] - 2026-11-12
 
 ### 🐛 Fixed

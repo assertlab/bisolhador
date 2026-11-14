@@ -11,7 +11,7 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 - **👥 Bus Factor**: Análise de risco de dependência de contribuidores com cálculo Pareto 70% e visualização de barra empilhada
 - **☢️ Análise de Risco de Equipe (Bus Factor)**: Card dedicado com número do Bus Factor, avatares dos key developers, classificação de risco (Crítico/Alto/Moderado/Saudável) e barra horizontal empilhada
 - **🔄 Dinâmica de Revisão**: Lead time e métricas de colaboração
-- **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução _(só GitHub, por enquanto: análises do GitLab ainda não são gravadas)_
+- **🏆 Leaderboard**: Ranking dos repositórios mais analisados com histórico de evolução _(só GitHub: projetos do GitLab não entram no Ranking, nem depois que suas análises passarem a ser gravadas, porque parte dos indicadores é medida de outro jeito no GitLab e a comparação não seria justa)_
 - **📖 Como interpretar**: definição, limitações e referência às métricas CHAOSS de cada indicador
 - **🎓 Modo Turma**: compare os repositórios das equipes de uma turma no período da disciplina, do GitHub e do GitLab na mesma tabela (privados e, no GitLab, internos também, com o token de quem usa, sem salvar nada); importa uma organização do GitHub ou um grupo do GitLab com subgrupos; exportação CSV e relatório PDF
 - **🤖 IA no Processo**: rastros de IA que a plataforma guarda (configuração de agentes versionada, coautoria declarada em commits, PRs abertos por agentes, revisões de bots de IA), com cruzamento entre as fontes e o selo "Uso responsável de IA"; tudo é limite inferior (sem rastro não quer dizer sem IA). Reconhece também Google Antigravity (`.agent/`), Pi (`.pi/`) e GitLab Duo (`.gitlab/duo/` e a revisão nos MRs). No GitLab, a origem template não é verificada, e commits de agentes do GitLab Duo (contas de serviço) ainda não são reconhecidos.
@@ -44,6 +44,9 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 - **O que muda no GitLab:** algumas métricas são calculadas a partir dos commits dos últimos 12 meses, a revisão usa notas e aprovações dos merge requests, e o CI usa os pipelines. Detalhes em *Como interpretar → Diferenças no GitLab* (`/guia#gitlab`).
 
 ## 🔄 Últimas Atualizações
+
+### v3.29.2 - GitLab fora do Ranking
+- **📝 Decisão registrada:** projetos do GitLab não entram no Ranking, nem depois que o histórico do GitLab existir. Dito no README, no guia *Diferenças no GitLab* e no aviso do Dashboard para projetos do GitLab
 
 ### v3.29.1 - Limite de requisições com mensagem própria
 - **🐛 Quando o GitHub ou o GitLab limita as chamadas**, a mensagem diz qual host e quando tentar de novo (no GitHub, o horário em que libera)
