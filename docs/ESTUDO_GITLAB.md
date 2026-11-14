@@ -403,7 +403,7 @@ Feita em 2026-11-12 (v3.27.1); `AGENTS.md`, `CHANGELOG` e o guia foram atualizad
 1ª entrega concluída e em produção. O que falta, em ordem de prioridade:
 
 1. **Confirmar com a administração do CIn os limites de taxa** do gitlab.cin.ufpe.br (Fase 0). A página pública indica que não há limite ativado, mas um limite no nginx não aparece lá.
-2. **Buscar páginas em paralelo** usando `x-total-pages`, para projetos grandes (como o gitlab-runner) carregarem mais rápido.
+2. ~~**Buscar páginas em paralelo**~~ (feito na v3.29.3). Depois da 1ª página, as seguintes vão em lotes de `GITLAB_PAGE_PARALLEL` (3), na ordem das páginas e sem passar do teto. Com `x-total-pages`, só as páginas que existem; sem ele (commits e, no gitlab.com, pipelines), o lote para na primeira página incompleta e gasta no máximo 2 requisições vazias.
 3. **CI da Turma sem MRs de bots e de forks:** a lista de pipelines não informa o autor, então é preciso cruzar com o MR.
 4. **IA no Processo:** reconhecer os commits de agentes do GitLab Duo, feitos por contas de serviço. A origem template continua não verificável no GitLab.
 5. **Fase 4 (histórico):** começa por um PR que só versiona o `obter_snapshot` e o DDL de `analytics_searches` em `supabase-migrations/`, sem mudar o banco. A migração com `provider`/`host` vem depois, em PR separado, já com o Ranking restrito ao GitHub.

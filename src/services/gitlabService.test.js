@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createGitlabService, checkGitlabToken } from './gitlabService.js';
-import { GITLAB_TREE_MAX_PAGES } from '../constants.js';
+import { GITLAB_TREE_MAX_PAGES, GITLAB_COMMIT_MAX_PAGES, GITLAB_PAGE_PARALLEL } from '../constants.js';
 
 // fetch is stubbed: each test lists the responses by URL fragment.
 const store = {};
@@ -216,6 +216,63 @@ describe('createGitlabService: requests', () => {
     ];
     const ctx = parseAiRepoContext(await createGitlabService('gitlab.com').fetchAiRepoContext('g', 'p'));
     expect(ctx.unverified).toContain('listings');
+  });
+});
+
+describe('createGitlabService: pages in parallel', () => {
+  const pageNumber = (url) => Number(new URL(url).searchParams.get('page'));
+  const treePage = (n, size = 100) => page(size, `p${n}-`);
+
+  it('X-Total-Pages known: pages 2+ requested together, only those that exist, kept in page order', async () => {
+    const pending = [];
+    routes = [['/repository/tree?recursive=true', (url) => {
+      const n = pageNumber(url);
+      if (n === 1) return reply(treePage(1), { headers: { 'x-total-pages': '4', 'x-total': '400' } });
+      return new Promise((resolve) => pending.push([n, () => resolve(reply(treePage(n)))]));
+    }]];
+    const result = createGitlabService('gitlab.com').fetchRepositoryTree('g', 'p', 'main');
+    await vi.waitFor(() => expect(pending).toHaveLength(Math.min(GITLAB_PAGE_PARALLEL, 3)));
+    // answers arrive out of order: the list still follows the pages
+    for (const [, resolve] of [...pending].reverse()) resolve();
+    await vi.waitFor(() => expect(pending).toHaveLength(3));
+    for (const [, resolve] of pending.slice(GITLAB_PAGE_PARALLEL)) resolve();
+    const tree = await result;
+    expect(calls.map((c) => pageNumber(c.url))).toEqual([1, 2, 3, 4]);
+    expect(tree.truncated).toBe(false);
+    expect(tree.tree.map((e) => e.path.split('-')[0])).toEqual([...Array(4)].flatMap((_, i) => Array(100).fill(`p${i + 1}`)));
+  });
+
+  it('X-Total-Pages past the cap: reads up to the cap and says it is truncated', async () => {
+    routes = [['/repository/tree?recursive=true', (url) => reply(treePage(pageNumber(url)), { headers: { 'x-total-pages': '44' } })]];
+    const tree = await createGitlabService('gitlab.com').fetchRepositoryTree('g', 'p', 'main');
+    expect(calls).toHaveLength(GITLAB_TREE_MAX_PAGES);
+    expect(tree.truncated).toBe(true);
+  });
+
+  it('X-Total-Pages equal to the pages read: complete, not capped, no extra request', async () => {
+    routes = [['/repository/tree?recursive=true', (url) => reply(treePage(pageNumber(url)), { headers: { 'x-total-pages': String(GITLAB_TREE_MAX_PAGES) } })]];
+    const tree = await createGitlabService('gitlab.com').fetchRepositoryTree('g', 'p', 'main');
+    expect(calls).toHaveLength(GITLAB_TREE_MAX_PAGES);
+    expect(tree.truncated).toBe(false);
+  });
+
+  it('without X-Total-Pages (commits): batches stop at the first short page; the year is complete', async () => {
+    const commit = (n, i) => ({ id: `${n}-${i}`, author_name: 'Ana', authored_date: new Date().toISOString(), parent_ids: ['p'] });
+    routes = [['/repository/commits?since=', (url) => {
+      const n = pageNumber(url);
+      const size = n <= 2 ? 100 : n === 3 ? 40 : 0;
+      return reply(Array.from({ length: size }, (_, i) => commit(n, i)));
+    }]];
+    const activity = await createGitlabService('gitlab.com').fetchCommitActivity('g', 'p');
+    expect(activity.all.at(-1)).toBe(240);
+    const pages = calls.map((c) => pageNumber(c.url));
+    expect(pages).toEqual([1, ...Array.from({ length: GITLAB_PAGE_PARALLEL }, (_, i) => i + 2)]);
+    expect(Math.max(...pages)).toBeLessThanOrEqual(GITLAB_COMMIT_MAX_PAGES);
+  });
+
+  it('a page failing fails the listing (never a shorter list read as complete)', async () => {
+    routes = [['/repository/tree?recursive=true', (url) => (pageNumber(url) === 3 ? reply({}, { status: 500 }) : reply(treePage(pageNumber(url)), { headers: { 'x-total-pages': '5' } }))]];
+    await expect(createGitlabService('gitlab.com').fetchRepositoryTree('g', 'p', 'main')).rejects.toThrow(/500/);
   });
 });
 
