@@ -13,7 +13,7 @@ import {
 } from '../utils/gitlabData.js';
 import { toPullRequestStats } from '../utils/prReviewStats.js';
 import {
-  GITLAB_PER_PAGE, GITLAB_TREE_MAX_PAGES, GITLAB_COMMIT_MAX_PAGES, GITLAB_BRANCH_MAX_PAGES, GITLAB_COMMIT_WEEKS,
+  GITLAB_PER_PAGE, GITLAB_PAGE_PARALLEL, GITLAB_TREE_MAX_PAGES, GITLAB_COMMIT_MAX_PAGES, GITLAB_BRANCH_MAX_PAGES, GITLAB_COMMIT_WEEKS,
   GITHUB_PER_PAGE_COMMITS, GITHUB_PER_PAGE_RECENT_PRS, CLOSED_PR_SCAN, MERGED_PR_SAMPLE, GITLAB_MR_NOTES,
   CLASSROOM_COMMIT_PAGES, CLASSROOM_CI_RUN_PAGES, CLASSROOM_PR_SCAN, CLASSROOM_GITLAB_MR_PAGE, GITLAB_GROUP_MAX_PAGES,
   AUTHORSHIP_MAX_PATHS, AUTHORSHIP_COMMITS_PER_PATH,
@@ -97,20 +97,37 @@ export function createGitlabService(host) {
     return totalOf(response, label);
   }
 
-  // Pages of 100 up to maxPages; `capped` when the last page read was full.
-  // `total`: page 1's X-Total, null when GitLab didn't report it.
+  // X-Total-Pages of page 1, null when GitLab didn't report it (commits, some pipelines, over 10,000 items).
+  const pagesOrNull = (response) => {
+    const pages = Number(response.headers.get('x-total-pages'));
+    return response.headers.get('x-total-pages') !== null && Number.isInteger(pages) && pages > 0 ? pages : null;
+  };
+
+  // Pages of 100 up to maxPages, never past it. `total`: page 1's X-Total, null when not reported.
+  // Page 1 first; then pages 2+ GITLAB_PAGE_PARALLEL at a time, in page order:
+  //  - X-Total-Pages known: only the pages that exist; `capped` when there are more than maxPages.
+  //  - unknown: stops at the first short page (later pages of that batch are empty);
+  //    `capped` when maxPages were read and the last one was full.
   async function paged(path, label, maxPages, { notFound } = {}) {
-    const items = [];
-    let total = null;
     const sep = path.includes('?') ? '&' : '?';
-    for (let page = 1; page <= maxPages; page++) {
-      const { response, body } = await request(`${path}${sep}per_page=${GITLAB_PER_PAGE}&page=${page}`, label, notFound !== undefined && page === 1 ? { notFound } : {});
-      if (page === 1) total = totalOrNull(response, label);
-      if (!Array.isArray(body)) return { items: body, capped: false, total };
-      items.push(...body);
-      if (body.length < GITLAB_PER_PAGE) return { items, capped: false, total };
+    const pageUrl = (n) => `${path}${sep}per_page=${GITLAB_PER_PAGE}&page=${n}`;
+    const first = await request(pageUrl(1), label, notFound !== undefined ? { notFound } : {});
+    const total = totalOrNull(first.response, label);
+    if (!Array.isArray(first.body)) return { items: first.body, capped: false, total };
+    const items = [...first.body];
+    if (first.body.length < GITLAB_PER_PAGE) return { items, capped: false, total };
+    const knownPages = pagesOrNull(first.response);
+    const last = Math.min(knownPages ?? maxPages, maxPages);
+    for (let start = 2; start <= last; start += GITLAB_PAGE_PARALLEL) {
+      const numbers = Array.from({ length: Math.min(GITLAB_PAGE_PARALLEL, last - start + 1) }, (_, i) => start + i);
+      const bodies = await Promise.all(numbers.map((n) => json(pageUrl(n), label)));
+      for (const body of bodies) {
+        const list = Array.isArray(body) ? body : [];
+        items.push(...list);
+        if (list.length < GITLAB_PER_PAGE) return { items, capped: false, total };
+      }
     }
-    return { items, capped: true, total };
+    return { items, capped: knownPages === null || knownPages > maxPages, total };
   }
 
   async function graphql(query, variables, label) {

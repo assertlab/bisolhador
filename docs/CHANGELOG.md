@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.3] - 2026-11-14
+
+### ⚡ Performance
+
+- **GitLab: páginas de uma listagem buscadas em paralelo.** Árvore do repositório, commits das últimas 52 semanas, branches, pipelines e commits do período na Turma, e projetos de um grupo na importação liam uma página de 100 itens por vez. Agora a 1ª página vem sozinha e as seguintes vão de 3 em 3 (`GITLAB_PAGE_PARALLEL`), sempre na ordem das páginas e sem passar dos tetos de paginação. Num projeto que chega ao teto de 10 páginas, são 4 rodadas de espera em vez de 10.
+  - Com `X-Total-Pages`, só as páginas que existem são pedidas. Sem ele (commits e, no gitlab.com, pipelines), o lote para na primeira página incompleta; no pior caso, gasta 2 requisições vazias.
+  - Uma listagem com exatamente o número de páginas do teto (informado pelo `X-Total-Pages`) passa a contar como completa, e não mais como truncada.
+  - Uma página que falha continua derrubando a listagem inteira: nunca uma lista mais curta tratada como completa.
+
+### 🧪 Tests
+
+- Páginas pedidas juntas e mantidas na ordem mesmo com respostas fora de ordem; teto com `X-Total-Pages` maior que ele; total igual ao teto sem requisição extra; commits sem `X-Total-Pages` parando no primeiro lote incompleto; falha de uma página.
+
+---
+
 ## [3.29.2] - 2026-11-14
 
 ### 📝 Documentation

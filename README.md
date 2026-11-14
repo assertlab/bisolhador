@@ -45,6 +45,9 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 
 ## 🔄 Últimas Atualizações
 
+### v3.29.3 - Projetos grandes do GitLab carregam mais rápido
+- **⚡ Páginas buscadas em paralelo:** árvore, commits do ano, branches, pipelines e projetos de um grupo do GitLab pedem até 3 páginas de cada vez, em vez de uma por vez
+
 ### v3.29.2 - GitLab fora do Ranking
 - **📝 Decisão registrada:** projetos do GitLab não entram no Ranking, nem depois que o histórico do GitLab existir. Dito no README, no guia *Diferenças no GitLab* e no aviso do Dashboard para projetos do GitLab
 
