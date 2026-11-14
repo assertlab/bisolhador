@@ -869,6 +869,6 @@
     "tooltip_gitlab": "Rastros que o GitLab guarda: configuração de agentes versionada (inclusive .gitlab/duo, .agent/ do Google Antigravity e .pi/ do Pi), coautoria declarada em commits, MRs abertos por agentes e revisões de bots de IA, como o GitLab Duo. Não mede quanto código foi escrito por IA."
   },
   "gitlab": {
-    "notice": "Projeto do GitLab ({{host}}). O histórico (link permanente, Linha do Tempo, Benchmark e Ranking) ainda não existe para o GitLab: esta análise não é gravada. Contribuidores, atividade semanal, dias da semana e churn são calculados a partir dos commits dos últimos 12 meses."
+    "notice": "Projeto do GitLab ({{host}}). O histórico (link permanente, Linha do Tempo e Benchmark) ainda não existe para o GitLab: esta análise não é gravada. O Ranking é só do GitHub. Contribuidores, atividade semanal, dias da semana e churn são calculados a partir dos commits dos últimos 12 meses."
   }
 }

@@ -1,7 +1,7 @@
 # Estudo: GitLab como fonte de análise no Bisolhador
 
-> Estado: **estudo e plano**, nada implementado. Data: 2026-11-11, com as medições da Fase 0 em 2026-11-12 (base: `main` em `e97140c`).
-> Referências `arquivo:linha` valem para esse commit e podem ter se deslocado depois.
+> Estado: **1ª entrega concluída** (fases 0 a 3 e 5, v3.25.0 a v3.29.1, em produção com gitlab.cin.ufpe.br). Falta a Fase 4 (histórico) e as pendências da seção "Estado em 2026-11-14". Estudo de 2026-11-11, com as medições da Fase 0 em 2026-11-12 (base: `main` em `e97140c`).
+> Referências `arquivo:linha` das seções 1 a 3 valem para esse commit e podem ter se deslocado depois.
 
 ## Contexto e decisões
 
@@ -17,6 +17,10 @@ Decisão de 2026-11-12:
 
 - **Token:** só token **legado** com `read_api`. Tokens fine-grained (beta) ficam fora da 1ª entrega (seção 2.1).
 - **Visibilidade `internal` = privado.** Um projeto GitLab só conta como público com `visibility: public`. `internal` e `private` seguem a regra dos repositórios privados do GitHub: o Dashboard recusa, só a Turma analisa (ao vivo, com o token de quem usa) e nada vai para o Supabase. Visibilidade ausente ou desconhecida bloqueia a análise (fail-closed). Motivo: `internal` restringe o conteúdo a quem tem login na instância, e gravar as métricas desses projetos num banco público expõe o que a instância protege. A análise de um projeto só de aluno é feita pela Turma com uma lista de 1 projeto.
+
+Decisão de 2026-11-14:
+
+- **O GitLab não entra no Ranking.** O Ranking continua só com repositórios do GitHub, inclusive depois da Fase 4, quando as análises do GitLab passarem a ser gravadas. Motivo: parte dos indicadores do GitLab é medida de outro jeito (health score pelas listagens dirigidas, séries a partir de commits, revisão por notas e aprovações), e uma lista única compararia números que não são equivalentes. A decisão é pública (README, guia "Diferenças no GitLab" e `AGENTS.md`) e só será revista com motivo novo.
 
 ---
 
@@ -345,7 +349,7 @@ O custo base cabe com folga nos limites atuais do gitlab.com e, ao que tudo indi
 Dividida em dois PRs. **PR 1 (feito, 2026-11-12):**
 
 - ✅ `src/services/gitlabService.js` (um serviço por host, `createGitlabService`) e `src/utils/gitlabData.js` (transformações puras para os formatos do GitHub), com testes (`fetch` simulado; falha lança erro em vez de virar zero).
-  - Falha parcial: cada fonte falha sozinha (o `Promise.allSettled` do `useRepository` deixa só aquele indicador indisponível). **Pendente:** um 401 de token inválido ainda aparece como o erro genérico da busca, não como "token inválido".
+  - Falha parcial: cada fonte falha sozinha (o `Promise.allSettled` do `useRepository` deixa só aquele indicador indisponível). Um 401 de token recusado tem mensagem própria, com o host, desde a v3.27.2; o limite de requisições (429), desde a v3.29.1.
 - ✅ Agregadores a partir de uma leitura das 52 semanas de commits: séries semanais, punch card, churn e contribuidores por e-mail.
 - ✅ Health score pelas listagens dirigidas (raiz e `.gitlab/`), não pela árvore.
 - ✅ Métricas de MR via GraphQL (duas consultas: núcleo e tamanho) e CI via pipelines. Revisão, branches zumbis e datas das tags funcionam **sem token** no GitLab (`detailsWithoutToken`), medido no gitlab-runner e no CIn.
@@ -381,8 +385,8 @@ Feita em 2026-11-12 (v3.27.0):
 - Migração com `provider text default 'github'` e `host text default 'github.com'`.
 - Novas assinaturas das RPCs (DROP + CREATE, atenção ao PGRST203 de overload ambíguo) com chave `(provider, host, lower(repo_name))`.
 - Ligar `saveSearch` para o GitLab.
-- Timeline com rota splat + host; Benchmark e Ranking com filtro e rótulo de plataforma.
-- Decidir se o Ranking mistura plataformas, já que o health score inferido não é idêntico ao do GitHub.
+- Timeline com rota splat + host; Benchmark com filtro e rótulo de plataforma.
+- **Ranking só com o GitHub** (decisão de 2026-11-14): o `get_leaderboard` passa a filtrar `provider = 'github'`, para que as análises do GitLab gravadas a partir desta fase não apareçam lá.
 
 ### Fase 5: documentação
 
@@ -393,6 +397,16 @@ Feita em 2026-11-12 (v3.27.1); `AGENTS.md`, `CHANGELOG` e o guia foram atualizad
 - ✅ README: descrição, busca, Modo Turma, privacidade (exceção da Turma) e a seção "Como informar repositórios"; recursos de histórico marcados como só GitHub.
 - ✅ Como interpretar: a entrada "Modo turma" aponta para "Diferenças no GitLab". Guia de IA: limite "GitLab" (o que ainda não é verificado).
 - ✅ ROADMAP: 1ª entrega marcada, fase 4 e pendências em aberto.
+
+### Estado em 2026-11-14
+
+1ª entrega concluída e em produção. O que falta, em ordem de prioridade:
+
+1. **Confirmar com a administração do CIn os limites de taxa** do gitlab.cin.ufpe.br (Fase 0). A página pública indica que não há limite ativado, mas um limite no nginx não aparece lá.
+2. **Buscar páginas em paralelo** usando `x-total-pages`, para projetos grandes (como o gitlab-runner) carregarem mais rápido.
+3. **CI da Turma sem MRs de bots e de forks:** a lista de pipelines não informa o autor, então é preciso cruzar com o MR.
+4. **IA no Processo:** reconhecer os commits de agentes do GitLab Duo, feitos por contas de serviço. A origem template continua não verificável no GitLab.
+5. **Fase 4 (histórico):** começa por um PR que só versiona o `obter_snapshot` e o DDL de `analytics_searches` em `supabase-migrations/`, sem mudar o banco. A migração com `provider`/`host` vem depois, em PR separado, já com o Ranking restrito ao GitHub.
 
 ### Riscos
 

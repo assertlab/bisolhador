@@ -869,6 +869,6 @@
     "tooltip_gitlab": "Traces GitLab keeps: versioned AI agent configuration (including .gitlab/duo, Google Antigravity's .agent/ and Pi's .pi/), co-authorship declared in commits, MRs opened by agents and reviews by AI bots, such as GitLab Duo. It does not measure how much code AI wrote."
   },
   "gitlab": {
-    "notice": "GitLab project ({{host}}). History (permanent link, Timeline, Benchmark and Ranking) doesn't exist for GitLab yet: this analysis is not saved. Contributors, weekly activity, weekdays and churn are computed from the commits of the last 12 months."
+    "notice": "GitLab project ({{host}}). History (permanent link, Timeline and Benchmark) doesn't exist for GitLab yet: this analysis is not saved. The Ranking is GitHub-only. Contributors, weekly activity, weekdays and churn are computed from the commits of the last 12 months."
   }
 }
