@@ -1,6 +1,6 @@
 {
   "errors": {
-    "privateRepo": "Este repositório é privado. O Bisolhador funciona apenas com repositórios públicos, pois os dados analisados podem ser compartilhados publicamente.",
+    "privateRepo": "Este repositório é privado. O Benchmark compara o histórico gravado, e análises de repositórios privados nunca são gravadas. Analise-o no Dashboard ou no Modo Turma, com o seu token.",
     "repoInputInvalid": "Endereço de repositório inválido. Use owner/repo para o GitHub, ou o endereço completo (com o host) para o GitLab.",
     "repoHostRequired": "Este caminho tem mais de dois níveis, o que só existe no GitLab. Inclua o host, por exemplo gitlab.com/grupo/subgrupo/projeto.",
     "repoHostNotAllowed": "Este endereço não é do GitHub nem de uma instância GitLab habilitada no Bisolhador, por isso não foi analisado.",
@@ -14,11 +14,10 @@
     "chunkLoad": "Não foi possível carregar esta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página para tentar de novo.",
     "pageCrash": "Algo deu errado ao mostrar esta página. Recarregue para tentar de novo; se persistir, use o menu para ir a outra página.",
     "lazyTexts": "Não foi possível carregar os textos desta página, provavelmente por falha de rede ou porque o Bisolhador foi atualizado depois que ela foi aberta. Recarregue a página e tente de novo.",
-    "gitlabNotPublic": "Este projeto do GitLab não é público (visibilidade interna ou privada). O Dashboard analisa apenas projetos públicos, porque os dados podem ser compartilhados. Projetos internos e privados podem ser analisados no Modo Turma, com o seu token, sem que nada seja gravado.",
     "visibilityUnknown": "Não foi possível confirmar se este projeto é público (a resposta não informou a visibilidade). Por segurança, ele não foi analisado. Tente de novo em instantes.",
     "tokenRejected": "O {{host}} recusou o token salvo neste navegador (inválido, revogado ou expirado). Confira ou troque o token nas configurações (ícone ⚙️); sem token, só projetos públicos são analisados.",
-    "repoNotFound": "Repositório não encontrado no GitHub, ou privado sem acesso com o seu token. Confira o dono e o nome; repositórios privados só são analisados no Modo Turma.",
-    "repoNotFoundGitlab": "Projeto não encontrado em {{host}}. Confira o caminho; se o projeto for interno ou privado, ele não aparece sem login: analise-o no Modo Turma, com um token da instância.",
+    "repoNotFound": "Repositório não encontrado no GitHub, ou privado sem acesso com o seu token. Confira o dono e o nome; para analisar um repositório privado, salve nas configurações (ícone ⚙️) um token com acesso a ele.",
+    "repoNotFoundGitlab": "Projeto não encontrado em {{host}}. Confira o caminho; se o projeto for interno ou privado, ele não aparece sem login: salve nas configurações (ícone ⚙️) um token read_api da instância.",
     "repoNotFoundGitlabToken": "Projeto não encontrado em {{host}}, ou o seu token dessa instância não tem acesso a ele. Confira o caminho e se a sua conta participa do projeto.",
     "rateLimited": "O {{host}} atingiu o limite de requisições por enquanto. Tente de novo em alguns minutos.",
     "rateLimited_noToken": "O {{host}} atingiu o limite de requisições por enquanto. Tente de novo em alguns minutos; sem token, o GitHub permite 60 por hora, e com um token (ícone ⚙️), 5.000.",
@@ -451,7 +450,7 @@
     },
     "token": {
       "title": "Por que configurar tokens?",
-      "description": "GitHub: sem token, o limite é de 60 requisições por hora; com um Personal Access Token, 5.000. GitLab: no Dashboard, projetos públicos funcionam sem token. No Modo Turma, cada plataforma da lista precisa de um token (no GitLab, um read_api por instância); é ele que dá acesso aos projetos internos e privados.",
+      "description": "GitHub: sem token, o limite é de 60 requisições por hora; com um Personal Access Token, 5.000. GitLab: no Dashboard, projetos públicos funcionam sem token. O token é o que dá acesso a repositórios privados (e, no GitLab, internos) no Dashboard e no Modo Turma; no Modo Turma, cada plataforma da lista precisa de um (no GitLab, um read_api por instância).",
       "warning": {
         "important": "Importante:",
         "message": "Os tokens ficam salvos apenas no seu navegador e nunca são enviados para nossos servidores; cada token do GitLab só é enviado para a própria instância."
@@ -479,7 +478,7 @@
     },
     "gitlab": {
       "title": "Projetos do GitLab",
-      "text": "No Dashboard, só projetos públicos do GitLab são analisados, e a análise não é gravada (não há link permanente, Linha do Tempo, Benchmark nem Ranking). Projetos internos e privados podem ser analisados no Modo Turma. Algumas métricas são calculadas de outro jeito no GitLab: veja \"Diferenças no GitLab\" em Como interpretar."
+      "text": "No Dashboard, projetos públicos do GitLab são analisados sem token, e internos e privados com o token da instância. A análise do GitLab não é gravada (não há link permanente, Linha do Tempo, Benchmark nem Ranking). Algumas métricas são calculadas de outro jeito no GitLab: veja \"Diferenças no GitLab\" em Como interpretar."
     },
     "classroom": {
       "title": "Modo Turma",
@@ -587,6 +586,7 @@
     "errorNoData": "Erro: Dados não salvos. Tente recarregar a página.",
     "errorNotSaved": "Este resultado não foi salvo porque alguns indicadores não puderam ser carregados (veja o aviso de dados parciais), então não há link permanente. Tente de novo em instantes ou configure um token do GitHub.",
     "errorGeneral": "Erro ao gerar link de compartilhamento",
+    "notSavedPrivate": "Análises de repositórios privados nunca são gravadas, por isso não há link permanente. O endereço desta página só mostra a análise para quem tiver acesso ao repositório e um token salvo.",
     "notSavedGitlab": "Análises de projetos do GitLab ainda não são gravadas, por isso não há link permanente. Copie o endereço desta página para compartilhar a análise ao vivo."
   },
   "snapshot": {
@@ -870,5 +870,8 @@
   },
   "gitlab": {
     "notice": "Projeto do GitLab ({{host}}). O histórico (link permanente, Linha do Tempo e Benchmark) ainda não existe para o GitLab: esta análise não é gravada. O Ranking é só do GitHub. Contribuidores, atividade semanal, dias da semana e churn são calculados a partir dos commits dos últimos 12 meses."
+  },
+  "privateNotice": {
+    "text": "Repositório privado (no GitLab, privado ou interno), analisado com o seu token. Nada desta análise é gravado no Bisolhador, e o Google Analytics fica desligado nesta página até ela ser fechada. Quem abrir este endereço só vê a análise se tiver acesso ao repositório. O PDF, o CSV e o JSON exportados contêm os dados: compartilhe só com quem já tem acesso."
   }
 }

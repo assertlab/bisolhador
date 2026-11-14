@@ -1,6 +1,8 @@
 import ReactGA from "react-ga4";
 import { supabase } from "./supabase.js";
 import { withExponentialBackoff } from "../utils/retry.js";
+import { parseRepoRef } from "../utils/repoRef.js";
+import { hasToken } from "./tokens.js";
 
 /**
  * Classroom mode may list private repositories (in the URL, the table links
@@ -15,6 +17,25 @@ function disableIfClassroom(path) {
   return Boolean(id && window[`ga-disable-${id}`]);
 }
 
+/** GA off for the rest of the page session (gtag's opt-out flag), as in Classroom mode. */
+function disable() {
+  const id = import.meta.env.VITE_GA_ID;
+  if (id) window[`ga-disable-${id}`] = true;
+}
+
+/**
+ * The Dashboard analyzes private repositories (GitHub private, GitLab internal/private) with the
+ * user's token. Whether one is private is only known after the first request, but the name is in
+ * the URL (?q=) before that, and GA4 enhanced measurement (history page views, site search on `q`)
+ * would send it. So a search for a host the user has a token for may be private: GA goes off
+ * before the name reaches the URL, for the rest of the page session. Without a token, a private
+ * repository can't be read at all (404), so public-only searches keep GA.
+ */
+export function searchMayBePrivate(name) {
+  const { ref } = parseRepoRef(String(name ?? ''));
+  return Boolean(ref && hasToken(ref));
+}
+
 /** origin + path, never the query string or hash (see initialize). */
 export const pathOnlyLocation = (path) => `${window.location.origin}${String(path).split(/[?#]/)[0]}`;
 
@@ -27,9 +48,18 @@ const analytics = {
   // site search read the real URL/links), hence disableIfClassroom.
   initialize() {
     disableIfClassroom(window.location.pathname);
+    // A Dashboard link opened directly (/?q=…) that may be private: off before any hit
+    if (searchMayBePrivate(new URLSearchParams(window.location.search).get("q"))) disable();
     ReactGA.initialize(import.meta.env.VITE_GA_ID, {
       gtagOptions: { send_page_view: false, page_location: pathOnlyLocation(window.location.pathname) },
     });
+  },
+
+  disable,
+
+  /** Before a Dashboard search goes into the URL (see searchMayBePrivate). */
+  disableIfPrivateSearch(name) {
+    if (searchMayBePrivate(name)) disable();
   },
 
   trackPageView(path) {

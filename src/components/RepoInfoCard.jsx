@@ -24,7 +24,8 @@ export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
 
   // History (Timeline) is GitHub-only: a GitLab "foo/bar" would open GitHub foo/bar's history.
   const isGithub = !data.provider || data.provider === 'github';
-  const timelineRoute = isGithub ? parseSafeRepoName(data.fullName) : null;
+  // Private repositories are never saved, so they have no history either.
+  const timelineRoute = isGithub && !data.private ? parseSafeRepoName(data.fullName) : null;
   const isTimelineRouteSafe = timelineRoute !== null;
 
   const handleDownloadPDF = async () => {
@@ -75,7 +76,7 @@ export function RepoInfoCard({ data, onShareSuccess, isSnapshot = false }) {
       if (!data.searchId) {
         // Partial results aren't saved (useRepository PERSIST_BLOCKERS), so there's no permalink.
         // GitLab analyses aren't saved at all yet.
-        showToast(t(!isGithub ? 'share.notSavedGitlab' : data._warnings?.length ? 'share.errorNotSaved' : 'share.errorNoData'), 'error');
+        showToast(t(data.private ? 'share.notSavedPrivate' : !isGithub ? 'share.notSavedGitlab' : data._warnings?.length ? 'share.errorNotSaved' : 'share.errorNoData'), 'error');
         return;
       }
 

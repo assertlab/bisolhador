@@ -41,6 +41,8 @@ export function buildRepoReportModel(data, t, locale, { isSnapshot = false, now 
       since: t('repo.since', { createdAt: data.createdAt ? formatters.formatDate(data.createdAt, locale) : 'N/A' }),
       analysisDate: data.analysisDate ?? null,
       isSnapshot,
+      // Read with the user's token and never saved: the method notes say so (the PDF carries the data)
+      private: data.private === true,
       // Platform host (GitLab reports name the instance in the method notes)
       host: data.host ?? 'github.com',
       branches: data.stats?.branches ?? null,

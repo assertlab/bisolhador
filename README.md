@@ -25,7 +25,7 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 - **📄 Export PDF/JSON/CSV**: Relatórios completos em PDF, dados brutos em JSON e exportação em CSV para análise em planilhas
 - ** Monitoramento de Uso**: Rastreamento de acessos e eventos (Buscas, Exports) com Google Analytics 4
 - **🛡️ Security-First (RPC Validation)**: Implementação de RPC segura no Supabase com validação de dados
-- **🔒 Apenas Repositórios Públicos fora do Modo Turma**: o Dashboard não processa nem persiste repositórios privados (nem projetos internos do GitLab), mesmo que o token tenha acesso. A única exceção é o Modo Turma, que os analisa no navegador, com o token de quem usa, sem gravar nada
+- **🔒 Repositórios privados nunca são gravados**: o Dashboard e o Modo Turma analisam repositórios privados (e, no GitLab, internos) no navegador, com o token de quem usa, sem gravar nada no Bisolhador; o Google Analytics fica desligado nessas buscas. Link permanente, Linha do Tempo, Benchmark e Ranking são só de repositórios públicos
 - **🛡️ Fail-Safe**: Tratamento robusto de erros e rate limits
 - **♿ Acessibilidade (WCAG AA)**: Semântica de tabelas, aria-label/aria-hidden em ícones, suporte a leitores de tela
 - **⚡ Performance Otimizada**: useMemo para gráficos, code splitting e skeleton screens
@@ -35,8 +35,8 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 | Plataforma | Busca (Dashboard) | Modo Turma (um por linha) |
 |---|---|---|
 | GitHub | `owner/repo` ou `https://github.com/owner/repo` | igual |
-| gitlab.com | `gitlab.com/grupo/projeto` ou a URL do projeto (só públicos) | igual (internos e privados também, com token) |
-| instância habilitada (ex.: gitlab.cin.ufpe.br) | `gitlab.cin.ufpe.br/grupo/subgrupo/projeto` ou a URL (só públicos) | igual (internos e privados também, com token) |
+| gitlab.com | `gitlab.com/grupo/projeto` ou a URL do projeto (internos e privados com token) | igual |
+| instância habilitada (ex.: gitlab.cin.ufpe.br) | `gitlab.cin.ufpe.br/grupo/subgrupo/projeto` ou a URL (internos e privados com token) | igual |
 
 - **No GitLab, o host vem sempre antes do caminho.** Um caminho de três níveis sem host (`grupo/sub/projeto`) é recusado com um pedido para incluir o host; outros hosts não são aceitos. As instâncias aceitas são o gitlab.com e as da variável `VITE_GITLAB_HOSTS` do build (em bisolhador.assertlab.com, gitlab.cin.ufpe.br).
 - **Importar uma turma:** no Modo Turma, o campo de importação aceita o nome de uma organização do GitHub (`ufpe-es-2026`) ou `host/grupo` do GitLab (`gitlab.cin.ufpe.br/disciplina`), com subgrupos.
@@ -44,6 +44,9 @@ Dashboard de análise de repositórios do **GitHub** e do **GitLab** (gitlab.com
 - **O que muda no GitLab:** algumas métricas são calculadas a partir dos commits dos últimos 12 meses, a revisão usa notas e aprovações dos merge requests, e o CI usa os pipelines. Detalhes em *Como interpretar → Diferenças no GitLab* (`/guia#gitlab`).
 
 ## 🔄 Últimas Atualizações
+
+### v3.31.0 - Repositórios privados no Dashboard
+- **✨ O Dashboard analisa repositórios privados do GitHub e projetos internos e privados do GitLab**, com o token de quem usa, para estudar cada equipe individualmente; nada é gravado, não há link permanente nem Linha do Tempo, e o Google Analytics fica desligado nessas buscas
 
 ### v3.30.0 - CI da Turma no GitLab com a mesma regra do GitHub
 - **✨ Pipelines de MRs de forks, do Dependabot ou do Renovate e com outro branch de destino deixam de contar** no CI da Turma em projetos do GitLab, como já era no GitHub

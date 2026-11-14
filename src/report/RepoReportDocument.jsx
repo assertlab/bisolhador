@@ -211,7 +211,7 @@ export function RepoReportDocument({ model, t, locale, meta }) {
   }
 
   function Method() {
-    const items = ['version', 'registry', header.isSnapshot ? 'snapshot' : 'live', 'nd', 'samples', 'ai'];
+    const items = ['version', 'registry', header.isSnapshot ? 'snapshot' : 'live', ...(header.private ? ['private'] : []), 'nd', 'samples', 'ai'];
     return (
       <View>
         {items.map((k) => (

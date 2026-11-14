@@ -25,6 +25,7 @@ import { PlatformProvider, withPlatform } from '../lib/platformText.js';
 import { GuideLink } from '../components/GuideLink.jsx';
 import { rateLimitI18n } from '../utils/rateLimit.js';
 import { intlLocale } from '../i18n.js';
+import analytics from '../services/analytics.js';
 
 // Lazy-loaded chart components (Code Splitting). Each also waits on
 // ensureChartSetup() so chart.js registration — now dynamically imported
@@ -109,6 +110,8 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
 
   const handleSearch = (repositoryName) => {
     setDismissedError(false); // reenviar a mesma busca não muda a URL
+    // May be private (token for that host): GA off BEFORE the name goes into the URL
+    analytics.disableIfPrivateSearch(repositoryName);
     setSearchParams({ q: repositoryName });
   };
 
@@ -201,6 +204,15 @@ export function Dashboard({ isSettingsOpen, setIsSettingsOpen }) {
             <p role="alert" className="w-full max-w-2xl mx-auto mt-3 bg-yellow-50 border border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-300 px-4 py-3 rounded-md text-sm">
               {rateLimitText(displayData._rateLimit)}
             </p>
+          )}
+
+          {/* Private repository: read with the user's token, never saved */}
+          {displayData?.private && (
+            <div className="w-full max-w-2xl mx-auto mt-3">
+              <p role="note" className="bg-amber-50 border border-amber-200 text-amber-900 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-200 px-4 py-3 rounded-md text-sm">
+                {t('privateNotice.text')}
+              </p>
+            </div>
           )}
 
           {/* GitLab: no history yet, and some charts are computed from commits */}
